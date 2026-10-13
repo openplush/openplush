@@ -57,7 +57,7 @@ All CI gates for the lane you touched pass locally.
 ## Commits and PRs
 
 - Conventional Commits: `feat(flatten): …`, `fix(mesh): …`, `docs(spec): …`.
-- PR sections: What · Why · Task · Edge cases · Failure modes · Tests · Skipped.
+- Every PR uses `.github/pull_request_template.md`: Stack · What · Why · Task · Edge cases · Failure modes · Tests · Skipped · Size.
 - Full detail and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 
 ### PR size is a hard rule
@@ -84,14 +84,33 @@ This is the one place "one task per PR" bends, and it has to: a PR landing only 
 
 ### Branch naming
 
+Every PR branch says **which feature, which position in the stack, and what it contains** — readable in `git branch -r` with no other context.
+
 | Kind | Pattern | Example |
 |---|---|---|
-| Spec / planning | `NNN-feature-slug` (what Spec Kit creates) | `003-auto-seams` |
-| Implementation | `NNN/TXXX-slug` | `001/T050-obj-import` |
-| Repo chore | `chore/slug` | `chore/remove-stray-file` |
+| Feature slice (spec, plan, or code) | `NNN/NN-slug` | `002/03-plan`, `001/07-T050-obj-import` |
+| Repo chore | `chore/slug` | `chore/pr-policy` |
 
-Implementation branches are cut from `main`, not from a feature branch. The Spec Kit git extension creates feature branches from `main` too — which is correct now that `main` is the trunk, but verify with `git log --oneline -3` after it runs.
+- `NNN` is the feature number; `NN` is the slice's position in that feature's stack, starting at `01`. Sorting branches lists each stack in merge order.
+- Include the task ID in the slug for implementation slices: `001/09-T060a-weld-spatial-hash`.
+- The slug names the content, not the activity. `001/04-contracts-project-schema`, never `001/design-docs`, `001/updates`, `001/fixes`.
+- Spec Kit's `/speckit.specify` creates a local `NNN-feature-slug` branch. That is a working branch: rename it before pushing (`git branch -m 003/01-spec`).
+- Session-assigned names (`claude/<slug>-<id>`, `codex/…`, `copilot/…`) are not PR branches. Push the slice under its `NNN/NN-slug` name. If your session cannot, put the intended name and stack position in the PR title and body so a maintainer can rename the branch in GitHub (renaming keeps the PR).
 
-### Stacking
+### Stacking is the default for dependent work
 
-Allowed, declared, and shallow. Say `Stacked on #N` in the PR body, target the parent branch, and retarget to `main` when the parent merges. **Maximum depth 2** — past that, no reviewer can tell what is new.
+If a slice reads, links to, or builds on anything not yet on `main`, it is **stacked**:
+
+1. Cut the branch from the parent slice's branch, not from `main`.
+2. Open the PR with **base = the parent branch**, so the diff shows only this slice.
+3. Fill in the `Stack` section of the PR template: position, parent PR, child PR. Edit the parent's body to link the new child.
+4. Only slices with no unmerged dependency start from `main`. Siblings cut from `main` that depend on each other are the failure this rule exists to prevent: each PR shows dead links and nothing records merge order.
+
+One stack per feature. A stack never spans two features and never contains a chore. There is no depth cap: because each PR targets its parent, every diff stays one slice no matter how deep the stack is.
+
+### Merging
+
+- **Merge commits only.** No squash, no rebase-merge. Squash would erase the test-before-implementation commit order, and both squash and rebase-merge rewrite commit SHAs, so every PR above the merged one would need a manual rebase. A merge commit keeps the SHAs, so the next PR's diff against `main` is already just its own slice.
+- **Merge bottom-up, and only a PR whose base is `main`.** Merging a PR whose base is another slice merges it into that slice's branch, not into `main`.
+- After merging, the head branch is deleted and GitHub retargets the child PR to `main` automatically. If it doesn't, retarget it by hand. Never rebase or force-push a stack someone else is reviewing just to tidy history.
+- A change requested on a lower slice goes on that slice's branch. Then merge it upward (`git checkout 002/04-… && git merge 002/03-…`), not rebase.

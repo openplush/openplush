@@ -1,3 +1,16 @@
+## Stack
+
+<!-- Fill in for every feature slice. Branch: NNN/NN-slug (e.g. 002/03-plan) or chore/slug.
+     Position: 3 of 5 in feature 002
+     Parent: #9 (002/02-research) - this PR's base branch. "main" if it depends on nothing unmerged.
+     Child: #11 (002/04-data-model-quickstart), or "none yet". Update this when you open the child.
+     Merge: merge commit only, and only once this PR's base is main. -->
+
+- **Branch**: 
+- **Position**: 
+- **Parent**: 
+- **Child**: 
+
 ## What
 
 <!-- One or two sentences. What changed, not how. -->
@@ -43,6 +56,8 @@
      - [ ] Test commit precedes implementation commit
      - [ ] CI green at the tip, and not green because a test was weakened
      - [ ] One story, one crate, one concern
+     - [ ] Branch named NNN/NN-slug or chore/slug; base is the parent slice if this depends on unmerged work
+     - [ ] Stack section filled in, and the parent PR links to this one
      - [ ] No golden snapshot updated to make a test pass
      - [ ] Skipped section filled in honestly
 -->

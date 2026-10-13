@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openplush.org/schemas/project-v1.json",
+  "title": "OpenPlush project document",
+  "description": "Version 1 of the .plush project document (FR-070). The mesh itself is stored as a binary chunk alongside this JSON, not inline. Everything here is either user intent or a deterministic recipe for recomputation, never a cached result, so a project can never disagree with itself.",
+  "type": "object",
+  "required": ["schemaVersion", "createdWith", "model", "scale", "seams"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "Bumped on any breaking change. openplush-project migrates older documents forward (FR-070)."
+    },
+    "createdWith": {
+      "type": "string",
+      "description": "Engine version that wrote this file, for diagnostics only. Never used to branch behaviour: that way lies version-sniffing."
+    },
+    "model": {
+      "type": "object",
+      "required": ["sourceFormat", "meshChunk", "units"],
+      "additionalProperties": false,
+      "properties": {
+        "sourceFormat": { "enum": ["obj", "gltf", "glb", "stl", "ply"] },
+        "meshChunk": {
+          "type": "string",
+          "description": "Name of the binary chunk holding the ORIGINAL imported mesh, unrepaired. Repair is replayed from repairPlan so the source the maker supplied is never lost."
+        },
+        "units": { "enum": ["mm", "cm", "m", "in", "ft", "unknown"] },
+        "name": { "type": "string" }
+      }
+    },
+    "repairPlan": {
+      "type": "object",
+      "description": "The repair choices the maker made, replayed deterministically on load. Storing the plan rather than the repaired mesh means a later engine with better repair produces a better result from the same project.",
+      "additionalProperties": false,
+      "properties": {
+        "weld": { "type": "boolean", "default": true },
+        "dropDegenerates": { "type": "boolean", "default": true },
+        "splitNonManifoldEdges": { "type": "boolean", "default": true },
+        "splitBowties": { "type": "boolean", "default": true },
+        "fixOrientation": { "type": "boolean", "default": true },
+        "fillHoles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/boundaryLoopRef" },
+          "description": "Loops the maker chose to fill. Loops absent from this list are intentional openings (FR-003; data-model section 3, step 7)."
+        },
+        "voxelRemesh": {
+          "type": "object",
+          "description": "Opt-in last resort. Destroys UVs and sharp features, so it is never implied.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "voxelSizeRel": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    },
+    "scale": {
+      "type": "object",
+      "required": ["targetMm"],
+      "additionalProperties": false,
+      "properties": {
+        "targetMm": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000,
+          "description": "Finished size along the reference dimension. Capped at 1 m: handheld-to-large plush only (FR-006, D-015)."
+        },
+        "referenceDimension": { "enum": ["height", "width", "depth", "measuredDistance"] },
+        "measuredFrom": { "$ref": "#/$defs/surfacePoint" },
+        "measuredTo": { "$ref": "#/$defs/surfacePoint" },
+        "shrinkPct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 50,
+          "default": 0,
+          "description": "Uniform shrink compensation for stretch fabrics (FR-056). Uniform by design: direction-dependent compensation is out of scope (D-014)."
+        }
+      }
+    },
+    "seams": {
+      "type": "array",
+      "description": "Seam edges keyed by SOURCE PROVENANCE, not EdgeId. EdgeIds move when repair settings change; provenance keys do not (data-model section 12).",
+      "items": {
+        "type": "object",
+        "required": ["edge", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "edge": { "$ref": "#/$defs/provenanceEdge" },
+          "kind": { "enum": ["cut", "dart", "opening", "fabricBoundary", "mandatory"] },
+          "allowanceMm": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Per-seam override. Zero is legal only on non-fraying fabric (FR-057)."
+          }
+        }
+      }
+    },
+    "fabrics": {
+      "type": "array",
+      "description": "Fabric profiles live IN the project (FR-050). Presets are seeds, not a shared table the project points at, so reopening a project cannot be changed by the app preset list having moved on.",
+      "items": { "$ref": "#/$defs/fabric" }
+    },
+    "fabricRegions": {
+      "type": "array",
+      "description": "Painted regions (FR-041). Region boundaries become seams, so a piece can never span two fabrics.",
+      "items": {
+        "type": "object",
+        "required": ["fabricId", "faces"],
+        "additionalProperties": false,
+        "properties": {
+          "fabricId": { "type": "string" },
+          "faces": { "type": "array", "items": { "$ref": "#/$defs/provenanceFace" } }
+        }
+      }
+    },
+    "directionStrokes": {
+      "type": "array",
+      "description": "Maker strokes defining nap and grain direction (FR-051).",
+      "items": {
+        "type": "object",
+        "required": ["points"],
+        "additionalProperties": false,
+        "properties": {
+          "points": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/surfacePoint" } },
+          "weight": { "type": "number", "minimum": 0, "default": 1 }
+        }
+      }
+    },
+    "markings": {
+      "type": "array",
+      "description": "Surface-attached decorations (FR-040). Stored in barycentric coordinates so they survive re-seaming and re-flattening.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "anchor"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["image", "outline", "placementMark"] },
+          "anchor": { "$ref": "#/$defs/surfacePoint" },
+          "imageChunk": { "type": "string" },
+          "widthMm": { "type": "number", "exclusiveMinimum": 0 },
+          "rotationDeg": { "type": "number" }
+        }
+      }
+    },
+    "detailParts": {
+      "type": "array",
+      "description": "Components the maker marked as non-sewn (FR-005, FR-042). They produce placement marks, not pattern pieces.",
+      "items": {
+        "type": "object",
+        "required": ["component"],
+        "additionalProperties": false,
+        "properties": {
+          "component": { "type": "integer", "minimum": 0 },
+          "label": { "type": "string" },
+          "safetyEye": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "patternOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultAllowanceMm": { "type": "number", "minimum": 0, "default": 6 },
+        "openingAllowanceMm": { "type": "number", "minimum": 0, "default": 12 },
+        "hemAllowanceMm": { "type": "number", "minimum": 0, "default": 12 },
+        "notchSpacingMm": { "type": "number", "exclusiveMinimum": 0, "default": 50 },
+        "pileAllowanceMultiple": {
+          "type": "number",
+          "minimum": 0,
+          "default": 3,
+          "description": "Provisional (FR-055): the default allowance scales to at least this many times the pile length, and pieces below this multiple are flagged."
+        },
+        "stretchMismatchThresholdPct": {
+          "type": "number",
+          "minimum": 0,
+          "default": 20,
+          "description": "Provisional (FR-058): stretch difference across a seam that triggers a warning."
+        },
+        "pilePrintMirrored": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pile fabrics print mirrored, labelled trace on wrong side (FR-054). The maker may switch to right-side printing."
+        }
+      }
+    },
+    "layoutOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["pages", "fabricRoll"], "default": "pages" },
+        "pageSize": { "enum": ["letter", "a4", "largeFormat"], "default": "a4" },
+        "overlapMm": { "type": "number", "minimum": 0, "default": 10 },
+        "pieceGapMm": { "type": "number", "minimum": 0, "default": 5 }
+      }
+    },
+    "acknowledgedWarnings": {
+      "type": "array",
+      "description": "FR-064: warnings the maker has acknowledged. Keyed by code plus provenance target so an acknowledgement survives re-repair. Unacknowledged warnings are recomputed, never stored.",
+      "items": {
+        "type": "object",
+        "required": ["code"],
+        "additionalProperties": false,
+        "properties": {
+          "code": { "type": "string" },
+          "target": { "type": "string" }
+        }
+      }
+    },
+    "dismissedHints": {
+      "type": "array",
+      "description": "Feature 002: dismissed seam-placement hints. Present in the v1 schema so feature 002 needs no migration, and so a file written by a 002-aware build still opens in a 001-only build.",
+      "items": {
+        "type": "object",
+        "required": ["category", "target"],
+        "additionalProperties": false,
+        "properties": {
+          "category": { "enum": ["sharpEdge", "concaveCrease", "dartCandidate", "symmetry"] },
+          "target": { "type": "string" },
+          "dismissedAtScaleMm": { "type": "number" }
+        }
+      }
+    },
+    "hintSettings": {
+      "type": "object",
+      "description": "Feature 002: per-category toggles and sensitivity.",
+      "additionalProperties": false,
+      "properties": {
+        "sharpEdge": { "$ref": "#/$defs/hintCategorySetting" },
+        "concaveCrease": { "$ref": "#/$defs/hintCategorySetting" },
+        "dartCandidate": { "$ref": "#/$defs/hintCategorySetting" },
+        "symmetry": { "$ref": "#/$defs/hintCategorySetting" }
+      }
+    },
+    "cache": {
+      "type": "object",
+      "description": "Optional, keyed by content hash, and always safe to delete. Nothing here is authoritative: a reader that ignores it computes the same result (data-model section 12).",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "provenanceEdge": {
+      "type": "string",
+      "description": "Sorted pair of canonical source-vertex IDs, for example 1204:1899. Stable across changes to repair settings."
+    },
+    "provenanceFace": {
+      "type": "string",
+      "description": "Sorted triple of canonical source-corner IDs."
+    },
+    "boundaryLoopRef": {
+      "type": "string",
+      "description": "Canonical representative provenance vertex of the loop, chosen by lowest ID for determinism."
+    },
+    "surfacePoint": {
+      "type": "object",
+      "required": ["face", "bary"],
+      "additionalProperties": false,
+      "description": "A point ON the surface, in barycentric coordinates. Never a world-space position, which would not survive repair or rescaling.",
+      "properties": {
+        "face": { "$ref": "#/$defs/provenanceFace" },
+        "bary": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "fabric": {
+      "type": "object",
+      "required": ["id", "name", "category"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "enum": ["woven", "knit", "pile", "felt"] },
+        "stretchGrainPct": { "type": "number", "minimum": 0, "default": 0 },
+        "stretchCrossPct": { "type": "number", "minimum": 0, "default": 0 },
+        "stretchBiasPct": { "type": "number", "minimum": 0, "default": 0 },
+        "nap": { "type": "boolean", "default": false },
+        "pileLenMm": { "type": "number", "minimum": 0, "default": 0 },
+        "thicknessMm": { "type": "number", "minimum": 0, "default": 0 },
+        "frays": { "type": "boolean", "default": true },
+        "defaultAllowanceMm": { "type": "number", "minimum": 0, "default": 6 },
+        "rollWidthMm": { "type": "number", "exclusiveMinimum": 0, "default": 1500 }
+      }
+    },
+    "hintCategorySetting": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "sensitivity": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 }
+      }
+    }
+  }
+}

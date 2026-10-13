@@ -1,0 +1,42 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Node / web
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# wasm-bindgen output
+pkg/
+
+# Test and tool output
+/out/
+coverage/
+playwright-report/
+test-results/
+*.snap.new
+*.pending-snap
+
+# Spec Kit local state (each contributor sets their active feature)
+/.specify/feature.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# IDEs
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Python (research notebooks)
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -55,6 +55,43 @@ All CI gates for the lane you touched pass locally.
 - Absolute dates (YYYY-MM-DD). Decisions go in the plan's Decision Ledger; principle changes need an ADR (MADR).
 
 ## Commits and PRs
+
 - Conventional Commits: `feat(flatten): …`, `fix(mesh): …`, `docs(spec): …`.
-- One task per PR, referenced as `Task: T014 (specs/001-pattern-pipeline/tasks.md)`.
 - PR sections: What · Why · Task · Edge cases · Failure modes · Tests · Skipped.
+- Full detail and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
+
+### PR size is a hard rule
+
+**One reviewable slice per PR.** Never bundle a whole feature, a whole phase, or a whole spec.
+
+- **Budget**: 400 changed lines of hand-written source. Excluded from the count: fixture models, generated TS types, snapshot files, lock files.
+- Over budget → split it, or justify it in a `**Size**` section of the PR description. "It was easier" is not a justification; "this is one indivisible algorithm" is.
+- A PR nobody can review in one sitting does not get reviewed — it gets approved.
+
+### What a PR contains
+
+A PR is **the test task plus the implementation task(s) that make it pass**, committed in that order so test-first stays visible in history while CI is green at the tip.
+
+This is the one place "one task per PR" bends, and it has to: a PR landing only a failing test cannot merge, and marking it `#[ignore]` to get green would violate "never weaken a test".
+
+### Never share a PR
+
+- Two different user stories
+- Two different crates (the thin wiring commit is the exception)
+- A spec or plan change and an implementation change
+- A refactor and a behaviour change
+- Repo chores and feature work
+
+### Branch naming
+
+| Kind | Pattern | Example |
+|---|---|---|
+| Spec / planning | `NNN-feature-slug` (what Spec Kit creates) | `003-auto-seams` |
+| Implementation | `NNN/TXXX-slug` | `001/T050-obj-import` |
+| Repo chore | `chore/slug` | `chore/remove-stray-file` |
+
+Implementation branches are cut from `main`, not from a feature branch. The Spec Kit git extension creates feature branches from `main` too — which is correct now that `main` is the trunk, but verify with `git log --oneline -3` after it runs.
+
+### Stacking
+
+Allowed, declared, and shallow. Say `Stacked on #N` in the PR body, target the parent branch, and retarget to `main` when the parent merges. **Maximum depth 2** — past that, no reviewer can tell what is new.

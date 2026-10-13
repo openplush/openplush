@@ -2,7 +2,7 @@
 
 Turn a 3D model into a sewable plush pattern. Free, open source, and it runs entirely on your device.
 
-> **Status: pre-alpha, specification phase.** There is no usable app yet. The design is being worked out in [`specs/`](specs/).
+> **Status: pre-alpha, no code yet.** Two features are fully specified and planned, with 253 numbered tasks ready to pick up. Nothing is implemented. See the [specs index](specs/README.md) for exactly what exists.
 
 ## What it will do
 - Import a 3D model (OBJ, glTF) and set its real-world size.
@@ -21,12 +21,27 @@ Turn a 3D model into a sewable plush pattern. Free, open source, and it runs ent
 The full set is in the [constitution](.specify/memory/constitution.md).
 
 ## Design documents
+
+Start at the [specs index](specs/README.md) — it shows what is specified, planned, and buildable, plus the known holes.
+
+**001 — pattern pipeline** (the product)
+
 | Document | Contents |
 |---|---|
 | [Spec](specs/001-pattern-pipeline/spec.md) | What we're building and why |
-| [Research](specs/001-pattern-pipeline/research.md) | Stack decision, library audit, algorithms |
+| [Research](specs/001-pattern-pipeline/research.md) | Stack decision, library audit, algorithms, fabric profiles |
 | [Plan](specs/001-pattern-pipeline/plan.md) | Architecture, repo layout, decision ledger |
-| [Data model](specs/001-pattern-pipeline/data-model.md) | Mesh structures and geometric edge cases |
+| [Data model](specs/001-pattern-pipeline/data-model.md) | Mesh structures, fabric, warnings, geometric edge cases |
+| [Contracts](specs/001-pattern-pipeline/contracts/) | Engine API, worker protocol, project file schema |
+| [Quickstart](specs/001-pattern-pipeline/quickstart.md) | The acceptance walkthrough |
+| [Tasks](specs/001-pattern-pipeline/tasks.md) | 171 work items — **start here to contribute** |
+
+**002 — seam-placement hints** (shows you where seams belong; depends on 001)
+
+| Document | Contents |
+|---|---|
+| [Spec](specs/002-seam-placement-hints/spec.md) · [Plan](specs/002-seam-placement-hints/plan.md) · [Research](specs/002-seam-placement-hints/research.md) | The four detectors and why each one matters for a plush |
+| [Data model](specs/002-seam-placement-hints/data-model.md) · [Tasks](specs/002-seam-placement-hints/tasks.md) | 82 work items |
 
 ## Contributing
 Contributions are welcome in four lanes: the Rust geometry engine, the TypeScript web app, test models (no code needed), and docs. See [CONTRIBUTING.md](CONTRIBUTING.md).

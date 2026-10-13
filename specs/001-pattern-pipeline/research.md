@@ -1,6 +1,6 @@
 # Phase 0 Research — 001-pattern-pipeline
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Status**: Draft
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Last updated**: 2026-10-13 | **Status**: Active — R3 resolved by spec Q2; R7 added for the fabric profile presets
 
 Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inference · **[speculative]** guess · **[verify]** check before committing.
 
@@ -58,23 +58,30 @@ Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inf
 
 ## R3. Flattening Algorithm
 
-**Decision (pending Q2)**: injective initialization → symmetric-Dirichlet minimization (SLIM) with flip-preventing line search; ARAP available as an alternative energy. Distortion metrics from Jacobian singular values.
+**Decision (Q2 closed 2026-10-13 — D-013)**: **boundary-pinned isometric flattening**. Each chart's boundary edge lengths are prescribed to their 3D lengths, then the interior is minimized under symmetric Dirichlet (SLIM) with the boundary held fixed and a flip-preventing line search. ARAP remains available as an alternative interior energy. Distortion metrics from Jacobian singular values.
+
+This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard** constraint rather than a reported residual. The consequence is deliberate: all unavoidable distortion moves into the piece interior, where FR-021's heatmap shows it and FR-022's dart suggestions can relieve it — instead of into a length mismatch the sewist discovers after cutting.
 
 | Method | Preserves | Injective? | Fit for fabric |
 |---|---|---|---|
 | Tutte / mean-value embedding (Tutte 1963; Floater 2003) | Nothing (convex boundary) | **Guaranteed** for disk + convex boundary [solid] | Initializer only |
 | LSCM (Lévy et al. 2002) | Angles (least squares) | No guarantee [solid] | Fast preview / alternative init |
 | ABF++ (Sheffer et al. 2005) | Angles | Usually | Blender-like baseline |
-| BFF (Sawhney & Crane 2017) | Angles; **prescribable boundary lengths** | Usually | Exact seam parity option (Q2) |
+| BFF (Sawhney & Crane 2017) | Angles; **prescribable boundary lengths** | Usually | **Chosen for the boundary solve (D-013)** — exact seam parity |
 | ARAP local/global (Liu et al. 2008) | Lengths (rigidity) | No guarantee | Good fabric proxy; needs flip guard |
-| **SLIM** (Rabinovich et al. 2017) | Isometry via symmetric Dirichlet | **Locally injective** (barrier) [solid] | **Primary** |
+| **SLIM** (Rabinovich et al. 2017) | Isometry via symmetric Dirichlet | **Locally injective** (barrier) [solid] | **Chosen for the interior solve (D-013)**, boundary held fixed |
 | Bijective w/ free boundary (Smith & Schaefer 2015) | Isometry + no boundary overlap | **Globally injective** [solid] | v0.2 boundary-overlap barrier |
 
 **Why isometric, not conformal**: fabric resists stretch far more than shear relative to how conformal maps distribute error; conformal maps preserve angles but let area drift — area drift is puckering or strain in fabric [likely].
 
-**Seam-length parity (Q2)**: Both sides of a seam edge come from the *same* 3D edge, so the natural target for each side is the 3D length. Option A: BFF with boundary lengths fixed to 3D lengths → exact parity, interior absorbs distortion. Option B: SLIM/ARAP with heavy boundary-edge length weight per chart → small residual mismatch, reported and marked as ease. No cross-chart coupling needed in either case.
+**Seam-length parity — resolved**: both sides of a seam edge come from the *same* 3D edge, so the natural target for each side is the 3D length. That is the whole reason parity can be exact without cross-chart coupling: pin every chart boundary to its 3D lengths independently and the sides agree automatically.
 
-**Anisotropic fabric (v0.2)**: replace the identity target metric with a per-fabric tensor `M` (allowed stretch along warp vs. weft). Because `M` depends on piece rotation, alternate: isotropic flatten → derive grain angle → anisotropic re-flatten (1–2 rounds) [likely sufficient].
+- **Option A — chosen (D-013)**: boundary lengths fixed to 3D lengths (BFF prescribes exactly this; Sawhney & Crane 2017) → exact parity, interior absorbs distortion.
+- **Option B — rejected**: SLIM/ARAP with a heavy boundary-length weight → small residual mismatch, reported as ease. Rejected because FR-023 now forbids handing the sewist a residual.
+
+**Risk this introduces** [verify — spike S7]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
+
+**Anisotropic fabric — out of scope (D-014)**: the obvious extension is to replace the identity target metric with a per-fabric tensor `M` (allowed stretch along warp vs. weft), alternating isotropic flatten → grain angle → anisotropic re-flatten. Spec FR-026 excludes it from this feature: per-direction stretch is recorded in the fabric profile and drives warnings (FR-058) only. Recorded here so a future feature does not have to rediscover the approach.
 
 **Distortion reported** (per triangle, singular values σ₁ ≥ σ₂ of J): max stretch σ₁, max compression σ₂, area ratio σ₁σ₂, conformal ratio σ₁/σ₂. Interpreted against the active fabric's tolerances, not fixed constants.
 
@@ -106,3 +113,34 @@ Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inf
 | S4 | `jagua-rs` WASM bundle size + discrete rotation sets {0°} / {0°,180°} support | 0.5 day |
 | S5 | `svg2pdf` WASM viability vs. generating PDF directly | 0.5 day |
 | S6 | Licenses: confirm `faer`, `i_overlay`, `sparrow`, `svg2pdf`, threecrate (MIT vs. dual) | 0.5 day |
+| **S7** | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
+| S8 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
+
+## R7. Fabric Profiles (FR-050, D-018)
+
+Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
+
+> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike S8 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker.
+
+| Preset | Category | Stretch grain / cross / bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
+|---|---|---|---|---|---|---|---|---|
+| Quilting cotton | woven | 0 / 0 / 5% | no | 0 | 0.3 | **yes** | 6 | 1120 |
+| Craft felt | felt | 0 / 0 / 0 | no | 0 | 1.2 | no | 6 | 1800 |
+| Polar fleece | knit | 5 / 25 / 30% | no | 1 | 2.0 | no | 6 | 1500 |
+| Minky / cuddle | knit (pile) | 10 / 40 / 45% | **yes** | 3 | 2.5 | no | 10 | 1500 |
+| Velboa | knit (pile) | 5 / 30 / 35% | **yes** | 1.5 | 1.5 | no | 6 | 1500 |
+| Short faux fur | knit (pile) | 5 / 30 / 35% | **yes** | 8 | 3.0 | no | 10 | 1500 |
+| Long faux fur | knit (pile) | 5 / 30 / 35% | **yes** | 30 | 4.0 | no | 12 | 1500 |
+
+### Why these fields and not others
+
+- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, mirrored printing (FR-054), and pile-scaled allowance (FR-055).
+- **Per-direction stretch** is recorded but does **not** steer flattening (D-014). Its only job in 001 is FR-058's cross-seam mismatch warning. Knit-backed fur stretching ~30% crosswise against a 0% woven is exactly the seam that fights back while sewing.
+- **Pile length** scales the default allowance and triggers the small-part warning (FR-055). The provisional 3× rule means long faux fur (30 mm) warns on any piece or detail under 90 mm — which is most plush faces. That is informative, not a bug, but it is the strongest argument for making the multiple configurable.
+- **Thickness** is recorded for the "thick backing on a small plush" edge case and for future thickness compensation, which is explicitly out of scope here. It drives no geometry in 001.
+- **Frays** gates FR-057's zero-allowance option. Felt is the case that motivates it: edge-stitched or appliqué felt pieces need no allowance at all, and adding one makes the piece wrong.
+- **Roll width** bounds FR-062's layout. Note that pile fabrics are commonly sold at 1500 mm while quilting cotton is ~1120 mm, so the same pattern can fit one and not the other.
+
+### Deliberately absent
+
+Weight (gsm), fibre content, wash behaviour, and price. None of them change a pattern, and each would imply the tool knows more about the fabric than it does.

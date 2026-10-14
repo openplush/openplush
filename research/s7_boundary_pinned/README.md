@@ -25,7 +25,7 @@ D-013 pins every chart's boundary edges to their 3D lengths, so the two sides of
 | Interior solve | L-BFGS on the symmetric Dirichlet energy (SLIM's), boundary fixed, step capped at the first triangle flip (Smith & Schaefer 2015, cancellation-free roots); reports why it stopped | Cannot create a flip, and never reports a non-converged run as `ok` |
 | Baseline | Free boundary: Tutte onto a circle, then the same energy with every vertex free | How much distortion pinning costs, and how far boundary lengths drift without it |
 
-The corpus is made of analytic surfaces. Lobed and asymmetric outlines come from a conformal warp `w = z(1 + Σ εₖ zᵏ)` of the disk with `Σ(k+1)|εₖ| < 1`. That bound makes the warp one-to-one (Noshiro–Warschawski), and conformality keeps every triangle well-shaped, so a deep lobe never produces a bad triangle. The `Reflex` column counts inward-turning outline corners, to show that the non-convex cases really are non-convex.
+The corpus is made of analytic surfaces. Lobed and asymmetric outlines come from a conformal warp `w = z(1 + Σ εₖ zᵏ)` of the disk with `Σ(k+1)|εₖ| < 1`. That bound makes the planar warp one-to-one and orientation-preserving (Noshiro–Warschawski), so a deep lobe never folds the chart. It does not make every triangle well-shaped: the map onto a near-full sphere squeezes the rim rings, and the 175° stress caps have rim slivers with a minimum corner angle of about 1.8° (the `Min angle` column). That is realistic input for a scanned or sculpted model, and the solver handled it. The `Reflex` column counts inward-turning outline corners, to show that the non-convex cases really are non-convex.
 
 Oracle tests (`test_s7.py`, 19 tests):
 - **Input validity** on every chart: sphere charts face outward, and no two adjacent faces fold over each other.
@@ -37,19 +37,20 @@ Oracle tests (`test_s7.py`, 19 tests):
 - A flat disk must map to itself, and must converge rather than run out of iterations.
 - A bent plane (developable) must flatten almost isometrically.
 
-Run it: `pip install -r requirements.txt`, then `python3 -m unittest -v` and `python3 run.py` (about 20 s). The output is deterministic, and `results.md` records the Python/numpy/scipy versions it was generated with.
+Run it: `pip install -r requirements.txt`, then `python3 -m unittest -v` and `python3 run.py` (about 90 s, most of it the resolution sweep). The output is deterministic, and `results.md` records the Python/numpy/scipy versions it was generated with.
 
 ## Results
 
 Full table in [`results.md`](./results.md). Read the columns as:
 - **SD mean**: 4.0 means isometric (no distortion); higher is worse.
 - **Stretch / compress**: the largest and smallest singular values. Compression 0.63 means the fabric there must gather into 63% of its 3D extent.
+- **Stop**: why the optimizer stopped, with the final gradient inf-norm. `gtol` means the gradient fell below 1e-8 of its starting value. `stalled` means the energy stopped changing at machine precision. Both count as converged; `maxiter` or `linesearch` would be reported as a failure, and none occurred.
 
 ### Corpus (14 charts) and stress set (5 charts)
 
-- **Closure never failed.** The BFF outline's natural closure gap was at most **0.6%** of the perimeter (bump-h1.2). Closing it with lengths held exact needed at most **0.05°** of turning-angle change at any corner. Every outline was simple and counter-clockwise, and no all-boundary triangle was inverted.
+- **Closure never failed.** The BFF outline's natural closure gap was at most **0.6%** of the perimeter (bump-h1.2). Closing it with lengths held exact needed at most **0.05°** of turning-angle change at any corner on the 640–1,536-triangle charts, and up to **0.10°** on the coarsest sweep mesh (asym-cap-p175, 384 triangles). Every outline was simple and counter-clockwise, and no all-boundary triangle was inverted.
 - **Injectivity never failed.** All 19 charts had an injective linear start: cotan on 18, and uniform on bump-h1.2, where cotan folded. Every interior solve converged with zero flips. That includes the stress caps, which cover 175° of the sphere in one piece with 18–25 reflex corners.
-- **Resolution sweep** on the three 175° stress caps, at 384, 1,536, 3,456 and 6,144 triangles: zero folds at every size (up to 55 reflex corners). The natural closure gap shrinks as the mesh refines (lobed-cap-p175: 0.156%, 0.055%, 0.026%, 0.015%), so it is a discretisation effect that converges, not a structural failure.
+- **Resolution sweep** on the three 175° stress caps, at 384, 1,536, 3,456 and 6,144 triangles: zero folds at every size (up to 55 reflex corners). The natural closure gap shrinks as the mesh refines (lobed-cap-p175: 0.156%, 0.055%, 0.026%, 0.015%), so it is a discretisation effect that converges, not a structural failure. **Minimum compression does not converge** on these caps: it keeps falling as the rim slivers refine (star-cap-p175: 0.145, 0.081, 0.063, 0.051). Per-triangle extremes are mesh-dependent there, so the dart signal should use area-integrated or converged measures, not the single worst triangle.
 - **The cost is interior distortion, and it grows fast with curvature:**
 
   | Chart | Pinned SD | Pinned min compress | Free SD | Free boundary-length drift (max edge) |

@@ -90,6 +90,7 @@ class Geometry:
 
         angles = np.stack([_corner_angle(p0, p1, p2), _corner_angle(p1, p2, p0), _corner_angle(p2, p0, p1)], 1)
         angle_sum = np.bincount(self.F.ravel(), angles.ravel(), n)
+        self.min_angle = float(angles.min())
 
         self.loop = np.array(boundary_loops(self.F)[0])
         is_b = np.zeros(n, bool)
@@ -306,10 +307,11 @@ def _max_injective_step(geo: Geometry, x: np.ndarray, p: np.ndarray) -> float:
     return float(smallest_positive_root(a, b, c).min())
 
 
-def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 4000) -> tuple[np.ndarray, int, str]:
+def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 4000) -> tuple[np.ndarray, int, str, float]:
     """L-BFGS on the free vertices; every accepted step keeps all triangles unflipped.
 
-    Returns (x, iterations, reason). reason is "gtol" (gradient small: converged),
+    Returns (x, iterations, reason, final gradient inf-norm). reason is "gtol" (gradient
+    below 1e-8 of its starting value, or 1e-12 absolute: converged),
     "stalled" (energy stopped changing at machine precision), "maxiter", "linesearch"
     (no acceptable step), or "infeasible-start" (the start already has a flip).
     Only gtol and stalled count as converged.
@@ -317,11 +319,14 @@ def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 40
     x = x0.copy()
     energy, grad = sd_energy(geo, x, with_grad=True)
     if not np.isfinite(energy):
-        return x, 0, "infeasible-start"
+        return x, 0, "infeasible-start", float("nan")
     mask = np.zeros_like(x, bool)
     mask[free] = True
     s_hist, y_hist = [], []
     g = np.where(mask, grad, 0).ravel()
+    # Relative gradient test: the energy's scale varies by orders of magnitude across
+    # charts, so a fixed absolute threshold is never reached on curved ones.
+    gtol = max(1e-12, 1e-8 * float(np.abs(g).max()))
     n_iter, reason = 0, "maxiter"
     for _ in range(iters):
         n_iter += 1
@@ -363,13 +368,13 @@ def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 40
         energy, g = e_new, g_new
         # Gradient test first: near the minimum the energy is quadratic, so an energy
         # tolerance of eps would leave ~sqrt(eps) error in the positions.
-        if np.abs(g).max() < 1e-10:
+        if np.abs(g).max() <= gtol:
             reason = "gtol"
             break
         if stalled:
             reason = "stalled"
             break
-    return x, n_iter, reason
+    return x, n_iter, reason, float(np.abs(g).max())
 
 
 # ---------------------------------------------------------------- reporting
@@ -389,10 +394,11 @@ class Stats:
     perimeter_err: float  # |P_2D / P_3D - 1|
     iterations: int
     termination: str  # minimize_sd reason, or "-" if it was not run
+    grad_inf: float  # final gradient inf-norm over free vertices (nan if not run)
 
 
 def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int, iterations: int,
-           termination: str = "-") -> Stats:
+           termination: str = "-", grad_inf: float = float("nan")) -> Stats:
     J = _jacobians(geo, x)
     det = np.linalg.det(J)
     fro = np.einsum("tij,tij->t", J, J)
@@ -415,6 +421,7 @@ def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int
         perimeter_err=float(abs(lengths_2d.sum() / geo.boundary_lengths.sum() - 1)),
         iterations=iterations,
         termination=termination,
+        grad_inf=grad_inf,
     )
 
 
@@ -428,6 +435,7 @@ class ChartResult:
     closure_max_change_deg: float
     boundary_simple: bool
     reflex_corners: int  # boundary vertices turning inward in the pinned outline
+    min_angle_deg: float  # smallest 3D corner angle: triangle quality of the input
     pinned: Stats
     free: Stats
 
@@ -469,14 +477,14 @@ def run_chart(chart) -> ChartResult:
         pinned = _stats(geo, best[1], "no injective initialisation", best[0], counts[best[0]], 0)
     else:
         w, x0 = usable[0]
-        x, n_it, why = minimize_sd(geo, x0, geo.interior)
+        x, n_it, why, g_inf = minimize_sd(geo, x0, geo.interior)
         status = "ok" if why in ("gtol", "stalled") else f"did not converge ({why})"
-        pinned = _stats(geo, x, status, w, 0, n_it, why)
+        pinned = _stats(geo, x, status, w, 0, n_it, why, g_inf)
 
     x0 = tutte_free_init(geo)
-    x, n_it, why = minimize_sd(geo, x0, np.arange(len(geo.V)))
+    x, n_it, why, g_inf = minimize_sd(geo, x0, np.arange(len(geo.V)))
     status = "ok" if why in ("gtol", "stalled") else f"did not converge ({why})"
-    free = _stats(geo, x, status, "tutte-circle", flips(geo, x0), n_it, why)
+    free = _stats(geo, x, status, "tutte-circle", flips(geo, x0), n_it, why, g_inf)
 
     return ChartResult(
         name=chart.name,
@@ -487,6 +495,7 @@ def run_chart(chart) -> ChartResult:
         closure_max_change_deg=float(np.rad2deg(closure.max_change)),
         boundary_simple=simple,
         reflex_corners=int(np.sum(closure.kappa < 0)),
+        min_angle_deg=float(np.degrees(geo.min_angle)),
         pinned=pinned,
         free=free,
     )

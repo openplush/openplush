@@ -120,7 +120,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 
 Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts, every one checked for 3D validity first. **Not the fixture corpus**, so T007 stays open.
 
-- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.05° of turning-angle change on every chart, and the gap shrinks with mesh refinement. The "fails to close" risk below can be downgraded.
+- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.05° of turning-angle change on every chart at 640–1,536 triangles (≤ 0.10° at 384), and the gap shrinks with mesh refinement. The "fails to close" risk below can be downgraded.
 - **Injectivity held on every valid chart** [likely], up to 6,144 triangles and 55 reflex corners, including caps covering 175° of the sphere. A cotan or uniform harmonic start was always injective. An earlier draft reported failures; they came from folded 3D input, not the method.
 - **Implication for T079–T082**: least-squares *angle* closure (dual-length weighted), never length closure. A cotan → uniform start in T080. Validate the 3D chart for folds upstream of T080 as a typed input error (needs its own task). An untangling rung only if fixture runs need one [speculative].
 

@@ -16,25 +16,32 @@ def pct(x: float) -> str:
     return f"{100 * x:.2g}%" if x >= 1e-6 else "0"
 
 
+def stop(stats) -> str:
+    """How the solver stopped, and the final gradient inf-norm."""
+    if stats.termination == "-":
+        return "-"
+    return f"{stats.termination} ({stats.grad_inf:.0e})"
+
+
 def table(charts) -> None:
     rows = [run_chart(c) for c in charts]
     header = [
-        "Chart", "Tris", "ΣK (°)", "Natural gap", "Max angle fix (°)", "Simple", "Reflex",
-        "Pinned: status", "Init flips", "SD mean", "Max stretch", "Min compress",
+        "Chart", "Tris", "Min angle (°)", "ΣK (°)", "Natural gap", "Max angle fix (°)", "Simple", "Reflex",
+        "Pinned: status", "Init flips", "SD mean", "Max stretch", "Min compress", "Pinned: stop",
         "Free: SD mean", "Free: max stretch", "Free: min compress",
-        "Free: seam-length err (max edge / perimeter)",
+        "Free: seam-length err (max edge / perimeter)", "Free: stop",
     ]
     print("| " + " | ".join(header) + " |")
     print("|" + "---|" * len(header))
     for r in rows:
         p, f = r.pinned, r.free
         print(
-            f"| {r.name} | {r.triangles} | {r.total_gauss_deg:.0f} | {pct(r.natural_gap)} | "
+            f"| {r.name} | {r.triangles} | {r.min_angle_deg:.1f} | {r.total_gauss_deg + 0.0:.0f} | {pct(r.natural_gap)} | "
             f"{r.closure_max_change_deg:.2f} | {'yes' if r.boundary_simple else '**no**'} | {r.reflex_corners} | "
             f"{p.status if p.status == 'ok' else '**' + p.status + '**'} | {p.init}:{p.init_flips} | "
-            f"{p.sd_mean:.3f} | {p.stretch_max:.3f} | {p.compress_min:.3f} | "
+            f"{p.sd_mean:.3f} | {p.stretch_max:.3f} | {p.compress_min:.3f} | {stop(p)} | "
             f"{f.sd_mean:.3f} | {f.stretch_max:.3f} | {f.compress_min:.3f} | "
-            f"{pct(f.boundary_len_err_max)} / {pct(f.perimeter_err)} |"
+            f"{pct(f.boundary_len_err_max)} / {pct(f.perimeter_err)} | {stop(f)} |"
         )
 
 
@@ -45,6 +52,21 @@ def main() -> None:
     table(meshes.corpus())
     print("\n### Stress\n")
     table(meshes.stress())
+    print("\n### Resolution sweep (stress caps)\n")
+    print("Same shapes at four mesh resolutions. Closure and injectivity are stable; the extreme")
+    print("singular values (max stretch, min compress) are not, so they are mesh-dependent at the")
+    print("rim and should not be read as converged physical values.\n")
+    shapes = (
+        ("lobed-cap-p175", ((4, 0.16, 0.0), (1, 0.05, 0.3))),
+        ("asym-cap-p175", ((1, 0.2, 0.0), (2, 0.1, 1.3), (5, 0.03, 0.0))),
+        ("star-cap-p175", ((6, 0.12, 0.0), (1, 0.03, 0.0))),
+    )
+    sweep = [
+        meshes.sphere_cap(175, rings=rings, peak=True, lobes=lobes, name=f"{name} r{rings}")
+        for rings in (8, 16, 24, 32)
+        for name, lobes in shapes
+    ]
+    table(sweep)
 
 
 if __name__ == "__main__":

@@ -26,6 +26,16 @@ unused-allowed-license = "allow"
 ignore = false
 
 [bans]
+# Constitution I names "cargo deny bans" as part of the boundary's enforcement.
+# rayon: crates/AGENTS.md forbids threads on the engine path, and rayon builds
+# for wasm32 without complaint, so neither the compiler nor the wasm CI job would
+# catch it. scripts/check-boundary.sh bans it for crates/ too; this covers the
+# whole graph. wasm-bindgen/web-sys/js-sys are not listed: the wasm binding and
+# wasm-bindgen-test legitimately need them; the boundary check scopes those.
+deny = [
+    { crate = "rayon", reason = "crates/AGENTS.md: no threads on the engine/WASM path" },
+    { crate = "rayon-core", reason = "crates/AGENTS.md: no threads on the engine/WASM path" },
+]
 multiple-versions = "warn"
 wildcards = "deny"
 allow-wildcard-paths = true

@@ -18,7 +18,7 @@ description: "Task list for 001 pattern pipeline"
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 171 tasks does not mean 171 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
+**A task is a unit of work, not a unit of review.** 173 tasks does not mean 173 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
 
 ### Batch these — several tasks, one PR
 
@@ -110,6 +110,8 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 - [ ] T019 [P] `.github/CODEOWNERS`, lane labels (`lane:engine`, `lane:shell`, `lane:fixtures`, `lane:docs`), issue forms
 - [ ] T020 [P] `docs/` Diátaxis skeleton (`tutorials/`, `how-to/`, `reference/`, `explanation/`) and `docs/adr/0000-template.md` in MADR format
 - [ ] T021 [P] `CODE_OF_CONDUCT.md` and `GOVERNANCE.md`
+- [ ] T172 `crates/clippy.toml` — compiler-resolved boundary layer behind T016: `disallowed-methods`/`disallowed-types` for `std::fs`, `std::thread::spawn`, `std::time::{Instant, SystemTime}`, `std::net`, `std::process`, so aliased forms (`use std::time;`, `use std as s;`) that T016's text scan cannot see fail clippy. Repeats the root `clippy.toml` entries (clippy reads only the nearest file); `openplush-testkit` keeps file access. Self-test proving each aliased form is rejected. *Added 2026-10-14 from PR review; ID out of phase order because T022+ were already numbered*
+- [ ] T173 `scripts/check.sh` — one entry point for every gate (`engine`, `wasm`, `shell`, or all), plus `--setup` to install `cargo-deny` and the lockfile-matched `wasm-bindgen-cli`; CI calls it so local and CI cannot drift. CONTRIBUTING documents three commands: clone, `scripts/check.sh --setup`, `scripts/check.sh` (Constitution IX: ≤ 3). *Added 2026-10-14 from PR review*
 
 **Checkpoint**: CI runs and passes on an empty workspace.
 

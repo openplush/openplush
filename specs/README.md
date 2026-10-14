@@ -8,7 +8,7 @@ This index exists so you can tell at a glance what is specified, what is planned
 
 | Feature | Spec | Planned | Tasks | Implementation |
 |---|---|---|---|---|
-| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 171 tasks | Not started |
+| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 173 tasks | Not started |
 | [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks | Blocked on 001 |
 
 **No code exists yet.** Both features are fully specified and planned; neither has been implemented. The first thing to build is 001's `T001`–`T008` (research spikes) and `T009`–`T021` (workspace setup).

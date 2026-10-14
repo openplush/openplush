@@ -13,21 +13,62 @@ import flatten as fl
 import meshes as ms
 
 
+ALL = ms.corpus() + ms.stress()
+
+
+def _face_normals(chart):
+    v, f = chart.vertices, chart.faces
+    n = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
+    return n / np.linalg.norm(n, axis=1)[:, None]
+
+
 class Topology(unittest.TestCase):
     def test_every_chart_is_a_disk(self):
-        for chart in ms.corpus():
+        for chart in ALL:
             with self.subTest(chart.name):
                 v, e, f = fl.euler_counts(chart.faces)
                 self.assertEqual(v - e + f, 1, "chi must be 1 for a disk")
                 self.assertEqual(len(fl.boundary_loops(chart.faces)), 1, "exactly one boundary loop")
 
     def test_faces_are_consistently_oriented(self):
-        for chart in ms.corpus():
+        for chart in ALL:
             with self.subTest(chart.name):
                 # Consistent orientation: an interior edge is traversed once in each
                 # direction, so no directed edge can appear twice.
                 directed = {(a, b) for t in chart.faces for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0]))}
                 self.assertEqual(len(directed), 3 * len(chart.faces), "no directed edge used twice")
+
+
+class Validity(unittest.TestCase):
+    """The 3D input itself must be a sensible surface, or flattening results mean nothing.
+
+    A cap whose polar angle passes 180 degrees wraps past the south pole and folds
+    back on itself; flattening that and reporting "folds" measures the input, not the
+    method. Independent of the generators: sphere charts are detected from the data.
+    """
+
+    def test_sphere_charts_face_outward(self):
+        for chart in ALL:
+            radii = np.linalg.norm(chart.vertices, axis=1)
+            if not np.allclose(radii, 1.0):
+                continue
+            with self.subTest(chart.name):
+                v, f = chart.vertices, chart.faces
+                centroid = (v[f[:, 0]] + v[f[:, 1]] + v[f[:, 2]]) / 3
+                inverted = int(np.sum(np.einsum("ij,ij->i", _face_normals(chart), centroid) <= 0))
+                self.assertEqual(inverted, 0, "faces inverted against the sphere's outward normal")
+
+    def test_no_surface_creases_back_on_itself(self):
+        for chart in ALL:
+            with self.subTest(chart.name):
+                normals = _face_normals(chart)
+                edge_faces = {}
+                for t, tri in enumerate(chart.faces):
+                    for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
+                        edge_faces.setdefault(tuple(sorted((int(a), int(b)))), []).append(t)
+                pairs = np.array([fs for fs in edge_faces.values() if len(fs) == 2])
+                worst = np.einsum("ij,ij->i", normals[pairs[:, 0]], normals[pairs[:, 1]]).min()
+                self.assertGreater(worst, -0.5, "adjacent faces fold over each other")
 
 
 class Curvature(unittest.TestCase):
@@ -74,6 +115,35 @@ class Closure(unittest.TestCase):
         np.testing.assert_allclose(result.kappa, target, atol=1e-9)
 
 
+    def test_touching_polygon_is_not_simple(self):
+        # A vertex lying exactly on another edge is a self-touch: not cuttable.
+        touching = np.array([[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [2.0, 0.0], [0.0, 3.0]])
+        self.assertFalse(fl.polygon_is_simple(touching))
+
+    def test_clockwise_polygon_is_not_accepted(self):
+        square = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]])
+        self.assertFalse(fl.polygon_is_simple(square))
+        self.assertTrue(fl.polygon_is_simple(square[::-1]))
+
+
+class Roots(unittest.TestCase):
+    def test_nearly_linear_quadratic_keeps_its_small_root(self):
+        # 1e-16 t^2 - 2 t + 1 = 0 has its small root at ~0.5. The textbook formula
+        # loses it to cancellation and returns ~0 or a huge value.
+        t = fl.smallest_positive_root(np.array([1e-16]), np.array([-2.0]), np.array([1.0]))
+        self.assertAlmostEqual(float(t[0]), 0.5, places=12)
+
+    def test_roots_match_numpy(self):
+        rng = np.random.default_rng(11)
+        a, b, c = rng.normal(size=(3, 200))
+        got = fl.smallest_positive_root(a, b, c)
+        for i in range(200):
+            r = np.roots([a[i], b[i], c[i]])
+            r = r[(np.abs(r.imag) < 1e-12) & (r.real > 0)].real
+            want = r.min() if len(r) else np.inf
+            self.assertTrue(np.isclose(got[i], want, rtol=1e-9) or (np.isinf(got[i]) and np.isinf(want)), i)
+
+
 class Energy(unittest.TestCase):
     def test_gradient_matches_finite_differences(self):
         chart = ms.sphere_cap(60, rings=4)
@@ -99,6 +169,7 @@ class Oracles(unittest.TestCase):
     def test_flat_disk_flattens_to_itself(self):
         r = fl.run_chart(ms.flat_disk(rings=8))
         self.assertTrue(r.pinned.injective)
+        self.assertIn(r.pinned.termination, ("gtol", "stalled"), "optimizer must converge, not run out")
         self.assertAlmostEqual(r.pinned.sd_mean, 4.0, places=9)
         self.assertLess(r.free.boundary_len_err_max, 1e-6)
 

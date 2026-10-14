@@ -17,7 +17,14 @@ fn quad() -> (Vec<DVec3>, Vec<[u32; 3]>, Vec<SourceCorner>) {
         DVec3::new(0.0, 1.0, 0.0),
     ];
     let t = vec![[0, 1, 2], [0, 2, 3]];
-    let c = vec![corner(0, 0), corner(0, 1), corner(0, 2), corner(0, 0), corner(0, 2), corner(0, 3)];
+    let c = vec![
+        corner(0, 0),
+        corner(0, 1),
+        corner(0, 2),
+        corner(0, 0),
+        corner(0, 2),
+        corner(0, 3),
+    ];
     (p, t, c)
 }
 
@@ -27,9 +34,15 @@ fn builds_and_exposes_triangles_and_provenance() -> Result<(), MeshError> {
     let soup = TriangleSoup::new(p, t, c, None)?;
     assert_eq!(soup.vertex_count(), 4);
     assert_eq!(soup.triangle_count(), 2);
-    assert_eq!(soup.triangle(1), Some([VertexId::new(0), VertexId::new(2), VertexId::new(3)]));
+    assert_eq!(
+        soup.triangle(1),
+        Some([VertexId::new(0), VertexId::new(2), VertexId::new(3)])
+    );
     assert_eq!(soup.triangle(2), None);
-    assert_eq!(soup.position(VertexId::new(2)), Some(DVec3::new(1.0, 1.0, 0.0)));
+    assert_eq!(
+        soup.position(VertexId::new(2)),
+        Some(DVec3::new(1.0, 1.0, 0.0))
+    );
     assert_eq!(soup.corner_source(1, 2), Some(corner(0, 3)));
     assert_eq!(soup.corner_uv(1, 2), None, "no UVs supplied");
     Ok(())
@@ -58,7 +71,12 @@ fn keeps_per_corner_uvs() -> Result<(), MeshError> {
 fn rejects_non_finite_coordinates_naming_the_vertex() {
     let (mut p, t, c) = quad();
     p[2].y = f64::NAN;
-    assert_eq!(TriangleSoup::new(p, t, c, None).err(), Some(MeshError::NonFiniteVertex { vertex: VertexId::new(2) }));
+    assert_eq!(
+        TriangleSoup::new(p, t, c, None).err(),
+        Some(MeshError::NonFiniteVertex {
+            vertex: VertexId::new(2)
+        })
+    );
 }
 
 #[test]
@@ -67,7 +85,11 @@ fn rejects_out_of_range_indices_naming_the_triangle() {
     t[1] = [0, 2, 9];
     assert_eq!(
         TriangleSoup::new(p, t, c, None).err(),
-        Some(MeshError::IndexOutOfRange { triangle: 1, index: 9, vertex_count: 4 })
+        Some(MeshError::IndexOutOfRange {
+            triangle: 1,
+            index: 9,
+            vertex_count: 4
+        })
     );
 }
 
@@ -75,10 +97,22 @@ fn rejects_out_of_range_indices_naming_the_triangle() {
 fn rejects_corner_arrays_of_the_wrong_length() {
     let (p, t, mut c) = quad();
     c.pop();
-    assert_eq!(TriangleSoup::new(p.clone(), t.clone(), c, None).err(), Some(MeshError::CornerCountMismatch { expected: 6, found: 5 }));
+    assert_eq!(
+        TriangleSoup::new(p.clone(), t.clone(), c, None).err(),
+        Some(MeshError::CornerCountMismatch {
+            expected: 6,
+            found: 5
+        })
+    );
     let (_, _, c) = quad();
     let uv = vec![None; 4];
-    assert_eq!(TriangleSoup::new(p, t, c, Some(uv)).err(), Some(MeshError::CornerCountMismatch { expected: 6, found: 4 }));
+    assert_eq!(
+        TriangleSoup::new(p, t, c, Some(uv)).err(),
+        Some(MeshError::CornerCountMismatch {
+            expected: 6,
+            found: 4
+        })
+    );
 }
 
 #[test]
@@ -87,7 +121,10 @@ fn carries_defects_through_for_validation_to_report() -> Result<(), MeshError> {
     let (p, mut t, c) = quad();
     t[0] = [0, 0, 1];
     let soup = TriangleSoup::new(p, t, c, None)?;
-    assert_eq!(soup.triangle(0), Some([VertexId::new(0), VertexId::new(0), VertexId::new(1)]));
+    assert_eq!(
+        soup.triangle(0),
+        Some([VertexId::new(0), VertexId::new(0), VertexId::new(1)])
+    );
     Ok(())
 }
 
@@ -103,6 +140,9 @@ fn bounding_box_diagonal() -> Result<(), MeshError> {
     let (p, t, c) = quad();
     let soup = TriangleSoup::new(p, t, c, None)?;
     assert_eq!(soup.bbox_diagonal(), Some(2f64.sqrt()));
-    assert_eq!(TriangleSoup::new(vec![], vec![], vec![], None)?.bbox_diagonal(), None);
+    assert_eq!(
+        TriangleSoup::new(vec![], vec![], vec![], None)?.bbox_diagonal(),
+        None
+    );
     Ok(())
 }

@@ -12,5 +12,10 @@ publish = false
 openplush-geom = { path = "../openplush-geom" }
 thiserror = "2.0.21"
 
+# Native only: proptest pulls in getrandom, which does not build for
+# wasm32-unknown-unknown without a JS backend.
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+proptest = { version = "1.12.0", default-features = false, features = ["std"] }
+
 [lints]
 workspace = true

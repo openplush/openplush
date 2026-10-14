@@ -1,8 +1,8 @@
 # Data Model & Critical Edge Cases
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Status**: Draft
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Last updated**: 2026-10-13 | **Status**: Active — §6a (fabric profiles) and §14 (warnings) added after spec Q1–Q3 closed
 
-Covers: representations per stage, the half-edge structure, non-manifold handling, chart topology, seam optimization, grainline/nap mapping, allowance, notches, decals, persistence. Confidence tags as in [research.md](./research.md).
+Covers: representations per stage, the half-edge structure, non-manifold handling, chart topology, seam optimization, grainline/nap mapping, fabric profiles, allowance, notches, decals, persistence, warnings. Confidence tags as in [research.md](./research.md).
 
 ## 1. Representations by Stage
 
@@ -13,8 +13,8 @@ Covers: representations per stage, the half-edge structure, non-manifold handlin
 | Repair | `ManifoldMesh` + `RepairReport` | `TriangleSoup` + `RepairPlan` | Constitution III post-repair invariants |
 | Seams | `SeamSet` | `ManifoldMesh` edges | Typed edge flags; no geometry change |
 | Chart | `ChartMesh` ×N + `SewingMap` | mesh + seams | Each chart a topological disk, or a typed error with proposed cuts |
-| Flatten | `Parameterization` | `ChartMesh` | det J > 0 on every face |
-| Pattern | `PatternPiece` ×N | param + fabric + scale | Simple polygons in mm; seam parity within tolerance |
+| Flatten | `Parameterization` | `ChartMesh` | det J > 0 on every face; boundary edge lengths equal their 3D lengths (D-013) |
+| Pattern | `PatternPiece` ×N | param + fabric + scale | Simple polygons in mm; seam parity within max(1.0 mm, 0.5%) — hard (D-013) |
 | Layout | `Sheet` ×N | pieces + layout options | No overlaps; rotation sets honored |
 
 **Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>`. Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
@@ -135,7 +135,7 @@ MVP UI exposes `k = 2`; the model supports `k > 2` from day one so FR-016 isn't 
 
 Two different problems — don't conflate them:
 1. **Improve given seams** (MVP, FR-022): heatmap + suggestions.
-2. **Generate seams from scratch** (FR-015, MVP status per Q3).
+2. **Generate seams from scratch** (FR-015) — v0.2, not v0.1 (D-015). Feature 002's hints are the intermediate step: they surface the same geometric signals to the maker before any code tries to chain them into a full layout.
 
 ### Objective (shared)
 `E = w_d·D + w_l·L + w_v·V + w_c·C + w_s·S + w_n·N`
@@ -193,12 +193,53 @@ At every seam bundle, compare the mapped nap directions on each side at matched 
 
 `jagua-rs` supports reflection about specified local axes, which maps directly to mirrored pieces (S4 confirms discrete rotation sets).
 
-### Anisotropic stretch (v0.2)
-Once θ* is fixed, the fabric's stretch tensor `M` is known in the piece frame → anisotropic re-flatten (research R3). Example: knit-backed faux fur stretches mostly crosswise, so the solver may place compression along that axis but not along the nap.
+### Anisotropic stretch — out of scope (D-014)
+Were it in scope: once θ* is fixed, the fabric's stretch tensor `M` is known in the piece frame → anisotropic re-flatten (research R3). Example: knit-backed faux fur stretches mostly crosswise, so the solver could place compression along that axis but not along the nap. FR-026 excludes this from 001; per-direction stretch feeds warnings only. Noted so the extension point is obvious and nobody designs it out.
+
+## 6a. Fabric Profiles (FR-050, D-018)
+
+```rust
+pub enum FabricCategory { Woven, Knit, Pile, Felt }
+
+pub struct Fabric {
+    pub id: FabricId,
+    pub name: String,
+    pub category: FabricCategory,
+    /// Percent elongation under normal hand tension. Recorded; drives warnings only (D-014).
+    pub stretch_grain: f64,
+    pub stretch_cross: f64,
+    pub stretch_bias: f64,
+    pub nap: bool,
+    pub pile_len_mm: f64,
+    pub thickness_mm: f64,
+    pub frays: bool,
+    pub default_allowance_mm: f64,
+    pub roll_width_mm: f64,
+}
+```
+
+- **Presets** (research R7) ship as data, not code: seven `Fabric` values the user can edit or delete. An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
+- **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether mirrored printing applies (FR-054: `category == Pile`), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
+- **Invariants**: `pile_len_mm > 0 ⇒ nap` for `Pile`; all stretch percentages ≥ 0; `roll_width_mm > 0`; `default_allowance_mm ≥ 0` (zero is legal only when `!frays`, FR-057).
+- **Per-piece assignment** comes from painted fabric regions (FR-041). A piece spanning two fabrics is impossible by construction, because region boundaries are seams.
+
+### Fabric-driven warnings
+
+| Warning | Condition | Remedy kind |
+|---|---|---|
+| `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, provisional `k = 3` | `Advisory` — shorter-pile fabric, or scale the toy up |
+| `CurveTighterThanPile` (FR-055) | seam-curve radius < `k × pile_len_mm` | `Advisory` — same |
+| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, provisional 20 percentage points, compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
+| `LowNapCoherence` (FR-052) | R < 0.85 (warn), R < 0.7 (suggest split) | `Actionable` — proposed split curve |
+| `UnsupportedConcavity` (FR-025) | concave crease with no seam along it | `Actionable` — proposed seam along the crease |
+
+`StretchMismatch` is the one that needs grain angle first, so it is evaluated at the pattern stage, after `orient` — not at fabric-assignment time. A seam between two pieces of the *same* knit cut at 90° to each other mismatches just as badly as two different fabrics, and only the post-orient comparison catches that.
 
 ## 7. Seam Allowance
 
 - **Per-edge allowance** (seam default, per-seam override, opening allowance, hem for unsewn edges) breaks single-distance polygon offset. Construct instead: union of the sewing polygon with one strip per boundary segment (segment ⊕ rectangle of that segment's allowance, plus round/miter caps) via `i_overlay`. Result is the cut line.
+- **Pile scaling** (FR-055): the effective default allowance is `max(fabric.default_allowance_mm, c × fabric.pile_len_mm)`. Long faux fur needs a wider allowance because the pile itself occupies the seam. Per-seam overrides still win — this only moves the default.
+- **Zero allowance** (FR-057): legal only when `!fabric.frays`, and only on edges the user marked edge-stitched or appliqué. The cut line then coincides with the sewing line, which means the piece has no offset polygon at all — a case the offset code must handle rather than divide by zero on. Pieces with zero allowance are excluded from clip/notch-out marking (§7 tight curves), since there is no allowance to clip into.
 - **Corners**: MVP uses miter joins with a miter limit (prevents spikes at acute corners). v0.2: drafting-standard **reflected corners** — allowance ends shaped as the mirror of the adjacent seam's allowance so edges align when pressed [likely].
 - **Tight curves**: where sewing-line curvature radius < allowance, the offset self-intersects; the union resolves it, and the piece gets **clip marks** (concave) or **notch-out marks** (convex) at a spacing proportional to curvature (FR-035).
 - **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (S3).
@@ -220,6 +261,9 @@ Once θ* is fixed, the fabric's stretch tensor `M` is known in the piece frame �
 ## 10. Units and Scale
 - `ImportOptions.units` declared or inferred (heuristic on bbox size) and confirmed by the user.
 - `Scale` is a single uniform factor applied at the pattern stage. Flattening output is in model units × scale; physical constraints (allowance, min piece size, min curvature radius) are evaluated in mm after scaling.
+- **Supported range** (FR-006): keychain to roughly 1 m in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
+- **Shrink compensation** (FR-056, D-012): an optional uniform percentage `shrink_pct`, applied as a second uniform factor at the pattern stage, so a stretch fabric sewn and stuffed lands nearer the model's size. It is **uniform only** — one number, every direction, every piece. Direction-dependent compensation is out of scope (D-014), and so is any attempt to predict the stuffed shape (D-012). The maker sets this from experience with their fabric; the tool does not infer it.
+- Because both `Scale` and `shrink_pct` are uniform factors at the same stage, flattening never re-runs when either changes — only `pattern` onward. That is the practical payoff of keeping compensation uniform.
 
 ## 11. Determinism and Tolerances
 - Arenas iterate in index order; maps are `BTreeMap`; sorts are stable with total-order tie-breaks.
@@ -232,7 +276,36 @@ Once θ* is fixed, the fabric's stretch tensor `M` is known in the piece frame �
 - Stored: source mesh, `RepairPlan` (re-applied deterministically), `SeamSet`, fabrics and region assignments, direction strokes, markings, scale, options.
 - Not stored: anything recomputable (charts, parameterizations, pieces). Optional cache block keyed by content hash for fast reopen.
 
-## 13. Contracts to Write Next (`contracts/`)
-1. `engine-api.md` — `openplush-pipeline` functions, inputs/outputs, error enum.
+## 13. Warnings and Remedies (FR-064, FR-065 — D-016, D-017)
+
+```rust
+pub struct WarningSet { items: Vec<Warning> }   // sorted by (code, target) — deterministic
+
+pub struct Warning {
+    pub code: WarningCode,          // stable, documented, user-visible
+    pub target: WarningTarget,      // Face/Edge/Chain/Piece/Component/Project
+    pub explanation: String,        // plain language: why it was flagged (FR-022, FR-065)
+    pub remedy: Remedy,             // never absent — that is the point
+    pub acknowledged: bool,         // persisted; FR-064's "acknowledged once"
+}
+
+pub enum Remedy {
+    /// The engine can perform it. UI offers preview-then-accept (Constitution VII).
+    Actionable { proposal: Proposal },
+    /// The engine will not perform it; it names the material or sizing change.
+    Advisory { what_to_change: String },
+}
+```
+
+**Why `Remedy` is an enum and not an `Option<Proposal>`**: FR-065 says no warning may describe only the problem. With `Option`, "no proposal" is representable and the requirement becomes a review checklist item. With this enum, a warning that explains nothing cannot be constructed — the compiler enforces the spec. `Advisory` carries real text precisely so "we couldn't think of a fix" is not expressible either.
+
+**Errors are the other channel entirely.** `WarningSet` rides along with `Ok(...)`; a violated invariant is `Err(EngineError)` and produces no output (plan "Warnings vs. errors"). The seam-parity tolerance is an error now (D-013), not a warning — which is the single most important consequence of Q2 for this file.
+
+**Persistence**: acknowledged warnings and their codes+targets are stored in the project (§12), keyed by **source provenance** like seams are, so an acknowledgement survives re-repair and reopening. Unacknowledged warnings are recomputed, never stored.
+
+**Export** (FR-064): `export` takes the `WarningSet`. Unresolved entries render as a summary block on the pattern's first page — code, location, explanation, remedy. Export is never refused. The summary is part of the golden snapshot, so a warning silently vanishing from the printed page is a test failure.
+
+## 14. Contracts to Write Next (`contracts/`)
+1. `engine-api.md` — `openplush-pipeline` functions, inputs/outputs, error enum, `WarningSet`.
 2. `worker-protocol.md` — message types, handle lifetime, transferables, cancellation.
 3. `project.schema.json` — JSON Schema for the project document, v1.

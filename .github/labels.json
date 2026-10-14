@@ -1,0 +1,10 @@
+[
+  { "name": "lane:engine",   "color": "b60205", "description": "Rust geometry engine: crates/, bindings/" },
+  { "name": "lane:shell",    "color": "1d76db", "description": "TypeScript / Three.js web app: apps/, packages/" },
+  { "name": "lane:fixtures", "color": "0e8a16", "description": "Test models and their licenses: fixtures/. No code needed" },
+  { "name": "lane:docs",     "color": "fbca04", "description": "Documentation: docs/. Sewing expertise welcome" },
+  { "name": "spec",          "color": "5319e7", "description": "Spec, plan, or task changes under specs/" },
+  { "name": "chore",         "color": "c5def5", "description": "Repo tooling, CI, config" },
+  { "name": "bug",           "color": "d73a4a", "description": "Something produces wrong output or fails" },
+  { "name": "good first issue", "color": "7057ff", "description": "Small, well-scoped, with a task ID" }
+]

@@ -1,0 +1,21 @@
+name: Docs or sewing correction
+description: Something in the docs, a warning message, or a sewing instruction is wrong or unclear. No code needed.
+labels: ["lane:docs"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Corrections from people who sew are as valuable as code. If a seam allowance, a fabric note, or an instruction doesn't match how you'd actually make the plush, say so here.
+  - type: input
+    id: where
+    attributes:
+      label: Where is it?
+      description: A page link, a file path, or the text of the message.
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong, and what should it say?
+    validations:
+      required: true

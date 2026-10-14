@@ -267,6 +267,10 @@ version = "0.0.0"
 [[package]]
 name = "openplush-mesh"
 version = "0.0.0"
+dependencies = [
+ "openplush-geom",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-pattern"

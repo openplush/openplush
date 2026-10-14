@@ -12,7 +12,7 @@ use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{Signed, Zero};
 use openplush_geom::predicates::{incircle, orient2d, orient3d};
-use openplush_geom::{DVec2, DVec3, Sign};
+use openplush_geom::{DVec2, DVec3, GeomError, Sign};
 use proptest::prelude::*;
 
 /// The exact rational value of a finite f64, decoded from its IEEE-754 bits:
@@ -154,25 +154,109 @@ fn sign_conventions() {
 
 #[test]
 fn non_finite_input_is_an_error_not_a_sign() {
-    let nan = DVec2::new(f64::NAN, 0.0);
-    assert!(orient2d(nan, DVec2::ZERO, DVec2::X).is_err());
-    assert!(
-        incircle(
-            DVec2::ZERO,
-            DVec2::X,
-            DVec2::Y,
-            DVec2::new(0.0, f64::INFINITY)
-        )
-        .is_err()
+    // Every argument, every component, every kind of non-finite value: a check
+    // dropped for any one of them must fail here.
+    let base2 = [DVec2::ZERO, DVec2::X, DVec2::Y, DVec2::new(0.25, 0.25)];
+    let base3 = [DVec3::ZERO, DVec3::X, DVec3::Y, DVec3::new(0.2, 0.2, 0.2)];
+    for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        for arg in 0..4 {
+            for comp in 0..3 {
+                let mut p2 = base2;
+                if comp < 2 {
+                    let q = &mut p2[arg];
+                    if comp == 0 {
+                        q.x = bad
+                    } else {
+                        q.y = bad
+                    }
+                    if arg < 3 {
+                        assert_eq!(orient2d(p2[0], p2[1], p2[2]), Err(GeomError::NonFinite));
+                    }
+                    assert_eq!(
+                        incircle(p2[0], p2[1], p2[2], p2[3]),
+                        Err(GeomError::NonFinite)
+                    );
+                }
+                let mut p3 = base3;
+                let q = &mut p3[arg];
+                match comp {
+                    0 => q.x = bad,
+                    1 => q.y = bad,
+                    _ => q.z = bad,
+                }
+                assert_eq!(
+                    orient3d(p3[0], p3[1], p3[2], p3[3]),
+                    Err(GeomError::NonFinite)
+                );
+            }
+        }
+    }
+}
+
+/// 2^k, exactly, for k in [-1022, 1023].
+fn pow2(k: i32) -> f64 {
+    f64::from_bits(((k + 1023) as u64) << 52)
+}
+
+#[test]
+fn finite_inputs_that_overflow_or_underflow_inside_the_predicate_still_get_the_exact_sign() {
+    // Regressions from review of #38: robust alone returns NaN (read as Zero) for
+    // the first two and underflows to 0 for the third. Every exact sign is Positive.
+    let (a, b, c, d) = (
+        DVec2::new(1e200, 0.0),
+        DVec2::new(0.0, 1e200),
+        DVec2::new(-1e200, 0.0),
+        DVec2::ZERO,
     );
-    assert!(
+    assert_eq!(exact_incircle(a, b, c, d), Sign::Positive);
+    assert_eq!(incircle(a, b, c, d), Ok(Sign::Positive));
+
+    let (a, b, c, d) = (
+        DVec3::ZERO,
+        DVec3::new(1e110, 0.0, 0.0),
+        DVec3::new(0.0, 1e110, 0.0),
+        DVec3::new(0.0, 0.0, -1e110),
+    );
+    assert_eq!(exact_orient3d(a, b, c, d), Sign::Positive);
+    assert_eq!(orient3d(a, b, c, d), Ok(Sign::Positive));
+
+    let (a, b, c) = (
+        DVec2::ZERO,
+        DVec2::new(1e-200, 0.0),
+        DVec2::new(0.0, 1e-200),
+    );
+    assert_eq!(exact_orient2d(a, b, c), Sign::Positive);
+    assert_eq!(orient2d(a, b, c), Ok(Sign::Positive));
+
+    // All-subnormal input is exact too.
+    let t = f64::MIN_POSITIVE / 8.0;
+    assert_eq!(
+        orient2d(DVec2::ZERO, DVec2::new(t, 0.0), DVec2::new(0.0, t)),
+        Ok(Sign::Positive)
+    );
+    assert_eq!(
+        orient2d(DVec2::ZERO, DVec2::ZERO, DVec2::ZERO),
+        Ok(Sign::Zero)
+    );
+}
+
+#[test]
+fn coordinates_spanning_more_than_2_pow_150_are_refused_not_guessed() {
+    // Relative to the largest |coordinate|, a nonzero one below 2^-150 could
+    // underflow inside the adaptive arithmetic, so the sign is not guaranteed.
+    let (a, b) = (DVec2::new(1.0, 0.0), DVec2::new(0.0, 1.0));
+    let edge = DVec2::new(pow2(-149), pow2(-149));
+    assert_eq!(orient2d(a, b, edge), Ok(exact_orient2d(a, b, edge)));
+    let below = DVec2::new(pow2(-160), 0.0);
+    assert_eq!(orient2d(a, b, below), Err(GeomError::UnsupportedMagnitude));
+    assert_eq!(
         orient3d(
-            DVec3::ZERO,
             DVec3::X,
             DVec3::Y,
-            DVec3::new(f64::NAN, 0.0, 0.0)
-        )
-        .is_err()
+            DVec3::Z,
+            DVec3::new(pow2(-160), 0.0, 0.0)
+        ),
+        Err(GeomError::UnsupportedMagnitude)
     );
 }
 
@@ -209,8 +293,8 @@ proptest! {
                                               t in proptest::array::uniform4(0.0f64..std::f64::consts::TAU),
                                               w in -3i32..=3) {
         let on = |angle: f64| DVec2::new(cx + r * angle.cos(), cy + r * angle.sin());
-        let d = on(t[3]);
-        let d = DVec2::new(if w >= 0 { d.x.next_up() } else { d.x.next_down() }, d.y);
+        // Move d by |w| ULPs (0 leaves it as rounded onto the circle).
+        let d = near_line(on(t[3]), on(t[3]), 0.0, (w, 0));
         let (a, b, c) = (on(t[0]), on(t[1]), on(t[2]));
         prop_assert_eq!(incircle(a, b, c, d), Ok(exact_incircle(a, b, c, d)));
     }
@@ -325,5 +409,28 @@ impl SignOf for Sign {
         } else {
             Sign::Zero
         }
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig { cases: 500, rng_seed: proptest::test_runner::RngSeed::Fixed(20261015), ..ProptestConfig::default() })]
+
+    /// Scaling by 2^k is exact and the predicates are homogeneous, so the exact sign
+    /// must survive any k for which the inputs stay normal, including scales where
+    /// robust alone would overflow (k > 0) or underflow (k < 0).
+    #[test]
+    fn predicates_stay_exact_at_any_power_of_two_scale(ax in coord(), ay in coord(), bx in coord(), by in coord(),
+                                                       t in -2.0f64..3.0, wx in -4i32..=4, wy in -4i32..=4,
+                                                       z in proptest::array::uniform3(coord()), k in -700i32..=700) {
+        let s = pow2(k);
+        let (a, b) = (DVec2::new(ax, ay) * s, DVec2::new(bx, by) * s);
+        let c = near_line(a, b, t, (wx, wy));
+        prop_assert_eq!(orient2d(a, b, c), Ok(exact_orient2d(a, b, c)));
+        let d = near_line(a, c, 0.5, (wy, wx));
+        prop_assert_eq!(incircle(a, b, c, d), Ok(exact_incircle(a, b, c, d)));
+        let lift = |p: DVec2, h: f64| DVec3::new(p.x, p.y, h * s);
+        let (a3, b3, c3) = (lift(a, z[0]), lift(b, z[1]), lift(c, z[2]));
+        let d3 = lift(near_line(a, b, 0.5, (wx, 0)), (z[0] + z[1]) * 0.5);
+        prop_assert_eq!(orient3d(a3, b3, c3, d3), Ok(exact_orient3d(a3, b3, c3, d3)));
     }
 }

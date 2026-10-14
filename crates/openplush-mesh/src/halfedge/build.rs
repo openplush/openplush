@@ -68,7 +68,7 @@ impl ManifoldMesh {
         for (t, tri) in tris.iter().enumerate() {
             let triangle = FaceId::new(t as u32);
             let mut key = *tri;
-            key.sort_unstable();
+            key.sort();
             match seen.entry(key) {
                 Entry::Occupied(first) => {
                     return Err(MeshError::DuplicateTriangle {

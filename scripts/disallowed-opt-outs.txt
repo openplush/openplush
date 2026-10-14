@@ -1,0 +1,8 @@
+# Reviewed opt-outs of the clippy.toml bans (HashMap/HashSet, unstable sorts, and
+# the boundary bans in crates/clippy.toml), checked by scripts/check-opt-outs.sh.
+# One line per opt-out: <path> <lint> <reason>. A file with two opt-outs of the
+# same lint needs two lines. The reason says why the use never reaches output
+# (for a determinism ban) or why the boundary does not apply.
+#
+# Example:
+# crates/openplush-mesh/src/weld.rs clippy::disallowed_types lookup only; iteration never reaches output

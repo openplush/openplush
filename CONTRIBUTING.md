@@ -114,9 +114,10 @@ CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deli
 | `too_many_lines` (60), `too_many_arguments` (5) | Small units. A function that predates the limit carries `#[expect(clippy::too_many_lines, reason = …)]` until it is split. |
 | `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed in `#[test]` functions and `#[cfg(test)]` modules (`clippy.toml`). Code outside those, such as helpers in `tests/*.rs` and everything in `openplush-testkit`, returns `Result` and uses `?`. |
 | `disallowed_types`: `HashMap`, `HashSet` | Iteration order is unspecified, which breaks byte-identical output (Constitution V). |
+| `disallowed_methods`: `sort_unstable*`, `select_nth_unstable*` | Equal elements end in an unspecified order, which has differed between x86_64 and wasm32 and between toolchains (Constitution V). Sort stably with a total order (`total_cmp`). |
 | `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |
 
-If a lint is wrong for one specific line, put `#[allow(clippy::…)]` on that item and a comment saying why. For `unwrap`/`expect`, the comment is `// INVARIANT: …` naming the invariant that makes it safe. Never turn a lint off workspace-wide to get one PR green; that needs its own PR and a reason.
+If a lint is wrong for one specific line, put `#[allow(clippy::…)]` on that item and a comment saying why. For `unwrap`/`expect`, the comment is `// INVARIANT: …` naming the invariant that makes it safe. An opt-out of `disallowed_types` or `disallowed_methods` (or of a group containing them) also needs a line in `scripts/disallowed-opt-outs.txt` with its reason, so a reviewer sees every one in one place; `scripts/check.sh hygiene` fails on an unlisted opt-out and on an entry whose opt-out is gone. Never turn a lint off workspace-wide to get one PR green; that needs its own PR and a reason.
 
 ## Tests come first
 Not a style preference — [constitution](.specify/memory/constitution.md) principle IV. Add or update the failing test, then implement. Two rules that have no exceptions:

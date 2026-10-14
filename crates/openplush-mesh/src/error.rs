@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::{FaceId, VertexId};
+use crate::{FaceId, MeshElement, VertexId};
 
 /// Every structural refusal in this crate. Each variant names the element at
 /// fault, so the UI can highlight it (crates/AGENTS.md).
@@ -42,6 +42,70 @@ pub enum MeshError {
         what: Counted,
         /// The element count.
         count: usize,
+    },
+    /// A triangle uses the same vertex twice. Repair removes these; a manifold
+    /// mesh cannot contain one.
+    #[error("triangle {triangle:?} repeats a vertex")]
+    DegenerateTriangle {
+        /// The triangle.
+        triangle: FaceId,
+    },
+    /// A triangle's area is at or below the model's area tolerance
+    /// (`ModelTolerances::area`, data-model section 11).
+    #[error("triangle {triangle:?} has (near-)zero area")]
+    ZeroAreaTriangle {
+        /// The triangle.
+        triangle: FaceId,
+    },
+    /// Two triangles use the same three vertices, in either winding: a coincident
+    /// copy, or a two-sided "pillow". Repair keeps one (data-model section 3 step 2).
+    #[error("triangle {triangle:?} repeats the vertices of triangle {first:?}")]
+    DuplicateTriangle {
+        /// The later triangle.
+        triangle: FaceId,
+        /// The earlier triangle with the same vertices.
+        first: FaceId,
+    },
+    /// A vertex no triangle uses. It has no one-ring, so it has no place in a
+    /// half-edge mesh.
+    #[error("vertex {vertex:?} is not used by any triangle")]
+    IsolatedVertex {
+        /// The vertex.
+        vertex: VertexId,
+    },
+    /// More than two triangles share an edge.
+    #[error("edge between {a:?} and {b:?} is shared by more than two triangles")]
+    NonManifoldEdge {
+        /// The edge's lower-indexed endpoint.
+        a: VertexId,
+        /// The edge's higher-indexed endpoint.
+        b: VertexId,
+    },
+    /// Two triangles traverse their shared edge in the same direction, so their
+    /// normals disagree.
+    #[error("triangles sharing the edge between {a:?} and {b:?} have opposite orientations")]
+    InconsistentOrientation {
+        /// The edge's lower-indexed endpoint.
+        a: VertexId,
+        /// The edge's higher-indexed endpoint.
+        b: VertexId,
+    },
+    /// A vertex's triangles do not form a single fan (disk or half-disk): for
+    /// example two cones touching at their tips, or a bowtie.
+    #[error("vertex {vertex:?} is non-manifold (its triangles form more than one fan)")]
+    NonManifoldVertex {
+        /// The vertex.
+        vertex: VertexId,
+    },
+    /// `ManifoldMesh::debug_validate` found a broken data-model section 2 invariant.
+    /// Construction never produces this; it means a bug in code that edits the mesh.
+    #[error("half-edge invariant {invariant} is broken at {element:?}")]
+    BrokenInvariant {
+        /// Which invariant (1-5 as numbered in data-model section 2; 0 for the
+        /// structural checks around them: array lengths, the boundary-vertex rule).
+        invariant: u8,
+        /// Where.
+        element: MeshElement,
     },
 }
 

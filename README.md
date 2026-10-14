@@ -2,7 +2,7 @@
 
 Turn a 3D model into a sewable plush pattern. Free, open source, and it runs entirely on your device.
 
-> **Status: pre-alpha, no code yet.** Two features are fully specified and planned, with 253 numbered tasks ready to pick up. Nothing is implemented. See the [specs index](specs/README.md) for exactly what exists.
+> **Status: pre-alpha, not usable yet.** Two features are specified and planned, with 257 numbered tasks. The geometry core is built (vectors, robust predicates, triangle soup, the half-edge mesh, and the shared ID and proposal types); import, seams, flattening, layout, and export are not. See the [specs index](specs/README.md) for exactly what exists.
 
 ## What it will do
 - Import a 3D model (OBJ, glTF) and set its real-world size.

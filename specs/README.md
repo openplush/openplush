@@ -1,0 +1,75 @@
+# Specifications
+
+OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spec-kit)). Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`.
+
+This index exists so you can tell at a glance what is specified, what is planned, and what is actually buildable.
+
+## Status
+
+| Feature | Spec | Planned | Tasks | Implementation |
+|---|---|---|---|---|
+| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 171 tasks | Not started |
+| [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks | Blocked on 001 |
+
+**No code exists yet.** Both features are fully specified and planned; neither has been implemented. The first thing to build is 001's `T001`–`T008` (research spikes) and `T009`–`T021` (workspace setup).
+
+## Reading order
+
+New to the project? Read in this order:
+
+1. [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) — the binding principles. Everything else defers to it.
+2. [`001-pattern-pipeline/spec.md`](./001-pattern-pipeline/spec.md) — what the product is.
+3. [`001-pattern-pipeline/plan.md`](./001-pattern-pipeline/plan.md) — the architecture and the Decision Ledger.
+4. [`001-pattern-pipeline/tasks.md`](./001-pattern-pipeline/tasks.md) — where to start working.
+
+## What each file is for
+
+| File | Contains | Does not contain |
+|---|---|---|
+| `spec.md` | What and why, in plain language | Any technology choice |
+| `research.md` | Library audits, algorithm comparisons, confidence-tagged findings | Decisions (those go in the plan) |
+| `plan.md` | Architecture, repo layout, Decision Ledger, phasing | Task-level detail |
+| `data-model.md` | Types, invariants, edge-case handling | Public API surface |
+| `contracts/` | The public surfaces: engine API, worker protocol, project schema | Internal structure |
+| `quickstart.md` | The acceptance walkthrough — when this works, the feature is done | Aspirational prose |
+| `tasks.md` | Numbered, file-path-exact work items | Rationale (that lives upstream) |
+| `checklists/requirements.md` | Spec quality gate, with its failures recorded honestly | |
+
+## Feature dependency
+
+002 depends hard on 001, and not incidentally: four of the seven capabilities it needs come from 001's pipeline, and its flat-pattern preview *is* 001's flatten plus pattern stages. See [002's plan](./002-seam-placement-hints/plan.md) for the exact task-level dependency — it starts partway through 001's Phase 3, not after all of 001.
+
+## Deferred and out of scope
+
+Named so nobody implements them by accident:
+
+| Thing | Status | Where |
+|---|---|---|
+| Automatic seam layout | v0.2 — 002 is its groundwork | 001 FR-015, D-015 |
+| Inserted pieces (ears in a seam) | v0.3; the data model supports it from day one | 001 FR-016 |
+| Texture transfer for print-on-fabric | v0.2 | 001 FR-043 |
+| Optimised nesting | v0.2 (v0.1 uses simple packing) | 001 FR-062 |
+| Stuffed-shape preview, inverse inflation | **Out of scope** — excluded, not deferred | 001 Out of scope, D-012 |
+| Direction-dependent stretch, anisotropic flattening | **Out of scope** | 001 FR-026, D-014 |
+| Thickness compensation, shave-zone markings | **Out of scope** | 001 Out of scope |
+| Learned/ML detection | **Out of scope** for both features | Constitution X |
+
+## Known holes
+
+Worth knowing before planning a release:
+
+- **No fixtures exist.** 001 `T035`–`T037` and 002 `H001`–`H003`. Several success criteria cannot be evaluated at all until they do.
+- **No model ships with a known-good hand-made pattern** (002 `H004`). 002's headline claim, SC-001, is unmeasurable without one.
+- **001's fabric preset values are guesses** (research R7, spike `T008`). Plausible, not measured, and tagged `[verify]` throughout.
+- **Five minor spec defaults remain open** in 001, each with a default already wired into `project.schema.json`. Listed in 001's spec under "Open Clarifications".
+- **Spike `T007` (S7) is the highest-risk unknown**: the exact-seam-parity decision (D-013) rests the whole pattern stage on boundary-pinned flattening, and nobody has verified it stays injective on real meshes.
+
+## Active feature pointer
+
+`.specify/feature.json` is local and git-ignored; it tells Spec Kit commands which feature you are working on. Point it at the one you are actually working on:
+
+```json
+{"feature_directory":"specs/001-pattern-pipeline"}
+```
+
+Note that the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check that it includes the work you expect (`git log --oneline -3`) and fast-forward it onto the trunk if it does not. This is recorded as an open question in 001's plan.

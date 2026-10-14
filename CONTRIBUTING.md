@@ -1,6 +1,10 @@
 # Contributing to OpenPlush
 
-Thanks for helping. OpenPlush is pre-alpha: the first feature is still being specified, so the most useful contributions right now are spec review, test models, and research.
+Thanks for helping. OpenPlush is pre-alpha with no code yet, but both features are fully specified and planned, so there is concrete work to pick up:
+
+- **The most useful contribution right now is test models.** Nothing in `fixtures/` exists, and several success criteria cannot be measured until it does. A model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change — it becomes a regression oracle and it is the only way to verify that feature 002's hints land where experienced makers actually cut. No code needed.
+- **Engine work** starts at [001 tasks](specs/001-pattern-pipeline/tasks.md) `T001`–`T008` (research spikes) and `T009`–`T021` (workspace setup). `T007` is the highest-value spike: the exact-seam-parity decision rests the whole pattern stage on it and nobody has verified it yet.
+- **Spec and plan review** is still welcome. Five minor defaults remain open in 001, and every fabric preset value is currently a guess.
 
 ## Lanes
 | Lane | Folder | You need |
@@ -14,8 +18,20 @@ Thanks for helping. OpenPlush is pre-alpha: the first feature is still being spe
 OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spec-kit)).
 
 1. Features are specified in `specs/NNN-name/spec.md`, planned in `plan.md`, and broken into tasks in `tasks.md`.
-2. Pick a task, open one PR for it, and reference it: `Task: T014 (specs/001-pattern-pipeline/tasks.md)`.
+2. Pick a task, open one small PR for it, and reference it: `Task: T014 (specs/001-pattern-pipeline/tasks.md)`.
 3. **Trivial changes skip the task requirement:** docs or typo fixes, comment fixes, dependency patch bumps, new fixtures with a license entry, and CI changes that don't alter gates.
+
+## Pull requests are small here
+`main` is the trunk and everything arrives by PR. The size rule is not a preference:
+
+- **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
+- **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
+- **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
+- Branch names: `001/T050-obj-import` for implementation, `chore/slug` for repo work, `NNN-feature-slug` for specs.
+
+Why so strict: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A sign error in a dihedral angle or an epsilon against the wrong scale is a one-line defect that produces plausible output. It does not survive a focused review of 200 lines, and it sails through 2,000.
+
+Details and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 
 Read the [constitution](.specify/memory/constitution.md) before your first PR. Reviewers enforce it.
 
@@ -47,10 +63,20 @@ Spec Kit tracks the active feature in `.specify/feature.json`, which is local an
 {"feature_directory":"specs/001-pattern-pipeline"}
 ```
 
-On Windows, Claude Code runs the `sh` scripts through Git Bash. If they fail, switch to PowerShell scripts with `specify integration upgrade claude --script ps --force`.
+On Windows, Claude Code runs the `sh` scripts through Git Bash. Verified working as of 2026-10-13 for `create-new-feature-branch.sh` and `check-prerequisites.sh`. If a script does fail, switch to PowerShell with `specify integration upgrade claude --script ps --force`.
+
+One known wrinkle: the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check it with `git log --oneline -3` and fast-forward it onto the trunk if it is missing commits.
 
 ## Development environment
-The build setup arrives with the first setup tasks in `specs/001-pattern-pipeline/tasks.md`. Planned: Rust stable with the `wasm32-unknown-unknown` target, Node LTS, and pnpm.
+The build setup is tasks `T009`–`T021` in [001's tasks](specs/001-pattern-pipeline/tasks.md) and does not exist yet. Planned: Rust stable with the `wasm32-unknown-unknown` target, Node LTS, and pnpm. Once it lands, [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the walkthrough.
+
+## Tests come first
+Not a style preference — [constitution](.specify/memory/constitution.md) principle IV. Add or update the failing test, then implement. Two rules that have no exceptions:
+
+- **Never update a golden snapshot** (`fixtures/golden/`, `*.snap`) to make a test pass. If the output legitimately changed, say so in the PR and leave the snapshot update to a reviewer.
+- **Never skip, weaken, or delete a test** to get to green.
+
+Both exist because the thing this project most needs to avoid is a pattern that looks right and is wrong — you find out after cutting the fabric.
 
 ## License
 Contributions are dual-licensed under MIT OR Apache-2.0, as stated in the [README](README.md#license). There is no CLA.

@@ -235,6 +235,28 @@ crate "$r" vendor/solver solver 'rayon = { path = "../rayon" }'
 crate "$r" crates/openplush-geom openplush-geom 'solver = { path = "../../vendor/solver" }'
 expect fail "transitive dependency on rayon" "$r" "rayon"
 
+# 14b. OS randomness: getrandom breaks determinism on native builds (on wasm32 it
+# needs js-sys, which is already banned). Seeded generators don't need it, and
+# proptest may use it as a dev-dependency.
+r=$(new_case getrandom-direct)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/getrandom getrandom
+crate "$r" crates/openplush-geom openplush-geom 'getrandom = { path = "../../vendor/getrandom" }'
+expect fail "dependency on getrandom" "$r" "getrandom"
+
+r=$(new_case getrandom-transitive)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/getrandom getrandom
+crate "$r" vendor/rng rng 'getrandom = { path = "../getrandom" }'
+crate "$r" crates/openplush-geom openplush-geom 'rng = { path = "../../vendor/rng" }'
+expect fail "transitive dependency on getrandom" "$r" "getrandom"
+
+r=$(new_case getrandom-dev)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/getrandom getrandom
+crate "$r" crates/openplush-geom openplush-geom '' 'getrandom = { path = "../../vendor/getrandom" }'
+expect pass "getrandom as a dev-dependency (proptest)" "$r"
+
 # 15. A browser crate behind a feature no member enables still ships if anyone enables it.
 r=$(new_case optional-web)
 workspace "$r" crates/openplush-geom

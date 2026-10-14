@@ -141,10 +141,10 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 ### Error and warning channels
 
 - [ ] T175 The element IDs and proposal types of data-model §13a, **types only** (no algorithms), each in its owning crate so T028–T031 can name them: `ComponentId` in `openplush-mesh`; `SeamKind`, `ChartId`, `SeamChainId`, `ChartFailure`, `Proposal`, `ProposalKind`, `SeamReason`, `ProposalId` (with its FNV-1a derivation) in `openplush-seams`; `PieceId` in `openplush-pattern`; `Format` in `openplush-io`. One PR per crate: `001/21-T175-seams-types` (#49), `001/22-T175-component-id` (#50), `001/23-T175-piece-id` (#51), `001/24-T175-import-format` (#52). Test first: `ProposalId` is stable under unrelated renumbering and matches independently computed FNV-1a vectors, one per kind byte and per seam-kind byte, plus a multi-byte edge index to pin little-endian. *Added 2026-10-14: T028 referenced Phase 3 types (T069's `SeamKind`, charts, pieces), so Phase 2 could not compile without them*
-- [ ] T028 `crates/openplush-pipeline/src/error.rs` — `EngineError` per contracts/engine-api.md section 5, every variant carrying a location
-- [ ] T029 `crates/openplush-pipeline/src/warning.rs` — `WarningSet`, `Warning`, and `Remedy` as an **enum** of `Actionable` and `Advisory`, never `Option<Proposal>`. FR-065 is enforced by the type: a warning that explains nothing must not be constructible
-- [ ] T030 [P] `crates/openplush-pipeline/src/warning/tests.rs` — `WarningSet` ordering is stable by code then target regardless of insertion order (Constitution V). *2026-10-14: a unit test until the first shipped `WarningCode` exists (none ship yet; the test uses `#[cfg(test)]` codes an integration test cannot see); it moves to `tests/warning_determinism.rs` with that code*
-- [ ] T031 `crates/openplush-pipeline/src/stage.rs` — `Staged<T>` and `StageResult<T>`. *2026-10-14: narrowed from "and the stage signatures as unimplemented stubs": most types those signatures name do not exist yet, and stub bodies cannot panic (`unimplemented`/`todo` are denied). Each stage signature lands with the task that owns its types; T043 grows with them*
+- [x] T028 `crates/openplush-pipeline/src/error.rs` — `EngineError` per contracts/engine-api.md section 5, every variant carrying a location — *merged in #57*
+- [x] T029 `crates/openplush-pipeline/src/warning/mod.rs` — `WarningSet`, `Warning`, and `Remedy` as an **enum** of `Actionable` and `Advisory`, never `Option<Proposal>`. FR-065 is enforced by the type: a warning that explains nothing must not be constructible — *merged in #58*
+- [x] T030 `crates/openplush-pipeline/src/warning/tests.rs` — `WarningSet` ordering is total (code string, target, remedy, explanation; data-model §13a) and independent of insertion order (Constitution V). *2026-10-14: a unit test until the first shipped `WarningCode` exists (none ship yet; the test uses `#[cfg(test)]` codes an integration test cannot see); it moves to `tests/warning_determinism.rs` with that code* — *merged in #58*
+- [x] T031 `crates/openplush-pipeline/src/stage.rs` — `Staged<T>` and `StageResult<T>`. *2026-10-14: narrowed from "and the stage signatures as unimplemented stubs": most types those signatures name do not exist yet, and stub bodies cannot panic (`unimplemented`/`todo` are denied). Each stage signature lands with the task that owns its types; T043 grows with them* — *merged in #59*
 
 ### Test machinery and fixtures
 
@@ -177,7 +177,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Tests for US1 (write first, observe failing)
 
-- [ ] T043 [P] [US1] `crates/openplush-pipeline/tests/contract_surface.rs` — the stage signatures in contracts/engine-api.md compile and are callable as documented
+- [ ] T043 [P] [US1] `crates/openplush-pipeline/tests/contract_surface.rs` — the stage signatures in contracts/engine-api.md compile and are callable as documented. *2026-10-14: grows one signature at a time, since T031 no longer stubs them: each US1 stage's assertion lands in the PR that adds that stage's `openplush-pipeline` signature, T092 at the latest; other stories' signatures get theirs in those stories*
 - [ ] T044 [P] [US1] `crates/openplush-flatten/tests/developable.rs` — cylinder strip, cone, and folded flat sheet each flatten with distortion near zero. **The oracle that catches a flattener that is confidently wrong**
 - [ ] T045 [P] [US1] `crates/openplush-pattern/tests/parity.rs` — on every fixture, both sides of every seam match within max(1.0 mm, 0.5%). Hard assertion, not a tolerance report (D-013)
 - [ ] T046 [P] [US1] `crates/openplush-export/tests/scale.rs` — the scale-check square measures exactly 50.00 mm in the output file (SC-003)
@@ -443,8 +443,8 @@ The tasks template wants every story independently deliverable. **US1 is not ind
 
 - All of Phase 0 except T007's dependents
 - Phase 1: everything except T009, T016, T172 (needs T016), and T173 (needs T013 and T016)
-- Phase 2: T023, T027, T030, T033–T037, T039–T041; T175's four per-crate PRs in parallel, before T028
-- Phase 3: all test tasks T043–T049 together; then the import parsers T050–T052; then the validators T055–T057
+- Phase 2: T023, T027, T033–T037, T039–T041; T175's four per-crate PRs in parallel, before T028
+- Phase 3: all test tasks T044–T049 together (T043 grows with each stage's signature); then the import parsers T050–T052; then the validators T055–T057
 - Phase 6 (US7) alongside Phases 4 and 5
 - Within every story, all test tasks run in parallel before any implementation starts
 

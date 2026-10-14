@@ -462,12 +462,12 @@ fn invariant_0_the_boundary_vertex_rule() {
 fn invariant_1_next_of_prev() {
     let (mut m, t) = built_square();
     let h = HalfEdgeId::new(0);
-    let old_next = m.next(h);
     m.corrupt_next_for_test(h);
-    // prev(old_next) is still h, but next(h) no longer is old_next.
+    // next(h) now skips a corner, so h no longer ends where next(h) starts. h is
+    // the lowest index involved, so it is the first violation reported.
     assert_eq!(
         m.debug_validate(&t).err(),
-        broken(1, MeshElement::HalfEdge(old_next))
+        broken(1, MeshElement::HalfEdge(h))
     );
 }
 
@@ -582,5 +582,85 @@ fn invariant_5_a_face_collapsed_by_moving_a_vertex() {
     assert_eq!(
         m.debug_validate(&t).err(),
         broken(5, MeshElement::Face(crate::FaceId::new(0)))
+    );
+}
+
+#[test]
+fn invariant_0_an_odd_half_edge_count() {
+    let (mut m, t) = built_square();
+    let h = HalfEdgeId::new(0);
+    m.he_next.push(h);
+    m.he_prev.push(h);
+    m.he_origin.push(VertexId::new(0));
+    m.he_face.push(None);
+    m.corner_src.push(None);
+    m.corner_uv.push(None);
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(0, MeshElement::Storage("he_next"))
+    );
+}
+
+#[test]
+fn invariant_0_face_half_edge_outside_its_face() {
+    let (mut m, t) = built_square();
+    m.f_he[1] = m.f_he[0];
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(0, MeshElement::Face(crate::FaceId::new(1)))
+    );
+}
+
+#[test]
+fn invariant_2_a_stray_triangle_loop_reusing_a_face_label() {
+    // Three new edges forming a second, consistently linked triangle 0-1-2 that
+    // also claims face 0. Every link and loop length checks out; only the count
+    // (three faced half-edges per face) sees the extra loop.
+    let (mut m, t) = built_square();
+    let base = m.half_edge_count() as u32;
+    let h = |k: u32| HalfEdgeId::new(base + k);
+    let v = VertexId::new;
+    // Edge k: interior half-edge base+2k (face 0), boundary twin base+2k+1.
+    // Interior loop 0->1->2->0; boundary loop of the twins 1->0, 0->2, 2->1.
+    let origins = [v(0), v(1), v(1), v(2), v(2), v(0)];
+    let nexts = [h(2), h(5), h(4), h(1), h(0), h(3)];
+    let prevs = [h(4), h(3), h(0), h(5), h(2), h(1)];
+    for k in 0..6 {
+        m.he_origin.push(origins[k]);
+        m.he_next.push(nexts[k]);
+        m.he_prev.push(prevs[k]);
+        m.he_face.push((k % 2 == 0).then(|| crate::FaceId::new(0)));
+        m.corner_src.push(None);
+        m.corner_uv.push(None);
+    }
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(2, MeshElement::Storage("he_face"))
+    );
+}
+
+#[test]
+fn invariant_4_both_sides_of_an_edge_in_one_face() {
+    // A "triangle" 0->1->0->0 whose loop runs along edge 0-1 and back, closed by a
+    // self-loop edge at vertex 0. Links, loop length and counts are consistent; the
+    // edge 0-1 has face 0 on both sides.
+    let h = HalfEdgeId::new;
+    let v = VertexId::new;
+    let f0 = Some(crate::FaceId::new(0));
+    let m = ManifoldMesh {
+        pos: vec![p(0., 0., 0.), p(1., 0., 0.)],
+        v_out: vec![h(3), h(1)],
+        he_origin: vec![v(0), v(1), v(0), v(0)],
+        he_face: vec![f0, f0, f0, None],
+        he_next: vec![h(1), h(2), h(0), h(3)],
+        he_prev: vec![h(2), h(0), h(1), h(3)],
+        f_he: vec![h(0)],
+        corner_src: vec![None; 4],
+        corner_uv: vec![None; 4],
+    };
+    let t = ModelTolerances::for_diagonal(1.0).unwrap();
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(4, MeshElement::HalfEdge(h(0)))
     );
 }

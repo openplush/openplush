@@ -26,16 +26,19 @@ Small config and scaffolding tasks sharing one concern:
 
 | PR | Tasks |
 |---|---|
-| `chore/workspace-config` | T010, T011, T012 |
-| `chore/ci-engine` | T013, T016 |
+| `chore/workspace-config` | T009, T010, T011, T012 |
+| `chore/ci-engine` | T013 |
+| `chore/boundary-check` | T016 — alone, see *Isolate these* |
 | `chore/ci-wasm-shell` | T014, T015 |
 | `chore/ci-determinism-golden` | T017, T018, T042 |
 | `chore/repo-governance` | T019, T020, T021 |
-| `001/T022-geom-core` | T022, T023 |
-| `001/T028-error-warning-types` | T028, T029, T030, T031, T043 |
-| `001/T032-testkit` | T032, T033, T034 |
-| `001/T050-obj-import` | T050, T053 |
-| `001/T055-validators` | T055, T056, T057 |
+| `001/NN-T022-geom-core` | T022, T023 |
+| `001/NN-T028-error-warning-types` | T028, T029, T030, T031, T043 |
+| `001/NN-T032-testkit` | T032, T033, T034 |
+| `001/NN-T050-obj-import` | T050, T053 |
+| `001/NN-T055-validators` | T055, T056, T057 |
+
+`NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks T009–T021 are repo plumbing, so they are `chore/` branches, not 001 slices.
 
 ### Split these — one task, several PRs
 

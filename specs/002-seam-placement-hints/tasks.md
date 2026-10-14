@@ -26,14 +26,16 @@ This feature packages more cleanly than 001, because each detector is independen
 
 | PR | Tasks |
 |---|---|
-| `002/H009-hints-crate` | H009, H010, H011 |
-| `002/H015-signals` | H012, H013, H014, H015, H016, H017 — the foundation and its three contract tests belong together; the tests define what the split *is* |
-| `002/H026-crease-detector` | H018, H019, H020, H026 |
-| `002/H027-chaining` | H027 (plus H006's spike finding) |
-| `002/H029-dart-detector` | H021, H029 |
-| `002/H030-symmetry` | H022, H030 |
-| `002/H061-identity` | H057, H059, H060, H061, H062 |
-| `002/H071-lifecycle` | H071, H072, H073 |
+| `002/NN-H009-hints-crate` | H009, H010, H011 |
+| `002/NN-H015-signals` | H012, H013, H014, H015, H016, H017 — the foundation and its three contract tests belong together; the tests define what the split *is* |
+| `002/NN-H026-crease-detector` | H018, H019, H020, H026 |
+| `002/NN-H027-chaining` | H027 (plus H006's spike finding) |
+| `002/NN-H029-dart-detector` | H021, H029 |
+| `002/NN-H030-symmetry` | H022, H030 |
+| `002/NN-H061-identity` | H057, H059, H060, H061, H062 |
+| `002/NN-H071-lifecycle` | H071, H072, H073 |
+
+`NN` is assigned when the PR is opened: the next unused position in feature 002.
 
 One PR per detector. Each is a self-contained signal with its own oracle, which is exactly the review unit you want — a sign error in the concave threshold is obvious in a 150-line detector PR and invisible in a 600-line "all detectors" PR.
 

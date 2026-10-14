@@ -50,10 +50,10 @@ Because `AGENTS.md` also says tests come first and never weaken a test. A PR con
 
 ### Several tiny tasks, one PR
 
-`T010`–`T012` are `deny.toml`, `pnpm-workspace.yaml`, and `rustfmt.toml`. Three tasks, about 60 lines, one concern (workspace configuration). One PR:
+`T009`–`T012` are the Cargo workspace, `deny.toml`, `pnpm-workspace.yaml`, and `rustfmt.toml`. Four tasks, one concern (workspace configuration). One PR:
 
 ```
-001/02-workspace-config     Tasks: T010, T011, T012
+chore/workspace-config     Tasks: T009, T010, T011, T012
 ```
 
 Splitting these into three PRs is ceremony, not review.

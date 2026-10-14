@@ -91,4 +91,6 @@ pub enum MeshElement {
     HalfEdge(HalfEdgeId),
     /// A face.
     Face(FaceId),
+    /// A whole per-element array, named, whose length disagrees with the others.
+    Storage(&'static str),
 }

@@ -5,10 +5,11 @@
 //! the same input always reports the same error (Constitution V).
 
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 
 use openplush_geom::epsilon::ModelTolerances;
 
-use super::{ManifoldMesh, ix};
+use super::{ManifoldMesh, is_sliver, ix};
 use crate::{Counted, FaceId, HalfEdgeId, MeshError, TriangleSoup, VertexId};
 
 /// Placeholder for a link not yet set. Every one is overwritten before the mesh is
@@ -27,10 +28,11 @@ struct EdgeSlot {
 }
 
 impl ManifoldMesh {
-    /// Builds the half-edge mesh of `soup`, which must already be clean: no repeated
-    /// or zero-area triangles, no unused vertices, every edge on at most two
-    /// triangles, consistent winding, and a single fan at every vertex. Anything
-    /// else is refused with the error for the first violation, in that order.
+    /// Builds the half-edge mesh of `soup`, which must already be clean: no triangle
+    /// repeating a vertex or at or below the area tolerance, no two triangles on the
+    /// same three vertices, no unused vertices, every edge on at most two triangles,
+    /// consistent winding, and a single fan at every vertex. Anything else is
+    /// refused with the error for the first violation, in that order.
     ///
     /// Repair (T067) is the caller; it is crate-private so that repair stays the
     /// only way to obtain a `ManifoldMesh`.
@@ -52,9 +54,27 @@ impl ManifoldMesh {
             if a == b || b == c || a == c {
                 return Err(MeshError::DegenerateTriangle { triangle });
             }
-            let (pa, pb, pc) = (pos[ix(a)], pos[ix(b)], pos[ix(c)]);
-            if 0.5 * (pb - pa).cross(pc - pa).length() <= tol.area() {
+            if is_sliver(pos[ix(a)], pos[ix(b)], pos[ix(c)], tol) {
                 return Err(MeshError::ZeroAreaTriangle { triangle });
+            }
+        }
+
+        // 1b. No two triangles on the same three vertices, in either winding.
+        let mut seen: BTreeMap<[u32; 3], FaceId> = BTreeMap::new();
+        for (t, tri) in tris.iter().enumerate() {
+            let triangle = FaceId::new(t as u32);
+            let mut key = *tri;
+            key.sort_unstable();
+            match seen.entry(key) {
+                Entry::Occupied(first) => {
+                    return Err(MeshError::DuplicateTriangle {
+                        triangle,
+                        first: *first.get(),
+                    });
+                }
+                Entry::Vacant(slot) => {
+                    slot.insert(triangle);
+                }
             }
         }
 

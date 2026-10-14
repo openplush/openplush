@@ -57,6 +57,15 @@ pub enum MeshError {
         /// The triangle.
         triangle: FaceId,
     },
+    /// Two triangles use the same three vertices, in either winding: a coincident
+    /// copy, or a two-sided "pillow". Repair keeps one (data-model section 3 step 2).
+    #[error("triangle {triangle:?} repeats the vertices of triangle {first:?}")]
+    DuplicateTriangle {
+        /// The later triangle.
+        triangle: FaceId,
+        /// The earlier triangle with the same vertices.
+        first: FaceId,
+    },
     /// A vertex no triangle uses. It has no one-ring, so it has no place in a
     /// half-edge mesh.
     #[error("vertex {vertex:?} is not used by any triangle")]

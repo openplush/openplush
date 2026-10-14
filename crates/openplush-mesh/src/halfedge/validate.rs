@@ -6,7 +6,7 @@
 
 use openplush_geom::epsilon::ModelTolerances;
 
-use super::{ManifoldMesh, ix};
+use super::{ManifoldMesh, is_sliver, ix};
 use crate::{FaceId, HalfEdgeId, MeshElement, MeshError, VertexId};
 
 fn broken(invariant: u8, element: MeshElement) -> MeshError {
@@ -16,14 +16,20 @@ fn broken(invariant: u8, element: MeshElement) -> MeshError {
 impl ManifoldMesh {
     /// Checks every invariant and returns the first violation as
     /// [`MeshError::BrokenInvariant`]:
-    /// 1. `next(prev(h)) == h`, `twin(twin(h)) == h`, `origin(next(h)) == origin(twin(h))`;
-    /// 2. interior face loops have length 3;
-    /// 3. each vertex's one-ring is a single fan;
-    /// 4. adjacent faces traverse their shared edge in opposite directions;
+    /// 1. `next(prev(h)) == h` and `origin(next(h)) == dest(h)`, with `next`
+    ///    staying in `h`'s face (`twin(twin(h)) == h` holds by construction of the
+    ///    paired IDs);
+    /// 2. every face's half-edges form loops of length 3, three per face;
+    /// 3. each vertex's one-ring is a single fan, with at most one outgoing
+    ///    boundary half-edge;
+    /// 4. adjacent faces traverse their shared edge in opposite directions. With
+    ///    paired twins this follows from 1 (a half-edge ends where its twin starts);
+    ///    what is checked here is that an edge's two sides lie in different faces;
     /// 5. no face has area at or below `tol.area()`.
     ///
-    /// Invariant 0 covers the structure around them: array lengths, IDs in range,
-    /// and the boundary-vertex rule (`v_out` is the boundary half-edge if one exists).
+    /// Invariant 0 covers the structure around them: array lengths (located by
+    /// array name), IDs in range, `f_he` pointing into its own face, and the
+    /// boundary-vertex rule (`v_out` is the boundary half-edge if one exists).
     pub fn debug_validate(&self, tol: &ModelTolerances) -> Result<(), MeshError> {
         let n = self.half_edge_count();
         let nv = self.vertex_count();
@@ -31,14 +37,20 @@ impl ManifoldMesh {
         let he = |i: usize| MeshElement::HalfEdge(HalfEdgeId::new(i as u32));
 
         // 0. Shapes and ranges, so everything below can index safely.
-        let lengths_ok = n.is_multiple_of(2)
-            && [self.he_prev.len(), self.he_origin.len(), self.he_face.len()]
-                .iter()
-                .chain([self.corner_src.len(), self.corner_uv.len()].iter())
-                .all(|&l| l == n)
-            && self.v_out.len() == nv;
-        if !lengths_ok {
-            return Err(broken(0, MeshElement::HalfEdge(HalfEdgeId::new(0))));
+        let lengths = [
+            ("he_next", self.he_next.len(), n),
+            ("he_prev", self.he_prev.len(), n),
+            ("he_origin", self.he_origin.len(), n),
+            ("he_face", self.he_face.len(), n),
+            ("corner_src", self.corner_src.len(), n),
+            ("corner_uv", self.corner_uv.len(), n),
+            ("v_out", self.v_out.len(), nv),
+        ];
+        if !n.is_multiple_of(2) {
+            return Err(broken(0, MeshElement::Storage("he_next")));
+        }
+        if let Some(&(name, _, _)) = lengths.iter().find(|(_, len, want)| len != want) {
+            return Err(broken(0, MeshElement::Storage(name)));
         }
         for i in 0..n {
             let in_range = ix(self.he_next[i].index()) < n
@@ -55,63 +67,74 @@ impl ManifoldMesh {
             }
         }
 
-        // 1 and 4, per half-edge.
+        // 1, per half-edge.
         for i in 0..n {
             let h = HalfEdgeId::new(i as u32);
-            if self.next(self.prev(h)) != h || h.twin().twin() != h {
-                return Err(broken(1, he(i)));
-            }
-            if self.origin(self.next(h)) != self.dest(h) {
-                return Err(broken(1, he(i)));
-            }
-            if self.face(self.next(h)) != self.face(h) {
-                return Err(broken(1, he(i)));
-            }
-            // 4: twins point opposite ways (by 1, h ends where its twin starts, and
-            // vice versa) and, between two faces, belong to different faces.
-            let twin_face = self.face(h.twin());
-            if self.origin(h) == self.dest(h)
-                || (self.face(h).is_some() && self.face(h) == twin_face)
+            if self.next(self.prev(h)) != h
+                || self.origin(self.next(h)) != self.dest(h)
+                || self.face(self.next(h)) != self.face(h)
             {
+                return Err(broken(1, he(i)));
+            }
+        }
+
+        // 2. Every half-edge in a face is on a loop of exactly three, and there are
+        //    exactly three per face, so no face has a second (stray) loop.
+        let mut in_faces = 0usize;
+        for i in 0..n {
+            let h = HalfEdgeId::new(i as u32);
+            if self.face(h).is_none() {
+                continue;
+            }
+            in_faces += 1;
+            let (h1, h2) = (self.next(h), self.next(self.next(h)));
+            if self.next(h2) != h || h1 == h || h2 == h {
+                return Err(broken(2, he(i)));
+            }
+        }
+        if in_faces != 3 * nf {
+            return Err(broken(2, MeshElement::Storage("he_face")));
+        }
+
+        // 4. The two sides of an edge lie in different faces.
+        for i in 0..n {
+            let h = HalfEdgeId::new(i as u32);
+            if self.face(h).is_some() && self.face(h) == self.face(h.twin()) {
                 return Err(broken(4, he(i)));
             }
         }
 
-        // 2 and 5, per face.
+        // 5, per face.
         for (f, &h0) in self.f_he.iter().enumerate() {
-            let face = MeshElement::Face(FaceId::new(f as u32));
             let (h1, h2) = (self.next(h0), self.next(self.next(h0)));
-            if self.next(h2) != h0 || h1 == h0 || h2 == h0 {
-                return Err(broken(2, face));
-            }
             let (a, b, c) = (
                 self.position(self.origin(h0)),
                 self.position(self.origin(h1)),
                 self.position(self.origin(h2)),
             );
-            if 0.5 * (b - a).cross(c - a).length() <= tol.area() {
-                return Err(broken(5, face));
+            if is_sliver(a, b, c, tol) {
+                return Err(broken(5, MeshElement::Face(FaceId::new(f as u32))));
             }
         }
 
         // 3 and the boundary-vertex rule, per vertex.
         let mut degree = vec![0usize; nv];
-        let mut has_boundary = vec![false; nv];
+        let mut boundary_out = vec![0usize; nv];
         for i in 0..n {
             let v = ix(self.he_origin[i].index());
             degree[v] += 1;
-            has_boundary[v] |= self.he_face[i].is_none();
+            boundary_out[v] += usize::from(self.he_face[i].is_none());
         }
         for v in 0..nv {
             let vertex = VertexId::new(v as u32);
             let out = self.v_out[v];
             if ix(out.index()) >= n
                 || self.origin(out) != vertex
-                || has_boundary[v] != self.face(out).is_none()
+                || (boundary_out[v] > 0) != self.face(out).is_none()
             {
                 return Err(broken(0, MeshElement::Vertex(vertex)));
             }
-            if degree[v] == 0 || self.outgoing(vertex).count() != degree[v] {
+            if degree[v] == 0 || boundary_out[v] > 1 || self.outgoing(vertex).count() != degree[v] {
                 return Err(broken(3, MeshElement::Vertex(vertex)));
             }
         }

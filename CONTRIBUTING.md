@@ -27,7 +27,7 @@ OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spe
 - **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
 - **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
 - **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
-- Branch names: `001/T050-obj-import` for implementation, `chore/slug` for repo work, `NNN-feature-slug` for specs.
+- Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#branch-naming).
 
 Why so strict: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A sign error in a dihedral angle or an epsilon against the wrong scale is a one-line defect that produces plausible output. It does not survive a focused review of 200 lines, and it sails through 2,000.
 
@@ -65,7 +65,7 @@ Spec Kit tracks the active feature in `.specify/feature.json`, which is local an
 
 On Windows, Claude Code runs the `sh` scripts through Git Bash. Verified working as of 2026-10-13 for `create-new-feature-branch.sh` and `check-prerequisites.sh`. If a script does fail, switch to PowerShell with `specify integration upgrade claude --script ps --force`.
 
-One known wrinkle: the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check it with `git log --oneline -3` and fast-forward it onto the trunk if it is missing commits.
+`/speckit-specify` creates a local `NNN-feature-slug` branch from `main`, which is the trunk. Rename it to the slice name before pushing: `git branch -m 003/01-spec`.
 
 ## Development environment
 The build setup is tasks `T009`–`T021` in [001's tasks](specs/001-pattern-pipeline/tasks.md) and does not exist yet. Planned: Rust stable with the `wasm32-unknown-unknown` target, Node LTS, and pnpm. Once it lands, [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the walkthrough.

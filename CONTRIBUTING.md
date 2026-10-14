@@ -2,7 +2,7 @@
 
 Thanks for helping. OpenPlush is pre-alpha with no code yet, but both features are fully specified and planned, so there is concrete work to pick up:
 
-- **The most useful contribution right now is test models.** Nothing in `fixtures/` exists, and several success criteria cannot be measured until it does. A model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change — it becomes a regression oracle and it is the only way to verify that feature 002's hints land where experienced makers actually cut. No code needed.
+- **The most useful contribution right now is test models.** `fixtures/` holds only generated shapes (a cube, a sphere, a capsule, and the defect corpus), so several success criteria cannot be measured until real plush models arrive. A model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change — it becomes a regression oracle and it is the only way to verify that feature 002's hints land where experienced makers actually cut. No code needed.
 - **Engine work** starts at [001 tasks](specs/001-pattern-pipeline/tasks.md) `T001`–`T008` (research spikes) and `T009`–`T021` (workspace setup). `T007` is the highest-value spike: the exact-seam-parity decision rests the whole pattern stage on it and nobody has verified it yet.
 - **Spec and plan review** is still welcome. Five minor defaults remain open in 001, and every fabric preset value is currently a guess.
 

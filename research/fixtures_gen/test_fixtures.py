@@ -1,8 +1,9 @@
 """Oracle tests for the committed fixture corpus. Run: python3 -m unittest -v (from this directory).
 
 The oracles read the committed files from disk and share no code with the generator,
-so a generator bug cannot hide itself. Detectors run in the repair order (weld, then
-drop duplicates, then topology) so each defect fixture trips exactly one of them.
+so a generator bug cannot hide itself. Each defect fixture trips exactly one detector on
+its input mesh: the oracle welds and drops duplicate faces, then evaluates every topology
+detector together on that mesh without repairing anything.
 """
 
 import json
@@ -16,7 +17,7 @@ from typing import Generic, TypeVar
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 MESHES = ("capsule", "cube", "sphere")
-# Every class the repair pipeline detects. Non-finite input fails at import instead, so it is not here.
+# The nine defect classes the corpus covers. Non-finite input fails at import instead, so it is not here.
 DEFECTS = (
     "bowtie-vertex",
     "duplicate-face",

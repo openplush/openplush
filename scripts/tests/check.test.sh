@@ -36,6 +36,14 @@ expect_plan "default runs every gate" "" \
 expect_plan "wasm step requires every wasm canary to run at least one test" "wasm" \
   "--test wasm_determinism --target wasm32-unknown-unknown --locked (must run at least 1 test)" \
   "--test wasm_predicates --target wasm32-unknown-unknown --locked (must run at least 1 test)"
+# The guard itself, on canned runner output (the plan cases above never run it).
+eval "$(grep '^canary_ran()' "$check")"
+for out in "test result: ok. 1 passed; 0 failed" "test result: ok. 10 passed; 0 failed"; do
+  if canary_ran <<<"$out"; then ok "canary counts as run: $out"; else bad "canary counts as run: $out"; fi
+done
+for out in "no tests to run!" "test result: ok. 0 passed; 0 failed" "test result: FAILED. 1 passed; 1 failed"; do
+  if canary_ran <<<"$out"; then bad "canary does not count as run: $out"; else ok "canary does not count as run: $out"; fi
+done
 expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "engine group is boundary, fmt, clippy, test" "engine" \

@@ -72,4 +72,4 @@ Worth knowing before planning a release:
 {"feature_directory":"specs/001-pattern-pipeline"}
 ```
 
-Note that the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check that it includes the work you expect (`git log --oneline -3`) and fast-forward it onto the trunk if it does not. This is recorded as an open question in 001's plan.
+The Spec Kit git extension creates a local `NNN-feature-slug` branch from `main`, which is the trunk. Rename it to the slice name before pushing (`git branch -m 003/01-spec`); see [`AGENTS.md`](../AGENTS.md#branch-naming).

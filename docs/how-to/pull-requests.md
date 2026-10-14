@@ -56,7 +56,7 @@ Because `AGENTS.md` also says tests come first and never weaken a test. A PR con
 chore/workspace-config     Tasks: T009, T010, T011, T012
 ```
 
-Splitting these into three PRs is ceremony, not review.
+Splitting these into four PRs is ceremony, not review.
 
 ### One task, several PRs
 
@@ -122,7 +122,7 @@ Only if over budget. What makes the change indivisible.
 chore/pr-policy
 ```
 
-`NNN` is the feature, `NN` is the merge order, and the slug is what the slice contains. You should be able to pick any branch and know what it is and what it waits on without opening it.
+`NNN` is the feature, `NN` is the slice's position in it (assigned when the PR opens, never reused), and the slug is what the slice contains. Stacked slices merge in `NN` order. You should be able to pick any branch and know what it is and what it waits on without opening it.
 
 ### Why stack
 

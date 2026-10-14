@@ -76,7 +76,7 @@ scripts/check.sh --setup   # the pinned Rust toolchain, cargo-deny, and the wasm
 scripts/check.sh           # every gate CI runs
 ```
 
-`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. Every CI workflow calls the same script (`engine`, `deny`, `wasm`, `shell`), so a green local run of a step means a green CI run of it. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
+`scripts/check.sh engine` runs the fast subset (boundary, hygiene, fmt, clippy, tests). Name individual steps to run just those (`boundary hygiene fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. Every CI workflow calls the same script (`engine`, `deny`, `wasm`, `shell`), so a green local run of a step means a green CI run of it. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
 
 ### Tests that must also run on wasm32
 `cargo test --target wasm32-unknown-unknown` only runs tests marked `#[wasm_bindgen_test]`. Plain `#[test]` functions are skipped there, with "no tests to run!" and exit 0. And `#[wasm_bindgen_test]` on its own compiles to nothing natively, so a test using only that attribute silently never runs off wasm. For a test that must run on both targets, use both attributes, as `crates/openplush-geom/tests/wasm_determinism.rs` does:

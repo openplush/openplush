@@ -120,7 +120,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 
 **Every candidate dependency, and every crate in their combined dependency graph, passes the Constitution IX allowlist.** No ADR or replacement needed.
 
-Method: a throwaway crate depending on each candidate at its current version, with the feature settings the plan names (`faer` with `default-features = false`), checked with `cargo deny check licenses` (v0.20.2) against the repository's own `deny.toml`. That is the same gate CI runs, over the **full transitive graph (409 crates)**, not just the top-level licenses.
+Method: a throwaway crate depending on each candidate at its current version, with the feature settings the plan names (`faer` with `default-features = false`), checked with `cargo deny check licenses` (v0.20.2) against `deny.toml` as proposed in #26 (commit `217d4e0`; not yet on `main`). That covers the **full transitive graph (409 crates)**, not just the top-level licenses. `deny.toml` sets `all-features = true`, so the checked graph is a superset of what the plan's feature settings would ship. Licenses only; advisories are noted below but are not part of T006.
 
 | Crate | Version | License | Note |
 |---|---|---|---|
@@ -141,7 +141,9 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 1. **The crates.io crate named `sparrow` is a different project**, an unrelated in-memory database (Apache-2.0, `DonaCrio/sparrow`). `sparrow = "…"` in a manifest would silently pull the wrong crate.
 2. **JeroenGar's `sparrow` is not published** and must be a git dependency. `deny.toml` denies unknown git sources, so adopting it means an `allow-git` entry pinned to a commit.
 3. **Its `Cargo.toml` has no `license` field.** The MIT license exists only as a `LICENSE` file. That needs a `[[licenses.clarify]]` entry in `deny.toml` keyed to the file's hash, so a future relicense fails the gate instead of passing silently.
-4. **It is an application crate, not a library**: it depends on `clap`, `ctrlc`, `fern`, `num_cpus`, and `rayon`. Using it in WASM needs either its library surface behind features or our own optimizer over `jagua-rs`. That is a WASM question for **S4**, recorded here because the audit surfaced it.
+4. **Its library is not WASM-ready as a dependency**: it is a lib + bin crate, and the library's non-optional dependencies include `clap`, `fern`, `num_cpus`, `rayon`, and `jiff`. Its manifest already gates `ctrlc` off wasm32 and enables `getrandom`'s `wasm_js`, so the author targets WASM, but `rayon` conflicts with `crates/AGENTS.md`. Upstream feature-gating, or our own optimizer over `jagua-rs`, is a question for **S4**, recorded here because the audit surfaced it.
+
+**Advisories (not part of T006)** [solid — `cargo deny check advisories` on the same graph, 2026-10-14]: four crates are flagged **unmaintained**, and there are no vulnerability advisories. `paste` (RUSTSEC-2024-0436, a proc-macro) via `baby_shark` → `faer` 0.22 → `gemm` 0.18, not via `faer` 0.24 itself. `rustybuzz` and `ttf-parser` (RUSTSEC-2026-0192 / -0206) via `svg2pdf` → `usvg`. `bincode` 1 (RUSTSEC-2025-0141) via `threecrate`. `deny.toml` will fail on each, so the PR that adopts the dependency decides: a replacement, or a targeted `[advisories] ignore = [{ id, reason }]`. The gate stays strict until then.
 
 **Also surfaced (not license issues; for S1/S4)** [verify]: `baby_shark` 0.3.12 depends on `rayon` and on its own `faer` 0.22 (a second faer version alongside 0.24), and `jagua-rs` 1.1.0 pulls `rayon` with default features. `crates/AGENTS.md` forbids `rayon` on the WASM path, so S1 and S4 need to check whether those dependencies are optional.
 

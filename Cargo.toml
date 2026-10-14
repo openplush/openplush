@@ -13,6 +13,9 @@ rust-version = "1.97"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/openplush/openplush"
 
+[workspace.dependencies]
+wasm-bindgen-test = "0.3.79"
+
 [workspace.lints.rust]
 unsafe_code = "forbid"
 missing_docs = "warn"

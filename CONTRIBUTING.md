@@ -76,7 +76,22 @@ cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
 cargo build --workspace --target wasm32-unknown-unknown
 cargo deny check          # cargo install cargo-deny --locked
 pnpm install
+
+# wasm32 (CI runs these too). The runner must match wasm-bindgen in Cargo.lock:
+cargo install wasm-bindgen-cli --version "$(cargo metadata --format-version 1 --locked | jq -r '.packages[] | select(.name == "wasm-bindgen") | .version')" --locked
+cargo test --workspace --target wasm32-unknown-unknown
 ```
+
+### Tests that must also run on wasm32
+`cargo test --target wasm32-unknown-unknown` only runs tests marked `#[wasm_bindgen_test]`. Plain `#[test]` functions are skipped there, with "no tests to run!" and exit 0. And `#[wasm_bindgen_test]` on its own compiles to nothing natively, so a test using only that attribute silently never runs off wasm. For a test that must run on both targets, use both attributes, as `crates/openplush-geom/tests/wasm_determinism.rs` does:
+
+```rust
+#[cfg_attr(not(target_arch = "wasm32"), test)]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+fn my_test() { /* … */ }
+```
+
+The crate needs `[target.'cfg(target_arch = "wasm32")'.dev-dependencies] wasm-bindgen-test.workspace = true`.
 
 The engine crates in `crates/` are scaffolds until their tasks land. [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough once the pipeline exists.
 

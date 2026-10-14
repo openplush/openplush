@@ -1,6 +1,7 @@
-//! Determinism canary (Constitution V, SC-008).
+//! IEEE-754 determinism canary and wasm test-harness smoke test.
 //!
-//! The native-vs-WASM export hash comparison only makes sense if basic IEEE-754
+//! A prerequisite for SC-008, not its test: T017 owns the native-vs-WASM export
+//! hash comparison (Constitution V). That comparison only makes sense if basic IEEE-754
 //! arithmetic gives bit-identical results on both targets. Add, multiply, divide,
 //! and sqrt are correctly rounded by the standard, so they must match. The
 //! expected bit patterns were computed independently (CPython `struct.pack`), not

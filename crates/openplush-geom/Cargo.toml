@@ -11,5 +11,6 @@ publish = false
 [lints]
 workspace = true
 
-[dev-dependencies]
-wasm-bindgen-test = "0.3.79"
+# Only the wasm32 test build needs the harness; native tests use plain #[test].
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test.workspace = true

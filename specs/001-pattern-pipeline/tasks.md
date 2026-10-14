@@ -34,7 +34,9 @@ Small config and scaffolding tasks sharing one concern:
 | `chore/repo-governance` | T019, T020, T021 |
 | `chore/clippy-boundary-lints` | T172 (landed as #33) |
 | `chore/check-script` | T173 (landed as #34) |
-| `001/NN-T028-error-warning-types` | T028, T029, T030, T031, T043 |
+| `001/25-T028-engine-error` (#57) | T028 |
+| `001/26-T029-warning-remedy` (#58), stacked on 25 | T029, T030 |
+| `001/27-T031-staged-result` (#59), stacked on 26 | T031 |
 | `001/NN-T032-testkit` | T032, T033, T034 |
 | `001/NN-T050-obj-import` | T050, T053 |
 | `001/NN-T055-validators` | T055, T056, T057 |
@@ -141,8 +143,8 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 - [ ] T175 The element IDs and proposal types of data-model §13a, **types only** (no algorithms), each in its owning crate so T028–T031 can name them: `ComponentId` in `openplush-mesh`; `SeamKind`, `ChartId`, `SeamChainId`, `ChartFailure`, `Proposal`, `ProposalKind`, `SeamReason`, `ProposalId` (with its FNV-1a derivation) in `openplush-seams`; `PieceId` in `openplush-pattern`; `Format` in `openplush-io`. One PR per crate: `001/21-T175-seams-types` (#49), `001/22-T175-component-id` (#50), `001/23-T175-piece-id` (#51), `001/24-T175-import-format` (#52). Test first: `ProposalId` is stable under unrelated renumbering and matches independently computed FNV-1a vectors, one per kind byte and per seam-kind byte, plus a multi-byte edge index to pin little-endian. *Added 2026-10-14: T028 referenced Phase 3 types (T069's `SeamKind`, charts, pieces), so Phase 2 could not compile without them*
 - [ ] T028 `crates/openplush-pipeline/src/error.rs` — `EngineError` per contracts/engine-api.md section 5, every variant carrying a location
 - [ ] T029 `crates/openplush-pipeline/src/warning.rs` — `WarningSet`, `Warning`, and `Remedy` as an **enum** of `Actionable` and `Advisory`, never `Option<Proposal>`. FR-065 is enforced by the type: a warning that explains nothing must not be constructible
-- [ ] T030 [P] `crates/openplush-pipeline/tests/warning_determinism.rs` — `WarningSet` ordering is stable by code then target regardless of insertion order (Constitution V)
-- [ ] T031 `crates/openplush-pipeline/src/lib.rs` — `Staged<T>`, `StageResult<T>`, and the stage signatures from the contract as unimplemented stubs
+- [ ] T030 [P] `crates/openplush-pipeline/src/warning/tests.rs` — `WarningSet` ordering is stable by code then target regardless of insertion order (Constitution V). *2026-10-14: a unit test until the first shipped `WarningCode` exists (none ship yet; the test uses `#[cfg(test)]` codes an integration test cannot see); it moves to `tests/warning_determinism.rs` with that code*
+- [ ] T031 `crates/openplush-pipeline/src/stage.rs` — `Staged<T>` and `StageResult<T>`. *2026-10-14: narrowed from "and the stage signatures as unimplemented stubs": most types those signatures name do not exist yet, and stub bodies cannot panic (`unimplemented`/`todo` are denied). Each stage signature lands with the task that owns its types; T043 grows with them*
 
 ### Test machinery and fixtures
 

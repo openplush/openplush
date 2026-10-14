@@ -1,6 +1,6 @@
 # Automated adversarial review, by the agents in .claude/agents/
-# (pr-reviewer always; spec-reviewer when specs change; mutation-auditor only on
-# request). Advisory, not a gate: it posts findings as review comments and never
+# (pr-reviewer always; spec-reviewer when specs change; docs-reviewer when a public
+# surface or docs/ changes; mutation-auditor only on request). Advisory, not a gate: it posts findings as review comments and never
 # approves. The maintainer still merges.
 #
 # Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
@@ -129,6 +129,8 @@ jobs:
                each told the PR number, base branch, and head SHA:
                - pr-reviewer: always.
                - spec-reviewer: if anything under specs/ or .specify/memory/ changed.
+               - docs-reviewer: if anything under crates/openplush-pipeline/src/,
+                 bindings/, packages/engine-client/, specs/*/contracts/, or docs/ changed.
                - mutation-auditor: only if MUTATION AUDIT REQUESTED is true and a
                  .rs file under crates/ changed. If it is false and engine code
                  changed, say in the summary that the auditor can be requested
@@ -149,7 +151,8 @@ jobs:
                `gh pr comment ${{ github.event.pull_request.number }} --body-file <file>`.
                Its first line is exactly
                `${{ env.SUMMARY_HEAD }}`
-               (the job fails if no new comment starts that way). Then: which agents ran, the count of 🔴/🟡/🟣 findings, the mutation kill
+               (the job fails if no new comment starts that way). Then: every agent above
+               as ran or skipped, with the reason for each skip, the count of 🔴/🟡/🟣 findings, the mutation kill
                count if the auditor ran, findings that do not map to a diff line, and
                "Nothing blocking" if that is true. End it with the same footer.
                Post it even when there are no findings or a step failed: say what

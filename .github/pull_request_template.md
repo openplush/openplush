@@ -44,6 +44,11 @@
 <!-- Anything deliberately deferred. Error handling you did not write. Be explicit:
      a reviewer cannot see an absence. Empty is a red flag, not a clean bill. -->
 
+## Docs
+
+<!-- The as-built docs this PR updates (rustdoc, docs/reference/, docs/explanation/),
+     or "n/a: no public change". See AGENTS.md, Specs and docs. -->
+
 ## Size
 
 <!-- Only if over the 400-line budget. Name what makes the change indivisible.
@@ -60,4 +65,5 @@
      - [ ] Stack section filled in, and the parent PR links to this one
      - [ ] No golden snapshot updated to make a test pass
      - [ ] Skipped section filled in honestly
+     - [ ] Public changes have their as-built docs, or Docs says n/a
 -->

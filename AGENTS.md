@@ -55,17 +55,19 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 Not yet available: `openplush-cli` fixture runs, the release `openplush-wasm` build, the web dev server.
 
 ## Definition of done
-All gates for the lane you touched pass locally, and the PR states edge cases (degenerate geometry, empty input, seams and boundaries, scale extremes), failure modes with their typed errors, tests and what each proves, and what was skipped.
+All gates for the lane you touched pass locally, any public change has its as-built docs (see Specs and docs), and the PR states edge cases (degenerate geometry, empty input, seams and boundaries, scale extremes), failure modes with their typed errors, tests and what each proves, and what was skipped.
 
 ## Specs and docs
 - Specs state what and why, never how; technology choices go in `plan.md` / `research.md`.
 - Tag uncertain claims in research and plan docs: `[solid]`, `[likely]`, `[speculative]`, `[verify]`.
 - Absolute dates (YYYY-MM-DD). Decisions go in the plan's Decision Ledger; principle changes need an ADR (MADR).
+- `specs/` records intent and decisions; `docs/` and rustdoc describe what exists. Once code lands it is the source of truth: the spec section it implements points to the as-built docs and stops changing.
+- A PR that changes public behaviour updates its docs in the same PR: rustdoc for `openplush-pipeline` items; `docs/reference/` for error and warning strings, CLI, worker protocol, and project schema; `docs/explanation/architecture.md` for a new stage, crate, or dependency edge. No public change, no docs.
 
 ## Commits and PRs
 Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 - Conventional Commits (`feat(flatten): …`). Every PR uses `.github/pull_request_template.md`.
-- One reviewable slice: ≤ 400 changed lines of hand-written source (fixtures, generated types, snapshots, and lock files excluded). Over → split, or justify in a `Size` section by naming what is indivisible.
+- One reviewable slice: ≤ 400 changed lines of hand-written source (fixtures, generated types, snapshots, lock files, and `docs/` prose excluded). Over → split, or justify in a `Size` section by naming what is indivisible.
 - A PR is a test task plus the implementation that makes it pass, test commit first.
 - Never in one PR: two user stories; two crates (a thin wiring commit excepted); spec and implementation; refactor and behaviour change; chores and feature work.
 - Branches: `NNN/NN-slug` for feature slices (`NN` = position in the feature, never reused; implementation slugs include the task ID) or `chore/slug`. The slug names the content, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.

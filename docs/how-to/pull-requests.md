@@ -188,7 +188,7 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 ## Tooling
 
 - [`.github/pull_request_template.md`](../../.github/pull_request_template.md) pre-fills the description with the required sections as HTML comments, so an unfilled section is visibly empty rather than silently absent.
-- [`.github/workflows/pr-size.yml`](../../.github/workflows/pr-size.yml) measures the hand-written diff and comments when a PR is over budget. **It never fails and never blocks.** Whether a large PR is justified is a judgement a CI job cannot make, and a check that merely verified a `Size` section exists would be satisfied by typing anything at all.
+- No CI job measures PR size; reviewers enforce the budget. Whether a large PR is justified is a judgement a CI job cannot make, and a check that merely verified a `Size` section exists would be satisfied by typing anything at all.
 
 ## Checklist before opening
 

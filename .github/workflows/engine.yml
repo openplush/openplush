@@ -48,4 +48,6 @@ jobs:
         with:
           tool: cargo-deny@0.20.2
           fallback: none
+      # check.sh runs cargo deny --locked: a stale Cargo.lock must fail, not be
+      # regenerated and checked instead.
       - run: scripts/check.sh deny

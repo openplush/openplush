@@ -28,7 +28,7 @@ expect_plan() {
 
 expect_plan "default runs every gate" "" \
   "cargo fmt --check" "cargo clippy --workspace --all-targets --locked -- -D warnings" \
-  "cargo test --workspace --locked" "scripts/check-boundary.sh" "cargo deny check" \
+  "cargo test --workspace --locked" "scripts/check-boundary.sh" "cargo deny --locked check" \
   "cargo build --workspace --target wasm32-unknown-unknown --locked" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
@@ -56,7 +56,7 @@ else
 fi
 
 out=$("$check" --dry-run engine 2>&1)
-if [[ $out != *"cargo deny check"* && $out != *"pnpm"* ]]; then
+if [[ $out != *"cargo deny"* && $out != *"pnpm"* ]]; then
   ok "engine group runs nothing else"
 else
   bad "engine group runs nothing else" "$out"

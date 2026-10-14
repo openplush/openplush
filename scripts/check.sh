@@ -94,17 +94,18 @@ for step in "${steps[@]}"; do
     test) run cargo test --workspace --locked ;;
     deny)
       ((dry)) || command -v cargo-deny >/dev/null || die "cargo-deny not installed; run scripts/check.sh --setup"
-      run cargo deny check
+      run cargo deny --locked check
       ;;
     wasm)
-      run cargo build --workspace --target wasm32-unknown-unknown --locked
-      run cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings
+      # Check the runner first: failing after a full build and clippy wastes minutes.
       if ! ((dry)); then
         want=$(wasm_bindgen_version)
         have=$(installed_version wasm-bindgen-test-runner)
         [[ -z $want || $have == "$want" ]] ||
           die "wasm-bindgen-test-runner ${have:-missing}, Cargo.lock needs $want; run scripts/check.sh --setup"
       fi
+      run cargo build --workspace --target wasm32-unknown-unknown --locked
+      run cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings
       # Only #[wasm_bindgen_test] tests run here; see CONTRIBUTING.
       run cargo test --workspace --target wasm32-unknown-unknown --locked
       ;;

@@ -76,7 +76,7 @@ scripts/check.sh --setup   # the pinned Rust toolchain, cargo-deny, and the wasm
 scripts/check.sh           # every gate CI runs
 ```
 
-`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. CI calls the same script, so a green local run means a green CI run. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
+`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. The engine CI job calls the same script, so a green local `engine` run means a green engine CI run. (The wasm and shell workflows switch to it in a follow-up.) `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
 
 The engine crates in `crates/` are scaffolds until their tasks land. [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough once the pipeline exists.
 
@@ -88,7 +88,7 @@ CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deli
 | `unsafe_code = "forbid"` | Constitution, engine lane. Exceptions need an ADR. |
 | `missing_docs` | Public items document their pre- and postconditions (`crates/AGENTS.md`). |
 | `missing_docs` on test files | Each `tests/*.rs` file is its own crate, so it needs a `//!` line. Make it say what the file proves. |
-| `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed inside `#[test]` code (`clippy.toml`); test helpers outside a `#[test]` fn return `Result` and use `?`. |
+| `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed in `#[test]` functions and `#[cfg(test)]` modules (`clippy.toml`). Code outside those, such as helpers in `tests/*.rs` and everything in `openplush-testkit`, returns `Result` and uses `?`. |
 | `disallowed_types`: `HashMap`, `HashSet` | Iteration order is unspecified, which breaks byte-identical output (Constitution V). |
 | `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |
 

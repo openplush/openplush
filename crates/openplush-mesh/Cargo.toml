@@ -8,5 +8,9 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[dependencies]
+openplush-geom = { path = "../openplush-geom" }
+thiserror = "2.0.21"
+
 [lints]
 workspace = true

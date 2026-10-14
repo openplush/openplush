@@ -426,6 +426,14 @@ name = "openplush-testkit"
 version = "0.0.0"
 
 [[package]]
+name = "openplush-wasm"
+version = "0.0.0"
+dependencies = [
+ "openplush-pipeline",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"

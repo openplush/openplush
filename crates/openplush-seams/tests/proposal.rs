@@ -141,3 +141,53 @@ fn accessors_return_what_was_built() -> Result<(), SeamsError> {
     assert_eq!(p.explanation(), "why");
     Ok(())
 }
+
+#[test]
+fn every_kind_byte_and_seam_kind_byte_is_pinned() -> Result<(), SeamsError> {
+    // One edge, index 0, unless noted. Each vector computed independently
+    // (Python FNV-1a 64) from data-model section 13a's encoding, so moving any
+    // byte, or giving two kinds the same byte, fails here.
+    let chart = ChartId::new(0);
+    let seam = ProposalKind::Seam {
+        reason: SeamReason::Crease,
+    };
+    let cases: [(ProposalKind, u32, SeamKind, &str); 9] = [
+        (
+            ProposalKind::CloseChart {
+                chart,
+                failure: ChartFailure::Closed,
+            },
+            0,
+            SeamKind::Cut,
+            "d7e4fcfa299d713d",
+        ),
+        (
+            ProposalKind::Dart { chart },
+            0,
+            SeamKind::Cut,
+            "fb4e98c73babab04",
+        ),
+        (
+            ProposalKind::SplitPiece { chart },
+            0,
+            SeamKind::Cut,
+            "9111c5600580fdaf",
+        ),
+        (seam, 0, SeamKind::Cut, "b47b612d178f3776"),
+        (seam, 0, SeamKind::Dart, "b47b622d178f3929"),
+        (seam, 0, SeamKind::Opening, "b47b5f2d178f3410"),
+        (seam, 0, SeamKind::FabricBoundary, "b47b602d178f35c3"),
+        (seam, 0, SeamKind::Mandatory, "b47b652d178f3e42"),
+        // Edge 0x01020304 pins the little-endian edge encoding.
+        (seam, 0x0102_0304, SeamKind::Cut, "35e5e5ceacc443f2"),
+    ];
+    for (kind, edge, seam_kind, want) in cases {
+        let p = Proposal::new(kind, edits(&[(edge, seam_kind)]), String::new())?;
+        assert_eq!(
+            p.id().to_hex(),
+            want,
+            "{kind:?} edge {edge:#x} {seam_kind:?}"
+        );
+    }
+    Ok(())
+}

@@ -1,6 +1,6 @@
-/// What a seam edge is for (data-model section 4). The declaration order is part
-/// of `ProposalId`'s derivation (section 13a): append new kinds at the end, never
-/// reorder.
+/// What a seam edge is for (data-model section 4). Each kind's byte in
+/// `ProposalId`'s derivation (section 13a) is fixed by `hash_byte` and pinned by
+/// tests; a new kind gets the next unused byte, and no byte ever changes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum SeamKind {

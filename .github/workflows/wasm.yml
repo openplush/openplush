@@ -28,9 +28,6 @@ jobs:
       # Installs the toolchain and wasm32 target pinned in rust-toolchain.toml.
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - run: cargo build --workspace --target wasm32-unknown-unknown --locked
-      # cfg(target_arch = "wasm32") code is invisible to the native clippy run.
-      - run: cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings
       # The test runner must match the wasm-bindgen version in Cargo.lock exactly.
       - name: wasm-bindgen version from Cargo.lock
         id: wasm-bindgen
@@ -48,15 +45,7 @@ jobs:
         with:
           tool: wasm-bindgen-cli@${{ steps.wasm-bindgen.outputs.version }}
           fallback: none
-      # Runner is set in .cargo/config.toml; tests run under Node. A test only runs
-      # here if it carries #[wasm_bindgen_test] (see CONTRIBUTING); plain #[test]
-      # functions are skipped on wasm32 with "no tests to run!".
-      - run: cargo test --workspace --target wasm32-unknown-unknown --locked
-      # The canary must actually run on wasm32. Without this, losing its
-      # #[wasm_bindgen_test] attribute makes the job print "no tests to run!" and pass.
-      - name: determinism canary ran on wasm32
-        shell: bash
-        run: |
-          set -euo pipefail
-          cargo test -p openplush-geom --test wasm_determinism --target wasm32-unknown-unknown --locked 2>&1 | tee canary.log
-          grep -q 'test result: ok. 1 passed' canary.log
+      # The same entry point contributors run (T173): build, wasm32 clippy (it sees
+      # cfg(target_arch = "wasm32") code the native run cannot), the tests under
+      # Node, and a check that every tests/wasm_*.rs canary really ran on wasm32.
+      - run: scripts/check.sh wasm

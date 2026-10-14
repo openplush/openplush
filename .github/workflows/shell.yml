@@ -31,11 +31,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm test
-      - name: playwright
-        if: hashFiles('apps/web/package.json') != ''
-        run: |
-          pnpm --filter web --fail-if-no-match exec playwright install --with-deps chromium
-          pnpm --filter web --fail-if-no-match exec playwright test
+      # The same entry point contributors run (T173): install, typecheck, unit
+      # tests, and Playwright once apps/web exists.
+      - run: scripts/check.sh shell

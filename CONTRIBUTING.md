@@ -76,7 +76,7 @@ scripts/check.sh --setup   # the pinned Rust toolchain, cargo-deny, and the wasm
 scripts/check.sh           # every gate CI runs
 ```
 
-`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. The engine CI job calls the same script, so a green local `engine` run means a green engine CI run. (The wasm and shell workflows switch to it in a follow-up.) `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
+`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. Every CI workflow calls the same script (`engine`, `deny`, `wasm`, `shell`), so a green local run of a step means a green CI run of it. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
 
 ### Tests that must also run on wasm32
 `cargo test --target wasm32-unknown-unknown` only runs tests marked `#[wasm_bindgen_test]`. Plain `#[test]` functions are skipped there, with "no tests to run!" and exit 0. And `#[wasm_bindgen_test]` on its own compiles to nothing natively, so a test using only that attribute silently never runs off wasm. For a test that must run on both targets, use both attributes, as `crates/openplush-geom/tests/wasm_determinism.rs` does:
@@ -88,6 +88,8 @@ fn my_test() { /* … */ }
 ```
 
 The crate needs `[target.'cfg(target_arch = "wasm32")'.dev-dependencies] wasm-bindgen-test.workspace = true`.
+
+Name such a file `tests/wasm_<topic>.rs`. `scripts/check.sh wasm` treats every file with that name as a canary and fails if it runs no test on wasm32, which is what happens silently if the attribute goes missing.
 
 The engine crates in `crates/` are scaffolds until their tasks land. [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough once the pipeline exists.
 

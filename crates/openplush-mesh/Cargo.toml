@@ -1,0 +1,12 @@
+[package]
+name = "openplush-mesh"
+description = "TriangleSoup, validation, repair, and the half-edge ManifoldMesh"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true

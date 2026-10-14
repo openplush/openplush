@@ -18,7 +18,7 @@ Applies in addition to the root `AGENTS.md`.
 | `openplush-project` | project document, schema versions, migrations |
 | `openplush-pipeline` | the only public engine API |
 
-Depend downward only (DAG in `specs/001-pattern-pipeline/plan.md`). `bindings/*` depend on `openplush-pipeline` and `openplush-project` only. A new sideways edge needs an ADR.
+Depend downward only (DAG in `specs/001-pattern-pipeline/plan.md`). `bindings/*` depend on `openplush-pipeline` only; it re-exports the project document API (D-020). A new sideways edge needs an ADR.
 
 ## Rust rules
 - No `unwrap`, `expect`, `panic!`, or panicking index on user-derived data. Allowed only for internal invariants, with a `// INVARIANT:` comment naming it.

@@ -8,7 +8,7 @@ This index exists so you can tell at a glance what is specified, what is planned
 
 | Feature | Spec | Planned | Tasks | Implementation |
 |---|---|---|---|---|
-| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 171 tasks | Not started |
+| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 173 tasks | Not started |
 | [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks | Blocked on 001 |
 
 **No code exists yet.** Both features are fully specified and planned; neither has been implemented. The first thing to build is 001's `T001`–`T008` (research spikes) and `T009`–`T021` (workspace setup).
@@ -72,4 +72,4 @@ Worth knowing before planning a release:
 {"feature_directory":"specs/001-pattern-pipeline"}
 ```
 
-Note that the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check that it includes the work you expect (`git log --oneline -3`) and fast-forward it onto the trunk if it does not. This is recorded as an open question in 001's plan.
+The Spec Kit git extension creates a local `NNN-feature-slug` branch from `main`, which is the trunk. Rename it to the slice name before pushing (`git branch -m 003/01-spec`); see [`AGENTS.md`](../AGENTS.md#branch-naming).

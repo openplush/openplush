@@ -1,0 +1,16 @@
+# openplush-testkit is a dev-dependency only (scripts/check-boundary.sh enforces
+# that), and loading fixture files is its job, so it does not take the filesystem
+# bans in crates/clippy.toml. Clippy reads only the nearest clippy.toml, so the
+# root rules are repeated here; scripts/tests/clippy-boundary.test.sh checks them.
+
+disallowed-types = [
+    { path = "std::collections::HashMap", reason = "iteration order is not deterministic; use BTreeMap or an index-ordered Vec" },
+    { path = "std::collections::HashSet", reason = "iteration order is not deterministic; use BTreeSet or an index-ordered Vec" },
+]
+
+
+# Tests may unwrap, expect, and panic: a failed test is the panic's purpose, and the
+# no-panic rule is about user-derived data at runtime. Library code is unaffected.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true

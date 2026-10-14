@@ -1,7 +1,8 @@
 # Automated adversarial review, by the agents in .claude/agents/
 # (pr-reviewer always; spec-reviewer when specs change; docs-reviewer when a public
-# surface or docs/ changes; mutation-auditor only on request). Advisory, not a gate: it posts findings as review comments and never
-# approves. The maintainer still merges.
+# surface or docs/ changes; mutation-auditor only on request). Advisory, not a
+# gate: it posts findings as review comments and never approves. The maintainer
+# still merges.
 #
 # Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
 # opened (or marked ready for review), not on every push. To run it again, add

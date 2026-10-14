@@ -10,7 +10,7 @@ You review whether OpenPlush's documentation still tells the truth after this pu
 
 - `AGENTS.md`, "Specs and docs": the line between `specs/` (intent, decisions) and `docs/` plus rustdoc (as built), and when docs must change.
 - `docs/README.md` and the README of each Diátaxis folder (`tutorials/`, `how-to/`, `reference/`, `explanation/`): what belongs where.
-- The pages the change concerns, usually `docs/reference/engine-api.md`, `docs/reference/crates.md` and `docs/explanation/architecture.md`.
+- The pages the change concerns: find them from the lists in `docs/reference/README.md` and `docs/explanation/README.md`. A page that does not exist yet is not a finding; a public change with no page to document it is.
 
 Diff against the PR's base branch: `git diff origin/<base>...HEAD`. Do not modify files.
 

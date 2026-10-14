@@ -26,16 +26,16 @@ Every capability is reachable from the CLI. This is the path golden tests take, 
 
 ```sh
 # Inspect a model before doing anything to it
-openplush-cli validate fixtures/meshes/capsule.glb --json out/report.json
+openplush-cli validate fixtures/meshes/capsule.obj --json out/report.json
 
 # Repair, with the plan written out so it is reproducible
-openplush-cli repair fixtures/meshes/broken-ear.glb \
+openplush-cli repair fixtures/defects/non-manifold-edge.obj \
   --weld --fix-orientation --fill-holes auto \
-  --plan-out out/repair-plan.json -o out/repaired.glb
+  --plan-out out/repair-plan.json -o out/repaired.obj
 
 # A full pattern from a prepared seam set
-openplush-cli pattern fixtures/meshes/capsule.glb \
-  --seams fixtures/seams/capsule-reference.json \
+openplush-cli pattern fixtures/meshes/capsule.obj \
+  --seams fixtures/seams/capsule.json \
   --fabric minky \
   --size-mm 300 \
   --page a4 \
@@ -59,7 +59,7 @@ jq -e '.chains[] | select(.parity_error_mm > 1.0)' out/metrics.json && echo "PAR
 jq -e '.scale_square_mm == 50.0' out/metrics.json
 
 # Determinism: same input, byte-identical output (SC-008)
-openplush-cli pattern fixtures/meshes/capsule.glb --seams fixtures/seams/capsule-reference.json \
+openplush-cli pattern fixtures/meshes/capsule.obj --seams fixtures/seams/capsule.json \
   --fabric minky --size-mm 300 --page a4 -o out2/
 cmp out/pattern.svg out2/pattern.svg && echo "deterministic"
 ```
@@ -85,7 +85,7 @@ pnpm --filter web exec playwright test
 
 Manual walkthrough matching US1:
 
-1. Drop `fixtures/meshes/capsule.glb` on the window. The health report lists defects; nothing is modified yet.
+1. Drop `fixtures/meshes/capsule.obj` on the window. The health report lists defects; nothing is modified yet.
 2. Accept the repairs. A before/after summary appears (Constitution VII).
 3. Set height to 300 mm. A human silhouette appears beside the model for scale.
 4. Draw a seam by clicking two points. The path follows the surface.
@@ -112,8 +112,8 @@ SC-004 needs recruited participants and a written protocol; it gates the release
 ## 5. Fixtures
 
 ```
-fixtures/
-├── meshes/      capsule, cube, sphere, quadruped, teddy  (+ LICENSES.md, CC0/CC-BY only)
+fixtures/        (+ LICENSES.md for every fixture: CC0/CC-BY only)
+├── meshes/      capsule, cube, sphere, quadruped, teddy
 ├── defects/     one model per defect class — SC-007 measures against this
 ├── seams/       reference seam sets, so pattern tests need no UI
 └── golden/      expected SVG + metrics JSON per fixture

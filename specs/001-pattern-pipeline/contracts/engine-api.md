@@ -140,7 +140,7 @@ Every function above is reachable from `openplush-cli` as file-in / file-out. A 
 
 ```sh
 openplush-cli validate  model.glb --json report.json
-openplush-cli pattern   model.glb --seams seams.json --fabric minky --size-mm 300 -o out/
+openplush-cli pattern   model.glb --seams seams.json --fabric minky --size-mm 300 --page a4 -o out/
 openplush-cli hints     model.glb --size-mm 300 --json hints.json   # feature 002
 ```
 

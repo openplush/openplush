@@ -79,9 +79,10 @@ openplush/
 ├── apps/
 │   └── web/                         # Vite + TS + Three.js UI
 │
-├── fixtures/
-│   ├── meshes/                      # CC0/CC-BY models + LICENSES.md
+├── fixtures/                        # + LICENSES.md for every fixture, README.md (seam-set format)
+│   ├── meshes/                      # CC0/CC-BY models
 │   ├── defects/                     # one fixture per defect class (SC-007)
+│   ├── seams/                       # reference seam sets (JSON)
 │   └── golden/                      # expected SVG + metrics JSON per fixture
 ├── research/                        # Python notebooks — non-shipping reference impls
 ├── docs/                            # Diátaxis + adr/ (MADR)

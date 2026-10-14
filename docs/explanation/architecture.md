@@ -54,7 +54,7 @@ Same input, same output, to the byte, on every platform:
 - Geometric predicates (`orient2d`, `orient3d`, `incircle`) are exact (`robust` crate, [ADR 0002](../adr/0002-robust-predicates.md)), so a near-degenerate triangle gets the same answer everywhere.
 - Tolerances come from `openplush_geom::epsilon` only, and come in two kinds kept apart by type:
   - **Model-space** (`ModelTolerances`): relative to the model's bounding-box diagonal, so the same shape at any size makes the same decisions.
-  - **Physical** (`SeamParity`): millimetres after scaling (max(1.0 mm, 0.5% of the seam)), because a sewist's millimetre does not depend on the model's units.
+  - **Physical** (`SeamParity`): millimetres after scaling, because a sewist's millimetre does not depend on the model's units. The exact allowance is in `SeamParity`'s rustdoc.
 
 Model units become millimetres through `Scale::to_mm`. `Mm::try_new` is public, so another route is possible, but the type makes it visible.
 

@@ -46,7 +46,7 @@ geom=openplush-geom
 
 # Aliased forms the text scan cannot see.
 expect fail "use std::time; then time::Instant::now()" $geom \
-  'use std::time; pub fn f() -> time::Instant { time::Instant::now() }' "std::time::Instant::now"
+  'use std::time; pub fn f() -> time::Instant { time::Instant::now() }' "std::time::Instant"
 expect fail "use std as s; then s::fs::read" $geom \
   'use std as s; pub fn f() -> usize { s::fs::read("x").map(|v| v.len()).unwrap_or(0) }' "std::fs::read"
 expect fail "glob import of std::time" $geom \

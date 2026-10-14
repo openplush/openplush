@@ -1,0 +1,54 @@
+# Engine lane (T172). Clippy reads only the nearest clippy.toml, so this file
+# repeats every rule in the root clippy.toml, then adds the boundary bans.
+# scripts/tests/clippy-boundary.test.sh checks both halves.
+#
+# Constitution I / AGENTS.md: crates/ never touches the filesystem, clock, threads,
+# network, or processes. scripts/check-boundary.sh catches those textually; these
+# bans are resolved by the compiler, so aliases (use std::time;) and renamed std
+# (use std as s;) cannot hide them. openplush-testkit has its own clippy.toml
+# without the filesystem bans: loading fixtures is its job.
+
+disallowed-types = [
+    # From the root clippy.toml (determinism, Constitution V).
+    { path = "std::collections::HashMap", reason = "iteration order is not deterministic; use BTreeMap or an index-ordered Vec" },
+    { path = "std::collections::HashSet", reason = "iteration order is not deterministic; use BTreeSet or an index-ordered Vec" },
+    # Boundary (Constitution I).
+    { path = "std::fs::File", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::OpenOptions", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::DirBuilder", reason = "engine crates never touch the filesystem" },
+    { path = "std::time::Instant", reason = "engine crates never read the clock (determinism; unavailable on wasm32)" },
+    { path = "std::time::SystemTime", reason = "engine crates never read the clock (determinism; unavailable on wasm32)" },
+    { path = "std::thread::Builder", reason = "engine crates never spawn threads (single-threaded WASM)" },
+    { path = "std::net::TcpStream", reason = "engine crates never use the network (privacy)" },
+    { path = "std::net::TcpListener", reason = "engine crates never use the network (privacy)" },
+    { path = "std::net::UdpSocket", reason = "engine crates never use the network (privacy)" },
+    { path = "std::process::Command", reason = "engine crates never spawn processes" },
+]
+
+disallowed-methods = [
+    { path = "std::fs::read", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::read_to_string", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::read_dir", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::write", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::copy", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::rename", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::create_dir", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::create_dir_all", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::remove_file", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::remove_dir", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::remove_dir_all", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::metadata", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::canonicalize", reason = "engine crates never touch the filesystem" },
+    { path = "std::thread::spawn", reason = "engine crates never spawn threads (single-threaded WASM)" },
+    { path = "std::thread::scope", reason = "engine crates never spawn threads (single-threaded WASM)" },
+    { path = "std::thread::sleep", reason = "engine crates never block on the clock" },
+    { path = "std::process::exit", reason = "engine crates never end the process; return a typed error" },
+    { path = "std::process::abort", reason = "engine crates never end the process; return a typed error" },
+]
+
+
+# Tests may unwrap, expect, and panic: a failed test is the panic's purpose, and the
+# no-panic rule is about user-derived data at runtime. Library code is unaffected.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true

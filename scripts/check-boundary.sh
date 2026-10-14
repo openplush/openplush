@@ -4,7 +4,8 @@
 #
 # Fails when:
 #   1. An engine crate (crates/*) reaches wasm-bindgen, web-sys, js-sys (browser
-#      APIs) or rayon (threads; crates/AGENTS.md) through normal or build
+#      APIs), rayon (threads; crates/AGENTS.md) or getrandom (OS randomness, which
+#      breaks determinism; seeded generators don't need it) through normal or build
 #      dependencies, directly or transitively, with every feature enabled.
 #      Dev-dependencies are allowed: wasm-bindgen-test needs them and they never ship.
 #   2. Engine source (any .rs under crates/<crate>/ outside tests/, benches/,
@@ -101,7 +102,7 @@ facts=$(jq -r '
     | "member\t\($n)\t\($a)\t\($pk[$id].manifest_path | rtrimstr("/Cargo.toml"))",
       (nondev($id)[] | select($isws[.]) | "edge\t\($n)\t\($a)\t\($pk[.].name)"),
       (if $a == "crates" then
-         (reach($id)[] | $pk[.].name | select(IN("wasm-bindgen", "web-sys", "js-sys", "rayon", "rayon-core"))
+         (reach($id)[] | $pk[.].name | select(IN("wasm-bindgen", "web-sys", "js-sys", "rayon", "rayon-core", "getrandom"))
           | "forbidden\t\($n)\t\(.)"),
          (if any($pk[$id].targets[]; .kind | index("custom-build")) then "buildscript\t\($n)" else empty end)
        else empty end)
@@ -153,7 +154,7 @@ sys.exit(0 if d.get("lints", {}).get("workspace") is True else 1)' "$dir/Cargo.t
       fi
       ;;
     forbidden)
-      violations+=("$a reaches $b through normal or build dependencies (engine crates never touch browser APIs or threads; crates/AGENTS.md)")
+      violations+=("$a reaches $b through normal or build dependencies (engine crates never touch browser APIs, threads, or OS randomness; crates/AGENTS.md)")
       ;;
     buildscript)
       violations+=("$a has a build.rs: engine crates have no build scripts (arbitrary code at build time)")

@@ -118,11 +118,11 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 
 ### S7 preliminary result — synthetic charts (2026-10-14) ⏳ open until fixtures exist
 
-Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts. **Not the fixture corpus**, so T007 stays open.
+Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts, every one checked for 3D validity first. **Not the fixture corpus**, so T007 stays open.
 
-- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.35° of turning-angle change on every chart, stress included, and every outline was simple. The "fails to close" risk below can be downgraded.
-- **Injectivity is** [likely]. All 14 corpus charts had an injective cotan-harmonic start. 3 of 5 stress charts (deeply lobed, 120–160° caps) had **no** injective linear start, and refining the mesh made it **worse** (folds grow with resolution), so the ~30k-triangle proxy is the harder case.
-- **Implication for T079–T082**: least-squares *angle* closure, never length closure. A start ladder in T080 (cotan → uniform → untangling), accepting only zero-fold starts. T082's dart proposal triggers when the ladder runs out. Whether an untangling start (Garanzha et al. 2021) rescues the stress charts is untested [verify].
+- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.05° of turning-angle change on every chart, and the gap shrinks with mesh refinement. The "fails to close" risk below can be downgraded.
+- **Injectivity held on every valid chart** [likely], up to 6,144 triangles and 55 reflex corners, including caps covering 175° of the sphere. A cotan or uniform harmonic start was always injective. An earlier draft reported failures; they came from folded 3D input, not the method.
+- **Implication for T079–T082**: least-squares *angle* closure (dual-length weighted), never length closure. A cotan → uniform start in T080. Validate the 3D chart for folds upstream of T080 as a typed input error (needs its own task). An untangling rung only if fixture runs need one [speculative].
 
 ## R7. Fabric Profiles (FR-050, D-018)
 

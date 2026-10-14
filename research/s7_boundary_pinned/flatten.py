@@ -190,19 +190,35 @@ def close_polygon(lengths: np.ndarray, target: np.ndarray) -> ClosureResult:
 
 
 def polygon_is_simple(points: np.ndarray) -> bool:
-    """True if no two non-adjacent edges of the closed polygon intersect."""
+    """True if the closed polygon is counter-clockwise and no two non-adjacent edges meet.
+
+    Touching counts as meeting: a vertex lying on another edge cannot be cut as one
+    piece. Collinearity uses a tolerance scaled by the perimeter.
+    """
     a, b = points, np.roll(points, -1, axis=0)
     n = len(points)
+    signed_area = 0.5 * np.sum(a[:, 0] * b[:, 1] - b[:, 0] * a[:, 1])
+    if signed_area <= 0:
+        return False
+    tol = 1e-12 * np.sum(_norm(b - a)) ** 2
 
     def orient(p, q, r):
-        return (q[..., 0] - p[..., 0]) * (r[..., 1] - p[..., 1]) - (q[..., 1] - p[..., 1]) * (r[..., 0] - p[..., 0])
+        o = (q[..., 0] - p[..., 0]) * (r[..., 1] - p[..., 1]) - (q[..., 1] - p[..., 1]) * (r[..., 0] - p[..., 0])
+        return np.where(np.abs(o) <= tol, 0.0, o)
+
+    def on_segment(p, q, r):  # r collinear with p-q: is it within the segment's box?
+        return ((np.minimum(p[..., 0], q[..., 0]) <= r[..., 0]) & (r[..., 0] <= np.maximum(p[..., 0], q[..., 0]))
+                & (np.minimum(p[..., 1], q[..., 1]) <= r[..., 1]) & (r[..., 1] <= np.maximum(p[..., 1], q[..., 1])))
 
     i, j = np.triu_indices(n, 2)
     keep = ~((i == 0) & (j == n - 1))  # first and last edges share a vertex
     i, j = i[keep], j[keep]
     d1, d2 = orient(a[i], b[i], a[j]), orient(a[i], b[i], b[j])
     d3, d4 = orient(a[j], b[j], a[i]), orient(a[j], b[j], b[i])
-    return not np.any((d1 * d2 < 0) & (d3 * d4 < 0))
+    proper = (d1 * d2 < 0) & (d3 * d4 < 0)
+    touch = (((d1 == 0) & on_segment(a[i], b[i], a[j])) | ((d2 == 0) & on_segment(a[i], b[i], b[j]))
+             | ((d3 == 0) & on_segment(a[j], b[j], a[i])) | ((d4 == 0) & on_segment(a[j], b[j], b[i])))
+    return not np.any(proper | touch)
 
 
 # ---------------------------------------------------------------- interior
@@ -257,38 +273,56 @@ def sd_energy(geo: Geometry, x: np.ndarray, with_grad: bool = False):
     return energy, grad
 
 
+def smallest_positive_root(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
+    """Smallest real root > 0 of a t^2 + b t + c, elementwise; inf where there is none.
+
+    Uses q = -(b + sign(b) sqrt(disc)) / 2, roots q / a and c / q, which avoids the
+    cancellation that makes the textbook formula lose the small root when |a| is
+    tiny, and needs no separate linear branch (c / q is the root as a -> 0).
+    """
+    with np.errstate(divide="ignore", invalid="ignore"):
+        disc = b * b - 4 * a * c
+        real = disc >= 0
+        q = -0.5 * (b + np.copysign(np.sqrt(np.where(real, disc, 0.0)), b))
+        r1 = np.where(a != 0, q / a, np.inf)
+        r2 = np.where(q != 0, c / q, np.inf)
+    r1 = np.where(real & np.isfinite(r1) & (r1 > 0), r1, np.inf)
+    r2 = np.where(real & np.isfinite(r2) & (r2 > 0), r2, np.inf)
+    return np.minimum(r1, r2)
+
+
 def _max_injective_step(geo: Geometry, x: np.ndarray, p: np.ndarray) -> float:
-    """Largest t with every det(J(x + t p)) > 0 (Smith & Schaefer 2015)."""
+    """Largest t with every det(J(x + t p)) > 0 (Smith & Schaefer 2015).
+
+    The energy's barrier (infinite at det = 0) is the backstop if this bound is
+    ever slightly optimistic: the line search rejects any step that flips a face.
+    """
     f = geo.F
     d = np.stack([x[f[:, 1]] - x[f[:, 0]], x[f[:, 2]] - x[f[:, 0]]], axis=2)
     e = np.stack([p[f[:, 1]] - p[f[:, 0]], p[f[:, 2]] - p[f[:, 0]]], axis=2)
     c = d[:, 0, 0] * d[:, 1, 1] - d[:, 0, 1] * d[:, 1, 0]
     b = d[:, 0, 0] * e[:, 1, 1] + e[:, 0, 0] * d[:, 1, 1] - d[:, 0, 1] * e[:, 1, 0] - e[:, 0, 1] * d[:, 1, 0]
     a = e[:, 0, 0] * e[:, 1, 1] - e[:, 0, 1] * e[:, 1, 0]
-    t = np.full(len(f), np.inf)
-    lin = np.abs(a) < 1e-300
-    with np.errstate(divide="ignore", invalid="ignore"):
-        t_lin = np.where(b < 0, -c / b, np.inf)
-        disc = b * b - 4 * a * c
-        sq = np.sqrt(np.where(disc >= 0, disc, 0))
-        r1, r2 = (-b - sq) / (2 * a), (-b + sq) / (2 * a)
-    r1 = np.where((disc >= 0) & (r1 > 0), r1, np.inf)
-    r2 = np.where((disc >= 0) & (r2 > 0), r2, np.inf)
-    t = np.where(lin, t_lin, np.minimum(r1, r2))
-    return float(t.min())
+    return float(smallest_positive_root(a, b, c).min())
 
 
-def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 4000) -> tuple[np.ndarray, int]:
-    """L-BFGS on the free vertices; every accepted step keeps all triangles unflipped."""
+def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 4000) -> tuple[np.ndarray, int, str]:
+    """L-BFGS on the free vertices; every accepted step keeps all triangles unflipped.
+
+    Returns (x, iterations, reason). reason is "gtol" (gradient small: converged),
+    "stalled" (energy stopped changing at machine precision), "maxiter", "linesearch"
+    (no acceptable step), or "infeasible-start" (the start already has a flip).
+    Only gtol and stalled count as converged.
+    """
     x = x0.copy()
     energy, grad = sd_energy(geo, x, with_grad=True)
     if not np.isfinite(energy):
-        return x, 0
+        return x, 0, "infeasible-start"
     mask = np.zeros_like(x, bool)
     mask[free] = True
     s_hist, y_hist = [], []
     g = np.where(mask, grad, 0).ravel()
-    n_iter = 0
+    n_iter, reason = 0, "maxiter"
     for _ in range(iters):
         n_iter += 1
         q = g.copy()
@@ -312,21 +346,30 @@ def minimize_sd(geo: Geometry, x0: np.ndarray, free: np.ndarray, iters: int = 40
                 break
             t *= 0.5
         else:
+            reason = "linesearch"
             break
         g_new = np.where(mask, g_new, 0).ravel()
-        s_hist.append(t * p.ravel())
-        y_hist.append(g_new - g)
-        if len(s_hist) > 10:
-            s_hist.pop(0)
-            y_hist.pop(0)
+        step, dg = t * p.ravel(), g_new - g
+        # Keep the pair only if it satisfies the curvature condition; otherwise the
+        # two-loop recursion stops producing a positive-definite inverse Hessian.
+        if step @ dg > 1e-12 * np.linalg.norm(step) * np.linalg.norm(dg):
+            s_hist.append(step)
+            y_hist.append(dg)
+            if len(s_hist) > 10:
+                s_hist.pop(0)
+                y_hist.pop(0)
         x = x + t * p
         stalled = abs(energy - e_new) <= 1e-15 * energy
         energy, g = e_new, g_new
-        # Stop on the gradient: near the minimum the energy is quadratic, so an energy
-        # tolerance of eps leaves ~sqrt(eps) error in the positions.
-        if stalled or np.abs(g).max() < 1e-10:
+        # Gradient test first: near the minimum the energy is quadratic, so an energy
+        # tolerance of eps would leave ~sqrt(eps) error in the positions.
+        if np.abs(g).max() < 1e-10:
+            reason = "gtol"
             break
-    return x, n_iter
+        if stalled:
+            reason = "stalled"
+            break
+    return x, n_iter, reason
 
 
 # ---------------------------------------------------------------- reporting
@@ -345,9 +388,11 @@ class Stats:
     boundary_len_err_max: float  # max |l_2D / l_3D - 1| over boundary edges
     perimeter_err: float  # |P_2D / P_3D - 1|
     iterations: int
+    termination: str  # minimize_sd reason, or "-" if it was not run
 
 
-def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int, iterations: int) -> Stats:
+def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int, iterations: int,
+           termination: str = "-") -> Stats:
     J = _jacobians(geo, x)
     det = np.linalg.det(J)
     fro = np.einsum("tij,tij->t", J, J)
@@ -369,6 +414,7 @@ def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int
         boundary_len_err_max=float(np.abs(lengths_2d / geo.boundary_lengths - 1).max()),
         perimeter_err=float(abs(lengths_2d.sum() / geo.boundary_lengths.sum() - 1)),
         iterations=iterations,
+        termination=termination,
     )
 
 
@@ -398,6 +444,16 @@ def run_chart(chart) -> ChartResult:
     boundary = polygon_points(lengths, closure.kappa)[:-1]
     simple = polygon_is_simple(boundary)
 
+    # A triangle with all three corners on the boundary is fixed by the boundary
+    # alone; if it comes out inverted (e.g. at a reflex corner) no interior solve
+    # can repair it. The chart needs a split or a dart, whatever the start.
+    on_loop = np.zeros(len(geo.V), bool)
+    on_loop[geo.loop] = True
+    rim_only = np.flatnonzero(on_loop[geo.F].all(axis=1))
+    placed = np.zeros((len(geo.V), 2))
+    placed[geo.loop] = boundary
+    rim_inverted = int(np.sum(np.linalg.det(_jacobians(geo, placed)[rim_only]) <= 0)) if len(rim_only) else 0
+
     candidates = [(w, harmonic_fill(geo, boundary, w)) for w in ("cotan", "uniform")]
     counts = {w: flips(geo, x) for w, x in candidates}
     usable = [(w, x) for w, x in candidates if counts[w] == 0]
@@ -405,18 +461,22 @@ def run_chart(chart) -> ChartResult:
         pinned = _stats(geo, candidates[0][1], "closure failed", "-", min(counts.values()), 0)
     elif not simple:
         pinned = _stats(geo, candidates[0][1], "boundary self-intersects", "-", min(counts.values()), 0)
+    elif rim_inverted:
+        pinned = _stats(geo, candidates[0][1], f"{rim_inverted} all-boundary triangle(s) inverted", "-",
+                        min(counts.values()), 0)
     elif not usable:
         best = min(candidates, key=lambda c: counts[c[0]])
         pinned = _stats(geo, best[1], "no injective initialisation", best[0], counts[best[0]], 0)
     else:
         w, x0 = usable[0]
-        free_ids = geo.interior
-        x, n_it = minimize_sd(geo, x0, free_ids)
-        pinned = _stats(geo, x, "ok", w, 0, n_it)
+        x, n_it, why = minimize_sd(geo, x0, geo.interior)
+        status = "ok" if why in ("gtol", "stalled") else f"did not converge ({why})"
+        pinned = _stats(geo, x, status, w, 0, n_it, why)
 
     x0 = tutte_free_init(geo)
-    x, n_it = minimize_sd(geo, x0, np.arange(len(geo.V)))
-    free = _stats(geo, x, "ok", "tutte-circle", flips(geo, x0), n_it)
+    x, n_it, why = minimize_sd(geo, x0, np.arange(len(geo.V)))
+    status = "ok" if why in ("gtol", "stalled") else f"did not converge ({why})"
+    free = _stats(geo, x, status, "tutte-circle", flips(geo, x0), n_it, why)
 
     return ChartResult(
         name=chart.name,

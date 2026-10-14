@@ -92,22 +92,45 @@ def cylinder_patch(rings: int = 16, radius: float = 0.8) -> Chart:
     return Chart("cylinder-patch", v, f, "oracle: developable (bent plane)")
 
 
-def sphere_cap(theta_max_deg: float, rings: int = 16, lobes: int = 0, lobe_amp: float = 0.0,
-               scale=(1.0, 1.0, 1.0), name: str | None = None, rim_wobble=()) -> Chart:
+def lobe_warp(polar: np.ndarray, terms) -> tuple[np.ndarray, np.ndarray]:
+    """Conformal warp of the unit disk, w = z * (1 + sum(eps * e^{i*phase} * z^k)).
+
+    Returns (rho, azimuth) of w. Each term adds k lobes of relative depth eps, and
+    k = 1 or 2 terms break the symmetry. If sum((k + 1) * |eps|) < 1 then Re w' > 0
+    on the disk, so the map is one-to-one (Noshiro-Warschawski) and, being
+    conformal, keeps every small triangle's shape and orientation. A radial warp
+    rho = r * R(phi) does not: its triangles shear by about lobe depth * lobe count
+    relative to the ring spacing at every resolution, and invert once that passes 1.
+    Raises ValueError when the bound fails.
+    """
+    bound = sum((k + 1) * abs(eps) for k, eps, _ in terms)
+    if bound >= 1:
+        raise ValueError(f"lobe terms sum((k+1)|eps|) = {bound:.2f} >= 1: the warp may fold")
+    z = polar[:, 0] * np.exp(1j * polar[:, 1])
+    w = z * (1 + sum(eps * np.exp(1j * ph) * z**k for k, eps, ph in terms))
+    return np.abs(w), np.angle(w)
+
+
+def sphere_cap(theta_max_deg: float, rings: int = 16, lobes=(), scale=(1.0, 1.0, 1.0),
+               name: str | None = None, peak: bool = False) -> Chart:
     """Cap of a sphere (optionally an ellipsoid) around the north pole.
 
-    The polar angle at the rim is theta_max * (1 + lobe_amp * cos(lobes * phi)
-    + sum(a * cos(k * phi + p) for k, a, p in rim_wobble)). Lobes give a wavy,
-    non-convex outline; `rim_wobble` terms break the rotational symmetry.
+    The disk is warped by `lobe_warp(lobes)`, then mapped to the sphere with polar
+    angle proportional to |w| (azimuthal equidistant), so the outline is wavy and
+    non-convex while every triangle stays valid. theta_max_deg is the polar angle
+    of the unwarped rim; with peak=True it is instead the rim's largest polar angle.
+    Raises ValueError if the rim reaches 180 degrees: the cap would wrap past the
+    south pole and fold back on itself.
     """
     polar, f = disk_grid(rings)
-    r, phi = polar[:, 0], polar[:, 1]
-    wobble = sum(a * np.cos(k * phi + ph) for k, a, ph in rim_wobble)
-    rim = np.deg2rad(theta_max_deg) * (1 + lobe_amp * np.cos(lobes * phi) + wobble)
-    theta = r * rim
-    v = np.column_stack([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
-    v = v * np.asarray(scale)
+    rho, azimuth = lobe_warp(polar, lobes)
     label = name or f"cap-{theta_max_deg:g}"
+    scale_rad = np.deg2rad(theta_max_deg) / (rho.max() if peak else 1.0)
+    theta = scale_rad * rho
+    if theta.max() >= np.pi:
+        raise ValueError(f"{label}: peak polar angle {np.rad2deg(theta.max()):.0f} deg >= 180, surface folds")
+    v = np.column_stack([np.sin(theta) * np.cos(azimuth), np.sin(theta) * np.sin(azimuth), np.cos(theta)])
+    v = v * np.asarray(scale)
     return Chart(label, v, f, "positive curvature (stuffed dome)")
 
 
@@ -143,25 +166,30 @@ def corpus() -> list[Chart]:
         sphere_cap(90),
         sphere_cap(135),
         sphere_cap(90, scale=(1.0, 0.6, 1.5), name="ellipsoid-cap-90"),
-        sphere_cap(90, lobes=3, lobe_amp=0.3, name="lobed-cap-90"),
-        sphere_cap(120, lobes=5, lobe_amp=0.35, name="lobed-cap-120"),
+        sphere_cap(90, lobes=((3, 0.2, 0.0),), name="lobed-cap-90"),
+        sphere_cap(120, lobes=((5, 0.13, 0.0),), name="lobed-cap-120"),
         saddle(),
         sphere_gore(45),
         sphere_gore(90),
         # Asymmetric: a symmetric turning sequence closes by symmetry alone, so these
         # are the charts that actually exercise closure.
-        sphere_cap(100, rim_wobble=((1, 0.25, 0.0), (2, 0.15, 1.0)), name="asym-cap-100"),
-        sphere_cap(110, scale=(0.5, 1.0, 1.6), rim_wobble=((1, 0.2, 0.5), (3, 0.1, 0.0)), name="ear"),
+        sphere_cap(100, lobes=((1, 0.25, 0.0), (2, 0.12, 1.0)), name="asym-cap-100"),
+        sphere_cap(110, scale=(0.5, 1.0, 1.6), lobes=((1, 0.2, 0.5), (3, 0.05, 0.0)), name="ear"),
         bump(),
     ]
 
 
 def stress() -> list[Chart]:
-    """Harsher than a sensible seam layout would produce; looking for the failure edge."""
+    """Harsher than a sensible seam layout would produce; looking for the failure edge.
+
+    The caps peak at 175 degrees: almost a whole sphere in one piece, with deep
+    lobes (each warp near the sum((k+1)|eps|) < 1 limit), but still a valid surface
+    (see test_s7.Validity).
+    """
     return [
-        sphere_cap(150, lobes=4, lobe_amp=0.5, rim_wobble=((1, 0.1, 0.3),), name="lobed-cap-150"),
-        sphere_cap(160, rim_wobble=((1, 0.3, 0.0), (2, 0.2, 1.3), (5, 0.1, 0.0)), name="asym-cap-160"),
-        sphere_cap(120, lobes=6, lobe_amp=0.6, rim_wobble=((1, 0.15, 0.0),), name="star-cap-120"),
+        sphere_cap(175, peak=True, lobes=((4, 0.16, 0.0), (1, 0.05, 0.3)), name="lobed-cap-p175"),
+        sphere_cap(175, peak=True, lobes=((1, 0.2, 0.0), (2, 0.1, 1.3), (5, 0.03, 0.0)), name="asym-cap-p175"),
+        sphere_cap(175, peak=True, lobes=((6, 0.12, 0.0), (1, 0.03, 0.0)), name="star-cap-p175"),
         bump(height=1.2, width=0.25),
         sphere_gore(150, half_height_deg=85.0),
     ]

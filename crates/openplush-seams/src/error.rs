@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-/// Every way this crate refuses its input.
+/// Every way `openplush-seams` refuses its input.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 #[non_exhaustive]
 pub enum SeamsError {

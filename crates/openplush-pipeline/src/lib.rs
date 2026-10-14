@@ -10,7 +10,7 @@ pub use error::EngineError;
 pub use openplush_io::Format;
 pub use openplush_mesh::{ComponentId, EdgeId, FaceId, SourceCorner, VertexId};
 pub use openplush_pattern::PieceId;
-/// The error `ProposalId::from_hex` and `Proposal::new` return.
+/// The error [`ProposalId::from_hex`] and [`Proposal::new`] return.
 pub use openplush_seams::SeamsError;
 pub use openplush_seams::{
     ChartFailure, ChartId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SeamReason,

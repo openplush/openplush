@@ -45,7 +45,7 @@ Format names: `OBJ`, `glTF`, `GLB`, `STL`, `PLY`.
 | Variant | Carries | Message |
 |---|---|---|
 | `EmptyProposal` | nothing | `a proposal must add at least one seam edge` |
-| `BadProposalId` | the rejected `text`, printed Debug-quoted: in double quotes, with quotes, backslashes and control characters escaped | `{text:?} is not a proposal id (16 lowercase hex digits)` |
+| `BadProposalId` | the rejected `text`, printed in Rust `{:?}` (Debug) form: double-quoted, with escapes | `{text:?} is not a proposal id (16 lowercase hex digits)` |
 
 ## Warnings
 

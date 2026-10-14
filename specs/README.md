@@ -8,10 +8,10 @@ This index exists so you can tell at a glance what is specified, what is planned
 
 | Feature | Spec | Planned | Tasks | Implementation |
 |---|---|---|---|---|
-| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 175 tasks | Phase 1 done except T017–T018 (need fixtures); Phase 2 under way (T022–T027 and T175 merged) |
+| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 175 tasks | Phase 1 done except T017–T018 (need fixtures); Phase 2 under way (T022–T031 and T175 merged) |
 | [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks | Blocked on 001 |
 
-Both features are fully specified and planned. 001's workspace, CI gates and governance (Phase 1) are done, except the determinism and golden workflows (T017–T018), which need the fixture corpus. Spikes S6 (licenses) and, on synthetic charts, S7 (boundary-pinned flattening) are done too. Phase 2 (foundational types) is under way: geometry core, robust predicates, the triangle soup, the half-edge mesh with its validator and property tests, and the element IDs and proposal types are merged; the error and warning channels (T028–T031) are next. The open spikes `T001`–`T005`, `T007` on real fixtures, and `T008` can run alongside.
+Both features are fully specified and planned. 001's workspace, CI gates and governance (Phase 1) are done, except the determinism and golden workflows (T017–T018), which need the fixture corpus. Spikes S6 (licenses) and, on synthetic charts, S7 (boundary-pinned flattening) are done too. Phase 2 (foundational types) is under way: geometry core, robust predicates, the triangle soup, the half-edge mesh with its validator and property tests, the element IDs and proposal types, and the error and warning channels (`EngineError`, `WarningSet`, `Staged`/`StageResult`) are merged; the test machinery and fixtures (T032–T037) and the binding skeletons (T038–T041) are next. The open spikes `T001`–`T005`, `T007` on real fixtures, and `T008` can run alongside.
 
 ## Reading order
 

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::VertexId;
+use crate::{FaceId, VertexId};
 
 /// Every structural refusal in this crate. Each variant names the element at
 /// fault, so the UI can highlight it (crates/AGENTS.md).
@@ -15,11 +15,11 @@ pub enum MeshError {
     },
     /// A triangle refers to a vertex that does not exist.
     #[error(
-        "triangle {triangle} uses vertex index {index}, but there are only {vertex_count} vertices"
+        "triangle {triangle:?} uses vertex index {index}, but there are only {vertex_count} vertices"
     )]
     IndexOutOfRange {
         /// Triangle position in the input.
-        triangle: usize,
+        triangle: FaceId,
         /// The out-of-range index.
         index: u32,
         /// How many vertices exist.

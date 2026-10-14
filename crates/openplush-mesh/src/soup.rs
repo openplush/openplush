@@ -1,6 +1,6 @@
 use openplush_geom::{DVec2, DVec3};
 
-use crate::{MeshError, VertexId};
+use crate::{FaceId, MeshError, VertexId};
 
 /// Where a triangle corner came from in the source file: which primitive (glTF
 /// primitive, OBJ group) and which source vertex index. Provenance survives repair,
@@ -62,7 +62,8 @@ impl TriangleSoup {
         for (triangle, tri) in triangles.iter().enumerate() {
             if let Some(&index) = tri.iter().find(|&&i| i as usize >= vertex_count) {
                 return Err(MeshError::IndexOutOfRange {
-                    triangle,
+                    // Lossless: the triangle count fits in u32 (checked above).
+                    triangle: FaceId::new(triangle as u32),
                     index,
                     vertex_count,
                 });
@@ -111,27 +112,23 @@ impl TriangleSoup {
         &self.positions
     }
 
-    /// The vertices of triangle `t`, or `None` if it does not exist.
-    pub fn triangle(&self, t: usize) -> Option<[VertexId; 3]> {
+    /// The vertices of triangle `f`, or `None` if it does not exist.
+    pub fn triangle(&self, f: FaceId) -> Option<[VertexId; 3]> {
+        let t = usize::try_from(f.index()).ok()?;
         self.triangles.get(t).map(|tri| tri.map(VertexId::new))
     }
 
-    /// Provenance of corner `corner` (0..3) of triangle `t`.
-    pub fn corner_source(&self, t: usize, corner: usize) -> Option<SourceCorner> {
-        if corner >= 3 {
-            return None;
-        }
-        self.corner_src.get(t * 3 + corner).copied()
+    /// Provenance of corner `corner` (0..3, in the triangle's vertex order) of
+    /// triangle `f`; `None` if either is out of range.
+    pub fn corner_source(&self, f: FaceId, corner: usize) -> Option<SourceCorner> {
+        self.corner_src.get(corner_slot(f, corner)?).copied()
     }
 
-    /// UV of corner `corner` of triangle `t`; `None` if absent or out of range.
-    pub fn corner_uv(&self, t: usize, corner: usize) -> Option<DVec2> {
-        if corner >= 3 {
-            return None;
-        }
+    /// UV of corner `corner` of triangle `f`; `None` if absent or out of range.
+    pub fn corner_uv(&self, f: FaceId, corner: usize) -> Option<DVec2> {
         self.corner_uv
             .as_ref()?
-            .get(t * 3 + corner)
+            .get(corner_slot(f, corner)?)
             .copied()
             .flatten()
     }
@@ -148,4 +145,16 @@ impl TriangleSoup {
         });
         Some((hi - lo).length())
     }
+}
+
+/// Index of a corner in the per-corner arrays. Checked, because on wasm32 `usize`
+/// is 32 bits and `face * 3` can overflow for a large (out-of-range) face index.
+fn corner_slot(f: FaceId, corner: usize) -> Option<usize> {
+    if corner >= 3 {
+        return None;
+    }
+    usize::try_from(f.index())
+        .ok()?
+        .checked_mul(3)?
+        .checked_add(corner)
 }

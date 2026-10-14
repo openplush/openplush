@@ -57,7 +57,7 @@ expect() {
   else
     fail=$((fail + 1))
     echo "FAIL $name (wanted $want, exit $status)"
-    sed 's/^/     | /' <<<"$out"
+    while IFS= read -r line; do echo "     | $line"; done <<<"$out"
   fi
 }
 
@@ -155,7 +155,7 @@ expect pass "testkit as a dev-dependency" "$r"
 
 # 10. Filesystem, threads, clock, network, processes in engine source.
 for api in 'std::fs::read("x")' 'std::thread::spawn(|| ())' 'std::time::Instant::now()' 'std::time::SystemTime::now()' 'std::net::TcpStream::connect("x")' 'std::process::exit(1)'; do
-  r=$(new_case "src-$(tr -c 'a-z' '-' <<<"$api" | cut -c1-24)")
+  r=$(new_case "src-$(tr -c '[:lower:]' '-' <<<"$api" | cut -c1-24)")
   workspace "$r" crates/openplush-geom
   crate "$r" crates/openplush-geom openplush-geom '' '' "pub fn f() { let _ = $api; }"
   expect fail "engine source uses ${api%%(*}" "$r" "${api%%::*}::"

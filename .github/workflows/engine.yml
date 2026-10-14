@@ -28,6 +28,12 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+      # T016, Constitution I. The self-test runs first so a broken checker
+      # cannot pass everything.
+      - name: boundary check self-test
+        run: scripts/tests/check-boundary.test.sh
+      - name: boundary check
+        run: scripts/check-boundary.sh
 
   deny:
     name: licenses and advisories

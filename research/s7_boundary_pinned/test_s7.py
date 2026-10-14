@@ -12,7 +12,6 @@ import numpy as np
 import flatten as fl
 import meshes as ms
 
-
 ALL = ms.corpus() + ms.stress()
 
 
@@ -172,6 +171,24 @@ class Oracles(unittest.TestCase):
         self.assertIn(r.pinned.termination, ("gtol", "stalled"), "optimizer must converge, not run out")
         self.assertAlmostEqual(r.pinned.sd_mean, 4.0, places=9)
         self.assertLess(r.free.boundary_len_err_max, 1e-6)
+
+    def test_solver_reports_how_it_stopped(self):
+        r = fl.run_chart(ms.sphere_cap(90, rings=8))
+        for stats in (r.pinned, r.free):
+            self.assertIn(stats.termination, ("gtol", "stalled"))
+            self.assertTrue(np.isfinite(stats.grad_inf))
+        self.assertEqual(r.free.status, "ok")
+
+    def test_min_corner_angle_matches_an_independent_computation(self):
+        chart = ms.sphere_cap(175, rings=8, peak=True, lobes=((4, 0.16, 0.0),))
+        v, f = chart.vertices, chart.faces
+        worst = np.pi
+        for tri in f:
+            for k in range(3):
+                a, b, c = v[tri[k]], v[tri[(k + 1) % 3]], v[tri[(k + 2) % 3]]
+                u, w = b - a, c - a
+                worst = min(worst, np.arccos(np.clip(u @ w / np.linalg.norm(u) / np.linalg.norm(w), -1, 1)))
+        self.assertAlmostEqual(fl.run_chart(chart).min_angle_deg, np.degrees(worst), places=6)
 
     def test_bent_plane_flattens_almost_isometrically(self):
         # A cylinder patch is developable. The discrete mesh is only nearly so

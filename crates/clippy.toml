@@ -3,9 +3,11 @@
 # scripts/tests/clippy-boundary.test.sh checks both halves.
 #
 # Constitution I / AGENTS.md: crates/ never touches the filesystem, clock, threads,
-# network, or processes. scripts/check-boundary.sh catches those textually; these
-# bans are resolved by the compiler, so aliases (use std::time;) and renamed std
-# (use std as s;) cannot hide them. openplush-testkit has its own clippy.toml
+# network, or processes. scripts/check-boundary.sh catches those textually; the
+# items listed here are resolved by the compiler, so aliases (use std::time;) and
+# renamed std (use std as s;) cannot hide *these items*. Clippy cannot ban a whole
+# module, so coverage is exactly this list: scripts/tests/clippy-boundary.test.sh
+# is the authoritative record of what is caught. openplush-testkit has its own clippy.toml
 # without the filesystem bans: loading fixtures is its job.
 
 disallowed-types = [
@@ -39,6 +41,28 @@ disallowed-methods = [
     { path = "std::fs::remove_dir_all", reason = "engine crates never touch the filesystem" },
     { path = "std::fs::metadata", reason = "engine crates never touch the filesystem" },
     { path = "std::fs::canonicalize", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::exists", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::read_link", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::symlink_metadata", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::hard_link", reason = "engine crates never touch the filesystem" },
+    { path = "std::fs::set_permissions", reason = "engine crates never touch the filesystem" },
+    # The filesystem through std::path, without any std::fs path written out.
+    { path = "std::path::Path::exists", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::try_exists", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::is_file", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::is_dir", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::is_symlink", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::metadata", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::symlink_metadata", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::read_dir", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::read_link", reason = "engine crates never touch the filesystem" },
+    { path = "std::path::Path::canonicalize", reason = "engine crates never touch the filesystem" },
+    # The clock without naming SystemTime: UNIX_EPOCH.elapsed().
+    { path = "std::time::SystemTime::elapsed", reason = "engine crates never read the clock (determinism; unavailable on wasm32)" },
+    # OS randomness: a randomly seeded hasher makes iteration order vary per run.
+    { path = "std::hash::RandomState::new", reason = "OS randomness breaks determinism (Constitution V)" },
+    # DNS resolution is network access.
+    { path = "std::net::ToSocketAddrs::to_socket_addrs", reason = "engine crates never use the network (privacy)" },
     { path = "std::thread::spawn", reason = "engine crates never spawn threads (single-threaded WASM)" },
     { path = "std::thread::scope", reason = "engine crates never spawn threads (single-threaded WASM)" },
     { path = "std::thread::sleep", reason = "engine crates never block on the clock" },

@@ -27,7 +27,7 @@ OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spe
 - **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
 - **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
 - **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
-- Branch names: `001/T050-obj-import` for implementation, `chore/slug` for repo work, `NNN-feature-slug` for specs.
+- Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#branch-naming).
 
 Why so strict: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A sign error in a dihedral angle or an epsilon against the wrong scale is a one-line defect that produces plausible output. It does not survive a focused review of 200 lines, and it sails through 2,000.
 
@@ -65,22 +65,18 @@ Spec Kit tracks the active feature in `.specify/feature.json`, which is local an
 
 On Windows, Claude Code runs the `sh` scripts through Git Bash. Verified working as of 2026-10-13 for `create-new-feature-branch.sh` and `check-prerequisites.sh`. If a script does fail, switch to PowerShell with `specify integration upgrade claude --script ps --force`.
 
-One known wrinkle: the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check it with `git log --oneline -3` and fast-forward it onto the trunk if it is missing commits.
+`/speckit-specify` creates a local `NNN-feature-slug` branch from `main`, which is the trunk. Rename it to the slice name before pushing: `git branch -m 003/01-spec`.
 
 ## Development environment
-You need [rustup](https://rustup.rs), Node 22+, and pnpm 10. `rust-toolchain.toml` pins the exact Rust toolchain (it is also the MSRV), with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target. rustup installs it on first use.
+Prerequisites: [rustup](https://rustup.rs), Node 22+ with pnpm 10 (`corepack enable`), bash ≥ 4.3, jq, and python3 ≥ 3.11. Then, three commands:
 
 ```sh
-cargo test --workspace
-cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
-cargo build --workspace --target wasm32-unknown-unknown
-cargo deny check          # cargo install cargo-deny --locked
-pnpm install
-
-# wasm32 (CI runs these too). The runner must match wasm-bindgen in Cargo.lock:
-cargo install wasm-bindgen-cli --version "$(cargo metadata --format-version 1 --locked | jq -r '.packages[] | select(.name == "wasm-bindgen") | .version')" --locked
-cargo test --workspace --target wasm32-unknown-unknown
+git clone https://github.com/openplush/openplush && cd openplush
+scripts/check.sh --setup   # the pinned Rust toolchain, cargo-deny, and the wasm test runner matching Cargo.lock
+scripts/check.sh           # every gate CI runs
 ```
+
+`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. The engine CI job calls the same script, so a green local `engine` run means a green engine CI run. (The wasm and shell workflows switch to it in a follow-up.) `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
 
 ### Tests that must also run on wasm32
 `cargo test --target wasm32-unknown-unknown` only runs tests marked `#[wasm_bindgen_test]`. Plain `#[test]` functions are skipped there, with "no tests to run!" and exit 0. And `#[wasm_bindgen_test]` on its own compiles to nothing natively, so a test using only that attribute silently never runs off wasm. For a test that must run on both targets, use both attributes, as `crates/openplush-geom/tests/wasm_determinism.rs` does:

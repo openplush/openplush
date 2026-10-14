@@ -88,11 +88,11 @@ Every PR branch says **which feature, which position in the stack, and what it c
 
 | Kind | Pattern | Example |
 |---|---|---|
-| Feature slice (spec, plan, or code) | `NNN/NN-slug` | `002/03-plan`, `001/07-T050-obj-import` |
+| Feature slice (spec, plan, or code) | `NNN/NN-slug` | `002/03-plan`, `001/42-T050-obj-import` (illustrative position) |
 | Repo chore | `chore/slug` | `chore/pr-policy` |
 
-- `NNN` is the feature number; `NN` is the slice's position in that feature's stack, starting at `01`. Sorting branches lists each stack in merge order.
-- Include the task ID in the slug for implementation slices: `001/09-T060a-weld-spatial-hash`.
+- `NNN` is the feature number; `NN` is the slice's position in that feature, starting at `01` and never reused. After `001/06-tasks` merges, the next 001 slice is `001/07-…`, whether it stacks or starts from `main`. Sorting branches lists each feature's slices in order.
+- Include the task ID in the slug for implementation slices: `001/57-T060a-weld-spatial-hash` (positions in examples are illustrative).
 - The slug names the content, not the activity. `001/04-contracts-project-schema`, never `001/design-docs`, `001/updates`, `001/fixes`.
 - Spec Kit's `/speckit.specify` creates a local `NNN-feature-slug` branch. That is a working branch: rename it before pushing (`git branch -m 003/01-spec`).
 - Session-assigned names (`claude/<slug>-<id>`, `codex/…`, `copilot/…`) are not PR branches. Push the slice under its `NNN/NN-slug` name. If your session cannot, put the intended name and stack position in the PR title and body so a maintainer can rename the branch in GitHub (renaming keeps the PR).
@@ -106,7 +106,7 @@ If a slice reads, links to, or builds on anything not yet on `main`, it is **sta
 3. Fill in the `Stack` section of the PR template: position, parent PR, child PR. Edit the parent's body to link the new child.
 4. Only slices with no unmerged dependency start from `main`. Siblings cut from `main` that depend on each other are the failure this rule exists to prevent: each PR shows dead links and nothing records merge order.
 
-One stack per feature. A stack never spans two features and never contains a chore. There is no depth cap: because each PR targets its parent, every diff stays one slice no matter how deep the stack is.
+A stack never spans two features and never mixes chores with feature slices. Chores that depend on an unmerged chore stack the same way: base = the parent chore's branch. There is no depth cap: because each PR targets its parent, every diff stays one slice no matter how deep the stack is.
 
 ### Merging
 

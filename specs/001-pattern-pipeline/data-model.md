@@ -8,7 +8,7 @@ Covers: representations per stage, the half-edge structure, non-manifold handlin
 
 | Stage | Type | Accepts | Guarantees |
 |---|---|---|---|
-| Import | `TriangleSoup` | Anything parseable | Finite coordinates; triangles only; provenance per corner. Polygons are triangulated and faces with a non-finite corner dropped here, each drop an import warning located by its source corner (§3 step 0, D-021) |
+| Import | `TriangleSoup` | Anything parseable | Finite coordinates: a NaN/∞ anywhere is a located import error, never a dropped face (§3 step 0, D-021). Triangles only: polygons are triangulated at import. Provenance per corner |
 | Validate | `ValidationReport` | `TriangleSoup` | Every defect located (face/edge/vertex IDs) |
 | Repair | `ManifoldMesh` + `RepairReport` | `TriangleSoup` + `RepairPlan` | Constitution III post-repair invariants |
 | Seams | `SeamSet` | `ManifoldMesh` edges | Typed edge flags; no geometry change |
@@ -73,7 +73,7 @@ Order matters; each step records entries in `RepairReport`.
 
 | # | Step | Detects | Resolution | Seam consequence |
 |---|---|---|---|---|
-| 0 | Normalize (**at import**, not in repair; D-021) | n-gons, NaN/∞ | Quads split on shorter diagonal; n-gons ear-clipped on best-fit plane; faces with a non-finite corner dropped, and vertices left unused by that dropped too, each drop an import warning naming its `SourceCorner`. The soup that reaches repair is finite and triangulated, so repair starts at step 1 | — |
+| 0 | Normalize (**at import**, not in repair; D-021) | n-gons, NaN/∞ | Quads split on shorter diagonal; n-gons ear-clipped on best-fit plane (lossless: no position changes). A NaN/∞ coordinate is **not** repaired: import fails with `EngineError::NonFiniteInput`, naming every non-finite source vertex by provenance, so the maker can fix the file. Dropping faces would be fixed-up geometry without confirmation (Constitution III, FR-004). Repair starts at step 1 | — |
 | 1 | **Weld** | Coincident vertices | Merge within `ε_weld = 1e-6 × bbox diagonal` via sorted spatial hash (deterministic tie-break by source index). Corner UVs untouched | **Critical for glTF**: exporters split vertices at UV/normal discontinuities; unwelded, the model is topologically shredded into UV islands [solid] |
 | 2 | Degenerates & duplicates | Zero-area faces, repeated indices, duplicate faces | Drop degenerates (collapse edge if needed); keep one of same-orientation duplicates; opposite-orientation duplicates ⇒ flag "double-sided sheet" | — |
 | 3 | **Non-manifold edges** (> 2 incident faces) | Edge fans | Sort incident faces by dihedral angle around the edge axis; pair angular neighbors with compatible orientation; give each pair its own edge copy (Guéziec et al. 2001) | New boundary edges become **mandatory seams**. Often *intentional*: an ear or fin sandwiched into a body seam → see §4 inserted pieces |

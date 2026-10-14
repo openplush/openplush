@@ -68,16 +68,15 @@ On Windows, Claude Code runs the `sh` scripts through Git Bash. Verified working
 One known wrinkle: the Spec Kit git extension creates feature branches from `main`, which is **not** this repo's trunk — the trunk is `001-pattern-pipeline`. After `/speckit-specify` creates a branch, check it with `git log --oneline -3` and fast-forward it onto the trunk if it is missing commits.
 
 ## Development environment
-You need [rustup](https://rustup.rs), Node 22+, and pnpm 10. `rust-toolchain.toml` pins the exact Rust toolchain (it is also the MSRV), with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target. rustup installs it on first use.
+Prerequisites: [rustup](https://rustup.rs), Node 22+ with pnpm 10 (`corepack enable`), bash ≥ 4.3, jq, and python3 ≥ 3.11. Then, three commands:
 
 ```sh
-cargo test --workspace
-cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
-cargo build --workspace --target wasm32-unknown-unknown
-cargo deny check          # cargo install cargo-deny --locked
-scripts/tests/check-boundary.test.sh && scripts/check-boundary.sh   # bash >= 4.3, jq, python3 >= 3.11
-pnpm install
+git clone https://github.com/openplush/openplush && cd openplush
+scripts/check.sh --setup   # the pinned Rust toolchain, cargo-deny, and the wasm test runner matching Cargo.lock
+scripts/check.sh           # every gate CI runs
 ```
+
+`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. CI calls the same script, so a green local run means a green CI run. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
 
 The engine crates in `crates/` are scaffolds until their tasks land. [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough once the pipeline exists.
 

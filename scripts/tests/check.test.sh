@@ -37,8 +37,23 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "engine group is boundary, fmt, clippy, test" "engine" \
   "scripts/check-boundary.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked"
-expect_plan "setup installs the pinned tools" "--setup" \
-  "cargo install cargo-deny --version" "cargo install wasm-bindgen-cli --version"
+expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
+# The runner must match Cargo.lock exactly; with no wasm-bindgen locked, say so.
+locked=$(cd "$here/../.." && cargo metadata --format-version 1 --locked |
+  jq -r '[.packages[] | select(.name == "wasm-bindgen") | .version][0] // ""')
+if [[ -n $locked ]]; then
+  expect_plan "setup installs the runner Cargo.lock pins" "--setup" "cargo install wasm-bindgen-cli --version $locked --locked"
+else
+  expect_plan "setup skips the runner when nothing pins wasm-bindgen" "--setup" "no wasm-bindgen in Cargo.lock yet"
+fi
+
+# The cargo-deny version CI installs must be the one check.sh pins.
+deny=$(sed -n 's/^DENY_VERSION=//p' "$check")
+if grep -q "tool: cargo-deny@$deny\b" "$here/../../.github/workflows/engine.yml"; then
+  ok "engine.yml installs cargo-deny $deny, as check.sh pins"
+else
+  bad "engine.yml installs cargo-deny $deny, as check.sh pins" "$(grep -n 'cargo-deny@' "$here/../../.github/workflows/engine.yml")"
+fi
 
 out=$("$check" --dry-run engine 2>&1)
 if [[ $out != *"cargo deny check"* && $out != *"pnpm"* ]]; then

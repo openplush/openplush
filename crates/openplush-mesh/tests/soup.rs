@@ -3,7 +3,7 @@
 //! and it carries defects through untouched: reporting them is validation's job.
 
 use openplush_geom::{DVec2, DVec3};
-use openplush_mesh::{FaceId, MeshError, SourceCorner, TriangleSoup, VertexId};
+use openplush_mesh::{CornerArray, FaceId, MeshError, SourceCorner, TriangleSoup, VertexId};
 
 fn corner(primitive: u32, vertex: u32) -> SourceCorner {
     SourceCorner { primitive, vertex }
@@ -79,25 +79,29 @@ fn keeps_per_corner_uvs() -> Result<(), MeshError> {
 
 #[test]
 fn rejects_non_finite_coordinates_naming_the_vertex() {
-    let (mut p, t, c) = quad();
-    p[2].y = f64::NAN;
-    assert_eq!(
-        TriangleSoup::new(p, t, c, None).err(),
-        Some(MeshError::NonFiniteVertex {
-            vertex: VertexId::new(2)
-        })
-    );
+    for (vertex, bad) in [(2, f64::NAN), (1, f64::INFINITY), (3, f64::NEG_INFINITY)] {
+        let (mut p, t, c) = quad();
+        p[vertex].y = bad;
+        assert_eq!(
+            TriangleSoup::new(p, t, c, None).err(),
+            Some(MeshError::NonFiniteVertex {
+                vertex: VertexId::new(vertex as u32)
+            }),
+            "{bad} at vertex {vertex}"
+        );
+    }
 }
 
 #[test]
 fn rejects_out_of_range_indices_naming_the_triangle() {
     let (p, mut t, c) = quad();
-    t[1] = [0, 2, 9];
+    // Index 4 == vertex_count: the first out-of-range value.
+    t[1] = [0, 2, 4];
     assert_eq!(
         TriangleSoup::new(p, t, c, None).err(),
         Some(MeshError::IndexOutOfRange {
             triangle: FaceId::new(1),
-            index: 9,
+            index: 4,
             vertex_count: 4
         })
     );
@@ -110,6 +114,7 @@ fn rejects_corner_arrays_of_the_wrong_length() {
     assert_eq!(
         TriangleSoup::new(p.clone(), t.clone(), c, None).err(),
         Some(MeshError::CornerCountMismatch {
+            array: CornerArray::Sources,
             expected: 6,
             found: 5
         })
@@ -119,6 +124,7 @@ fn rejects_corner_arrays_of_the_wrong_length() {
     assert_eq!(
         TriangleSoup::new(p, t, c, Some(uv)).err(),
         Some(MeshError::CornerCountMismatch {
+            array: CornerArray::Uvs,
             expected: 6,
             found: 4
         })
@@ -148,9 +154,24 @@ fn empty_soup_is_valid() -> Result<(), MeshError> {
 
 #[test]
 fn bounding_box_diagonal() -> Result<(), MeshError> {
-    let (p, t, c) = quad();
-    let soup = TriangleSoup::new(p, t, c, None)?;
-    assert_eq!(soup.bbox_diagonal(), Some(2f64.sqrt()));
+    // A box from (0,0,0) to (1,2,2): every axis contributes, diagonal 3.
+    let p = vec![
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.0, 0.0, 0.0),
+        DVec3::new(0.0, 2.0, 0.0),
+        DVec3::new(0.0, 0.0, 2.0),
+    ];
+    let t = vec![[0, 1, 2], [0, 2, 3]];
+    let c = vec![corner(0, 0); 6];
+    let soup = TriangleSoup::new(p.clone(), t.clone(), c.clone(), None)?;
+    assert_eq!(soup.bbox_diagonal(), Some(3.0));
+    // An unused vertex far away does not inflate the tolerances derived from it.
+    let mut stray = p;
+    stray.push(DVec3::new(1e6, 1e6, 1e6));
+    assert_eq!(
+        TriangleSoup::new(stray, t, c, None)?.bbox_diagonal(),
+        Some(3.0)
+    );
     assert_eq!(
         TriangleSoup::new(vec![], vec![], vec![], None)?.bbox_diagonal(),
         None
@@ -169,4 +190,39 @@ fn far_out_of_range_faces_are_none_not_an_overflow() -> Result<(), MeshError> {
     assert_eq!(soup.corner_source(far, 2), None);
     assert_eq!(soup.corner_uv(far, 2), None);
     Ok(())
+}
+
+#[test]
+fn corner_index_three_is_out_of_range() -> Result<(), MeshError> {
+    // Not a back door into the next triangle's corner 0.
+    let (p, t, c) = quad();
+    let uv = Some(vec![Some(DVec2::new(0.0, 0.0)); c.len()]);
+    let soup = TriangleSoup::new(p, t, c, uv)?;
+    assert_eq!(soup.corner_source(FaceId::new(0), 3), None);
+    assert_eq!(soup.corner_uv(FaceId::new(0), 3), None);
+    Ok(())
+}
+
+#[test]
+fn errors_are_reported_in_a_documented_order() {
+    // Corner-array lengths, then coordinates, then indices: with every defect at
+    // once, the length mismatch wins, and so on down the list.
+    let (mut p, mut t, mut c) = quad();
+    p[0].x = f64::NAN;
+    t[0] = [0, 1, 9];
+    c.pop();
+    assert!(matches!(
+        TriangleSoup::new(p.clone(), t.clone(), c, None),
+        Err(MeshError::CornerCountMismatch { .. })
+    ));
+    let (_, _, c) = quad();
+    assert!(matches!(
+        TriangleSoup::new(p, t.clone(), c.clone(), None),
+        Err(MeshError::NonFiniteVertex { .. })
+    ));
+    let (p, _, _) = quad();
+    assert!(matches!(
+        TriangleSoup::new(p, t, c, None),
+        Err(MeshError::IndexOutOfRange { .. })
+    ));
 }

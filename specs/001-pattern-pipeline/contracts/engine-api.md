@@ -1,6 +1,8 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-13 | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-14 | **Version**: 0.2 (draft) | **Status**: Draft contract
+
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020).
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
@@ -132,6 +134,24 @@ openplush-cli validate  model.glb --json report.json
 openplush-cli pattern   model.glb --seams seams.json --fabric minky --size-mm 300 -o out/
 openplush-cli hints     model.glb --size-mm 300 --json hints.json   # feature 002
 ```
+
+## 6a. Project documents (D-020)
+
+The `.plush` project document (`contracts/project.schema.json`) belongs to `openplush-project`, but shells reach it only through this crate:
+
+```rust
+pub mod project {
+    // Re-exported from openplush-project (T124); shells never depend on it directly.
+    pub use openplush_project::{ProjectDocument, ProjectError};
+
+    /// Serialise a project to the `.plush` byte format (JSON plus the embedded mesh chunk).
+    pub fn save(doc: &ProjectDocument) -> Result<Vec<u8>, ProjectError>;
+    /// Parse and migrate a `.plush` document forward to the current schema version (FR-070).
+    pub fn load(bytes: &[u8]) -> Result<ProjectDocument, ProjectError>;
+}
+```
+
+Bytes in, bytes out, like every stage: no filesystem access in the engine (Constitution I). The CLI's `project` command (T130) and the web shell's save/open go through these two functions.
 
 ## 7. Stability
 

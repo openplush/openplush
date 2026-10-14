@@ -104,7 +104,7 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 - [ ] T013 [P] `.github/workflows/engine.yml` — fmt, clippy with `-D warnings`, `cargo test --workspace`, `cargo deny check`
 - [ ] T014 [P] `.github/workflows/wasm.yml` — build `wasm32-unknown-unknown`, run `wasm-bindgen-test`
 - [ ] T015 [P] `.github/workflows/shell.yml` — typecheck, Vitest, Playwright
-- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a crate other than `openplush-pipeline` (D-020). Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
+- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a workspace crate other than `openplush-pipeline` (D-020). Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
 - [ ] T017 [P] `.github/workflows/determinism.yml` — run the fixture corpus native and WASM, compare export hashes (SC-008)
 - [ ] T018 [P] `.github/workflows/golden.yml` — `insta` snapshot diff, PR comment with rendered SVG diffs
 - [ ] T019 [P] `.github/CODEOWNERS`, lane labels (`lane:engine`, `lane:shell`, `lane:fixtures`, `lane:docs`), issue forms

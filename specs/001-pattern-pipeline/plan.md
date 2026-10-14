@@ -198,7 +198,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 
 ## Decision Ledger
 
-*Running log. Newest first. Absolute dates.*
+*Running log. Oldest first. Absolute dates.*
 
 ### Decisions
 | Date | ID | Decision | Status |

@@ -303,6 +303,9 @@ dependencies = [
 [[package]]
 name = "openplush-testkit"
 version = "0.0.0"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "pin-project-lite"

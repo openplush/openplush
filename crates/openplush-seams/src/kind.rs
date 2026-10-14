@@ -1,6 +1,6 @@
-/// What a seam edge is for (data-model section 4). Each kind's byte in
-/// `ProposalId`'s derivation (section 13a) is fixed by `hash_byte` and pinned by
-/// tests; a new kind gets the next unused byte, and no byte ever changes.
+/// What a seam edge is for. Each kind's byte in `ProposalId`'s derivation is fixed
+/// by `hash_byte` and pinned by tests; a new kind gets the next unused byte, and no
+/// byte ever changes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum SeamKind {
@@ -29,8 +29,7 @@ impl SeamKind {
     }
 }
 
-/// Why a chart cannot be flattened as one piece (data-model section 4, engine-api
-/// section 5): it must be a topological disk.
+/// Why a chart cannot be flattened as one piece: it must be a topological disk.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum ChartFailure {

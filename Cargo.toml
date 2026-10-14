@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-# Add "bindings/*" with the first binding (T038/T039). Cargo rejects a member
+# Add "bindings/*" with the first binding. Cargo rejects a member
 # glob that matches nothing, so it cannot be listed ahead of time.
 members = ["crates/*"]
 

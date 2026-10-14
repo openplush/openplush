@@ -1,4 +1,4 @@
-//! `PieceId` (T175, data-model section 13a): a newtype, ordered by index.
+//! `PieceId`: a newtype, ordered by index.
 
 use openplush_pattern::PieceId;
 

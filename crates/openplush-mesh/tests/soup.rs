@@ -1,5 +1,5 @@
-//! `TriangleSoup` (T024): the import stage's output. It guarantees finite coordinates,
-//! in-range indices, and one provenance record per corner (data-model section 1),
+//! `TriangleSoup`: the import stage's output. It guarantees finite coordinates,
+//! in-range indices, and one provenance record per corner,
 //! and it carries defects through untouched: reporting them is validation's job.
 
 use openplush_geom::{DVec2, DVec3};

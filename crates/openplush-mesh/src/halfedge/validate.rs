@@ -1,4 +1,4 @@
-//! `debug_validate` (T026): the five invariants of data-model section 2.
+//! `debug_validate`: the five half-edge invariants.
 //!
 //! Construction establishes them; this checks them independently, so tests and
 //! debug builds catch any later edit (cutting, repair) that breaks one. It never

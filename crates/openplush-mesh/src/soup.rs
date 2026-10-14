@@ -4,7 +4,7 @@ use crate::{CornerArray, Counted, FaceId, MeshError, VertexId};
 
 /// Where a triangle corner came from in the source file. Provenance survives
 /// repair, so a saved project can find the same corner again after re-import
-/// (T125). The importer (T042-T045) owns the numbering and must keep it stable for
+/// The importer owns the numbering and must keep it stable for
 /// the same file:
 /// - `primitive` is unique across the whole file. For glTF it counts each drawn
 ///   instance (node × mesh × primitive) separately, because one mesh instanced by
@@ -21,7 +21,7 @@ pub struct SourceCorner {
 
 /// Indexed triangles as imported, before any repair.
 ///
-/// **Guarantees** (data-model section 1): every coordinate is finite, every index is
+/// **Guarantees**: every coordinate is finite, every index is
 /// in range, and every corner has a provenance record (and optionally a UV).
 /// **Does not guarantee** anything about mesh quality: repeated indices, duplicate
 /// or zero-area faces, non-manifold edges, and unwelded seams pass through untouched,

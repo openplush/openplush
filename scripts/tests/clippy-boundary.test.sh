@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for the compiler-resolved boundary layer (T172): crates/clippy.toml and
+# Tests for the compiler-resolved boundary layer: crates/clippy.toml and
 # crates/openplush-testkit/clippy.toml.
 #
 # Each case copies the repository's real clippy configs into a throwaway workspace,

@@ -1,4 +1,4 @@
-# T015: web shell gates. Steps that need a package no-op until it exists
+# Web shell gates. Steps that need a package no-op until it exists
 # (root scripts use --if-present), so CI passes on the empty workspace.
 # Drop --if-present from package.json in the PR that adds the first package:
 # after that, a package without a typecheck/test script should fail, not pass.
@@ -31,6 +31,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      # The same entry point contributors run (T173): install, typecheck, unit
+      # The same entry point contributors run: install, typecheck, unit
       # tests, and Playwright once apps/web exists.
       - run: scripts/check.sh shell

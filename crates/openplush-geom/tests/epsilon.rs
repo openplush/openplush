@@ -1,4 +1,4 @@
-//! The tolerance policy of data-model section 11: model-space epsilons scale with
+//! The tolerance policy: model-space epsilons scale with
 //! the bounding-box diagonal; physical tolerances are absolute millimetres; the two
 //! meet only through a named conversion (AGENTS.md, units).
 

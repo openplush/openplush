@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for scripts/check.sh (T173), using --dry-run so nothing is built.
+# Tests for scripts/check.sh, using --dry-run so nothing is built.
 #
 # What matters is that the one entry point runs every gate CI runs, with the flags
 # that make them gates (-D warnings, --locked, --frozen-lockfile), and that a typo

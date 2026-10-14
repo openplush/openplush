@@ -1,5 +1,5 @@
-//! Proposals: every remedy the engine can carry out is a seam-set delta
-//! (data-model section 13a, D-022). Accepting one inserts its edges into the
+//! Proposals: every remedy the engine can carry out is a seam-set delta.
+//! Accepting one inserts its edges into the
 //! `SeamSet`; the mesh never changes.
 
 use std::collections::BTreeMap;
@@ -12,19 +12,19 @@ use crate::{ChartFailure, ChartId, SeamKind, SeamsError};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum ProposalKind {
-    /// FR-013: extra seams that make a chart a topological disk.
+    /// Extra seams that make a chart a topological disk.
     CloseChart {
         /// The chart that is not a disk.
         chart: ChartId,
         /// Why not.
         failure: ChartFailure,
     },
-    /// FR-022: a dart to relieve distortion.
+    /// A dart to relieve distortion.
     Dart {
         /// The chart it relieves.
         chart: ChartId,
     },
-    /// FR-052: split a piece whose nap is incoherent. Names the chart, because
+    /// Split a piece whose nap is incoherent. Names the chart, because
     /// pieces (`openplush-pattern`) sit above this crate.
     SplitPiece {
         /// The chart whose piece splits.
@@ -55,7 +55,7 @@ impl ProposalKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum SeamReason {
-    /// FR-025, T106: a concave region with no seam through it.
+    /// A concave region with no seam through it.
     Crease,
     /// Feature 002: an accepted seam-placement hint.
     SeamHint,
@@ -117,7 +117,7 @@ impl ProposalId {
     }
 }
 
-/// A remedy the engine can carry out: seam edges to add (data-model section 13a).
+/// A remedy the engine can carry out: seam edges to add.
 /// Built only through [`Proposal::new`], so the ID always matches the edit.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Proposal {
@@ -131,7 +131,7 @@ impl Proposal {
     /// A proposal to add `add`'s seam edges, for `kind`'s reason, explained to the
     /// maker in plain language. Errors with [`SeamsError::EmptyProposal`] if `add`
     /// is empty. (That no edge is already a seam is checked against the `SeamSet`
-    /// by whoever proposes, T069 onward.)
+    /// by whoever proposes.)
     pub fn new(
         kind: ProposalKind,
         add: BTreeMap<EdgeId, SeamKind>,

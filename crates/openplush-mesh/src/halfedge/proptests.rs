@@ -1,4 +1,4 @@
-//! Property tests for `ManifoldMesh` (T027): every mesh the builder accepts
+//! Property tests for `ManifoldMesh`: every mesh the builder accepts
 //! satisfies `debug_validate`, and every mesh it refuses gets a typed error.
 //!
 //! In-crate rather than `tests/invariants.rs` (as tasks.md names it) because the

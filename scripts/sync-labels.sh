@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create or update the repository's labels from .github/labels.json (T019).
+# Create or update the repository's labels from .github/labels.json.
 # GitHub does not read label files, so a maintainer runs this once, and again
 # after editing the file. Needs the GitHub CLI (gh) authenticated with repo access.
 #

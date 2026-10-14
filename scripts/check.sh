@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One entry point for every gate (T173). CI calls this too, so a contributor runs
+# One entry point for every gate. CI calls this too, so a contributor runs
 # exactly what CI runs.
 #
 # Usage:

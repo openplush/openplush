@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for scripts/check-boundary.sh (T016).
+# Tests for scripts/check-boundary.sh.
 #
 # Each case builds a throwaway Cargo workspace with path-only dependencies, so no
 # network is needed, and asserts whether the boundary check accepts or rejects it.
@@ -147,7 +147,7 @@ crate "$r" bindings/openplush-wasm openplush-wasm 'openplush-pipeline = { path =
 wasm-bindgen = { path = "../../vendor/wasm-bindgen" }'
 expect pass "binding uses pipeline (which re-exports project) and wasm-bindgen" "$r"
 
-# D-020: the project API reaches shells through pipeline's re-export, not directly.
+# The project API reaches shells through pipeline's re-export, not directly.
 r=$(new_case binding-project-direct)
 workspace "$r" crates/openplush-pipeline crates/openplush-project bindings/openplush-cli
 crate "$r" crates/openplush-project openplush-project

@@ -1,4 +1,4 @@
-# Engine lane (T172). Clippy reads only the nearest clippy.toml, so this file
+# Engine lane. Clippy reads only the nearest clippy.toml, so this file
 # repeats every rule in the root clippy.toml, then adds the boundary bans.
 # scripts/tests/clippy-boundary.test.sh checks both halves.
 #

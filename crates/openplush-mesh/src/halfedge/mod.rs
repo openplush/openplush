@@ -1,4 +1,4 @@
-//! The half-edge `ManifoldMesh` (data-model section 2).
+//! The half-edge `ManifoldMesh`.
 //!
 //! Index arenas in struct-of-arrays layout, with newtype IDs. Twins are paired
 //! indices, boundary half-edges are explicit (`face = None`), and `prev` is stored.
@@ -17,11 +17,11 @@ use openplush_geom::{DVec2, DVec3};
 
 use crate::{FaceId, HalfEdgeId, SourceCorner, VertexId};
 
-/// A triangle mesh satisfying the five invariants of data-model section 2: a
+/// A triangle mesh satisfying the five invariants of `debug_validate`: a
 /// consistently oriented 2-manifold, possibly with boundary, with no degenerate or
 /// zero-area face and no isolated vertex.
 ///
-/// There is no public constructor. Repair (T067) is the only producer, so
+/// There is no public constructor. Repair is the only producer, so
 /// unrepaired data cannot reach the flattener by construction (Constitution VII).
 #[derive(Debug, Clone, PartialEq)]
 pub struct ManifoldMesh {

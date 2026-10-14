@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Engine boundary check (T016). Constitution I's enforcement: without it, the
+# Engine boundary check. Constitution I's enforcement: without it, the
 # boundary between engine, bindings, and shell is a suggestion.
 #
 # Fails when:
@@ -17,7 +17,7 @@
 #      specs/001-pattern-pipeline/plan.md, or a crate is missing from that DAG.
 #   5. A crate takes openplush-testkit as a normal or build dependency.
 #   6. A binding (bindings/*) depends on a workspace crate other than
-#      openplush-pipeline (Constitution I; the project API is re-exported, D-020).
+#      openplush-pipeline (Constitution I; the project API is re-exported).
 #   7. A workspace member lives outside crates/ and bindings/, or does not inherit
 #      the workspace lints ([lints] workspace = true), which carry forbid(unsafe_code).
 #
@@ -29,7 +29,7 @@
 # comments or strings, and it misses aliasing (`use std::time;` then
 # `time::Instant`, `use std as s;`), nested groups (`use std::{io::{self, Read}, fs}`)
 # and a `use` split across lines. It is a tripwire for honest mistakes, not a
-# sandbox; crates/clippy.toml (T172) is the compiler-resolved layer behind it.
+# sandbox; crates/clippy.toml is the compiler-resolved layer behind it.
 # Third-party crates are trusted apart from the dependency denylist above: neither
 # layer reads dependency source, so a crate that spawns threads or reads the clock
 # internally is caught only by dependency review (and an ADR for a new category).
@@ -60,7 +60,7 @@ declare -A parents=(
   [openplush-pipeline]="openplush-io openplush-decal openplush-layout openplush-export openplush-project"
   [openplush-testkit]="openplush-pipeline"
 )
-binding_may_use=" openplush-pipeline "  # D-020: project API arrives as openplush_pipeline::project
+binding_may_use=" openplush-pipeline "  # the project API arrives as openplush_pipeline::project
 testkit=openplush-testkit
 
 # below <crate>: every crate reachable downward from <crate>, space-separated.
@@ -171,7 +171,7 @@ sys.exit(0 if d.get("lints", {}).get("workspace") is True else 1)' "$dir/Cargo.t
         violations+=("$from -> $to: openplush-testkit is a dev-dependency only")
       elif [[ $area == bindings ]]; then
         [[ $binding_may_use == *" $to "* ]] ||
-          violations+=("$from -> $to: bindings depend on openplush-pipeline only; use its re-exports (Constitution I, D-020)")
+          violations+=("$from -> $to: bindings depend on openplush-pipeline only; use its re-exports (Constitution I)")
       elif [[ $area == crates && -v "parents[$from]" ]]; then
         [[ $(below "$from") == *" $to "* ]] ||
           violations+=("$from -> $to: not downward in the crate DAG (plan.md); a sideways or upward edge needs an ADR")

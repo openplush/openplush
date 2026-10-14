@@ -1,9 +1,9 @@
 //! Triangle soups, validation, repair, and the half-edge `ManifoldMesh`.
 //!
-//! This crate owns the import-side representations of data-model section 1. Each
+//! This crate owns the import-side mesh representations. Each
 //! stage's type guarantees what the next stage relies on: a `TriangleSoup` has
 //! finite coordinates and valid indices but may carry any mesh defect; a
-//! `ManifoldMesh` (later tasks) satisfies the section 2 invariants and can only be
+//! `ManifoldMesh` satisfies the half-edge invariants and can only be
 //! obtained through repair.
 
 mod error;

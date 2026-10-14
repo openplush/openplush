@@ -1,8 +1,8 @@
-//! ManifoldMesh construction (T025) and invariants (T026).
+//! ManifoldMesh construction and invariants.
 //!
 //! These live inside the crate because `ManifoldMesh` has no public constructor
-//! (data-model section 1: only repair may produce one). The builder under test,
-//! `ManifoldMesh::from_oriented_triangles`, is what repair (T067) calls once the soup
+//! (only repair may produce one). The builder under test,
+//! `ManifoldMesh::from_oriented_triangles`, is what repair calls once the soup
 //! is clean.
 
 use openplush_geom::epsilon::ModelTolerances;

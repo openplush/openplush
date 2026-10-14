@@ -1,4 +1,4 @@
-# T014: every engine crate builds for wasm32, and wasm-bindgen tests run there.
+# Every engine crate builds for wasm32, and wasm-bindgen tests run there.
 name: wasm
 
 on:
@@ -45,7 +45,7 @@ jobs:
         with:
           tool: wasm-bindgen-cli@${{ steps.wasm-bindgen.outputs.version }}
           fallback: none
-      # The same entry point contributors run (T173): build, wasm32 clippy (it sees
+      # The same entry point contributors run: build, wasm32 clippy (it sees
       # cfg(target_arch = "wasm32") code the native run cannot), the tests under
       # Node, and a check that every tests/wasm_*.rs canary really ran on wasm32.
       - run: scripts/check.sh wasm

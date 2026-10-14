@@ -329,12 +329,14 @@ All are `u32` newtypes except `ProposalId`, which is a `u64`. Numbering by lowes
 Every remedy the engine can carry out is a seam edit: extra seams to make a chart a disk (FR-013), darts (FR-022; a dart *is* a seam ending inside a piece, §4), piece splits (FR-052), and seams along creases (FR-025). The mesh never changes when seams change (§4). So one type covers all of them, and accepting one is the same operation every time:
 
 ```rust
-pub struct Proposal {
-    pub id: ProposalId,
-    pub kind: ProposalKind,
-    pub add: BTreeMap<EdgeId, SeamKind>,   // never empty; never an edge already in the SeamSet
-    pub explanation: String,               // plain language: what it fixes and what it costs
+pub struct Proposal {                      // fields private; read through accessors
+    id: ProposalId,                        // derived from kind + add, never set directly
+    kind: ProposalKind,
+    add: BTreeMap<EdgeId, SeamKind>,       // never empty; never an edge already in the SeamSet
+    explanation: String,                   // plain language: what it fixes and what it costs
 }
+// The only constructor, Proposal::new(kind, add, explanation), refuses an empty
+// `add` and computes `id`, so the ID can never drift from the edit.
 
 #[non_exhaustive]
 pub enum ProposalKind {

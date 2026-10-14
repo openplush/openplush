@@ -412,7 +412,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T165 [P] Performance pass against SC-005: 50k triangles, seam edit to updated preview within 10 s. Budget informed by S2 (T002)
 - [ ] T166 [P] `docs/tutorials/first-plush.md` — the walkthrough a first-time maker follows
 - [ ] T167 [P] `docs/explanation/why-seams-go-there.md` — the teaching document; the geometry reasoning behind seam placement, and the groundwork feature 002 builds on
-- [ ] T168 [P] `docs/reference/` — fabric profiles, warning codes with their meanings and remedies, CLI reference
+- [ ] T168 [P] `docs/reference/` — fabric profiles, warning codes with their meanings and remedies, CLI reference. *2026-10-14: written incrementally, not here (D-023): each PR that adds a warning code, fabric preset or CLI command documents it in `docs/reference/`. T168 is the closing pass: an index of those pages and a check that they match the code*
 - [ ] T169 [P] `docs/adr/` — write up every spike outcome and any decision that changed a principle or public contract
 - [ ] T170 Run the full [quickstart.md](./quickstart.md) walkthrough end to end and fix what does not work. **Including printing on paper and measuring the scale square with a ruler** — a pattern that prints at 97% is a ruined project and nothing on screen reveals it
 - [ ] T171 SC-004 usability test: five or more first-time makers, prepared model, printable pattern within 15 minutes. Needs recruiting and a written protocol; gates the release claim, not the build

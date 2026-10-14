@@ -132,6 +132,17 @@ r=$(new_case cargo-not-lints)
 printf '[package]\nname = "x"\n\n[features]\nall = []\nwarnings = []\n' >"$r/crates/openplush-mesh/Cargo.toml"
 expect pass "keys named all or warnings outside a lints table" "$r"
 
+r=$(new_case cargo-config)
+mkdir -p "$r/.cargo"
+printf '[build]\nrustflags = ["-A", "clippy::disallowed_types", "--cap-lints", "warn"]\n' >"$r/.cargo/config.toml"
+expect fail "rustflags in .cargo/config.toml" "$r" ".cargo/config.toml: clippy::disallowed_types"
+expect fail "--cap-lints in .cargo/config.toml" "$r" ".cargo/config.toml: cap-lints"
+
+r=$(new_case cargo-config-warnings)
+mkdir -p "$r/.cargo"
+printf '[build]\nrustflags = ["-Awarnings"]\n' >"$r/.cargo/config.toml"
+expect fail "-Awarnings in .cargo/config.toml" "$r" ".cargo/config.toml: warnings"
+
 r=$(new_case bindings)
 mkdir -p "$r/bindings/openplush-wasm/src"
 printf '%s\n' "$allow_map" >"$r/bindings/openplush-wasm/src/lib.rs"

@@ -9,7 +9,7 @@ use proptest::prelude::*;
 
 use super::ManifoldMesh;
 use super::tests::{p, soup, tol};
-use crate::MeshError;
+use crate::{MeshError, VertexId};
 
 /// A w x h grid of quads, each split along a chosen diagonal; optionally wrapped
 /// around into a cylinder. Returns positions and triangles.
@@ -74,25 +74,136 @@ proptest! {
         prop_assert_eq!(m.boundary_loops().len(), if cylinder { 2 } else { 1 });
     }
 
-    /// Deleting arbitrary faces can create bowties and isolated vertices. The builder
-    /// must either produce a mesh that passes every invariant or return a typed error;
-    /// never a panic, never an invalid mesh.
+    /// Deleting arbitrary faces from a grid (and the vertices left unused) leaves
+    /// a surface that is manifold or not at each vertex. An independent oracle,
+    /// the connectivity of each vertex's link, decides which: the builder must
+    /// build exactly when every link is connected, and otherwise name the lowest
+    /// vertex whose link is not.
     #[test]
-    fn damaged_grids_build_valid_or_refuse(w in 3usize..8, h in 2usize..6, keep in proptest::collection::vec(any::<bool>(), 1..40),
-                                           seed in any::<u64>()) {
-        let (pos, tris) = grid(w, h, &[true, false], false);
-        let mut kept: Vec<[u32; 3]> = tris.into_iter().enumerate().filter(|(i, _)| keep[i % keep.len()]).map(|(_, t)| t).collect();
+    fn damaged_grids_build_exactly_when_every_vertex_link_is_connected(
+        w in 3usize..8, h in 2usize..6, delete in proptest::collection::vec(any::<usize>(), 1..4), seed in any::<u64>()) {
+        let (pos, kept) = damaged_grid(w, h, &delete);
         prop_assume!(!kept.is_empty());
+        let bad = non_manifold_vertices(pos.len(), &kept);
+        let mut kept = kept;
         permute(&mut kept, seed);
         let s = soup(pos, kept);
         let t = tol(&s);
         match ManifoldMesh::from_oriented_triangles(&s, &t) {
-            Ok(m) => prop_assert!(m.debug_validate(&t).is_ok()),
-            Err(e) => prop_assert!(
-                matches!(e, MeshError::IsolatedVertex { .. } | MeshError::NonManifoldVertex { .. }),
-                "unexpected refusal: {:?}",
-                e
+            Ok(m) => {
+                prop_assert!(bad.is_empty(), "built, but the oracle says {:?} are non-manifold", bad);
+                prop_assert!(m.debug_validate(&t).is_ok());
+            }
+            Err(e) => prop_assert_eq!(
+                Some(e),
+                bad.first().map(|&v| MeshError::NonManifoldVertex { vertex: VertexId::new(v) })
             ),
         }
     }
+}
+
+/// A `w` x `h` grid with the faces at `delete` (modulo the face count) removed,
+/// and the vertices no remaining face uses removed too, so the result can only
+/// fail by being non-manifold. A few deletions give a mix of holes (still
+/// manifold) and faces meeting at a single vertex (bowties).
+fn damaged_grid(w: usize, h: usize, delete: &[usize]) -> (Vec<DVec3>, Vec<[u32; 3]>) {
+    let (pos, tris) = grid(w, h, &[true, false], false);
+    let n = tris.len();
+    let kept: Vec<[u32; 3]> = tris
+        .into_iter()
+        .enumerate()
+        .filter(|(i, _)| !delete.iter().any(|d| d % n == *i))
+        .map(|(_, t)| t)
+        .collect();
+    let mut new_index = vec![None; pos.len()];
+    let mut out = Vec::new();
+    for &v in kept.iter().flatten() {
+        if new_index[v as usize].is_none() {
+            new_index[v as usize] = Some(out.len() as u32);
+            out.push(v);
+        }
+    }
+    // Renumber in original order, so vertex order does not depend on face order.
+    out.sort_unstable();
+    for (n, &v) in out.iter().enumerate() {
+        new_index[v as usize] = Some(n as u32);
+    }
+    let pos = out.iter().map(|&v| pos[v as usize]).collect();
+    let tris = kept
+        .iter()
+        .map(|t| t.map(|v| new_index[v as usize].unwrap()))
+        .collect();
+    (pos, tris)
+}
+
+/// The oracle: a vertex is manifold when its link (the edges opposite it in its
+/// triangles) is connected: one path for a boundary vertex, one cycle for an
+/// interior one. Shares no code with the builder.
+fn non_manifold_vertices(n: usize, tris: &[[u32; 3]]) -> Vec<u32> {
+    let mut links: Vec<Vec<(u32, u32)>> = vec![Vec::new(); n];
+    for t in tris {
+        for k in 0..3 {
+            links[t[k] as usize].push((t[(k + 1) % 3], t[(k + 2) % 3]));
+        }
+    }
+    let mut bad = Vec::new();
+    for (v, link) in links.iter().enumerate() {
+        // Union-find over the link's endpoints.
+        let mut parent: std::collections::BTreeMap<u32, u32> = std::collections::BTreeMap::new();
+        fn find(p: &mut std::collections::BTreeMap<u32, u32>, x: u32) -> u32 {
+            let up = p[&x];
+            if up == x {
+                x
+            } else {
+                let r = find(p, up);
+                p.insert(x, r);
+                r
+            }
+        }
+        for &(a, b) in link {
+            parent.entry(a).or_insert(a);
+            parent.entry(b).or_insert(b);
+            let (ra, rb) = (find(&mut parent, a), find(&mut parent, b));
+            parent.insert(ra, rb);
+        }
+        let keys: Vec<u32> = parent.keys().copied().collect();
+        let roots: std::collections::BTreeSet<u32> =
+            keys.into_iter().map(|k| find(&mut parent, k)).collect();
+        if roots.len() > 1 {
+            bad.push(v as u32);
+        }
+    }
+    bad
+}
+
+/// The property above is only meaningful if both outcomes are common. Over a
+/// fixed set of damage patterns, at least a fifth must build and a fifth must be
+/// refused as non-manifold.
+#[test]
+fn damaged_grids_produce_both_outcomes() {
+    let (mut built, mut refused, mut s) = (0, 0, 0x9e37_79b9_7f4a_7c15u64);
+    for _ in 0..300 {
+        let mut next = || {
+            s ^= s << 13;
+            s ^= s >> 7;
+            s ^= s << 17;
+            s as usize
+        };
+        let count = 1 + next() % 3;
+        let delete: Vec<usize> = (0..count).map(|_| next()).collect();
+        let (pos, tris) = damaged_grid(5, 4, &delete);
+        if tris.is_empty() {
+            continue;
+        }
+        let so = soup(pos, tris);
+        match ManifoldMesh::from_oriented_triangles(&so, &tol(&so)) {
+            Ok(_) => built += 1,
+            Err(MeshError::NonManifoldVertex { .. }) => refused += 1,
+            Err(e) => panic!("unexpected refusal {e:?}"),
+        }
+    }
+    assert!(
+        built >= 60 && refused >= 60,
+        "built {built}, refused {refused}"
+    );
 }

@@ -125,8 +125,11 @@ jobs:
             above (stacked PRs target their parent, not main):
             `git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`.
 
-            1. List the changed paths. Run these agents, in parallel where you can,
-               each told the PR number, base branch, and head SHA:
+            1. List the changed paths. Run these agents, each told the PR number, base
+               branch, and head SHA. Start every agent with run_in_background: false and
+               wait for its report: this run ends when you stop, and a background agent
+               dies with it, so stopping with one still running posts nothing.
+               Several foreground agent calls in one message still run in parallel.
                - pr-reviewer: always.
                - spec-reviewer: if anything under specs/ or .specify/memory/ changed.
                - docs-reviewer: if anything under crates/openplush-pipeline/src/,

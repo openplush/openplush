@@ -2,6 +2,8 @@
 
 **Feature**: `001-pattern-pipeline` | **Date**: 2026-10-13 | **Status**: Draft contract
 
+*Changes*: 2026-10-14 (D-022): binding-level error codes alongside `EngineError` names, `ProposalId` as a hex string, and chart, chain and component locations.
+
 The engine runs in a Web Worker so the UI thread never blocks on geometry (Constitution "Technical Constraints"). This file defines the messages between `apps/web` and the worker hosting `bindings/openplush-wasm`, mediated by `packages/engine-client`.
 
 TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern.
@@ -41,7 +43,7 @@ Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `progress` me
 | `flattenStep` | `PipelineHandle` | `Progress` | UI-driven pumping; keeps the worker responsive to cancels |
 | `metrics` | `PipelineHandle` | per-chart distortion + heatmap buffer (transferred) | FR-021 |
 | `proposals` | `PipelineHandle`, kind | `Proposal[]` | Darts, extra seams, splits — all preview-then-accept |
-| `applyProposal` | `PipelineHandle`, `ProposalId` | affected chart IDs | Only after explicit user acceptance |
+| `applyProposal` | `PipelineHandle`, `ProposalId` (16-char hex string) | affected chart IDs | Only after explicit user acceptance. An ID no longer offered is `ProposalNotOffered` |
 | `pieces` | `PipelineHandle`, `PatternOptions` | `PatternPiece[]` (outlines transferred) | FR-030 … FR-035 |
 | `layout` | `PipelineHandle`, `LayoutOptions` | `Sheet[]` | |
 | `export` | `PipelineHandle`, `ExportOptions` | bytes (transferred) | SVG or PDF; includes the warning summary page (FR-064) |
@@ -75,9 +77,10 @@ Cancellation is cooperative: the worker checks between `step()` calls. A cancell
 
 ```ts
 type EngineErrorDto = {
-  code: string;                     // stable, matches EngineError variant names
+  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle)
   message: string;                  // plain language, shown to the maker
-  locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[] };
+  locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[];
+                charts?: number[]; chains?: number[]; components?: number[] };
   proposals?: Proposal[];           // e.g. ChartNotDisk carries its own fix (FR-013)
 };
 ```

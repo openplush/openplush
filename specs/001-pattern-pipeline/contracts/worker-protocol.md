@@ -58,7 +58,7 @@ type PipelineHandle = { readonly __brand: 'pipeline'; readonly n: number };
 ```
 
 - Handles are opaque integers, branded in TS so they cannot be swapped or arithmetic'd.
-- The worker owns the objects. `release(handle)` frees; using a released handle returns `EngineError::StaleHandle` rather than undefined behaviour.
+- The worker owns the objects. `release(handle)` frees; using a released handle returns an error with code `StaleHandle` rather than undefined behaviour. That code belongs to the binding, not to `EngineError`: the engine has no handles, so the WASM binding raises it before calling the engine (D-022).
 - Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state.
 
 ## 5. Progress and cancellation

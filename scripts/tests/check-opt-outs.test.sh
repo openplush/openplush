@@ -149,9 +149,64 @@ printf '%s\n' "$allow_map" >"$r/bindings/openplush-wasm/src/lib.rs"
 expect fail "an opt-out in bindings/" "$r" "bindings/openplush-wasm/src/lib.rs: clippy::disallowed_types"
 
 r=$(new_case build-output)
-mkdir -p "$r/crates/openplush-mesh/target/debug"
-printf '%s\n' "$allow_map" >"$r/crates/openplush-mesh/target/debug/gen.rs"
-expect pass "build output is out of scope" "$r"
+mkdir -p "$r/target/debug/build/x/.cargo"
+printf '%s\n' "$allow_map" >"$r/target/debug/build/x/gen.rs"
+printf 'x = 1\n' >"$r/target/debug/build/x/clippy.toml"
+printf '[env]\nCLIPPY_CONF_DIR = "x"\n' >"$r/target/debug/build/x/.cargo/config.toml"
+expect pass "the top-level target/ is out of scope" "$r"
+
+r=$(new_case crate-target)
+mkdir -p "$r/crates/openplush-mesh/target"
+printf '%s\n' "$allow_map" >"$r/crates/openplush-mesh/target/gen.rs"
+expect fail "a target/ inside a crate is in scope" "$r" "crates/openplush-mesh/target/gen.rs: clippy::disallowed_types"
+
+# Bypasses that drop every ban at once, so no allowlist entry can excuse them.
+r=$(new_case known-configs)
+for f in clippy.toml crates/clippy.toml crates/openplush-testkit/clippy.toml; do
+  mkdir -p "$r/$(dirname "$f")"
+  printf 'too-many-lines-threshold = 60\n' >"$r/$f"
+done
+expect pass "the three known clippy.toml files" "$r"
+
+for f in crates/openplush-mesh/clippy.toml crates/openplush-mesh/.clippy.toml .clippy.toml bindings/x/clippy.toml; do
+  r=$(new_case "stray-${f//\//-}")
+  mkdir -p "$r/$(dirname "$f")"
+  printf 'too-many-lines-threshold = 60\n' >"$r/$f"
+  list "$r" "$f clippy::disallowed_types it is listed"
+  expect fail "another clippy config, even listed: $f" "$r" "$f: a clippy config other than"
+done
+
+r=$(new_case conf-dir-cargo-config)
+mkdir -p "$r/.cargo"
+printf '[env]\nCLIPPY_CONF_DIR = { value = "x", relative = true }\n' >"$r/.cargo/config.toml"
+expect fail "CLIPPY_CONF_DIR in .cargo/config.toml" "$r" ".cargo/config.toml: CLIPPY_CONF_DIR"
+
+r=$(new_case conf-dir-cargo-toml)
+printf '[package]\nname = "x"\n# CLIPPY_CONF_DIR\n' >"$r/crates/openplush-mesh/Cargo.toml"
+expect fail "CLIPPY_CONF_DIR in a Cargo.toml" "$r" "crates/openplush-mesh/Cargo.toml: CLIPPY_CONF_DIR"
+
+# Cargo.toml forms a table parser would have to know about.
+cargo_case() { # cargo_case <name> <Cargo.toml text> <expected lint>
+  local r
+  r=$(new_case "$1")
+  printf '%s\n' "$2" >"$r/crates/openplush-mesh/Cargo.toml"
+  expect fail "Cargo.toml: $1" "$r" "crates/openplush-mesh/Cargo.toml: $3"
+}
+cargo_case "an inline table" $'[lints]\nclippy = { disallowed_methods = "allow" }' clippy::disallowed_methods
+cargo_case "a spaced header" $'[ lints.clippy ]\ndisallowed_types = "allow"' clippy::disallowed_types
+cargo_case "a quoted key" $'[lints.clippy]\n"disallowed_methods" = "allow"' clippy::disallowed_methods
+cargo_case "a hyphenated key" $'[lints.clippy]\ndisallowed-types = "allow"' clippy::disallowed_types
+cargo_case "a quoted group key" $'[lints.clippy]\n"style" = "allow"' clippy::style
+cargo_case "[lints.rust] warnings" $'[lints.rust]\nwarnings = "allow"' warnings
+
+r=$(new_case macro 'macro_rules! quiet {
+    ($lint:ident) => {
+        #[allow(clippy::$lint)]
+        pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }
+    };
+}
+quiet!(disallowed_types);')
+expect fail "a macro that builds the attribute from a bare lint name" "$r" "$lib: clippy::disallowed_types"
 
 echo
 echo "$pass passed, $fail failed"

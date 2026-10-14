@@ -71,6 +71,10 @@ disallowed-methods = [
 ]
 
 
+# Small units (AGENTS.md, Engineering rules); too_many_lines is enabled in Cargo.toml.
+too-many-lines-threshold = 60
+too-many-arguments-threshold = 5
+
 # Tests may unwrap, expect, and panic: a failed test is the panic's purpose, and the
 # no-panic rule is about user-derived data at runtime. Library code is unaffected.
 allow-unwrap-in-tests = true

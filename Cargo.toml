@@ -18,7 +18,10 @@ wasm-bindgen-test = "0.3.79"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
-missing_docs = "warn"
+# Only the public engine API requires docs on every item (openplush-pipeline
+# sets missing_docs itself); elsewhere they would force docs that restate names.
+# Visibility is pub(crate) unless another crate calls it.
+unreachable_pub = "warn"
 
 [workspace.lints.clippy]
 # crates/AGENTS.md: no unwrap/expect/panic on user-derived data. Internal
@@ -30,3 +33,5 @@ panic = "warn"
 todo = "warn"
 unimplemented = "warn"
 dbg_macro = "warn"
+# Small units: the threshold (60) is in each clippy.toml.
+too_many_lines = "warn"

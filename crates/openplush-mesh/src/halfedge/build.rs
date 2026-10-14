@@ -40,6 +40,10 @@ impl ManifoldMesh {
         not(test),
         expect(dead_code, reason = "called by repair, not yet written")
     )]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "predates the limit; split one step per check"
+    )]
     pub(crate) fn from_oriented_triangles(
         soup: &TriangleSoup,
         tol: &ModelTolerances,

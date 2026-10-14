@@ -99,8 +99,9 @@ CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deli
 | Lint | Why |
 |---|---|
 | `unsafe_code = "forbid"` | Constitution, engine lane. Exceptions need an ADR. |
-| `missing_docs` | Public items document their pre- and postconditions (`crates/AGENTS.md`). |
-| `missing_docs` on test files | Each `tests/*.rs` file is its own crate, so it needs a `//!` line. Make it say what the file proves. |
+| `missing_docs` (`openplush-pipeline` only) | The public engine API documents every item. Elsewhere a doc is one line saying what the signature doesn't (`AGENTS.md`, Comments and prose). |
+| `unreachable_pub` | Visibility is `pub(crate)` unless another crate calls the item (YAGNI). |
+| `too_many_lines` (60), `too_many_arguments` (5) | Small units. A function that predates the limit carries `#[expect(clippy::too_many_lines, reason = …)]` until it is split. |
 | `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed in `#[test]` functions and `#[cfg(test)]` modules (`clippy.toml`). Code outside those, such as helpers in `tests/*.rs` and everything in `openplush-testkit`, returns `Result` and uses `?`. |
 | `disallowed_types`: `HashMap`, `HashSet` | Iteration order is unspecified, which breaks byte-identical output (Constitution V). |
 | `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |

@@ -490,6 +490,10 @@ fn invariant_2_every_face_loop_has_length_three() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "predates the limit; build the corrupted mesh in a helper"
+)]
 fn invariant_3_a_bowtie_with_one_linked_boundary_loop() {
     // Triangles (0,1,2) and (0,3,4) share only vertex 0. Linked as a single
     // boundary loop, every link checks out and the rotation at vertex 0 visits all

@@ -30,6 +30,10 @@ impl ManifoldMesh {
     /// Invariant 0 covers the structure around them: array lengths (located by
     /// array name), IDs in range, `f_he` pointing into its own face, and the
     /// boundary-vertex rule (`v_out` is the boundary half-edge if one exists).
+    #[expect(
+        clippy::too_many_lines,
+        reason = "predates the limit; split one check per invariant"
+    )]
     pub fn debug_validate(&self, tol: &ModelTolerances) -> Result<(), MeshError> {
         let n = self.half_edge_count();
         let nv = self.vertex_count();

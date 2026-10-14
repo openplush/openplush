@@ -94,3 +94,21 @@ pub enum MeshElement {
     /// A whole per-element array, named, whose length disagrees with the others.
     Storage(&'static str),
 }
+
+/// A connected component of a repaired mesh, numbered by its lowest `FaceId`
+/// (data-model section 13a). Created by repair step 6 (T065); stable for one
+/// repaired mesh.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ComponentId(u32);
+
+impl ComponentId {
+    /// Wraps a raw index.
+    pub const fn new(index: u32) -> Self {
+        Self(index)
+    }
+
+    /// The raw index.
+    pub const fn index(self) -> u32 {
+        self.0
+    }
+}

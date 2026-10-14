@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-14
-deciders: maintainer (delegated to the implementing agent, reviewed in the T022/T023 PR)
+deciders: maintainer (delegated to the implementing agent, reviewed in the T023 PR)
 ---
 
 # Use the `robust` crate for exact geometric predicates

@@ -5,7 +5,7 @@ Applies in addition to the root `AGENTS.md`.
 ## Where code goes
 | Crate | Owns |
 |---|---|
-| `openplush-geom` | f64 vectors, robust predicates, `eps` policy |
+| `openplush-geom` | f64 vectors, robust predicates, the tolerance policy (`epsilon`), millimetre units |
 | `openplush-mesh` | `TriangleSoup`, validation, repair, half-edge `ManifoldMesh` |
 | `openplush-io` | bytes → `TriangleSoup` (OBJ, glTF, STL, PLY) |
 | `openplush-seams` | `SeamSet`, cut-graph completion, darts, symmetry |
@@ -24,7 +24,7 @@ Depend downward only (DAG in `specs/001-pattern-pipeline/plan.md`). `bindings/*`
 - No `unwrap`, `expect`, `panic!`, or panicking index on user-derived data. Allowed only for internal invariants, with a `// INVARIANT:` comment naming it.
 - One `thiserror` error enum per crate. Errors carry element IDs (`FaceId`, `EdgeId`, `VertexId`) so the UI can highlight them.
 - Newtype IDs across every API — never raw `usize`/`u32`.
-- `f64` for geometry. Tolerances come from `openplush_geom::eps` (relative to bbox diagonal); no literal `1e-9`s in algorithm code.
+- `f64` for geometry. Tolerances come from `openplush_geom::epsilon`: model-space ones relative to the bbox diagonal, physical ones (seam parity) in millimetres; no literal `1e-9`s in algorithm code.
 - `#![forbid(unsafe_code)]` in engine crates unless an ADR says otherwise.
 - Public items document their pre- and postconditions.
 - Modules stay small (soft cap ~400 lines); split by responsibility, not by convenience.

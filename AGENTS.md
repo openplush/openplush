@@ -28,17 +28,18 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 - **Licenses**: new dependencies must be MIT, Apache-2.0, BSD-2/3, ISC, Zlib, Unicode, or MPL-2.0 and pass `cargo deny` / the JS license check. A new dependency category needs an ADR in `docs/adr/`.
 
 ## Commands
-> Planned — update when the workspace is scaffolded.
+`scripts/check.sh` is the single entry point; CI calls it too (CONTRIBUTING.md, Development environment).
 
 | Task | Command |
 |---|---|
-| Engine tests | `cargo test --workspace` |
-| Lint | `cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings` |
-| WASM build | `cargo build -p openplush-wasm --target wasm32-unknown-unknown --release` |
-| Licenses/advisories | `cargo deny check` |
-| Run one fixture | `cargo run -p openplush-cli -- pattern fixtures/meshes/capsule.glb -o out/` |
-| Web dev server | `pnpm --filter web dev` |
-| Web tests | `pnpm -r test && pnpm --filter web exec playwright test` |
+| Install the pinned tools | `scripts/check.sh --setup` |
+| Every gate CI runs | `scripts/check.sh` |
+| Engine: boundary, fmt, clippy, tests | `scripts/check.sh engine` |
+| One step | `scripts/check.sh <boundary\|fmt\|clippy\|test\|deny\|wasm\|shell>` |
+| See the exact commands | `scripts/check.sh --dry-run <steps>` |
+| One crate's tests | `cargo test -p openplush-<crate>` |
+
+Not yet available (their crates and apps don't exist): running a fixture through `openplush-cli`, the release `openplush-wasm` build, and the web dev server.
 
 ## Definition of done
 The PR description states:

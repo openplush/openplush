@@ -13,4 +13,6 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 
 | ADR | Title | Status |
 |---|---|---|
-| — | none yet | — |
+| [0002](0002-robust-predicates.md) | Use the `robust` crate for exact geometric predicates | Accepted |
+
+ADR 0001 is reserved for the S1 preprocessing decision (T001).

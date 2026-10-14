@@ -151,6 +151,21 @@ impl TriangleSoup {
             .flatten()
     }
 
+    /// Raw triangle indices, all in range (checked in [`TriangleSoup::new`]).
+    pub(crate) fn triangle_indices(&self) -> &[[u32; 3]] {
+        &self.triangles
+    }
+
+    /// Per-corner provenance, three entries per triangle.
+    pub(crate) fn corner_sources(&self) -> &[SourceCorner] {
+        &self.corner_src
+    }
+
+    /// Per-corner UVs, three entries per triangle, if any were supplied.
+    pub(crate) fn corner_uvs(&self) -> Option<&[Option<DVec2>]> {
+        self.corner_uv.as_deref()
+    }
+
     /// The bounding-box diagonal of the vertices triangles use: the scale every
     /// model-space tolerance derives from (`openplush_geom::epsilon`). Unused
     /// vertices are left out, so one stray point cannot inflate the weld and area

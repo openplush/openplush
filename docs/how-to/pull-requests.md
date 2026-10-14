@@ -35,7 +35,7 @@ These are not:
 **The test task plus the implementation that makes it pass.** Commit the test first, then the implementation, so the history shows test-first and CI is green at the PR tip.
 
 ```
-001/07-T050-obj-import
+001/42-T050-obj-import
 ├── test(io): OBJ import preserves per-corner UVs and materials   ← fails
 └── feat(io): OBJ import via tobj                                  ← passes
 ```
@@ -63,8 +63,8 @@ Splitting these into four PRs is ceremony, not review.
 `T060` is the weld step. It is one task and it will exceed the budget, because welding needs a spatial hash, a deterministic tie-break, and the glTF split-vertex handling that is the entire reason it matters. Split by capability, each with its own test:
 
 ```
-001/09-T060a-weld-spatial-hash      the hash and its determinism test
-001/10-T060b-weld-gltf-split-verts  the case that makes or breaks glTF import   (stacked on 09)
+001/57-T060a-weld-spatial-hash      the hash and its determinism test
+001/58-T060b-weld-gltf-split-verts  the case that makes or breaks glTF import   (stacked on 57)
 ```
 
 Then annotate `T060` in `tasks.md` with both branch names so the task's history is findable. Splitting a task is fine; losing the trace is not.

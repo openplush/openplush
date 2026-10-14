@@ -27,7 +27,7 @@ OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spe
 - **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
 - **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
 - **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
-- Branch names: `NNN/NN-slug` for feature work (`001/07-T050-obj-import`: feature, position, content), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#branch-naming).
+- Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#branch-naming).
 
 Why so strict: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A sign error in a dihedral angle or an epsilon against the wrong scale is a one-line defect that produces plausible output. It does not survive a focused review of 200 lines, and it sails through 2,000.
 

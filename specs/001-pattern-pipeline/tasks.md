@@ -38,7 +38,7 @@ Small config and scaffolding tasks sharing one concern:
 | `001/NN-T050-obj-import` | T050, T053 |
 | `001/NN-T055-validators` | T055, T056, T057 |
 
-`NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks T009–T021 are repo plumbing, so they are `chore/` branches, not 001 slices.
+`NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks (Phase 1) are repo plumbing, so they are `chore/` branches, not 001 slices.
 
 ### Split these — one task, several PRs
 

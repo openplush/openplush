@@ -20,7 +20,7 @@ The arguments parse and are validated. **No subcommand runs a stage yet**: each 
 
 Values checked while parsing:
 
-- `--size-mm`: a finite number above 0. It is the finished length of the model's longest dimension, in millimetres.
+- `--size-mm`: a finite number above 0, the target finished size in millimetres. Which dimension it measures is decided by the task that builds scaling.
 - `--page`: `a4` or `letter`.
 - `--fill-holes`: `auto`. The engine classifies each boundary loop as an opening or an accidental hole.
 
@@ -30,6 +30,6 @@ Values checked while parsing:
 
 | Code | Meaning |
 |---|---|
-| 0 | Success (no subcommand succeeds yet) |
+| 0 | Success. Today only `--help` and `--version` (prints `openplush-cli <version>`) |
 | 1 | The engine refused, or the stage is not built yet. The reason is on stderr |
 | 2 | Usage error: an unknown flag or value, or a missing required argument. `clap` prints the usage |

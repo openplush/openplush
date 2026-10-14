@@ -51,23 +51,19 @@ fn an_unknown_page_size_is_a_usage_error() {
 
 #[test]
 fn a_non_positive_size_is_a_usage_error() {
-    for size in ["0", "-5", "NaN", "inf"] {
+    for size in ["0", "-5", "NaN", "inf", "1e309"] {
+        let flag = format!("--size-mm={size}");
         let out = cli(&[
-            "pattern",
-            "m.obj",
-            "--seams",
-            "s.json",
-            "--fabric",
-            "minky",
-            "--size-mm",
-            size,
-            "--page",
-            "a4",
-            "-o",
-            "out",
+            "pattern", "m.obj", "--seams", "s.json", "--fabric", "minky", &flag, "--page", "a4",
+            "-o", "out",
         ])
         .expect("the binary runs");
         assert_eq!(out.status.code(), Some(2), "size {size}: {}", stderr(&out));
+        assert!(
+            stderr(&out).contains("not a finite length above 0 mm"),
+            "size {size} was not refused by the value check: {}",
+            stderr(&out)
+        );
     }
 }
 

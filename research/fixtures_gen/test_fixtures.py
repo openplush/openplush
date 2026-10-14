@@ -102,6 +102,20 @@ def edges_of(f: Face) -> list[Edge]:
     return [(f[0], f[1]), (f[1], f[2]), (f[2], f[0])]
 
 
+def signed_volume(pos: list[Vec], faces: list[Face]) -> float:
+    return sum(dot(pos[a], cross(pos[b], pos[c])) for a, b, c in faces) / 6
+
+
+def inward_closed_components(pos: list[Vec], faces: list[Face], comps: UnionFind[int]) -> int:
+    """Closed vertex-connected components with signed volume <= 0: repair orients each to positive volume."""
+    by_comp: dict[int, list[Face]] = {}
+    for f in faces:
+        by_comp.setdefault(comps.find(f[0]), []).append(f)
+    edge_uses = Counter((min(e), max(e)) for f in faces for e in edges_of(f))
+    open_comps = {comps.find(a) for (a, _), n in edge_uses.items() if n == 1}
+    return sum(signed_volume(pos, fs) <= 0 for root, fs in by_comp.items() if root not in open_comps)
+
+
 def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
     """Count each defect class; zero everywhere means closed, manifold, oriented, and clean."""
     canon: dict[Vec, int] = {}
@@ -140,7 +154,7 @@ def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
         n - 1
         for (a, b), n in Counter(e for f in unique for e in edges_of(f)).items()
         if len(edge_faces[(min(a, b), max(a, b))]) <= 2
-    )
+    ) + inward_closed_components(pos, unique, comps)
     return {
         "bowtie-vertex": len(fan_roots) - len({v for v, _ in fan_roots}),
         "duplicate-face": len(welded) - len(unique),
@@ -156,10 +170,6 @@ def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
             for n in (cross(sub(t[1], t[0]), sub(t[2], t[0])) for t in tris)
         ),
     }
-
-
-def signed_volume(pos: list[Vec], faces: list[Face]) -> float:
-    return sum(dot(pos[a], cross(pos[b], pos[c])) for a, b, c in faces) / 6
 
 
 class CleanMeshes(unittest.TestCase):

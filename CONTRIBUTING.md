@@ -75,6 +75,7 @@ cargo test --workspace
 cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
 cargo build --workspace --target wasm32-unknown-unknown
 cargo deny check          # cargo install cargo-deny --locked
+scripts/tests/check-boundary.test.sh && scripts/check-boundary.sh   # bash >= 4.3, jq, python3 >= 3.11
 pnpm install
 ```
 

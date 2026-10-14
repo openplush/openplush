@@ -358,7 +358,7 @@ pub enum SeamReason {
 
 ### ProposalId
 
-A 64-bit FNV-1a hash of the proposal's edit, not a counter, so the same fix proposed twice has the same ID even after unrelated seam changes renumber charts:
+A 64-bit FNV-1a hash (offset basis `0xcbf29ce484222325`, prime `0x100000001b3`) of the proposal's edit, not a counter, so the same fix proposed twice has the same ID even after unrelated seam changes renumber charts:
 - **Bytes hashed**, in order: one byte for the `ProposalKind` variant (0 `CloseChart`, 1 `Dart`, 2 `SplitPiece`, 3 `Seam`); then, for each entry of `add` in key order, the `EdgeId` as 4 bytes little-endian followed by one byte for the `SeamKind` (§4 declaration order). Chart IDs and text are deliberately left out: they can change while the edit stays the same.
 - **Stable** for as long as the repaired mesh is, since `EdgeId`s are.
 - **On the wire** (worker protocol) it is a 16-character lowercase hex string: a `u64` as a JSON number loses precision above 2^53.

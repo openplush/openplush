@@ -77,7 +77,8 @@ Cancellation is cooperative: the worker checks between `step()` calls. A cancell
 
 ```ts
 type EngineErrorDto = {
-  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle)
+  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle),
+                                    // defined in openplush-wasm's own error type so the TS generator sees it
   message: string;                  // plain language, shown to the maker
   locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[];
                 charts?: number[]; chains?: number[]; components?: number[] };

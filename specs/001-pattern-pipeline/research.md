@@ -116,6 +116,30 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 | **S7** | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
 | S8 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
 
+### S1 result: baby_shark on wasm32 (2026-10-14) ✅ closed
+
+Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_shark_wasm/README.md). Decision: [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed).
+
+**It builds and runs on `wasm32-unknown-unknown`, byte-identical to native, but it can't be adopted as published** [solid]. `baby_shark` 0.3.12's isotropic remesher, quadric decimator and both voxel meshers ran under Node, and each output hash matched the native release build. Rayon does not panic on wasm32: `rayon-core` 1.13 falls back to the current thread.
+
+- **It fails two gates and has no features to opt out.**
+  - `rayon` is unconditional (direct, and through `faer` default features), so the `cargo deny` bans fail.
+  - On wasm32 it always pulls in `wasm-bindgen` and `getrandom` (`js`), and it compiles its own `#[wasm_bindgen]` exports, so boundary rule 1 fails.
+  - Licenses pass.
+  - Making it native-only fails the same gates (they resolve every target) and would break native/WASM byte-identity (Constitution V).
+- **A small upstream change would fix it** [solid for the harness]: make those three dependencies optional, turn off `faer`'s defaults, and make three call sites sequential. In the harness that passes `cargo deny` and keeps every hash unchanged.
+- **Library defects** [solid]:
+  - dual-contouring output is nondeterministic with more than one thread, and contains `todo!()`;
+  - decimation ignores its face floor;
+  - the decimation threshold is an absolute model-units² value;
+  - voxel output is an unwelded soup;
+  - there is no step or yield API.
+- **Implication**:
+  - both targets flatten the repaired mesh, so T080 cannot assume isotropic triangles;
+  - S2 must size charts at raw-input size;
+  - the §3 voxel last resort is out of v0.1;
+  - re-adopt only from a crates.io release that has opt-out features.
+
 ### S6 result — licenses (2026-10-14) ✅ closed
 
 **Every candidate dependency, and every crate in their combined dependency graph, passes the Constitution IX allowlist.** No ADR or replacement needed.

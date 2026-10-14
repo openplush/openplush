@@ -18,7 +18,7 @@ description: "Task list for 001 pattern pipeline"
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 171 tasks does not mean 171 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
+**A task is a unit of work, not a unit of review.** 173 tasks does not mean 173 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
 
 ### Batch these — several tasks, one PR
 
@@ -26,16 +26,19 @@ Small config and scaffolding tasks sharing one concern:
 
 | PR | Tasks |
 |---|---|
-| `chore/workspace-config` | T010, T011, T012 |
-| `chore/ci-engine` | T013, T016 |
+| `chore/workspace-config` | T009, T010, T011, T012 |
+| `chore/ci-engine` | T013 |
+| `chore/boundary-check` | T016 — alone, see *Isolate these* |
 | `chore/ci-wasm-shell` | T014, T015 |
 | `chore/ci-determinism-golden` | T017, T018, T042 |
 | `chore/repo-governance` | T019, T020, T021 |
-| `001/T022-geom-core` | T022, T023 |
-| `001/T028-error-warning-types` | T028, T029, T030, T031, T043 |
-| `001/T032-testkit` | T032, T033, T034 |
-| `001/T050-obj-import` | T050, T053 |
-| `001/T055-validators` | T055, T056, T057 |
+| `001/NN-T022-geom-core` | T022, T023 |
+| `001/NN-T028-error-warning-types` | T028, T029, T030, T031, T043 |
+| `001/NN-T032-testkit` | T032, T033, T034 |
+| `001/NN-T050-obj-import` | T050, T053 |
+| `001/NN-T055-validators` | T055, T056, T057 |
+
+`NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks (Phase 1) are repo plumbing, so they are `chore/` branches, not 001 slices.
 
 ### Split these — one task, several PRs
 
@@ -104,12 +107,14 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 - [ ] T013 [P] `.github/workflows/engine.yml` — fmt, clippy with `-D warnings`, `cargo test --workspace`, `cargo deny check`
 - [ ] T014 [P] `.github/workflows/wasm.yml` — build `wasm32-unknown-unknown`, run `wasm-bindgen-test`
 - [ ] T015 [P] `.github/workflows/shell.yml` — typecheck, Vitest, Playwright
-- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a crate other than `openplush-pipeline` and `openplush-project`. Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
+- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a workspace crate other than `openplush-pipeline` (D-020). Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
 - [ ] T017 [P] `.github/workflows/determinism.yml` — run the fixture corpus native and WASM, compare export hashes (SC-008)
 - [ ] T018 [P] `.github/workflows/golden.yml` — `insta` snapshot diff, PR comment with rendered SVG diffs
 - [ ] T019 [P] `.github/CODEOWNERS`, lane labels (`lane:engine`, `lane:shell`, `lane:fixtures`, `lane:docs`), issue forms
 - [ ] T020 [P] `docs/` Diátaxis skeleton (`tutorials/`, `how-to/`, `reference/`, `explanation/`) and `docs/adr/0000-template.md` in MADR format
 - [ ] T021 [P] `CODE_OF_CONDUCT.md` and `GOVERNANCE.md`
+- [ ] T172 `crates/clippy.toml` — compiler-resolved boundary layer behind T016: `disallowed-methods`/`disallowed-types` for `std::fs`, `std::thread::spawn`, `std::time::{Instant, SystemTime}`, `std::net`, `std::process`, so aliased forms (`use std::time;`, `use std as s;`) that T016's text scan cannot see fail clippy. Repeats the root `clippy.toml` entries (clippy reads only the nearest file); `openplush-testkit` keeps file access. Self-test proving each aliased form is rejected. *Added 2026-10-14 from PR review; ID out of phase order because T022+ were already numbered*
+- [ ] T173 `scripts/check.sh` — one entry point for every gate (`engine`, `wasm`, `shell`, or all), plus `--setup` to install `cargo-deny` and the lockfile-matched `wasm-bindgen-cli`; CI calls it so local and CI cannot drift. CONTRIBUTING documents three commands: clone, `scripts/check.sh --setup`, `scripts/check.sh` (Constitution IX: ≤ 3). *Added 2026-10-14 from PR review*
 
 **Checkpoint**: CI runs and passes on an empty workspace.
 
@@ -310,13 +315,13 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Implementation
 
-- [ ] T124 [US7] `crates/openplush-project/src/document.rs` — the document type matching the schema
+- [ ] T124 [US7] `crates/openplush-project/src/document.rs` — the document type matching the schema; re-export the public document API from `openplush-pipeline` as `openplush_pipeline::project` (D-020)
 - [ ] T125 [US7] `crates/openplush-project/src/provenance.rs` — stable keys from source provenance: sorted source-vertex pairs for edges, sorted source-corner triples for faces. Never `EdgeId`, which moves when repair settings change
 - [ ] T126 [US7] `crates/openplush-project/src/serde.rs` — JSON plus embedded binary mesh chunk; store the repair **plan**, not the repaired mesh, so a later engine with better repair improves old projects
 - [ ] T127 [US7] `crates/openplush-project/src/migrate.rs` — `schemaVersion` with forward migrations (FR-070)
 - [ ] T128 [US7] `crates/openplush-pipeline/src/undo.rs` — undo and redo for every edit, as diffs over `SeamSet` and the option structs (FR-071)
 - [ ] T129 [US7] `apps/web/src/project/` — save, load, and recent-project UI
-- [ ] T130 [US7] `bindings/openplush-cli/src/commands/project.rs` — CLI save and load, for headless parity
+- [ ] T130 [US7] `bindings/openplush-cli/src/commands/project.rs` — CLI save and load, for headless parity. Uses `openplush_pipeline::project`, never `openplush-project` directly (D-020)
 
 **Checkpoint**: work is durable. Everything before this was ephemeral.
 
@@ -430,7 +435,7 @@ The tasks template wants every story independently deliverable. **US1 is not ind
 ### Parallel opportunities
 
 - All of Phase 0 except T007's dependents
-- Phase 1: everything except T009 and T016
+- Phase 1: everything except T009, T016, T172 (needs T016), and T173 (needs T013 and T016)
 - Phase 2: T023, T027, T030, T033–T037, T039–T041
 - Phase 3: all test tasks T043–T049 together; then the import parsers T050–T052; then the validators T055–T057
 - Phase 6 (US7) alongside Phases 4 and 5

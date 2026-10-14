@@ -106,7 +106,7 @@ openplush-geom
                                                                     └─ openplush-export
 openplush-project  (depends on mesh/seams/pattern types; serde only)
 openplush-pipeline (depends on all of the above)
-bindings/*     (depend on openplush-pipeline + openplush-project ONLY)
+bindings/*     (depend on openplush-pipeline ONLY; it re-exports the project document API — D-020)
 ```
 
 Rules: no cycles; no sideways edges between siblings without an ADR; `openplush-testkit` is a dev-dependency only. A CI script parses `cargo metadata` and fails on violations.
@@ -198,7 +198,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 
 ## Decision Ledger
 
-*Running log. Newest first. Absolute dates.*
+*Running log. Oldest first. Absolute dates.*
 
 ### Decisions
 | Date | ID | Decision | Status |
@@ -222,6 +222,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 | 2026-10-13 | D-017 | Every warning carries a `Remedy`, either `Actionable` (engine-computed, offered preview-then-accept) or `Advisory` (names a material or sizing change the engine will not perform). Enforced by the type, not by review | Accepted — FR-065 |
 | 2026-10-13 | D-018 | `Fabric` is a first-class persisted entity: category, per-direction stretch, nap, pile length, thickness, fray, default allowance, roll width, plus seven shipped editable presets | Accepted — FR-050 |
 | 2026-10-13 | D-019 | Pile fabrics print **mirrored with a "trace on wrong side" label** by default, switchable to right-side printing. Affects the pattern and export stages, not flattening | Accepted — FR-054 |
+| 2026-10-14 | D-020 | **Shells depend on `openplush-pipeline` only**, as Constitution I says. The project document API (`openplush-project`) reaches shells as a re-export from `openplush-pipeline` (`openplush_pipeline::project`), not as a second dependency. Resolves a contradiction: this plan, the engine API contract, T016 and `crates/AGENTS.md` allowed `openplush-project` directly. Keeps one versioned surface without amending a principle | Accepted — PR review, maintainer decision |
 
 ### Trade-offs accepted
 - Smaller engine contributor pool (Rust) in exchange for zero-install distribution and one engine everywhere.
@@ -236,6 +237,6 @@ Spec Q1–Q3 closed 2026-10-13 (D-012 … D-015). Remaining:
 - **Minor spec defaults still unanswered**, each with a default that applies if nobody decides: STL/PLY import (yes), PDF in v0.1 (yes), default seam allowance (6 mm metric / ¼ in US), pile-length multiple for the small-part warning (3×), stretch-difference threshold for the seam-mismatch warning (20 percentage points). All five are settings, not architecture — none blocks implementation.
 - **S7 (new)**: does boundary-pinned flattening (D-013) stay injective on the fixture corpus, and how often does it fail to close? If failures are common, the fallback is a shortest-dart proposal rather than relaxing parity — parity is now a hard contract.
 - Confirm Spec Kit's `sh` scripts run from Claude Code on Windows (Git Bash). If they don't, switch to `ps` (see CONTRIBUTING.md). *Partially answered 2026-10-13: `create-new-feature-branch.sh` and `check-prerequisites.sh` both run correctly under Git Bash.*
-- `create-new-feature-branch.sh` branched feature 002 from `main` rather than from the current feature branch, which silently produced a working tree without 001's committed work. Decide whether to configure a base branch or document the `git merge --ff-only` fix-up step.
+- ~~`create-new-feature-branch.sh` branched feature 002 from `main` rather than from the current feature branch, which silently produced a working tree without 001's committed work. Decide whether to configure a base branch or document the `git merge --ff-only` fix-up step.~~ **Resolved 2026-10-14**: `main` is the trunk, so branching from it is correct. Spec Kit's `NNN-feature-slug` branch is renamed to the slice name before pushing (AGENTS.md, branch naming).
 - Verify on the first PR whether Copilot code review on github.com reads `AGENTS.md`; if not, the review priorities in `copilot-instructions.md` are the only rules it sees.
 - Anti-enclosure: permissive license allows closed forks (including commercial competitors). Accept, or switch to MPL-2.0 for the engine? Decide before first public release.

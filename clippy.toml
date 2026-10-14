@@ -1,0 +1,8 @@
+# Determinism (Constitution V, crates/AGENTS.md): HashMap/HashSet iteration order is
+# unspecified, so output can differ between runs and between native and WASM.
+# Use BTreeMap/BTreeSet or index-ordered Vecs. A lookup-only use that never reaches
+# output may opt out locally with #[allow(clippy::disallowed_types)] and a comment.
+disallowed-types = [
+    { path = "std::collections::HashMap", reason = "iteration order is not deterministic; use BTreeMap or an index-ordered Vec" },
+    { path = "std::collections::HashSet", reason = "iteration order is not deterministic; use BTreeSet or an index-ordered Vec" },
+]

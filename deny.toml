@@ -1,0 +1,39 @@
+# Constitution IX: the license allowlist, exactly. Anything not listed is denied,
+# which covers GPL, AGPL, and LGPL. Adding a license here needs an ADR.
+
+[graph]
+all-features = true
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "MPL-2.0",
+]
+confidence-threshold = 0.93
+# The list is the constitution's, not the current dependency set, so entries
+# nothing uses yet are expected.
+unused-allowed-license = "allow"
+
+[licenses.private]
+# Workspace crates are publish = false; they are checked via `license` in Cargo.toml.
+ignore = false
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[advisories]
+yanked = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

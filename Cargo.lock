@@ -280,6 +280,13 @@ version = "0.0.0"
 [[package]]
 name = "openplush-pipeline"
 version = "0.0.0"
+dependencies = [
+ "openplush-io",
+ "openplush-mesh",
+ "openplush-pattern",
+ "openplush-seams",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-project"

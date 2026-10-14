@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::{FaceId, VertexId};
+use crate::{FaceId, MeshElement, VertexId};
 
 /// Every structural refusal in this crate. Each variant names the element at
 /// fault, so the UI can highlight it (crates/AGENTS.md).
@@ -87,6 +87,16 @@ pub enum MeshError {
     NonManifoldVertex {
         /// The vertex.
         vertex: VertexId,
+    },
+    /// `ManifoldMesh::debug_validate` found a broken data-model section 2 invariant.
+    /// Construction never produces this; it means a bug in code that edits the mesh.
+    #[error("half-edge invariant {invariant} is broken at {element:?}")]
+    BrokenInvariant {
+        /// Which invariant (1-5 as numbered in data-model section 2; 0 for the
+        /// structural checks around them: array lengths, the boundary-vertex rule).
+        invariant: u8,
+        /// Where.
+        element: MeshElement,
     },
 }
 

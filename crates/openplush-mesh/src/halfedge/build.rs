@@ -205,6 +205,9 @@ impl ManifoldMesh {
             }
         }
 
+        if cfg!(debug_assertions) {
+            mesh.debug_validate(tol)?;
+        }
         Ok(mesh)
     }
 }

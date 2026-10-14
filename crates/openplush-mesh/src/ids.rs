@@ -81,3 +81,14 @@ impl EdgeId {
         HalfEdgeId(self.0 << 1)
     }
 }
+
+/// Any mesh element, for errors that can point at more than one kind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MeshElement {
+    /// A vertex.
+    Vertex(VertexId),
+    /// A half-edge.
+    HalfEdge(HalfEdgeId),
+    /// A face.
+    Face(FaceId),
+}

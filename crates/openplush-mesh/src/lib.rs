@@ -13,5 +13,5 @@ mod soup;
 
 pub use error::{CornerArray, Counted, MeshError};
 pub use halfedge::{ManifoldMesh, Outgoing};
-pub use ids::{EdgeId, FaceId, HalfEdgeId, VertexId};
+pub use ids::{EdgeId, FaceId, HalfEdgeId, MeshElement, VertexId};
 pub use soup::{SourceCorner, TriangleSoup};

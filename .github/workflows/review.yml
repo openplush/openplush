@@ -1,10 +1,17 @@
-# Automated adversarial review on every pull request, by the agents in
-# .claude/agents/ (pr-reviewer always; spec-reviewer when specs change;
-# mutation-auditor when engine code changes). Advisory, not a gate: it posts
-# findings as review comments and never approves. The maintainer still merges.
+# Automated adversarial review, by the agents in .claude/agents/
+# (pr-reviewer always; spec-reviewer when specs change; mutation-auditor only on
+# request). Advisory, not a gate: it posts findings as review comments and never
+# approves. The maintainer still merges.
 #
-# Needs one repository secret: ANTHROPIC_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN
-# (from `claude setup-token`). Without either, the job skips with a notice.
+# Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
+# opened (or marked ready for review), not on every push. To run it again, add
+# the `rereview` label; for the mutation auditor too, add `mutation-audit`. The
+# labels are removed when the run starts, so they can be added again later.
+#
+# Authenticates with CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`), which
+# draws on the maintainer's Claude subscription. There is deliberately no API-key
+# fallback, so this workflow can never bill API usage. Without the secret, the
+# job skips with a notice.
 # PR content (the diff and the files the agents read) is sent to the Anthropic
 # API. That is CI tooling, not product runtime: the app itself still makes no
 # network calls (Constitution, privacy).
@@ -12,7 +19,7 @@ name: review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, ready_for_review, labeled]
 
 permissions:
   contents: read
@@ -20,23 +27,38 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # A new push supersedes the review of the previous one.
-  cancel-in-progress: true
+  # A review run is never cancelled part-way (that would waste the usage spent);
+  # a second request waits for the first to finish.
+  cancel-in-progress: false
 
 jobs:
   review:
     name: adversarial review
-    # Same-repo, non-draft PRs only: fork PRs get no secrets, and drafts are
-    # not ready to review.
-    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    # Same-repo, non-draft PRs only (fork PRs get no secrets; drafts are not
+    # ready). A `labeled` event runs only for the two review labels.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' ||
+       github.event.label.name == 'rereview' ||
+       github.event.label.name == 'mutation-audit')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+      HAS_CREDENTIAL: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+      MUTATION_AUDIT: ${{ contains(github.event.pull_request.labels.*.name, 'mutation-audit') }}
     steps:
       - name: skip without a credential
         if: env.HAS_CREDENTIAL != 'true'
-        run: echo "::notice::No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN secret; automated review skipped."
+        run: echo "::notice::No CLAUDE_CODE_OAUTH_TOKEN secret; automated review skipped."
+      # Clear the request labels first, so they can be added again to ask for
+      # another run.
+      - name: clear review labels
+        if: env.HAS_CREDENTIAL == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label rereview --remove-label mutation-audit || true
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: env.HAS_CREDENTIAL == 'true'
         with:
@@ -52,7 +74,6 @@ jobs:
       - uses: anthropics/claude-code-action@12dd8d74c712f5f3669365b2369b558c495b1104 # v1.0.238
         if: env.HAS_CREDENTIAL == 'true'
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # The job's own token: scoped to the permissions above, expires with
           # the job. Comments appear as github-actions[bot].
@@ -62,6 +83,7 @@ jobs:
             PR: ${{ github.event.pull_request.number }}
             BASE BRANCH: ${{ github.event.pull_request.base.ref }}
             HEAD SHA: ${{ github.event.pull_request.head.sha }}
+            MUTATION AUDIT REQUESTED: ${{ env.MUTATION_AUDIT }}
 
             You coordinate an adversarial review of this pull request using the
             project's agents in .claude/agents/. Diff against the base branch
@@ -72,7 +94,10 @@ jobs:
                each told the PR number, base branch, and head SHA:
                - pr-reviewer: always.
                - spec-reviewer: if anything under specs/ or .specify/memory/ changed.
-               - mutation-auditor: if any .rs file under crates/ changed.
+               - mutation-auditor: only if MUTATION AUDIT REQUESTED is true and a
+                 .rs file under crates/ changed. If it is false and engine code
+                 changed, say in the summary that the auditor can be requested
+                 with the `mutation-audit` label.
                Tell them this is CI: skip `scripts/check.sh wasm` (the wasm workflow
                covers it) and leave the working tree exactly as they found it.
             2. Merge their findings. Drop duplicates and anything without evidence.

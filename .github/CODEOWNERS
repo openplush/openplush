@@ -9,16 +9,26 @@
 /Cargo.toml               @lvndrpup
 /Cargo.lock               @lvndrpup
 /deny.toml                @lvndrpup
+/clippy.toml              @lvndrpup
+/rust-toolchain.toml      @lvndrpup
+/rustfmt.toml             @lvndrpup
+/.cargo/                  @lvndrpup
 
 # Shell lane: TypeScript / Three.js.
 /apps/                    @lvndrpup
 /packages/                @lvndrpup
+/package.json             @lvndrpup
+/pnpm-workspace.yaml      @lvndrpup
+/pnpm-lock.yaml           @lvndrpup
 
 # Fixtures lane: test models and their licenses.
 /fixtures/                @lvndrpup
 
 # Docs lane.
 /docs/                    @lvndrpup
+/README.md                @lvndrpup
+/CONTRIBUTING.md          @lvndrpup
+/research/                @lvndrpup
 
 # Rules, specs, and gates: changes here change what every lane must do.
 /.specify/                @lvndrpup
@@ -28,3 +38,5 @@
 /apps/AGENTS.md           @lvndrpup
 /.github/                 @lvndrpup
 /scripts/                 @lvndrpup
+/GOVERNANCE.md            @lvndrpup
+/CODE_OF_CONDUCT.md       @lvndrpup

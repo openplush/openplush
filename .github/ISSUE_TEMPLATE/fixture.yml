@@ -17,7 +17,7 @@ body:
     id: license
     attributes:
       label: License
-      description: Only these can ship in the repository (Constitution IX).
+      description: Only these can ship in the repository (plan.md, fixture corpus; each model gets an entry in fixtures/meshes/LICENSES.md).
       options:
         - CC0
         - CC-BY (I'll give the attribution text below)
@@ -36,6 +36,18 @@ body:
         - "Yes, and I can share the pattern pieces"
         - "Yes, but I can only describe where the seams go"
         - "No"
+    validations:
+      required: true
+  - type: dropdown
+    id: pattern-license
+    attributes:
+      label: Pattern license (if you're sharing pattern pieces)
+      description: A shared pattern becomes a test oracle in the repository, so it needs a license too.
+      options:
+        - Not sharing a pattern
+        - CC0
+        - CC-BY (attribution text below)
+        - I made it and release it as CC0
     validations:
       required: true
   - type: dropdown

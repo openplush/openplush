@@ -10,7 +10,7 @@ OpenPlush adopts the [Contributor Covenant, version 2.1](https://www.contributor
 
 ## Reporting
 
-Report a problem privately to the maintainers listed in [GOVERNANCE.md](GOVERNANCE.md). Reports are handled confidentially, and the maintainers will not act on a report about themselves; the other maintainers handle it.
+Report a problem privately to the maintainers listed in [GOVERNANCE.md](GOVERNANCE.md). Reports are handled confidentially, and a maintainer will not act on a report about themselves. While the project has a single maintainer, report a problem with that maintainer to GitHub through [Report abuse](https://docs.github.com/en/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam), which reaches GitHub's staff, not the project.
 
 > **Maintainer action needed:** add a private reporting address here (a project email or form). Until then, contact a maintainer through their GitHub profile and ask for a private channel.
 

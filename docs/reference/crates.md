@@ -16,3 +16,11 @@ What each engine crate contains **today**, and what it actually depends on. Whic
 ## Scaffolds (no code yet)
 
 `openplush-fields`, `openplush-flatten`, `openplush-decal`, `openplush-layout`, `openplush-export`, `openplush-project`, and `openplush-testkit` (dev-dependency only) exist so the workspace and its boundary checks are in place. Each crate's purpose is in `crates/AGENTS.md`; testkit's is in its own crate doc.
+
+## Bindings
+
+Shells in `bindings/` may depend on `openplush-pipeline` and nothing else from `crates/` (`scripts/check-boundary.sh`).
+
+| Binding | What it is today | Depends on |
+|---|---|---|
+| `openplush-cli` | The argument-parsing skeleton; no stage is wired yet. See [cli.md](cli.md) | `clap` ([ADR 0004](../adr/0004-cli-argument-parsing.md)) |

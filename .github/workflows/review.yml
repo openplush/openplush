@@ -155,7 +155,7 @@ jobs:
                Post it even when there are no findings or a step failed: say what
                ran and what did not.
 
-            Never approve, request changes, push, or edit files yourself. Verified
+            Never approve, request changes, push, or edit the checkout yourself. Verified
             findings only: a wrong finding costs the author more than a missed one.
           claude_args: >-
             --allowedTools "Task,Agent,Read,Grep,Glob,Edit,Write,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(cargo:*),Bash(scripts/check.sh:*),Bash(cp:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"

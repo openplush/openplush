@@ -13,7 +13,14 @@ pub enum GeomError {
         /// The rejected value.
         diagonal: f64,
     },
-    /// A model-to-millimetre scale that is zero, negative, or not finite.
+    /// A length in millimetres that is negative or not finite, either given directly
+    /// or produced by a conversion that overflowed.
+    #[error("length of {mm} mm is not usable (must be finite and not negative)")]
+    InvalidLength {
+        /// The rejected value.
+        mm: f64,
+    },
+    /// A model-to-millimetre scale that is zero, negative, subnormal, or not finite.
     #[error("scale of {mm_per_unit} mm per model unit is not usable (must be finite and positive)")]
     InvalidScale {
         /// The rejected value.

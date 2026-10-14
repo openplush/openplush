@@ -3,6 +3,7 @@
 #![warn(missing_docs)]
 
 mod error;
+mod warning;
 
 pub use error::EngineError;
 pub use openplush_io::Format;

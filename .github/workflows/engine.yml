@@ -35,6 +35,10 @@ jobs:
         run: scripts/tests/check-boundary.test.sh
       - name: boundary check
         run: scripts/check-boundary.sh
+      # T172: the compiler-resolved layer (crates/clippy.toml) rejects what the text
+      # scan cannot see; the clippy step below enforces it on the real crates.
+      - name: clippy boundary layer self-test
+        run: scripts/tests/clippy-boundary.test.sh
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings

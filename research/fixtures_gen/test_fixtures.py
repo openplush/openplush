@@ -190,6 +190,16 @@ class DefectCorpus(unittest.TestCase):
                 found = {k: v for k, v in detect(*read_obj(FIXTURES / "defects" / f"{name}.obj")).items() if v}
                 self.assertEqual(list(found), [name])
 
+    def test_a_closed_component_wound_inward_throughout_is_flipped(self) -> None:
+        """Consistent winding alone passes an inside-out shell; repair orients closed components to +volume."""
+        pos, faces = read_obj(FIXTURES / "meshes" / "cube.obj")
+        inside_out = [(a, c, b) for a, b, c in faces]
+        self.assertEqual({k: v for k, v in detect(pos, inside_out).items() if v}, {"flipped-normals": 1})
+        pos, faces = read_obj(FIXTURES / "defects" / "multi-component.obj")
+        tetra_out = faces[:-4] + [(a, c, b) for a, b, c in faces[-4:]]
+        found = {k: v for k, v in detect(pos, tetra_out).items() if v}
+        self.assertEqual(found, {"flipped-normals": 1, "multi-component": 1})
+
 
 def chart_topology(faces: list[Face], seams: set[Edge]) -> list[tuple[int, int]]:
     """Per chart, (Euler characteristic, boundary loops) after cutting along `seams`."""

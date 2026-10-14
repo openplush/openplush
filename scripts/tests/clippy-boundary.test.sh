@@ -46,27 +46,42 @@ geom=openplush-geom
 
 # Aliased forms the text scan cannot see.
 expect fail "use std::time; then time::Instant::now()" $geom \
-  'use std::time; pub fn f() -> time::Instant { time::Instant::now() }' "std::time::Instant"
+  'use std::time; pub fn f() -> time::Instant { time::Instant::now() }' "\`std::time::Instant\`"
 expect fail "use std as s; then s::fs::read" $geom \
-  'use std as s; pub fn f() -> usize { s::fs::read("x").map(|v| v.len()).unwrap_or(0) }' "std::fs::read"
+  'use std as s; pub fn f() -> usize { s::fs::read("x").map(|v| v.len()).unwrap_or(0) }' "\`std::fs::read\`"
 expect fail "glob import of std::time" $geom \
-  'use std::time::*; pub fn f() { let _ = SystemTime::now(); }' "std::time::SystemTime"
+  'use std::time::*; pub fn f() { let _ = SystemTime::now(); }' "\`std::time::SystemTime\`"
 expect fail "fs through a type: File::open" $geom \
-  'pub fn f() -> bool { std::fs::File::open("x").is_ok() }' "std::fs::File"
+  'pub fn f() -> bool { std::fs::File::open("x").is_ok() }' "\`std::fs::File\`"
 expect fail "fs: read_to_string" $geom \
-  'pub fn f() -> usize { std::fs::read_to_string("x").map(|s| s.len()).unwrap_or(0) }' "std::fs::read_to_string"
+  'pub fn f() -> usize { std::fs::read_to_string("x").map(|s| s.len()).unwrap_or(0) }' "\`std::fs::read_to_string\`"
 expect fail "threads: thread::spawn" $geom \
-  'pub fn f() { let _ = std::thread::spawn(|| ()); }' "std::thread::spawn"
+  'pub fn f() { let _ = std::thread::spawn(|| ()); }' "\`std::thread::spawn\`"
 expect fail "network: TcpStream" $geom \
-  'pub fn f() -> bool { std::net::TcpStream::connect("x:1").is_ok() }' "std::net::TcpStream"
+  'pub fn f() -> bool { std::net::TcpStream::connect("x:1").is_ok() }' "\`std::net::TcpStream\`"
 expect fail "processes: Command::new" $geom \
-  'pub fn f() { let _ = std::process::Command::new("x"); }' "std::process::Command"
+  'pub fn f() { let _ = std::process::Command::new("x"); }' "\`std::process::Command\`"
 expect fail "processes: process::exit" $geom \
-  'pub fn f() { std::process::exit(1) }' "std::process::exit"
+  'pub fn f() { std::process::exit(1) }' "\`std::process::exit\`"
+
+# Plain-std forms found by review round 2: no std::fs:: path written out, so only
+# the compiler layer can see them.
+expect fail "fs through Path::exists" $geom \
+  'pub fn f() -> bool { std::path::Path::new("x").exists() }' "\`std::path::Path::exists\`"
+expect fail "fs through Path::read_dir" $geom \
+  'pub fn f() -> bool { std::path::Path::new("/").read_dir().is_ok() }' "\`std::path::Path::read_dir\`"
+expect fail "fs through std::fs::exists" $geom \
+  'use std as s; pub fn f() -> bool { s::fs::exists("x").unwrap_or(false) }' "\`std::fs::exists\`"
+expect fail "clock through UNIX_EPOCH.elapsed()" $geom \
+  'use std::time::UNIX_EPOCH; pub fn f() -> bool { UNIX_EPOCH.elapsed().is_ok() }' "\`std::time::SystemTime::elapsed\`"
+expect fail "randomness through RandomState" $geom \
+  'use std::hash::BuildHasher; pub fn f() -> u64 { std::hash::RandomState::new().hash_one(0u8) }' "\`std::hash::RandomState"
+expect fail "network through ToSocketAddrs" $geom \
+  'use std as s; use s::net::ToSocketAddrs; pub fn f() -> bool { "example.com:80".to_socket_addrs().is_ok() }' "to_socket_addrs\`"
 
 # The root rules still apply under crates/ (clippy reads only the nearest file).
 expect fail "HashMap is still banned in crates/" $geom \
-  'pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }' "std::collections::HashMap"
+  'pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }' "\`std::collections::HashMap\`"
 
 # Allowed.
 expect pass "Duration is not a clock read" $geom \
@@ -75,7 +90,7 @@ expect pass "plain arithmetic" $geom 'pub fn f(a: f64, b: f64) -> f64 { a.mul_ad
 expect pass "testkit may read fixture files" openplush-testkit \
   'pub fn load() -> usize { std::fs::read("fixture.glb").map(|v| v.len()).unwrap_or(0) }'
 expect fail "testkit still may not use HashMap" openplush-testkit \
-  'pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }' "std::collections::HashMap"
+  'pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }' "\`std::collections::HashMap\`"
 
 echo
 echo "$pass passed, $fail failed"

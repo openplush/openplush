@@ -279,7 +279,7 @@ pub struct Fabric {
 ## 13. Warnings and Remedies (FR-064, FR-065 — D-016, D-017)
 
 ```rust
-pub struct WarningSet { items: Vec<Warning> }   // sorted by (code, target) — deterministic
+pub struct WarningSet { items: Vec<Warning> }   // total order, see §13a "Warning codes and order"
 
 pub struct Warning {
     pub code: WarningCode,          // stable, documented, user-visible
@@ -360,6 +360,8 @@ pub enum SeamReason {
 
 ### ProposalId
 
+> **As built**: [`docs/reference/engine-api.md`](../../docs/reference/engine-api.md#wire-forms) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
+
 A 64-bit FNV-1a hash (offset basis `0xcbf29ce484222325`, prime `0x100000001b3`) of the proposal's edit, not a counter, so the same fix proposed twice has the same ID even after unrelated seam changes renumber charts:
 - **Bytes hashed**, in order: one byte for the `ProposalKind` variant (0 `CloseChart`, 1 `Dart`, 2 `SplitPiece`, 3 `Seam`); then, for each entry of `add` in key order, the `EdgeId` as 4 bytes little-endian followed by one byte for the `SeamKind` (§4 declaration order). Chart IDs and text are deliberately left out: they can change while the edit stays the same.
 - **Stable** for as long as the repaired mesh is, since `EdgeId`s are.
@@ -375,7 +377,9 @@ pub enum WarningTarget { Face(FaceId), Edge(EdgeId), Chain(SeamChainId), Piece(P
 
 ### Warning codes and order
 
-`WarningCode` is a `#[non_exhaustive]` enum. Each variant has a stable string form (`"stretch-exceeds-fabric"`, kebab-case) that never changes once released, because acknowledgements are persisted by code (§12, §13). The variants are added by the tasks that first raise them. `docs/reference/` lists every code with its meaning and remedies (T168).
+> **As built**: [`docs/reference/engine-api.md`](../../docs/reference/engine-api.md#warnings) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
+
+`WarningCode` is a `#[non_exhaustive]` enum. Each variant has a stable string form (`"stretch-exceeds-fabric"`, kebab-case) that never changes once released, because acknowledgements are persisted by code (§12, §13). The variants are added by the tasks that first raise them. Each code is documented in `docs/reference/` by the PR that adds it (ADR 0003).
 
 `WarningSet` is sorted by the code's **string** (not its declaration order, so adding a variant never reorders a printed summary, T157), then by target (variant order as declared above, then ID), then by the remedy (an `Actionable` proposal's `ProposalId`, then an `Advisory`'s text), then by explanation. Two warnings equal in all of these are one warning. The order is therefore total and independent of insertion order (T030).
 

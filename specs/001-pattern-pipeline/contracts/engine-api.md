@@ -1,14 +1,16 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-14 | **Version**: 0.4 (draft) | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-14 | **Version**: 0.5 (draft) | **Status**: Draft contract
 
-*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021).
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes.
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
-Signatures here are the contract. Internal crate layout may change freely behind it; this file may not change without a version bump and an entry in the plan's Decision Ledger.
+Signatures here are the contract until a section is built. A section marked **As built** is frozen intent: the code and `docs/reference/` are authoritative for it ([ADR 0003](../../../docs/adr/0003-as-built-docs.md)). Internal crate layout may change freely behind the contract; this file may not change without a version bump and an entry in the plan's Decision Ledger.
 
 ## 1. Shape of every stage
+
+> **As built**: [`docs/reference/engine-api.md`](../../../docs/reference/engine-api.md) and rustdoc (`cargo doc -p openplush-pipeline`) describe this section as it exists. Frozen here as the original intent ([ADR 0003](../../../docs/adr/0003-as-built-docs.md), D-023).
 
 ```rust
 pub type StageResult<T> = Result<Staged<T>, EngineError>;
@@ -101,6 +103,8 @@ impl Pipeline {
 Scale and shrink are uniform factors applied at the pattern stage, so neither re-runs flattening. That is the practical payoff of keeping shrink compensation uniform (D-012, D-014).
 
 ## 5. Errors
+
+> **As built**: [`docs/reference/engine-api.md`](../../../docs/reference/engine-api.md) and rustdoc (`cargo doc -p openplush-pipeline`) describe this section as it exists. Frozen here as the original intent ([ADR 0003](../../../docs/adr/0003-as-built-docs.md), D-023).
 
 ```rust
 #[non_exhaustive]

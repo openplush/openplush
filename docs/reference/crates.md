@@ -24,3 +24,4 @@ Shells in `bindings/` may depend on `openplush-pipeline` and nothing else from `
 | Binding | What it is today | Depends on |
 |---|---|---|
 | `openplush-cli` | The argument-parsing skeleton; no stage is wired yet. See [cli.md](cli.md) | `clap` ([ADR 0004](../adr/0004-cli-argument-parsing.md)) |
+| `openplush-wasm` | The `wasm-bindgen` facade skeleton: it builds as a `cdylib` for `wasm32-unknown-unknown` and exports nothing yet | `openplush-pipeline`, `wasm-bindgen` |

@@ -106,7 +106,7 @@ openplush-geom
                                                                     └─ openplush-export
 openplush-project  (depends on mesh/seams/pattern types; serde only)
 openplush-pipeline (depends on all of the above)
-bindings/*     (depend on openplush-pipeline + openplush-project ONLY)
+bindings/*     (depend on openplush-pipeline ONLY; it re-exports the project document API — D-020)
 ```
 
 Rules: no cycles; no sideways edges between siblings without an ADR; `openplush-testkit` is a dev-dependency only. A CI script parses `cargo metadata` and fails on violations.
@@ -222,6 +222,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 | 2026-10-13 | D-017 | Every warning carries a `Remedy`, either `Actionable` (engine-computed, offered preview-then-accept) or `Advisory` (names a material or sizing change the engine will not perform). Enforced by the type, not by review | Accepted — FR-065 |
 | 2026-10-13 | D-018 | `Fabric` is a first-class persisted entity: category, per-direction stretch, nap, pile length, thickness, fray, default allowance, roll width, plus seven shipped editable presets | Accepted — FR-050 |
 | 2026-10-13 | D-019 | Pile fabrics print **mirrored with a "trace on wrong side" label** by default, switchable to right-side printing. Affects the pattern and export stages, not flattening | Accepted — FR-054 |
+| 2026-10-14 | D-020 | **Shells depend on `openplush-pipeline` only**, as Constitution I says. The project document API (`openplush-project`) reaches shells as a re-export from `openplush-pipeline` (`openplush_pipeline::project`), not as a second dependency. Resolves a contradiction: this plan, the engine API contract, T016 and `crates/AGENTS.md` allowed `openplush-project` directly. Keeps one versioned surface without amending a principle | Accepted — PR review, maintainer decision |
 
 ### Trade-offs accepted
 - Smaller engine contributor pool (Rust) in exchange for zero-install distribution and one engine everywhere.

@@ -2,7 +2,7 @@
 
 **Feature**: `001-pattern-pipeline` | **Date**: 2026-10-13 | **Status**: Draft contract
 
-The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and `openplush-project` and **nothing else** from `crates/`. A CI check over `cargo metadata` enforces this.
+The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
 Signatures here are the contract. Internal crate layout may change freely behind it; this file may not change without a version bump and an entry in the plan's Decision Ledger.
 

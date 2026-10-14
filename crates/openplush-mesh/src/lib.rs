@@ -7,6 +7,7 @@
 //! obtained through repair.
 
 mod error;
+mod halfedge;
 mod ids;
 mod soup;
 

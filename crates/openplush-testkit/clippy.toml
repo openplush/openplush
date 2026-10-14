@@ -17,7 +17,6 @@ disallowed-methods = [
     { path = "slice::select_nth_unstable_by_key", reason = "equal elements end in an unspecified order; sort stably, then index" },
 ]
 
-
 # Small units (AGENTS.md, Engineering rules); too_many_lines is enabled in Cargo.toml.
 too-many-lines-threshold = 60
 too-many-arguments-threshold = 5

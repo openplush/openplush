@@ -29,7 +29,7 @@
 | VI Units | ✅ scale applied once at pattern stage |
 | VII Explicit repair | ✅ `RepairReport` mandatory output; hints and warning remedies are proposals until accepted (D-017) |
 | VIII Local-first | ✅ static hosting, PWA |
-| IX License | ✅ all deps on allowlist (MPL-2.0 for jagua-rs) — confirm via S6 |
+| IX License | ✅ all deps on allowlist (MPL-2.0 for jagua-rs) — confirmed by S6 on 2026-10-14 over the full transitive graph ([research](./research.md#s6-result--licenses-2026-10-14--closed)) |
 | X Baseline first | ✅ ONNX deferred behind traits |
 
 ## Project Structure

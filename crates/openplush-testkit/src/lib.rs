@@ -1,4 +1,3 @@
 //! Dev-dependency only: fixture loader, oracles, golden compare.
 //!
-//! Scaffold only. Responsibilities and the dependency DAG are in
-//! `specs/001-pattern-pipeline/plan.md` and `crates/AGENTS.md`.
+//! Scaffold only: no code yet.

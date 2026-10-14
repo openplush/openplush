@@ -1,4 +1,4 @@
 //! Curvature and nap/grain direction fields.
 //!
-//! Scaffold only. Responsibilities and the dependency DAG are in
-//! `specs/001-pattern-pipeline/plan.md` and `crates/AGENTS.md`.
+//! Scaffold only: no code yet. What each crate holds today is in
+//! `docs/reference/crates.md`; what it will own is in `crates/AGENTS.md`.

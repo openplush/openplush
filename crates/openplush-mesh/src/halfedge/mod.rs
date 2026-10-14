@@ -203,3 +203,9 @@ impl Iterator for Outgoing<'_> {
 
 #[cfg(test)]
 mod tests;
+
+// Native only: proptest's dependencies don't build for wasm32. Two attributes,
+// not cfg(all(..)), so clippy still recognises a test module.
+#[cfg(test)]
+#[cfg(not(target_arch = "wasm32"))]
+mod proptests;

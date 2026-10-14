@@ -269,6 +269,7 @@ name = "openplush-mesh"
 version = "0.0.0"
 dependencies = [
  "openplush-geom",
+ "proptest",
  "thiserror",
 ]
 

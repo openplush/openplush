@@ -11,7 +11,7 @@ use openplush_geom::epsilon::ModelTolerances;
 use super::{HalfEdgeId, ManifoldMesh};
 use crate::{MeshError, SourceCorner, TriangleSoup, VertexId};
 
-fn soup(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> TriangleSoup {
+pub(super) fn soup(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> TriangleSoup {
     let corners = (0..triangles.len() * 3)
         .map(|i| SourceCorner {
             primitive: 0,
@@ -21,7 +21,7 @@ fn soup(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> TriangleSoup {
     TriangleSoup::new(positions, triangles, corners, None).unwrap()
 }
 
-fn tol(s: &TriangleSoup) -> ModelTolerances {
+pub(super) fn tol(s: &TriangleSoup) -> ModelTolerances {
     ModelTolerances::for_diagonal(s.bbox_diagonal().unwrap()).unwrap()
 }
 
@@ -30,7 +30,7 @@ fn build(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> Result<ManifoldMesh
     ManifoldMesh::from_oriented_triangles(&s, &tol(&s))
 }
 
-fn p(x: f64, y: f64, z: f64) -> DVec3 {
+pub(super) fn p(x: f64, y: f64, z: f64) -> DVec3 {
     DVec3::new(x, y, z)
 }
 

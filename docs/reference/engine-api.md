@@ -16,6 +16,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `Staged<T>` | struct | `value: T` plus `warnings: WarningSet`; warnings never turn `Ok` into `Err` |
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
+| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what `ProposalId::from_hex` and `Proposal::new` return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
 No stage function exists yet; each lands with the task that builds its stage.
@@ -39,6 +40,13 @@ Each `EngineError` variant carries the location of the problem. The messages are
 
 Format names: `OBJ`, `glTF`, `GLB`, `STL`, `PLY`.
 
+`SeamsError` is the error of building a proposal or parsing its ID, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:
+
+| Variant | Carries | Message |
+|---|---|---|
+| `EmptyProposal` | nothing | `a proposal must add at least one seam edge` |
+| `BadProposalId` | the rejected `text`, printed in Rust `{:?}` (Debug) form: double-quoted, with escapes | `{text:?} is not a proposal id (16 lowercase hex digits)` |
+
 ## Warnings
 
 A `Warning` has a code, a target, an explanation and a remedy, and cannot be built without all four:
@@ -60,7 +68,7 @@ Two warnings equal in all four are kept once.
 
 ## Wire forms
 
-- **`ProposalId`** is a `u64`, sent as exactly 16 lowercase hex digits (`ProposalId::to_hex` / `from_hex`). A JSON number would lose precision above 2^53. `from_hex` refuses any other spelling, so an ID has one form.
+- **`ProposalId`** is a `u64`, sent as exactly 16 lowercase hex digits (`ProposalId::to_hex` / `from_hex`). A JSON number would lose precision above 2^53. `from_hex` refuses any other spelling with `SeamsError::BadProposalId`, so an ID has one form.
 
 ## Stability
 

@@ -34,7 +34,7 @@ Start at the [specs index](specs/README.md) — it shows what is specified, plan
 | [Data model](specs/001-pattern-pipeline/data-model.md) | Mesh structures, fabric, warnings, geometric edge cases |
 | [Contracts](specs/001-pattern-pipeline/contracts/) | Engine API, worker protocol, project file schema |
 | [Quickstart](specs/001-pattern-pipeline/quickstart.md) | The acceptance walkthrough |
-| [Tasks](specs/001-pattern-pipeline/tasks.md) | 174 work items — **start here to contribute** |
+| [Tasks](specs/001-pattern-pipeline/tasks.md) | 175 work items — **start here to contribute** |
 
 **002 — seam-placement hints** (shows you where seams belong; depends on 001)
 

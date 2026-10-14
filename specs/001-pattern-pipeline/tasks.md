@@ -18,7 +18,7 @@ description: "Task list for 001 pattern pipeline"
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 174 tasks does not mean 174 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
+**A task is a unit of work, not a unit of review.** 175 tasks does not mean 175 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
 
 ### Batch these — several tasks, one PR
 
@@ -138,6 +138,7 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 
 ### Error and warning channels
 
+- [ ] T175 The element IDs and proposal types of data-model §13a, **types only** (no algorithms), each in its owning crate so T028–T031 can name them: `ComponentId` in `openplush-mesh`; `SeamKind`, `ChartId`, `SeamChainId`, `ChartFailure`, `Proposal`, `ProposalKind`, `SeamReason`, `ProposalId` (with its FNV-1a derivation) in `openplush-seams`; `PieceId` in `openplush-pattern`; `Format` in `openplush-io`. One PR per crate. Test first: `ProposalId` is stable under unrelated renumbering and matches a hand-computed FNV-1a vector. *Added 2026-10-14: T028 referenced Phase 3 types (T069's `SeamKind`, charts, pieces), so Phase 2 could not compile without them*
 - [ ] T028 `crates/openplush-pipeline/src/error.rs` — `EngineError` per contracts/engine-api.md section 5, every variant carrying a location
 - [ ] T029 `crates/openplush-pipeline/src/warning.rs` — `WarningSet`, `Warning`, and `Remedy` as an **enum** of `Actionable` and `Advisory`, never `Option<Proposal>`. FR-065 is enforced by the type: a warning that explains nothing must not be constructible
 - [ ] T030 [P] `crates/openplush-pipeline/tests/warning_determinism.rs` — `WarningSet` ordering is stable by code then target regardless of insertion order (Constitution V)
@@ -206,7 +207,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Seams and charts (FR-010 … FR-014)
 
-- [ ] T069 [US1] `crates/openplush-seams/src/set.rs` — `SeamSet` as non-destructive `BTreeMap<EdgeId, SeamKind>`; the mesh never changes when seams change
+- [ ] T069 [US1] `crates/openplush-seams/src/set.rs` — `SeamSet` as non-destructive `BTreeMap<EdgeId, SeamKind>` (`SeamKind` itself comes from T175); the mesh never changes when seams change
 - [ ] T070 [US1] `crates/openplush-seams/src/graph.rs` — seam graph node classification and maximal seam chains (the unit of notching, labelling, and parity)
 - [ ] T071 [US1] `crates/openplush-seams/src/path.rs` — shortest surface path between two picked points, for seam drawing (FR-010)
 - [ ] T072 [US1] `crates/openplush-seams/src/dart.rs` — darts as seams ending inside a piece; dart tips stay single vertices, a slit rather than a separation (FR-011)
@@ -440,7 +441,7 @@ The tasks template wants every story independently deliverable. **US1 is not ind
 
 - All of Phase 0 except T007's dependents
 - Phase 1: everything except T009, T016, T172 (needs T016), and T173 (needs T013 and T016)
-- Phase 2: T023, T027, T030, T033–T037, T039–T041
+- Phase 2: T023, T027, T030, T033–T037, T039–T041; T175's four per-crate PRs in parallel, before T028
 - Phase 3: all test tasks T043–T049 together; then the import parsers T050–T052; then the validators T055–T057
 - Phase 6 (US7) alongside Phases 4 and 5
 - Within every story, all test tasks run in parallel before any implementation starts

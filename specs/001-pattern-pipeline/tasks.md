@@ -187,14 +187,14 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T050 [US1] `crates/openplush-io/src/obj.rs` — OBJ plus MTL and textures, via `tobj`
 - [ ] T051 [P] [US1] `crates/openplush-io/src/gltf.rs` — glTF 2.0 and GLB via `gltf`; skinned and animated data ignored with a warning
 - [ ] T052 [P] [US1] `crates/openplush-io/src/stl_ply.rs` — STL and PLY (the minor default was yes)
-- [ ] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002)
+- [ ] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002). A NaN/∞ coordinate anywhere fails the import with `EngineError::NonFiniteInput` naming every non-finite source vertex (D-021); nothing is dropped
 - [ ] T054 [US1] `crates/openplush-mesh/src/validate/nonmanifold.rs` — non-manifold edges and bowtie vertices, each located
 - [ ] T055 [P] [US1] `crates/openplush-mesh/src/validate/degenerate.rs` — zero-area, duplicate, and repeated-index faces
 - [ ] T056 [P] [US1] `crates/openplush-mesh/src/validate/topology.rs` — holes, boundary loops, connected components
 - [ ] T057 [P] [US1] `crates/openplush-mesh/src/validate/orientation.rs` — inconsistent winding, non-orientable detection
 - [ ] T058 [US1] `crates/openplush-mesh/src/validate/selfintersect.rs` — BVH triangle-triangle tests. **Warn only** (data-model section 3 step 8)
 - [ ] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003)
-- [ ] T060 [US1] `crates/openplush-mesh/src/repair/normalize_weld.rs` — repair steps 0 and 1. **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
+- [ ] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
 - [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag
 - [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams
 - [ ] T063 [US1] `crates/openplush-mesh/src/repair/bowtie.rs` — step 4, split one vertex per fan

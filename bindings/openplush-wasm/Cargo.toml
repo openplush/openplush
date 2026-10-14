@@ -1,0 +1,19 @@
+[package]
+name = "openplush-wasm"
+description = "wasm-bindgen facade over openplush-pipeline, hosted in the web worker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+openplush-pipeline = { path = "../../crates/openplush-pipeline" }
+wasm-bindgen = "0.2.129"
+
+[lints]
+workspace = true

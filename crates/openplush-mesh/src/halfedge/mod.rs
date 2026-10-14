@@ -11,6 +11,7 @@
 
 mod build;
 
+use openplush_geom::epsilon::{AREA_RELATIVE_SQ, ModelTolerances};
 use openplush_geom::{DVec2, DVec3};
 
 use crate::{FaceId, HalfEdgeId, SourceCorner, VertexId};
@@ -37,6 +38,16 @@ pub struct ManifoldMesh {
     // per corner, stored per half-edge (`None` on boundary half-edges)
     corner_src: Vec<Option<SourceCorner>>,
     corner_uv: Vec<Option<DVec2>>,
+}
+
+/// True if triangle (a, b, c) has area at or below `tol.area()`. The edge vectors
+/// are divided by the diagonal first and the result compared with the relative
+/// threshold, so the cross product stays near 1 and cannot overflow at any
+/// diagonal `ModelTolerances` accepts. (Unscaled, |e1 x e2|^2 overflows above a
+/// diagonal of about 2.6e82, and an overflowed area reads as "large enough".)
+fn is_sliver(a: DVec3, b: DVec3, c: DVec3, tol: &ModelTolerances) -> bool {
+    let inv = 1.0 / tol.diagonal();
+    0.5 * ((b - a) * inv).cross((c - a) * inv).length() <= AREA_RELATIVE_SQ
 }
 
 #[inline]
@@ -125,8 +136,10 @@ impl ManifoldMesh {
         self.corner_uv[ix(h.index())]
     }
 
-    /// The half-edges leaving `v`, in rotation order starting at
-    /// [`vertex_out`](Self::vertex_out). Each appears exactly once.
+    /// The half-edges leaving `v`, each exactly once, starting at
+    /// [`vertex_out`](Self::vertex_out) and turning counter-clockwise (seen from
+    /// the side the counter-clockwise faces face). At a boundary vertex that is the
+    /// boundary half-edge first, then the interior ones in order across the fan.
     pub fn outgoing(&self, v: VertexId) -> Outgoing<'_> {
         let start = self.vertex_out(v);
         Outgoing {

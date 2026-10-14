@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for the compiler-resolved boundary layer (T172): crates/clippy.toml and
+# Tests for the compiler-resolved boundary layer: crates/clippy.toml and
 # crates/openplush-testkit/clippy.toml.
 #
 # Each case copies the repository's real clippy configs into a throwaway workspace,
@@ -91,6 +91,21 @@ expect pass "testkit may read fixture files" openplush-testkit \
   'pub fn load() -> usize { std::fs::read("fixture.glb").map(|v| v.len()).unwrap_or(0) }'
 expect fail "testkit still may not use HashMap" openplush-testkit \
   'pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }' "\`std::collections::HashMap\`"
+
+# Size limits (AGENTS.md, Small units): each clippy.toml sets them, since clippy
+# reads only the nearest one. The defaults (100 lines, 7 arguments) would pass
+# both fail cases.
+long_fn() { # long_fn <body lines>
+  printf '#![warn(clippy::too_many_lines)]\npub fn f(x: &mut u32) {\n'
+  for ((i = 1; i <= $1; i++)); do printf '    *x = x.wrapping_add(%d);\n' "$i"; done
+  printf '}\n'
+}
+for crate in $geom openplush-testkit; do
+  expect pass "$crate: a 50-line function" "$crate" "$(long_fn 50)"
+  expect fail "$crate: a 70-line function" "$crate" "$(long_fn 70)" "too_many_lines"
+  expect pass "$crate: five parameters" "$crate" 'pub fn f(_: u8, _: u8, _: u8, _: u8, _: u8) {}'
+  expect fail "$crate: six parameters" "$crate" 'pub fn f(_: u8, _: u8, _: u8, _: u8, _: u8, _: u8) {}' "too_many_arguments"
+done
 
 echo
 echo "$pass passed, $fail failed"

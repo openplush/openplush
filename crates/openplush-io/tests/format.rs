@@ -1,4 +1,4 @@
-//! `Format` (T175, data-model section 13a): the import formats, each named.
+//! `Format`: the import formats, each named.
 
 use openplush_io::Format;
 

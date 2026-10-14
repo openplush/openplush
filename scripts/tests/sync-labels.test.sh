@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for scripts/sync-labels.sh (T019), using --dry-run so nothing touches GitHub.
+# Tests for scripts/sync-labels.sh, using --dry-run so nothing touches GitHub.
 #
 # What matters: one command per label in labels.json, every one aimed at an
 # explicit repository, and a typo in an argument fails instead of being ignored.

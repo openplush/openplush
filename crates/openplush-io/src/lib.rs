@@ -1,22 +1,19 @@
 //! Bytes to `TriangleSoup`: OBJ, glTF, STL, PLY.
-//!
-//! Scaffold, plus the type other crates name (T175). Responsibilities and the dependency DAG are in
-//! `specs/001-pattern-pipeline/plan.md` and `crates/AGENTS.md`.
 
-/// A file format the importer reads (data-model section 13a). Named in
+/// A file format the importer reads. Named in
 /// `EngineError::Parse` so the maker knows which reader refused the file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum Format {
-    /// Wavefront OBJ, with MTL and textures (T050).
+    /// Wavefront OBJ, with MTL and textures.
     Obj,
-    /// glTF 2.0, JSON with separate buffers (T051).
+    /// glTF 2.0, JSON with separate buffers.
     Gltf,
-    /// glTF 2.0, binary container (T051).
+    /// glTF 2.0, binary container.
     Glb,
-    /// STL, ASCII or binary (T052).
+    /// STL, ASCII or binary.
     Stl,
-    /// PLY, ASCII or binary (T052).
+    /// PLY, ASCII or binary.
     Ply,
 }
 

@@ -1,4 +1,4 @@
-# T013: engine gates. Runs on every PR, including PRs stacked on another branch.
+# Engine gates. Runs on every PR, including PRs stacked on another branch.
 name: engine
 
 on:
@@ -29,8 +29,8 @@ jobs:
       # Installs exactly what rust-toolchain.toml pins (toolchain = MSRV).
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      # T173: the same entry point contributors run. "engine" is boundary (every
-      # self-test, then the boundary check, before any build), fmt, clippy, test.
+      # The same entry point contributors run. "engine" is boundary (every
+      # self-test, then the boundary check, before any build), hygiene, fmt, clippy, test.
       - run: scripts/check.sh engine
 
   deny:

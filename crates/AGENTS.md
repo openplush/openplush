@@ -26,8 +26,15 @@ Depend downward only (DAG in `specs/001-pattern-pipeline/plan.md`). `bindings/*`
 - Newtype IDs across every API — never raw `usize`/`u32`.
 - `f64` for geometry. Tolerances come from `openplush_geom::epsilon`: model-space ones relative to the bbox diagonal, physical ones (seam parity) in millimetres; no literal `1e-9`s in algorithm code.
 - `#![forbid(unsafe_code)]` in engine crates unless an ADR says otherwise.
-- Public items document their pre- and postconditions.
-- Modules stay small (soft cap ~400 lines); split by responsibility, not by convenience.
+
+## Rust design
+- Make invalid states unrepresentable: private fields plus one validating constructor (`Proposal::new` is the model); typestate at stage boundaries (Principle III).
+- `pub(crate)` by default; `pub` only for what another crate calls (`unreachable_pub` is denied).
+- Borrow in, own out. No `clone()` just to satisfy the borrow checker.
+- Enums over `bool` flags and stringly-typed values; `#[non_exhaustive]` on public enums that will grow.
+- Iterators over index loops unless the index is the point.
+- Docs follow the root comment rules: one line, saying what the signature doesn't. Only `openplush-pipeline`, the public API, requires a doc on every item.
+- Modules ≤ 400 lines, functions ≤ 60 lines, ≤ 5 parameters (`scripts/check.sh` fails above). Split by responsibility, not by convenience. A function already over the limit carries `#[expect(clippy::too_many_lines, reason = "…")]` until it is split; never add a new one.
 
 ## WASM constraints
 Every crate in `crates/` must build for `wasm32-unknown-unknown`.

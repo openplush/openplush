@@ -51,14 +51,14 @@ pub enum MeshError {
         triangle: FaceId,
     },
     /// A triangle's area is at or below the model's area tolerance
-    /// (`ModelTolerances::area`, data-model section 11).
+    /// (`ModelTolerances::area`).
     #[error("triangle {triangle:?} has (near-)zero area")]
     ZeroAreaTriangle {
         /// The triangle.
         triangle: FaceId,
     },
     /// Two triangles use the same three vertices, in either winding: a coincident
-    /// copy, or a two-sided "pillow". Repair keeps one (data-model section 3 step 2).
+    /// copy, or a two-sided "pillow". Repair keeps one.
     #[error("triangle {triangle:?} repeats the vertices of triangle {first:?}")]
     DuplicateTriangle {
         /// The later triangle.
@@ -97,11 +97,11 @@ pub enum MeshError {
         /// The vertex.
         vertex: VertexId,
     },
-    /// `ManifoldMesh::debug_validate` found a broken data-model section 2 invariant.
+    /// `ManifoldMesh::debug_validate` found a broken half-edge invariant.
     /// Construction never produces this; it means a bug in code that edits the mesh.
     #[error("half-edge invariant {invariant} is broken at {element:?}")]
     BrokenInvariant {
-        /// Which invariant (1-5 as numbered in data-model section 2; 0 for the
+        /// Which invariant (1-5 as `ManifoldMesh::debug_validate` numbers them; 0 for the
         /// structural checks around them: array lengths, the boundary-vertex rule).
         invariant: u8,
         /// Where.

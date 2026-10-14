@@ -1,8 +1,8 @@
-//! ManifoldMesh construction (T025) and invariants (T026).
+//! ManifoldMesh construction and invariants.
 //!
 //! These live inside the crate because `ManifoldMesh` has no public constructor
-//! (data-model section 1: only repair may produce one). The builder under test,
-//! `ManifoldMesh::from_oriented_triangles`, is what repair (T067) calls once the soup
+//! (only repair may produce one). The builder under test,
+//! `ManifoldMesh::from_oriented_triangles`, is what repair calls once the soup
 //! is clean.
 
 use openplush_geom::epsilon::ModelTolerances;
@@ -490,6 +490,10 @@ fn invariant_2_every_face_loop_has_length_three() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "predates the limit; build the corrupted mesh in a helper"
+)]
 fn invariant_3_a_bowtie_with_one_linked_boundary_loop() {
     // Triangles (0,1,2) and (0,3,4) share only vertex 0. Linked as a single
     // boundary loop, every link checks out and the rotation at vertex 0 visits all

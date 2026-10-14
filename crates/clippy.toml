@@ -1,4 +1,4 @@
-# Engine lane (T172). Clippy reads only the nearest clippy.toml, so this file
+# Engine lane. Clippy reads only the nearest clippy.toml, so this file
 # repeats every rule in the root clippy.toml, then adds the boundary bans.
 # scripts/tests/clippy-boundary.test.sh checks both halves.
 #
@@ -70,6 +70,10 @@ disallowed-methods = [
     { path = "std::process::abort", reason = "engine crates never end the process; return a typed error" },
 ]
 
+
+# Small units (AGENTS.md, Engineering rules); too_many_lines is enabled in Cargo.toml.
+too-many-lines-threshold = 60
+too-many-arguments-threshold = 5
 
 # Tests may unwrap, expect, and panic: a failed test is the panic's purpose, and the
 # no-panic rule is about user-derived data at runtime. Library code is unaffected.

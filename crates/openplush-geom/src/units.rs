@@ -34,7 +34,7 @@ impl Mm {
 }
 
 /// Millimetres per model unit: the single uniform factor applied at the pattern
-/// stage (data-model section 10). Always finite, positive, and normal.
+/// stage. Always finite, positive, and normal.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Scale(f64);
 

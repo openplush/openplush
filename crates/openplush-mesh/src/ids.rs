@@ -32,7 +32,7 @@ impl FaceId {
 }
 
 /// A half-edge index. Twins are allocated in pairs `(2k, 2k + 1)`, so the twin and
-/// the undirected edge are bit operations, not lookups (data-model section 2).
+/// the undirected edge are bit operations, not lookups.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct HalfEdgeId(u32);
 
@@ -95,9 +95,8 @@ pub enum MeshElement {
     Storage(&'static str),
 }
 
-/// A connected component of a repaired mesh, numbered by its lowest `FaceId`
-/// (data-model section 13a). Created by repair step 6 (T065); stable for one
-/// repaired mesh.
+/// A connected component of a repaired mesh, numbered by its lowest `FaceId`.
+/// Created by repair; stable for one repaired mesh.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ComponentId(u32);
 

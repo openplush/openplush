@@ -27,7 +27,7 @@ OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spe
 - **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
 - **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
 - **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
-- Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#branch-naming).
+- Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#commits-and-prs).
 
 Why so strict: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A sign error in a dihedral angle or an epsilon against the wrong scale is a one-line defect that produces plausible output. It does not survive a focused review of 200 lines, and it sails through 2,000.
 
@@ -76,7 +76,7 @@ scripts/check.sh --setup   # the pinned Rust toolchain, cargo-deny, and the wasm
 scripts/check.sh           # every gate CI runs
 ```
 
-`scripts/check.sh engine` runs the fast subset (boundary, fmt, clippy, tests). Name individual steps to run just those (`boundary fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. Every CI workflow calls the same script (`engine`, `deny`, `wasm`, `shell`), so a green local run of a step means a green CI run of it. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
+`scripts/check.sh engine` runs the fast subset (boundary, hygiene, fmt, clippy, tests). Name individual steps to run just those (`boundary hygiene fmt clippy test deny wasm shell`), and add `--dry-run` to see the exact commands. Every CI workflow calls the same script (`engine`, `deny`, `wasm`, `shell`), so a green local run of a step means a green CI run of it. `rust-toolchain.toml` pins the exact Rust toolchain, which is also the MSRV.
 
 ### Tests that must also run on wasm32
 `cargo test --target wasm32-unknown-unknown` only runs tests marked `#[wasm_bindgen_test]`. Plain `#[test]` functions are skipped there, with "no tests to run!" and exit 0. And `#[wasm_bindgen_test]` on its own compiles to nothing natively, so a test using only that attribute silently never runs off wasm. For a test that must run on both targets, use both attributes, as `crates/openplush-geom/tests/wasm_determinism.rs` does:
@@ -99,8 +99,9 @@ CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deli
 | Lint | Why |
 |---|---|
 | `unsafe_code = "forbid"` | Constitution, engine lane. Exceptions need an ADR. |
-| `missing_docs` | Public items document their pre- and postconditions (`crates/AGENTS.md`). |
-| `missing_docs` on test files | Each `tests/*.rs` file is its own crate, so it needs a `//!` line. Make it say what the file proves. |
+| `missing_docs` (`openplush-pipeline` only) | The public engine API documents every item. Elsewhere a doc is one line saying what the signature doesn't (`AGENTS.md`, Comments and prose). |
+| `unreachable_pub` | Visibility is `pub(crate)` unless another crate calls the item (YAGNI). |
+| `too_many_lines` (60), `too_many_arguments` (5) | Small units. A function that predates the limit carries `#[expect(clippy::too_many_lines, reason = …)]` until it is split. |
 | `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed in `#[test]` functions and `#[cfg(test)]` modules (`clippy.toml`). Code outside those, such as helpers in `tests/*.rs` and everything in `openplush-testkit`, returns `Result` and uses `?`. |
 | `disallowed_types`: `HashMap`, `HashSet` | Iteration order is unspecified, which breaks byte-identical output (Constitution V). |
 | `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |

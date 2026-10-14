@@ -1,4 +1,4 @@
-//! Proposal types (T175, data-model section 13a, D-022).
+//! Proposal types.
 
 use std::collections::BTreeMap;
 
@@ -145,7 +145,7 @@ fn accessors_return_what_was_built() -> Result<(), SeamsError> {
 #[test]
 fn every_kind_byte_and_seam_kind_byte_is_pinned() -> Result<(), SeamsError> {
     // One edge, index 0, unless noted. Each vector computed independently
-    // (Python FNV-1a 64) from data-model section 13a's encoding, so moving any
+    // (Python FNV-1a 64) from the data model's encoding, so moving any
     // byte, or giving two kinds the same byte, fails here.
     let chart = ChartId::new(0);
     let seam = ProposalKind::Seam {

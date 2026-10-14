@@ -1,4 +1,4 @@
-//! Building a `ManifoldMesh` from a clean, consistently oriented soup (T025).
+//! Building a `ManifoldMesh` from a clean, consistently oriented soup.
 //!
 //! Every check returns a typed error naming the element at fault. The order of the
 //! checks is fixed, and within each check elements are visited in index order, so
@@ -34,11 +34,15 @@ impl ManifoldMesh {
     /// consistent winding, and a single fan at every vertex. Anything else is
     /// refused with the error for the first violation, in that order.
     ///
-    /// Repair (T067) is the caller; it is crate-private so that repair stays the
+    /// Repair is the caller; it is crate-private so that repair stays the
     /// only way to obtain a `ManifoldMesh`.
     #[cfg_attr(
         not(test),
-        expect(dead_code, reason = "called by repair (T067), not yet written")
+        expect(dead_code, reason = "called by repair, not yet written")
+    )]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "predates the limit; split one step per check"
     )]
     pub(crate) fn from_oriented_triangles(
         soup: &TriangleSoup,

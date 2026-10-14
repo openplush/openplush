@@ -1,4 +1,4 @@
-//! The tolerance policy (data-model section 11).
+//! The tolerance policy.
 //!
 //! Two kinds of tolerance, kept apart by type:
 //! - **Model-space** tolerances ([`ModelTolerances`]) scale with the model's
@@ -68,8 +68,8 @@ impl ModelTolerances {
 }
 
 /// How closely the two sides of a seam must agree in length, after scaling: the
-/// larger of an absolute floor and a fraction of the seam length (data-model
-/// section 1: max(1.0 mm, 0.5%)). Parity is a hard contract (D-013): exceeding this
+/// larger of an absolute floor and a fraction of the seam length (max(1.0 mm,
+/// 0.5%)). Parity is a hard contract (boundary lengths are prescribed): exceeding this
 /// is a typed error downstream, never a warning.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SeamParity {

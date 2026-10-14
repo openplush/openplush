@@ -13,3 +13,4 @@ Report findings in this order. Skip praise and style nits that `rustfmt`/`pretti
 6. **Tests** — missing oracle tests, weakened assertions, golden snapshot changes without an explanation.
 7. **Licensing** — a new dependency outside the allowlist or without a license check.
 8. **PR completeness** — missing task ID, edge cases, failure modes, tests, or skipped items.
+9. **Design** — duplicated definitions (DRY), speculative or test-only `pub` surface (YAGNI), functions or modules doing more than one job, comments that restate the code or carry task/spec numbers.

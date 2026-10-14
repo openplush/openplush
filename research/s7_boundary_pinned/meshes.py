@@ -93,15 +93,17 @@ def cylinder_patch(rings: int = 16, radius: float = 0.8) -> Chart:
 
 
 def sphere_cap(theta_max_deg: float, rings: int = 16, lobes: int = 0, lobe_amp: float = 0.0,
-               scale=(1.0, 1.0, 1.0), name: str | None = None) -> Chart:
+               scale=(1.0, 1.0, 1.0), name: str | None = None, rim_wobble=()) -> Chart:
     """Cap of a sphere (optionally an ellipsoid) around the north pole.
 
-    `lobes` > 0 makes the rim wavy: the polar angle at the rim varies as
-    theta_max * (1 + lobe_amp * cos(lobes * phi)), giving a non-convex flat outline.
+    The polar angle at the rim is theta_max * (1 + lobe_amp * cos(lobes * phi)
+    + sum(a * cos(k * phi + p) for k, a, p in rim_wobble)). Lobes give a wavy,
+    non-convex outline; `rim_wobble` terms break the rotational symmetry.
     """
     polar, f = disk_grid(rings)
     r, phi = polar[:, 0], polar[:, 1]
-    rim = np.deg2rad(theta_max_deg) * (1 + lobe_amp * np.cos(lobes * phi))
+    wobble = sum(a * np.cos(k * phi + ph) for k, a, ph in rim_wobble)
+    rim = np.deg2rad(theta_max_deg) * (1 + lobe_amp * np.cos(lobes * phi) + wobble)
     theta = r * rim
     v = np.column_stack([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
     v = v * np.asarray(scale)
@@ -113,6 +115,14 @@ def saddle(rings: int = 16, a: float = 0.6) -> Chart:
     polar, f = disk_grid(rings)
     x, y = _xy(polar)
     return Chart("saddle", np.column_stack([x, y, a * (x * x - y * y)]), f, "negative curvature")
+
+
+def bump(rings: int = 16, height: float = 0.5, width: float = 0.3, center=(0.3, -0.1)) -> Chart:
+    """Flat disk with an off-centre Gaussian bump: positive curvature on top, negative around it."""
+    polar, f = disk_grid(rings)
+    x, y = _xy(polar)
+    z = height * np.exp(-((x - center[0]) ** 2 + (y - center[1]) ** 2) / width**2)
+    return Chart(f"bump-h{height:g}", np.column_stack([x, y, z]), f, "mixed curvature, asymmetric")
 
 
 def sphere_gore(half_width_deg: float, half_height_deg: float = 80.0, nu: int = 9, nv: int = 41) -> Chart:
@@ -138,4 +148,20 @@ def corpus() -> list[Chart]:
         saddle(),
         sphere_gore(45),
         sphere_gore(90),
+        # Asymmetric: a symmetric turning sequence closes by symmetry alone, so these
+        # are the charts that actually exercise closure.
+        sphere_cap(100, rim_wobble=((1, 0.25, 0.0), (2, 0.15, 1.0)), name="asym-cap-100"),
+        sphere_cap(110, scale=(0.5, 1.0, 1.6), rim_wobble=((1, 0.2, 0.5), (3, 0.1, 0.0)), name="ear"),
+        bump(),
+    ]
+
+
+def stress() -> list[Chart]:
+    """Harsher than a sensible seam layout would produce; looking for the failure edge."""
+    return [
+        sphere_cap(150, lobes=4, lobe_amp=0.5, rim_wobble=((1, 0.1, 0.3),), name="lobed-cap-150"),
+        sphere_cap(160, rim_wobble=((1, 0.3, 0.0), (2, 0.2, 1.3), (5, 0.1, 0.0)), name="asym-cap-160"),
+        sphere_cap(120, lobes=6, lobe_amp=0.6, rim_wobble=((1, 0.15, 0.0),), name="star-cap-120"),
+        bump(height=1.2, width=0.25),
+        sphere_gore(150, half_height_deg=85.0),
     ]

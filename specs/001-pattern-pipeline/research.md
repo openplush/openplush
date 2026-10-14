@@ -116,6 +116,14 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 | **S7** | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
 | S8 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
 
+### S7 preliminary result — synthetic charts (2026-10-14) ⏳ open until fixtures exist
+
+Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts. **Not the fixture corpus**, so T007 stays open.
+
+- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.35° of turning-angle change on every chart, stress included, and every outline was simple. The "fails to close" risk below can be downgraded.
+- **Injectivity is** [likely]. All 14 corpus charts had an injective cotan-harmonic start. 3 of 5 stress charts (deeply lobed, 120–160° caps) had **no** injective linear start, and refining the mesh made it **worse** (folds grow with resolution), so the ~30k-triangle proxy is the harder case.
+- **Implication for T079–T082**: least-squares *angle* closure, never length closure. A start ladder in T080 (cotan → uniform → untangling), accepting only zero-fold starts. T082's dart proposal triggers when the ladder runs out. Whether an untangling start (Garanzha et al. 2021) rescues the stress charts is untested [verify].
+
 ## R7. Fabric Profiles (FR-050, D-018)
 
 Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).

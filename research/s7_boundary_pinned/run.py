@@ -1,0 +1,44 @@
+"""Run spike S7 over the synthetic corpus and print a Markdown results table.
+
+Usage: python3 run.py            (from this directory; numpy + scipy)
+"""
+
+import meshes
+from flatten import run_chart
+
+
+def pct(x: float) -> str:
+    return f"{100 * x:.2g}%" if x >= 1e-6 else "0"
+
+
+def table(charts) -> None:
+    rows = [run_chart(c) for c in charts]
+    header = [
+        "Chart", "Tris", "ΣK (°)", "Natural gap", "Max angle fix (°)", "Simple", "Reflex",
+        "Pinned: status", "Init flips", "SD mean", "Max stretch", "Min compress",
+        "Free: SD mean", "Free: max stretch", "Free: min compress",
+        "Free: seam-length err (max edge / perimeter)",
+    ]
+    print("| " + " | ".join(header) + " |")
+    print("|" + "---|" * len(header))
+    for r in rows:
+        p, f = r.pinned, r.free
+        print(
+            f"| {r.name} | {r.triangles} | {r.total_gauss_deg:.0f} | {pct(r.natural_gap)} | "
+            f"{r.closure_max_change_deg:.2f} | {'yes' if r.boundary_simple else '**no**'} | {r.reflex_corners} | "
+            f"{p.status if p.status == 'ok' else '**' + p.status + '**'} | {p.init}:{p.init_flips} | "
+            f"{p.sd_mean:.3f} | {p.stretch_max:.3f} | {p.compress_min:.3f} | "
+            f"{f.sd_mean:.3f} | {f.stretch_max:.3f} | {f.compress_min:.3f} | "
+            f"{pct(f.boundary_len_err_max)} / {pct(f.perimeter_err)} |"
+        )
+
+
+def main() -> None:
+    print("### Corpus\n")
+    table(meshes.corpus())
+    print("\n### Stress\n")
+    table(meshes.stress())
+
+
+if __name__ == "__main__":
+    main()

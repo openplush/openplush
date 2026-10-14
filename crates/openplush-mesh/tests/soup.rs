@@ -3,7 +3,7 @@
 //! and it carries defects through untouched: reporting them is validation's job.
 
 use openplush_geom::{DVec2, DVec3};
-use openplush_mesh::{MeshError, SourceCorner, TriangleSoup, VertexId};
+use openplush_mesh::{FaceId, MeshError, SourceCorner, TriangleSoup, VertexId};
 
 fn corner(primitive: u32, vertex: u32) -> SourceCorner {
     SourceCorner { primitive, vertex }
@@ -35,16 +35,16 @@ fn builds_and_exposes_triangles_and_provenance() -> Result<(), MeshError> {
     assert_eq!(soup.vertex_count(), 4);
     assert_eq!(soup.triangle_count(), 2);
     assert_eq!(
-        soup.triangle(1),
+        soup.triangle(FaceId::new(1)),
         Some([VertexId::new(0), VertexId::new(2), VertexId::new(3)])
     );
-    assert_eq!(soup.triangle(2), None);
+    assert_eq!(soup.triangle(FaceId::new(2)), None);
     assert_eq!(
         soup.position(VertexId::new(2)),
         Some(DVec3::new(1.0, 1.0, 0.0))
     );
-    assert_eq!(soup.corner_source(1, 2), Some(corner(0, 3)));
-    assert_eq!(soup.corner_uv(1, 2), None, "no UVs supplied");
+    assert_eq!(soup.corner_source(FaceId::new(1), 2), Some(corner(0, 3)));
+    assert_eq!(soup.corner_uv(FaceId::new(1), 2), None, "no UVs supplied");
     Ok(())
 }
 
@@ -61,9 +61,19 @@ fn keeps_per_corner_uvs() -> Result<(), MeshError> {
         Some(DVec2::new(0.0, 1.0)),
     ];
     let soup = TriangleSoup::new(p, t, c, Some(uv))?;
-    assert_eq!(soup.corner_uv(0, 0), Some(DVec2::new(0.0, 0.0)));
-    assert_eq!(soup.corner_uv(1, 0), Some(DVec2::new(0.5, 0.0)));
-    assert_eq!(soup.corner_uv(1, 1), None, "a corner may lack a UV");
+    assert_eq!(
+        soup.corner_uv(FaceId::new(0), 0),
+        Some(DVec2::new(0.0, 0.0))
+    );
+    assert_eq!(
+        soup.corner_uv(FaceId::new(1), 0),
+        Some(DVec2::new(0.5, 0.0))
+    );
+    assert_eq!(
+        soup.corner_uv(FaceId::new(1), 1),
+        None,
+        "a corner may lack a UV"
+    );
     Ok(())
 }
 
@@ -86,7 +96,7 @@ fn rejects_out_of_range_indices_naming_the_triangle() {
     assert_eq!(
         TriangleSoup::new(p, t, c, None).err(),
         Some(MeshError::IndexOutOfRange {
-            triangle: 1,
+            triangle: FaceId::new(1),
             index: 9,
             vertex_count: 4
         })
@@ -122,7 +132,7 @@ fn carries_defects_through_for_validation_to_report() -> Result<(), MeshError> {
     t[0] = [0, 0, 1];
     let soup = TriangleSoup::new(p, t, c, None)?;
     assert_eq!(
-        soup.triangle(0),
+        soup.triangle(FaceId::new(0)),
         Some([VertexId::new(0), VertexId::new(0), VertexId::new(1)])
     );
     Ok(())
@@ -132,6 +142,7 @@ fn carries_defects_through_for_validation_to_report() -> Result<(), MeshError> {
 fn empty_soup_is_valid() -> Result<(), MeshError> {
     let soup = TriangleSoup::new(vec![], vec![], vec![], None)?;
     assert_eq!(soup.triangle_count(), 0);
+    assert_eq!(soup.bbox_diagonal(), None);
     Ok(())
 }
 
@@ -144,5 +155,18 @@ fn bounding_box_diagonal() -> Result<(), MeshError> {
         TriangleSoup::new(vec![], vec![], vec![], None)?.bbox_diagonal(),
         None
     );
+    Ok(())
+}
+
+#[test]
+fn far_out_of_range_faces_are_none_not_an_overflow() -> Result<(), MeshError> {
+    // On wasm32 usize is 32 bits, so `face * 3` must not be computed unchecked.
+    let (p, t, c) = quad();
+    let uv = Some(vec![None; c.len()]);
+    let soup = TriangleSoup::new(p, t, c, uv)?;
+    let far = FaceId::new(u32::MAX);
+    assert_eq!(soup.triangle(far), None);
+    assert_eq!(soup.corner_source(far, 2), None);
+    assert_eq!(soup.corner_uv(far, 2), None);
     Ok(())
 }

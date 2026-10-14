@@ -1,8 +1,9 @@
 """Oracle tests for the committed fixture corpus. Run: python3 -m unittest -v (from this directory).
 
 The oracles read the committed files from disk and share no code with the generator,
-so a generator bug cannot hide itself. Detectors run in the repair order (weld, then
-drop duplicates, then topology) so each defect fixture trips exactly one of them.
+so a generator bug cannot hide itself. Each defect fixture trips exactly one detector on
+its input mesh: the oracle welds and drops duplicate faces, then evaluates every topology
+detector together on that mesh without repairing anything.
 """
 
 import json
@@ -10,17 +11,30 @@ import math
 import tempfile
 import unittest
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Generic, TypeVar
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 MESHES = ("capsule", "cube", "sphere")
-# Every class the repair pipeline detects. Non-finite input fails at import instead, so it is not here.
-DEFECTS = ("bowtie-vertex", "duplicate-face", "flipped-normals", "hole", "multi-component")
-DEFECTS += ("non-manifold-edge", "self-intersection", "unwelded-split-vertices", "zero-area-face")
+# The nine defect classes the corpus covers. Non-finite input fails at import instead, so it is not here.
+DEFECTS = (
+    "bowtie-vertex",
+    "duplicate-face",
+    "flipped-normals",
+    "hole",
+    "multi-component",
+    "non-manifold-edge",
+    "self-intersection",
+    "unwelded-split-vertices",
+    "zero-area-face",
+)
 SEAM_KINDS = {"cut", "dart", "opening", "fabricBoundary", "mandatory"}
 
 Vec = tuple[float, float, float]
 Face = tuple[int, int, int]
+Edge = tuple[int, int]
+T = TypeVar("T")
 
 
 def read_obj(path: Path) -> tuple[list[Vec], list[Face]]:
@@ -39,17 +53,17 @@ def read_obj(path: Path) -> tuple[list[Vec], list[Face]]:
     return pos, faces
 
 
-class UnionFind:
+class UnionFind(Generic[T]):
     def __init__(self) -> None:
-        self.parent: dict[object, object] = {}
+        self.parent: dict[T, T] = {}
 
-    def find(self, x: object) -> object:
+    def find(self, x: T) -> T:
         self.parent.setdefault(x, x)
         while self.parent[x] != x:
             x = self.parent[x]
         return x
 
-    def union(self, a: object, b: object) -> None:
+    def union(self, a: T, b: T) -> None:
         self.parent[self.find(a)] = self.find(b)
 
 
@@ -85,20 +99,39 @@ def triangles_cross(s: tuple[Vec, Vec, Vec], t: tuple[Vec, Vec, Vec]) -> bool:
     return any(segment_hits_triangle(a[k], a[(k + 1) % 3], b) for a, b in ((s, t), (t, s)) for k in range(3))
 
 
-def edges_of(f: Face) -> list[tuple[int, int]]:
+def edges_of(f: Face) -> list[Edge]:
     return [(f[0], f[1]), (f[1], f[2]), (f[2], f[0])]
+
+
+def signed_volume(pos: list[Vec], faces: list[Face]) -> float:
+    return sum(dot(pos[a], cross(pos[b], pos[c])) for a, b, c in faces) / 6
+
+
+def inward_closed_components(pos: list[Vec], faces: list[Face], comps: UnionFind[int]) -> int:
+    """Closed vertex-connected components with signed volume <= 0: repair orients each to positive volume."""
+    by_comp: dict[int, list[Face]] = {}
+    for f in faces:
+        by_comp.setdefault(comps.find(f[0]), []).append(f)
+    edge_uses = Counter((min(e), max(e)) for f in faces for e in edges_of(f))
+    open_comps = {comps.find(a) for (a, _), n in edge_uses.items() if n == 1}
+    return sum(signed_volume(pos, fs) <= 0 for root, fs in by_comp.items() if root not in open_comps)
 
 
 def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
     """Count each defect class; zero everywhere means closed, manifold, oriented, and clean."""
     canon: dict[Vec, int] = {}
-    welded = [tuple(canon.setdefault(pos[i], i) for i in f) for f in faces]
+
+    def weld(i: int) -> int:
+        return canon.setdefault(pos[i], i)
+
+    welded = [(weld(a), weld(b), weld(c)) for a, b, c in faces]
     unique = list({tuple(sorted(f)): f for f in reversed(welded)}.values())
     lo = [min(p[k] for p in pos) for k in range(3)]
     hi = [max(p[k] for p in pos) for k in range(3)]
     diag2 = sum((h - l) ** 2 for h, l in zip(hi, lo))
-    edge_faces: dict[tuple[int, int], set[int]] = {}
-    fans, comps = UnionFind(), UnionFind()
+    edge_faces: dict[Edge, set[int]] = {}
+    fans: UnionFind[tuple[int, int]] = UnionFind()
+    comps: UnionFind[int] = UnionFind()
     for i, f in enumerate(unique):
         comps.union(f[0], f[1])
         comps.union(f[1], f[2])
@@ -117,15 +150,16 @@ def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
         for j in range(i + 1, len(unique))
         if not set(unique[i]) & set(unique[j])
     )
+    # Winding is only defined across a manifold edge; repair orients after splitting the others.
+    misoriented = sum(
+        n - 1
+        for (a, b), n in Counter(e for f in unique for e in edges_of(f)).items()
+        if len(edge_faces[(min(a, b), max(a, b))]) <= 2
+    ) + inward_closed_components(pos, unique, comps)
     return {
         "bowtie-vertex": len(fan_roots) - len({v for v, _ in fan_roots}),
         "duplicate-face": len(welded) - len(unique),
-        # Winding is only defined across a manifold edge; repair orients after splitting the others.
-        "flipped-normals": sum(
-            n - 1
-            for (a, b), n in Counter(e for f in unique for e in edges_of(f)).items()
-            if len(edge_faces[(min(a, b), max(a, b))]) <= 2
-        ),
+        "flipped-normals": misoriented,
         "hole": sum(len(fs) == 1 for fs in edge_faces.values()),
         "multi-component": len({comps.find(v) for f in unique for v in f}) - 1,
         "non-finite": sum(not math.isfinite(c) for p in pos for c in p),
@@ -139,10 +173,6 @@ def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
     }
 
 
-def signed_volume(pos: list[Vec], faces: list[Face]) -> float:
-    return sum(dot(pos[a], cross(pos[b], pos[c])) for a, b, c in faces) / 6
-
-
 class CleanMeshes(unittest.TestCase):
     """Prevents a base mesh that is itself defective, which would make every pattern test meaningless."""
 
@@ -152,7 +182,7 @@ class CleanMeshes(unittest.TestCase):
                 pos, faces = read_obj(FIXTURES / "meshes" / f"{name}.obj")
                 self.assertEqual({k: v for k, v in detect(pos, faces).items() if v}, {})
                 self.assertLessEqual(len(faces), 400, "keep fixtures small")
-                edges = {tuple(sorted(e)) for f in faces for e in edges_of(f)}
+                edges = {(min(e), max(e)) for f in faces for e in edges_of(f)}
                 self.assertEqual(len(pos) - len(edges) + len(faces), 2, "sphere topology")
                 self.assertTrue(set(range(len(pos))) <= {v for f in faces for v in f}, "no unused vertex")
                 self.assertGreater(signed_volume(pos, faces), 0, "wound outward")
@@ -171,19 +201,30 @@ class DefectCorpus(unittest.TestCase):
                 found = {k: v for k, v in detect(*read_obj(FIXTURES / "defects" / f"{name}.obj")).items() if v}
                 self.assertEqual(list(found), [name])
 
+    def test_a_closed_component_wound_inward_throughout_is_flipped(self) -> None:
+        """Consistent winding alone passes an inside-out shell; repair orients closed components to +volume."""
+        pos, faces = read_obj(FIXTURES / "meshes" / "cube.obj")
+        inside_out = [(a, c, b) for a, b, c in faces]
+        self.assertEqual({k: v for k, v in detect(pos, inside_out).items() if v}, {"flipped-normals": 1})
+        pos, faces = read_obj(FIXTURES / "defects" / "multi-component.obj")
+        tetra_out = faces[:-4] + [(a, c, b) for a, b, c in faces[-4:]]
+        found = {k: v for k, v in detect(pos, tetra_out).items() if v}
+        self.assertEqual(found, {"flipped-normals": 1, "multi-component": 1})
 
-def chart_topology(faces: list[Face], seams: set[tuple[int, int]]) -> list[tuple[int, int]]:
+
+def chart_topology(faces: list[Face], seams: set[Edge]) -> list[tuple[int, int]]:
     """Per chart, (Euler characteristic, boundary loops) after cutting along `seams`."""
-    edge_faces: dict[tuple[int, int], list[int]] = {}
+    edge_faces: dict[Edge, list[int]] = {}
     for i, f in enumerate(faces):
         for a, b in edges_of(f):
             edge_faces.setdefault((min(a, b), max(a, b)), []).append(i)
-    charts, corners = UnionFind(), UnionFind()
-    for (a, b), (f, g) in edge_faces.items():
+    charts: UnionFind[int] = UnionFind()
+    corners: UnionFind[tuple[int, int]] = UnionFind()
+    for (a, b), (p, q) in edge_faces.items():
         if (a, b) not in seams:
-            charts.union(f, g)
-            corners.union((f, a), (g, a))
-            corners.union((f, b), (g, b))
+            charts.union(p, q)
+            corners.union((p, a), (q, a))
+            corners.union((p, b), (q, b))
     out: list[tuple[int, int]] = []
     for root in sorted({charts.find(i) for i in range(len(faces))}):
         mine = [i for i in range(len(faces)) if charts.find(i) == root]
@@ -193,7 +234,7 @@ def chart_topology(faces: list[Face], seams: set[tuple[int, int]]) -> list[tuple
         succ = {corners.find((i, a)): corners.find((i, b)) for i, a, b in cut}
         if len(succ) != len(cut):
             raise AssertionError("a wedge has two outgoing boundary edges: the cut is not a manifold")
-        loops, seen = 0, set()
+        loops, seen = 0, set[tuple[int, int]]()
         for start in succ:
             loops += start not in seen
             while start not in seen:
@@ -203,38 +244,108 @@ def chart_topology(faces: list[Face], seams: set[tuple[int, int]]) -> list[tuple
     return out
 
 
+@dataclass(frozen=True)
+class SeamSet:
+    mesh: str
+    edges: list[Edge]
+    kinds: set[str]
+
+
+def field(obj: object, key: str) -> object:
+    if not isinstance(obj, dict):
+        raise TypeError(f"expected a JSON object holding {key!r}, got {obj!r}")
+    fields: dict[object, object] = obj
+    if key not in fields:
+        raise KeyError(key)
+    return fields[key]
+
+
+def exact_int(x: object, what: str) -> int:
+    """JSON 1.0 and false compare equal to 1 and 0 in Python, so the type is checked, not the value."""
+    if type(x) is not int:
+        raise TypeError(f"{what}: expected an integer, got {x!r}")
+    return x
+
+
+def text(x: object, what: str) -> str:
+    if not isinstance(x, str):
+        raise TypeError(f"{what}: expected a string, got {x!r}")
+    return x
+
+
+def array(x: object, what: str) -> list[object]:
+    if not isinstance(x, list):
+        raise TypeError(f"{what}: expected an array, got {x!r}")
+    out: list[object] = x
+    return out
+
+
+def parse_seam_set(doc: object) -> SeamSet:
+    """Raises on a field of the wrong JSON type or value; never substitutes a default."""
+    header = (
+        text(field(doc, "format"), "format"),
+        exact_int(field(doc, "version"), "version"),
+        exact_int(field(doc, "vertexIndexBase"), "vertexIndexBase"),
+    )
+    if header != ("openplush-seam-set", 1, 0):
+        raise ValueError(f"unsupported seam-set header {header!r}")
+    edges: list[Edge] = []
+    kinds: set[str] = set()
+    for seam in array(field(doc, "seams"), "seams"):
+        pair = array(field(seam, "edge"), "edge")
+        if len(pair) != 2:
+            raise ValueError(f"an edge is two vertex indices, got {pair!r}")
+        edges.append((exact_int(pair[0], "edge index"), exact_int(pair[1], "edge index")))
+        kinds.add(text(field(seam, "kind"), "kind"))
+    return SeamSet(text(field(doc, "mesh"), "mesh"), edges, kinds)
+
+
+def read_seam_set(path: Path) -> SeamSet:
+    doc: object = json.loads(path.read_text(encoding="utf-8"))
+    return parse_seam_set(doc)
+
+
 class SeamSets(unittest.TestCase):
     """Prevents a reference seam set that names a non-edge or leaves a chart that cannot flatten."""
 
-    def load(self, path: Path) -> tuple[list[Face], set[tuple[int, int]], dict[str, object]]:
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        self.assertIsInstance(doc, dict)
-        self.assertEqual((doc["format"], doc["version"], doc["vertexIndexBase"]), ("openplush-seam-set", 1, 0))
-        pos, faces = read_obj(FIXTURES / str(doc["mesh"]))
-        pairs = [(s["edge"][0], s["edge"][1]) for s in doc["seams"]]
+    def load(self, path: Path) -> tuple[list[Face], set[Edge]]:
+        seam_set = read_seam_set(path)
+        _, faces = read_obj(FIXTURES / seam_set.mesh)
+        pairs = seam_set.edges
         self.assertEqual(pairs, sorted(set(pairs)), "sorted, no duplicates")
         self.assertTrue(all(a < b for a, b in pairs), "each pair sorted")
-        self.assertTrue({s["kind"] for s in doc["seams"]} <= SEAM_KINDS)
-        mesh_edges = {tuple(sorted(e)) for f in faces for e in edges_of(f)}
+        self.assertTrue(seam_set.kinds <= SEAM_KINDS)
+        mesh_edges = {(min(e), max(e)) for f in faces for e in edges_of(f)}
         self.assertEqual(set(pairs) - mesh_edges, set(), "every seam is a mesh edge")
-        return faces, set(pairs), doc
+        return faces, set(pairs)
 
     def test_every_mesh_has_a_seam_set(self) -> None:
-        meshes = {json.loads(p.read_text(encoding="utf-8"))["mesh"] for p in (FIXTURES / "seams").glob("*.json")}
+        meshes = {read_seam_set(p).mesh for p in (FIXTURES / "seams").glob("*.json")}
         self.assertTrue({f"meshes/{m}.obj" for m in MESHES} <= meshes)
+
+    def test_parser_rejects_floats_and_booleans_that_compare_equal_to_ints(self) -> None:
+        def doc(edge: list[object], version: object, base: object) -> dict[str, object]:
+            seams = [{"edge": edge, "kind": "cut"}]
+            head = {"format": "openplush-seam-set", "version": version, "mesh": "m", "vertexIndexBase": base}
+            return head | {"seams": seams}
+
+        self.assertEqual(parse_seam_set(doc([0, 1], 1, 0)).edges, [(0, 1)])
+        for bad in (doc([0.0, 1.0], 1, 0), doc([False, 1], 1, 0), doc([0, 1], 1.0, 0), doc([0, 1], 1, False)):
+            with self.subTest(bad), self.assertRaises(TypeError):
+                parse_seam_set(bad)
 
     def test_every_chart_is_a_topological_disk(self) -> None:
         paths = sorted((FIXTURES / "seams").glob("*.json"))
         self.assertGreaterEqual(len(paths), len(MESHES))
         for path in paths:
             with self.subTest(path.name):
-                faces, seams, _ = self.load(path)
+                faces, seams = self.load(path)
                 topo = chart_topology(faces, seams)
                 self.assertGreaterEqual(len(topo), 1)
                 self.assertEqual(topo, [(1, 1)] * len(topo), "each chart: chi 1, one boundary loop")
 
     def test_disk_oracle_rejects_an_uncut_sphere_and_an_annulus(self) -> None:
-        faces, seams, _ = self.load(FIXTURES / "seams" / "capsule.json")
+        faces, seams = self.load(FIXTURES / "seams" / "capsule.json")
         self.assertEqual(chart_topology(faces, set()), [(2, 0)])
         # Dropping a middle edge of the capsule's lengthwise cut leaves the tube an annulus.
         weakened = [chart_topology(faces, seams - {e}) for e in sorted(seams)]

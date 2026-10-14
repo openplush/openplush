@@ -4,7 +4,8 @@
 #
 # Fails when:
 #   1. An engine crate (crates/*) reaches wasm-bindgen, web-sys, js-sys (browser
-#      APIs) or rayon (threads; crates/AGENTS.md) through normal or build
+#      APIs), rayon (threads; crates/AGENTS.md) or getrandom (OS randomness, which
+#      breaks determinism; seeded generators don't need it) through normal or build
 #      dependencies, directly or transitively, with every feature enabled.
 #      Dev-dependencies are allowed: wasm-bindgen-test needs them and they never ship.
 #   2. Engine source (any .rs under crates/<crate>/ outside tests/, benches/,
@@ -16,7 +17,7 @@
 #      specs/001-pattern-pipeline/plan.md, or a crate is missing from that DAG.
 #   5. A crate takes openplush-testkit as a normal or build dependency.
 #   6. A binding (bindings/*) depends on a workspace crate other than
-#      openplush-pipeline and openplush-project.
+#      openplush-pipeline (Constitution I; the project API is re-exported, D-020).
 #   7. A workspace member lives outside crates/ and bindings/, or does not inherit
 #      the workspace lints ([lints] workspace = true), which carry forbid(unsafe_code).
 #
@@ -56,7 +57,7 @@ declare -A parents=(
   [openplush-pipeline]="openplush-io openplush-decal openplush-layout openplush-export openplush-project"
   [openplush-testkit]="openplush-pipeline"
 )
-binding_may_use=" openplush-pipeline openplush-project "
+binding_may_use=" openplush-pipeline "  # D-020: project API arrives as openplush_pipeline::project
 testkit=openplush-testkit
 
 # below <crate>: every crate reachable downward from <crate>, space-separated.
@@ -101,7 +102,7 @@ facts=$(jq -r '
     | "member\t\($n)\t\($a)\t\($pk[$id].manifest_path | rtrimstr("/Cargo.toml"))",
       (nondev($id)[] | select($isws[.]) | "edge\t\($n)\t\($a)\t\($pk[.].name)"),
       (if $a == "crates" then
-         (reach($id)[] | $pk[.].name | select(IN("wasm-bindgen", "web-sys", "js-sys", "rayon", "rayon-core"))
+         (reach($id)[] | $pk[.].name | select(IN("wasm-bindgen", "web-sys", "js-sys", "rayon", "rayon-core", "getrandom"))
           | "forbidden\t\($n)\t\(.)"),
          (if any($pk[$id].targets[]; .kind | index("custom-build")) then "buildscript\t\($n)" else empty end)
        else empty end)
@@ -146,14 +147,14 @@ sys.exit(0 if d.get("lints", {}).get("workspace") is True else 1)' "$dir/Cargo.t
         violations+=("$from -> $to: openplush-testkit is a dev-dependency only")
       elif [[ $area == bindings ]]; then
         [[ $binding_may_use == *" $to "* ]] ||
-          violations+=("$from -> $to: bindings depend on openplush-pipeline and openplush-project only")
+          violations+=("$from -> $to: bindings depend on openplush-pipeline only; use its re-exports (Constitution I, D-020)")
       elif [[ $area == crates && -v "parents[$from]" ]]; then
         [[ $(below "$from") == *" $to "* ]] ||
           violations+=("$from -> $to: not downward in the crate DAG (plan.md); a sideways or upward edge needs an ADR")
       fi
       ;;
     forbidden)
-      violations+=("$a reaches $b through normal or build dependencies (engine crates never touch browser APIs or threads; crates/AGENTS.md)")
+      violations+=("$a reaches $b through normal or build dependencies (engine crates never touch browser APIs, threads, or OS randomness; crates/AGENTS.md)")
       ;;
     buildscript)
       violations+=("$a has a build.rs: engine crates have no build scripts (arbitrary code at build time)")

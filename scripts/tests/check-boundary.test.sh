@@ -140,13 +140,21 @@ expect fail "binding depends on an inner engine crate" "$r" "openplush-cli -> op
 
 r=$(new_case binding-ok)
 workspace "$r" crates/openplush-pipeline crates/openplush-project bindings/openplush-wasm
-crate "$r" crates/openplush-pipeline openplush-pipeline
 crate "$r" crates/openplush-project openplush-project
+crate "$r" crates/openplush-pipeline openplush-pipeline 'openplush-project = { path = "../openplush-project" }'
 crate "$r" vendor/wasm-bindgen wasm-bindgen
 crate "$r" bindings/openplush-wasm openplush-wasm 'openplush-pipeline = { path = "../../crates/openplush-pipeline" }
-openplush-project = { path = "../../crates/openplush-project" }
 wasm-bindgen = { path = "../../vendor/wasm-bindgen" }'
-expect pass "binding uses pipeline, project, and wasm-bindgen" "$r"
+expect pass "binding uses pipeline (which re-exports project) and wasm-bindgen" "$r"
+
+# D-020: the project API reaches shells through pipeline's re-export, not directly.
+r=$(new_case binding-project-direct)
+workspace "$r" crates/openplush-pipeline crates/openplush-project bindings/openplush-cli
+crate "$r" crates/openplush-project openplush-project
+crate "$r" crates/openplush-pipeline openplush-pipeline 'openplush-project = { path = "../openplush-project" }'
+crate "$r" bindings/openplush-cli openplush-cli 'openplush-pipeline = { path = "../../crates/openplush-pipeline" }
+openplush-project = { path = "../../crates/openplush-project" }'
+expect fail "binding depends on openplush-project directly" "$r" "openplush-cli -> openplush-project"
 
 # 9. testkit is a dev-dependency only.
 r=$(new_case testkit-normal)
@@ -234,6 +242,28 @@ crate "$r" vendor/rayon rayon
 crate "$r" vendor/solver solver 'rayon = { path = "../rayon" }'
 crate "$r" crates/openplush-geom openplush-geom 'solver = { path = "../../vendor/solver" }'
 expect fail "transitive dependency on rayon" "$r" "rayon"
+
+# 14b. OS randomness: getrandom breaks determinism on native builds (on wasm32 it
+# needs js-sys, which is already banned). Seeded generators don't need it, and
+# proptest may use it as a dev-dependency.
+r=$(new_case getrandom-direct)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/getrandom getrandom
+crate "$r" crates/openplush-geom openplush-geom 'getrandom = { path = "../../vendor/getrandom" }'
+expect fail "dependency on getrandom" "$r" "getrandom"
+
+r=$(new_case getrandom-transitive)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/getrandom getrandom
+crate "$r" vendor/rng rng 'getrandom = { path = "../getrandom" }'
+crate "$r" crates/openplush-geom openplush-geom 'rng = { path = "../../vendor/rng" }'
+expect fail "transitive dependency on getrandom" "$r" "getrandom"
+
+r=$(new_case getrandom-dev)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/getrandom getrandom
+crate "$r" crates/openplush-geom openplush-geom '' 'getrandom = { path = "../../vendor/getrandom" }'
+expect pass "getrandom as a dev-dependency (proptest)" "$r"
 
 # 15. A browser crate behind a feature no member enables still ships if anyone enables it.
 r=$(new_case optional-web)

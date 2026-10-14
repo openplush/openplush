@@ -140,13 +140,21 @@ expect fail "binding depends on an inner engine crate" "$r" "openplush-cli -> op
 
 r=$(new_case binding-ok)
 workspace "$r" crates/openplush-pipeline crates/openplush-project bindings/openplush-wasm
-crate "$r" crates/openplush-pipeline openplush-pipeline
 crate "$r" crates/openplush-project openplush-project
+crate "$r" crates/openplush-pipeline openplush-pipeline 'openplush-project = { path = "../openplush-project" }'
 crate "$r" vendor/wasm-bindgen wasm-bindgen
 crate "$r" bindings/openplush-wasm openplush-wasm 'openplush-pipeline = { path = "../../crates/openplush-pipeline" }
-openplush-project = { path = "../../crates/openplush-project" }
 wasm-bindgen = { path = "../../vendor/wasm-bindgen" }'
-expect pass "binding uses pipeline, project, and wasm-bindgen" "$r"
+expect pass "binding uses pipeline (which re-exports project) and wasm-bindgen" "$r"
+
+# D-020: the project API reaches shells through pipeline's re-export, not directly.
+r=$(new_case binding-project-direct)
+workspace "$r" crates/openplush-pipeline crates/openplush-project bindings/openplush-cli
+crate "$r" crates/openplush-project openplush-project
+crate "$r" crates/openplush-pipeline openplush-pipeline 'openplush-project = { path = "../openplush-project" }'
+crate "$r" bindings/openplush-cli openplush-cli 'openplush-pipeline = { path = "../../crates/openplush-pipeline" }
+openplush-project = { path = "../../crates/openplush-project" }'
+expect fail "binding depends on openplush-project directly" "$r" "openplush-cli -> openplush-project"
 
 # 9. testkit is a dev-dependency only.
 r=$(new_case testkit-normal)

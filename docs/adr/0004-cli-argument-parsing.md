@@ -12,9 +12,9 @@ T038 builds `bindings/openplush-cli`, the headless shell that Constitution II ma
 
 ## Decision drivers
 
-* Constitution II: every capability reachable as file-in, file-out; a usage mistake must fail loudly, never fall back to a default.
+* Constitution II: every capability reachable as file-in, file-out. AGENTS.md, Fail loudly: a usage mistake is an error, never a fallback to a default.
 * Constitution IX: license on the allowlist; the dependency must pass `cargo deny`.
-* Constitution I: the CLI is a shell, so this dependency must not reach `crates/` (the boundary check enforces it).
+* Constitution I: the CLI is a shell, so this dependency belongs in `bindings/` only. Review keeps it out of `crates/`; the boundary check's dependency denylist does not name it.
 * Contributor burden: argument parsing is not this project's problem to solve.
 
 ## Considered options
@@ -35,7 +35,7 @@ Chosen option: **`clap` 4 with `derive`**, because typed arguments (`ValueEnum`,
 
 ### Confirmation
 
-`cargo deny check` passes with `clap` in the lock file, and `scripts/check-boundary.sh` keeps it out of `crates/`. `bindings/openplush-cli/tests/cli.rs` pins the usage-error exit code.
+`cargo deny check` passes with `clap` in the lock file. `bindings/openplush-cli/tests/cli.rs` pins the usage-error exit code.
 
 ## Pros and cons of the options
 

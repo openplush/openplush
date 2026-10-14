@@ -69,7 +69,7 @@ struct Pattern {
     /// The fabric preset by name.
     #[arg(long)]
     fabric: String,
-    /// The finished length of the model's longest dimension, in millimetres.
+    /// The target finished size, in millimetres.
     #[arg(long, value_parser = positive_mm)]
     size_mm: f64,
     /// The sheet size the print export tiles onto.

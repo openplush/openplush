@@ -1,0 +1,40 @@
+# T014: every engine crate builds for wasm32, and wasm-bindgen tests run there.
+name: wasm
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  wasm:
+    name: build and test on wasm32
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Installs the toolchain and wasm32 target pinned in rust-toolchain.toml.
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo build --workspace --target wasm32-unknown-unknown --locked
+      # The test runner must match the wasm-bindgen version in Cargo.lock exactly.
+      - name: wasm-bindgen version from Cargo.lock
+        id: wasm-bindgen
+        run: |
+          version=$(cargo metadata --format-version 1 --locked |
+            jq -r '.packages[] | select(.name == "wasm-bindgen") | .version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: wasm-bindgen-cli@${{ steps.wasm-bindgen.outputs.version }}
+      # Runner is set in .cargo/config.toml; tests run under Node.
+      - run: cargo test --workspace --target wasm32-unknown-unknown --locked

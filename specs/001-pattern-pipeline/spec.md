@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-pattern-pipeline`
 **Created**: 2026-10-12
-**Status**: Draft — 3 blocking clarifications open (Q1–Q3)
+**Status**: Draft — blocking clarifications Q1–Q3 closed 2026-10-13; minor defaults still open
 **Input**: "Take an arbitrary 3D mesh (OBJ/glTF), mark cut seams, flatten the surface patches into 2D with minimal distortion, add seam allowances, map surface details onto the flat pieces, and lay out printable patterns. Must cover Plushify's high-level features. Free, open source, open to contributors."
 
 > Spec Kit rule: this file states **what** and **why** only. Technology choices live in [research.md](./research.md) and [plan.md](./plan.md). Data structures live in [data-model.md](./data-model.md).
@@ -25,6 +25,18 @@ Publicly described Plushify capabilities this project must match (sources in [re
 | Save / reload a project file | US7 · FR-070 |
 
 Beyond parity: seam allowance, match notches, mirrored-piece deduplication, grain/nap orientation, fabric-aware layout, glTF, offline/private by construction, headless automation, open project format.
+
+---
+
+## Clarifications
+
+### Session 2026-10-13
+
+- Q: Is the imported model the finished stuffed toy, or the fabric shell that puffs out when stuffed? → A: The fabric shell (WYSIWYG). The model is understood as a basic, nearly-stuffed shape; the tool makes no promise of dimensional accuracy after stuffing.
+- Q: Must paired seam edges match exactly in length, or may the tool leave a small difference for the sewist to ease in? → A: Exact — a hard constraint; distortion is absorbed in the piece interior. Fabric stretch is treated as uniform in all directions for this feature.
+- Q: Does the first release propose seams automatically, or does the maker draw them all by hand? → A: Manual seams in v0.1, with validation and dart/extra-seam suggestions; automatic layout deferred. Upper size bound is handheld-to-large plush, not wearable/costume scale.
+- Q: Does a warning block export, or can the maker print anyway? → A: Never blocks. Unresolved warnings are acknowledged once and printed on the pattern's first page, so flawed output is possible but never undocumented. Violated invariants remain errors and do block.
+- Q: Must every warning come with a fix the maker can accept? → A: Every warning must name a remedy in plain language; where the tool can perform it, it is offered as a preview-then-accept action. Warnings whose real remedy is a material or sizing choice say so without acting.
 
 ---
 
@@ -64,7 +76,7 @@ Pieces carry match notches, partner labels ("A3 → C1"), cut counts, mirror fla
 2. **Given** a seam segment marked as the opening, **When** exported, **Then** that segment is labeled and its allowance uses the opening allowance.
 3. **Given** a tight concave curve, **When** exported, **Then** clip marks are drawn in its allowance; tight convex curves get notch-out marks.
 
-### US4 — One-click starting seams (Priority: P2, MVP status per Q3)
+### US4 — One-click starting seams (Priority: P2 — deferred past v0.1)
 The maker requests an automatic seam layout, then edits it.
 
 **Why P2**: Removes the blank-canvas problem; not required for a correct pattern.
@@ -78,7 +90,7 @@ The maker places images/markings on the model, paints fabric regions, and marks 
 2. **Given** separate eye meshes, **When** the user marks them as details, **Then** each produces a placement mark on the underlying piece and no pattern piece of its own.
 3. **Given** two painted fabric regions, **When** generated, **Then** pieces are grouped by fabric in the output.
 
-### US6 — Fabric-aware orientation and layout (Priority: P3, partially MVP per Q3)
+### US6 — Fabric-aware orientation and layout (Priority: P3, partially in v0.1)
 The maker chooses a fabric (e.g., faux fur with nap), sets fur direction on the model, and gets pieces oriented so nap runs correctly, laid out to minimize fabric use.
 
 **Acceptance scenarios**
@@ -100,7 +112,10 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - Ears or fins sandwiched into a seam (more than two layers meeting along one seam line).
 - Markings straddling a seam; markings on a region later re-seamed.
 - Extreme scales (keychain to wearable), very dense meshes, quads/n-gons.
-- Concave regions without a seam (stuffing will push them outward — see Q1).
+- Concave regions without a seam (stuffing will push them outward — FR-024, FR-025).
+- Seams joining fabrics with different stretch (fur to minky).
+- Pile longer than a detail it covers.
+- Thick backing on a small plush.
 
 ---
 
@@ -112,7 +127,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-003**: Detect and report non-manifold edges/vertices, inconsistent orientation, degenerate/duplicate faces, holes, disconnected components, and self-intersections; each defect is locatable in 3D.
 - **FR-004**: Offer repair per defect class with a before/after report; never modify geometry without confirmation (or an explicit per-project auto-repair setting).
 - **FR-005**: Classify small disconnected components as candidate detail parts the user can mark as non-sewn.
-- **FR-006**: User sets real-world size (by a dimension or a measured reference distance) and units; a human-scale reference is shown.
+- **FR-006**: User sets real-world size (by a dimension or a measured reference distance) and units; a human-scale reference is shown. Supported range is handheld to large plush (roughly keychain up to a metre in the longest dimension); wearable/costume scale is out of scope.
 
 ### Seams
 - **FR-010**: Draw and erase seams along the surface in 3D (point-to-point with automatic shortest path), with an optional symmetry-mirroring mode.
@@ -120,16 +135,17 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-012**: Mark any seam segment as the stuffing/turning opening.
 - **FR-013**: Validate that seams split the surface into flattenable pieces; otherwise propose the minimal additional seams, highlighted for approval.
 - **FR-014**: Piece previews update incrementally as seams change (only affected pieces recompute).
-- **FR-015**: Generate an automatic starting seam layout, fully editable afterwards. [NEEDS CLARIFICATION: Q3 — MVP or v0.2]
-- **FR-016**: Support inserted pieces (more than two layers along one seam, e.g., ears sandwiched into a head seam). [NEEDS CLARIFICATION: Q3 — recommended v0.3; data model supports it from day one]
+- **FR-015**: Generate an automatic starting seam layout, fully editable afterwards. Deferred past v0.1 — the first release ships manual seam drawing with validation (FR-013) and dart suggestions (FR-022), which an automatic layout is expected to build on.
+- **FR-016**: Support inserted pieces (more than two layers along one seam, e.g., ears sandwiched into a head seam). Deferred past v0.1; the project format must represent such seams from the start so earlier files stay valid.
 
 ### Flattening & quality
 - **FR-020**: Flatten each piece to 2D with no folds and no self-overlap.
 - **FR-021**: Show per-region stretch/compression on 3D and 2D, with a numeric per-piece summary.
 - **FR-022**: Suggest darts or seams where distortion exceeds the selected fabric's tolerance, with preview before applying.
-- **FR-023**: Both sides of every seam yield equal sewing lengths within tolerance. [NEEDS CLARIFICATION: Q2 — hard constraint vs. soft-with-reported-ease; tolerance value]
-- **FR-024**: Account for stuffing. [NEEDS CLARIFICATION: Q1 — is the input the stuffed target or the fabric shell?]
+- **FR-023**: Both sides of every seam yield equal sewing lengths within max(1.0 mm, 0.5%) — a hard constraint, never a residual handed to the sewist as ease. The unavoidable distortion is absorbed in the piece interior instead, where FR-021 shows it and FR-022 can relieve it. A pairing that cannot meet this is an error, not a warning.
+- **FR-024**: The imported model is the fabric shell: pieces are cut to match its surface, and the model is read as a basic, nearly-stuffed shape rather than a prediction of the stuffed result. The maker is told this plainly — a stuffed toy reads fuller than the model, most visibly at concavities, and no dimensional accuracy is promised after stuffing. The optional uniform shrink percentage (FR-056) is the only compensation offered.
 - **FR-025**: Warn when a concave region has no seam passing through it.
+- **FR-026**: Fabric stretch is treated as uniform in all directions for this feature. FR-050's per-direction percentages are recorded and drive warnings (FR-058) but do not steer flattening; direction-dependent flattening is out of scope.
 
 ### Pattern features
 - **FR-030**: Seam allowance outside the sewing line: global default, per-seam override, separate opening allowance, hem allowance for unsewn edges. [NEEDS CLARIFICATION: default — 6 mm vs. ¼ in, locale-dependent?]
@@ -144,19 +160,26 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-040**: Place images/markings on the 3D surface; they map onto pieces, splitting across seams with alignment marks.
 - **FR-041**: Paint fabric/color regions on the model; region boundaries become seams, and pieces are grouped by fabric.
 - **FR-042**: Detail parts (FR-005) become placement marks on the piece beneath them.
-- **FR-043**: Transfer the model's texture onto pieces as printable images for print-on-fabric, with bleed into the allowance. [NEEDS CLARIFICATION: Q3 — recommended v0.2]
+- **FR-043**: Transfer the model's texture onto pieces as printable images for print-on-fabric, with bleed into the allowance. Deferred past v0.1.
 
 ### Fabric & grain
-- **FR-050**: Fabric profiles: name, nap (yes/no), stretch along/across grain, default allowance, roll width.
+- **FR-050**: Fabric profiles: name, category (woven, knit, pile, felt), stretch along grain / across grain / bias (%), nap (yes/no), pile length (mm), thickness (mm), frays (yes/no), default seam allowance, roll width. Ship editable presets: quilting cotton, felt, fleece, minky, velboa, short faux fur, long faux fur. Profiles are saved in the project.
 - **FR-051**: User-defined nap/grain direction on the model via strokes, with a sensible default when none is given.
 - **FR-052**: Each piece is oriented so grain/nap align with the fabric; poor nap coherence within a piece triggers a warning and split suggestion.
 - **FR-053**: Layout honors allowed rotations per fabric (napped: none; non-napped: 180°).
+- **FR-054**: For pile fabrics, print pieces mirrored and labeled "trace on wrong side" by default; the user can switch to right-side printing.
+- **FR-055**: Default seam allowance scales with pile length; warn when a piece, detail part, or curve is smaller than a multiple of the pile length. [NEEDS CLARIFICATION: multiple — provisional 3×]
+- **FR-056**: Optional uniform shrink compensation (%) for stretch fabrics so the stuffed toy matches the model size; direction-dependent compensation is out of scope for this feature.
+- **FR-057**: Non-fraying fabrics may use zero allowance for edge-stitched or appliqué pieces.
+- **FR-058**: Warn when a seam joins fabrics whose stretch differs by more than a threshold. [NEEDS CLARIFICATION: threshold — provisional 20 percentage points]
 
 ### Output
 - **FR-060**: SVG export at true scale (document dimensions in mm; 1 user unit = 1 mm).
 - **FR-061**: Print export tiled for Letter and A4 with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
-- **FR-062**: Fabric-saving layout within a given fabric width. [NEEDS CLARIFICATION: Q3 — MVP uses simple packing; optimized nesting v0.2]
+- **FR-062**: Fabric-saving layout within a given fabric width. v0.1 places pieces by a simple rule and reports the fabric length needed; genuinely optimized nesting is deferred.
 - **FR-063**: Export pattern geometry and metadata as open JSON; DXF for cutting machines. (P3)
+- **FR-064**: A warning never blocks export. Before exporting a pattern that still has unresolved warnings, the maker acknowledges them once, and a summary of each unresolved warning is printed on the pattern's first page — so a printed pattern always carries its own known problems. A violated geometric invariant (e.g. FR-023) is an error, not a warning, and does block export.
+- **FR-065**: Every warning states in plain language what the maker can do about it; none describes only the problem. Where the tool can carry out the remedy it is offered as a preview-then-accept action (extra seams per FR-013, darts per FR-022, piece splits per FR-052). Where the real remedy is a material or sizing choice (FR-055, FR-058), the warning names that choice without acting on it.
 
 ### Project
 - **FR-070**: Save/load a single portable, versioned project file containing the model and all edits; older files migrate forward.
@@ -174,18 +197,28 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **Seam / Dart / Opening** — user-drawn or proposed cut paths with a type.
 - **Piece** — one flat region of fabric, with sewing line, cut line, marks, labels.
 - **Seam Pairing** — which piece edges sew together (two sides, or more for inserted pieces).
-- **Fabric** — material properties that constrain distortion, orientation, allowance, layout.
+- **Fabric** — material properties that constrain distortion, orientation, allowance, layout; includes pile length, thickness, fray, category.
 - **Marking / Detail Part** — surface-attached decoration or separate small part.
 - **Sheet** — a printed page or fabric layout holding placed pieces.
 - **Project** — everything above, saved as one file.
 
 ---
 
+## Out of scope (future features)
+
+Named here so they are not silently assumed in scope:
+
+- Stuffed-shape preview (inflation simulation).
+- Inverse inflation — the pattern adjusted so the stuffed result matches the model.
+- Direction-dependent stretch compensation (see FR-056, which is uniform only).
+- Thickness compensation.
+- Shave-zone markings.
+
+---
+
 ## Success Criteria *(mandatory)*
 
-All thresholds provisional until Q1–Q3 close.
-
-- **SC-001**: On the reference fixture set, every seam pairing matches in length within max(1.0 mm, 0.5%) — or reports the residual as ease, per Q2.
+- **SC-001**: On the reference fixture set, every seam pairing matches in length within max(1.0 mm, 0.5%). Hard pass/fail — no residual is reported as ease.
 - **SC-002**: On the reference fixture set with reference seams, ≥ 95% of surface area has stretch within ±5%.
 - **SC-003**: Every exported page's scale-check square is exactly 50.00 mm in the file; printed at 100%, it measures within ±0.5 mm on a typical home printer.
 - **SC-004**: In a usability test (n ≥ 5), first-time users with a prepared model produce a printable pattern in ≤ 15 minutes.
@@ -196,12 +229,13 @@ All thresholds provisional until Q1–Q3 close.
 
 ---
 
-## Open Clarifications (blocking `/plan` finalization)
+## Open Clarifications
 
-| ID | Question | Blocks |
-|---|---|---|
-| **Q1** | Is the imported mesh the *stuffed target shape* or the *fabric shell*? If target: does MVP need inflation compensation, or a documented WYSIWYG-shell rule plus concavity warnings? | FR-024, FR-025, SC-002 |
-| **Q2** | Seam-length parity: exact (boundary-isometric flattening; interior absorbs distortion) or soft (heavy boundary weight; residual reported as ease ≤ tolerance)? Isotropic fabric in MVP, anisotropic stretch later? | FR-022, FR-023, SC-001 |
-| **Q3** | MVP cut line: is auto-seam generation in v0.1, or manual seams + dart suggestions only? Upper size bound: handheld plush only, or wearable scale? | FR-015, FR-016, FR-043, FR-062, SC-005 |
+The three decisions that blocked `/plan` finalization (Q1–Q3) closed on 2026-10-13; see [Clarifications](#clarifications).
 
-Minor (default applies if unanswered): STL/PLY import (yes), PDF in MVP (yes), default allowance (6 mm metric locales / ¼ in US).
+Remaining minor decisions, with the default that applies if nobody answers:
+- STL/PLY import (default: yes) — FR-001.
+- PDF print export in v0.1 (default: yes) — FR-061.
+- Default seam allowance (default: 6 mm in metric locales, ¼ in in the US) — FR-030.
+- Pile-length multiple below which a piece, detail, or curve is flagged (default: 3×) — FR-055.
+- Stretch difference between two fabrics that triggers a seam warning (default: 20 percentage points) — FR-058.

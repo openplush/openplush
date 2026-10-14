@@ -432,7 +432,7 @@ The tasks template wants every story independently deliverable. **US1 is not ind
 ### Parallel opportunities
 
 - All of Phase 0 except T007's dependents
-- Phase 1: everything except T009 and T016
+- Phase 1: everything except T009, T016, T172 (needs T016), and T173 (needs T013 and T016)
 - Phase 2: T023, T027, T030, T033–T037, T039–T041
 - Phase 3: all test tasks T043–T049 together; then the import parsers T050–T052; then the validators T055–T057
 - Phase 6 (US7) alongside Phases 4 and 5

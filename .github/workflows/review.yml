@@ -1,7 +1,8 @@
 # Automated adversarial review, by the agents in .claude/agents/
-# (pr-reviewer always; spec-reviewer when specs change; mutation-auditor only on
-# request). Advisory, not a gate: it posts findings as review comments and never
-# approves. The maintainer still merges.
+# (pr-reviewer always; spec-reviewer when specs change; docs-reviewer when a public
+# surface or docs/ changes; mutation-auditor only on request). Advisory, not a
+# gate: it posts findings as review comments and never approves. The maintainer
+# still merges.
 #
 # Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
 # opened (or marked ready for review), not on every push. To run it again, add
@@ -125,10 +126,15 @@ jobs:
             above (stacked PRs target their parent, not main):
             `git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`.
 
-            1. List the changed paths. Run these agents, in parallel where you can,
-               each told the PR number, base branch, and head SHA:
+            1. List the changed paths. Run these agents, each told the PR number, base
+               branch, and head SHA. Start every agent with run_in_background: false and
+               wait for its report: this run ends when you stop, and a background agent
+               dies with it, so stopping with one still running posts nothing.
+               Several foreground agent calls in one message still run in parallel.
                - pr-reviewer: always.
                - spec-reviewer: if anything under specs/ or .specify/memory/ changed.
+               - docs-reviewer: if anything under crates/openplush-pipeline/src/,
+                 bindings/, packages/engine-client/, specs/*/contracts/, or docs/ changed.
                - mutation-auditor: only if MUTATION AUDIT REQUESTED is true and a
                  .rs file under crates/ changed. If it is false and engine code
                  changed, say in the summary that the auditor can be requested
@@ -149,7 +155,8 @@ jobs:
                `gh pr comment ${{ github.event.pull_request.number }} --body-file <file>`.
                Its first line is exactly
                `${{ env.SUMMARY_HEAD }}`
-               (the job fails if no new comment starts that way). Then: which agents ran, the count of 🔴/🟡/🟣 findings, the mutation kill
+               (the job fails if no new comment starts that way). Then: every agent above
+               as ran or skipped, with the reason for each skip, the count of 🔴/🟡/🟣 findings, the mutation kill
                count if the auditor ran, findings that do not map to a diff line, and
                "Nothing blocking" if that is true. End it with the same footer.
                Post it even when there are no findings or a step failed: say what
@@ -172,6 +179,22 @@ jobs:
             echo "::error::The review agent finished without posting a summary, so nothing was reviewed. Its transcript is in this run's artifacts; add the rereview label to run it again."
             exit 1
           fi
+      # The artifact needs a browser and repository access to read; the log does not.
+      # So when no summary was posted, print the agent's last words, its tool calls
+      # and its result line, which is usually enough to see why it stopped.
+      - name: show why the agent stopped
+        if: failure() && env.HAS_CREDENTIAL == 'true'
+        run: |
+          f="$RUNNER_TEMP/claude-execution-output.json"
+          [[ -f $f ]] || { echo "no transcript at $f"; exit 0; }
+          jq -r '.[] | select(.type == "assistant") | .message.content[]?
+            | if .type == "text" then "says: \(.text)"
+              elif .type == "tool_use" then "calls \(.name): \(.input | tostring | .[0:300])"
+              else empty end' "$f" | tail -n 40
+          jq -r '.[] | select(.type == "user") | .message.content[]? | select(.type? == "tool_result")
+            | "result: \(.content | tostring | .[0:300])"' "$f" | tail -n 20
+          jq -r '.[] | select(.type == "result")
+            | "final: \(.subtype), \(.num_turns) turns, \(.result // "" | .[0:1500])"' "$f"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always() && env.HAS_CREDENTIAL == 'true'
         with:

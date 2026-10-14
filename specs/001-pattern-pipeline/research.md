@@ -147,6 +147,14 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 
 **Also surfaced (not license issues; for S1/S4)** [verify]: `rayon` arrives via `baby_shark` 0.3.12 (which also brings its own `faer` 0.22 beside 0.24), `jagua-rs` 1.1.0 (default features), `sparrow`, and `threecrate`. `faer` 0.24 itself does not pull `rayon` with these features. Since `deny.toml` bans `rayon` (#26), each of these fails `cargo deny` until `rayon` is feature-gated off or the crate is replaced. That is a hard gate now, not a review item. `crates/AGENTS.md` forbids `rayon` on the WASM path, so S1 and S4 need to check whether those dependencies are optional.
 
+### S7 preliminary result — synthetic charts (2026-10-14) ⏳ open until fixtures exist
+
+Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts, every one checked for 3D validity first. **Not the fixture corpus**, so T007 stays open.
+
+- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.05° of turning-angle change on every chart at 640–1,536 triangles (≤ 0.10° at 384), and the gap shrinks with mesh refinement. The "fails to close" risk below can be downgraded.
+- **Injectivity held on every valid chart** [likely], up to 6,144 triangles and 55 reflex corners, including caps covering 175° of the sphere. A cotan or uniform harmonic start was always injective. An earlier draft reported failures; they came from folded 3D input, not the method.
+- **Implication for T079–T082**: least-squares *angle* closure (dual-length weighted), never length closure. A cotan → uniform start in T080. Validate the 3D chart for folds upstream of T080 as a typed input error (needs its own task). An untangling rung only if fixture runs need one [speculative].
+
 ## R7. Fabric Profiles (FR-050, D-018)
 
 Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).

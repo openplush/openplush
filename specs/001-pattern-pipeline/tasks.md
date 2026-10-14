@@ -18,7 +18,7 @@ description: "Task list for 001 pattern pipeline"
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 173 tasks does not mean 173 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
+**A task is a unit of work, not a unit of review.** 174 tasks does not mean 174 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
 
 ### Batch these — several tasks, one PR
 
@@ -32,13 +32,16 @@ Small config and scaffolding tasks sharing one concern:
 | `chore/ci-wasm-shell` | T014, T015 |
 | `chore/ci-determinism-golden` | T017, T018, T042 |
 | `chore/repo-governance` | T019, T020, T021 |
-| `001/NN-T022-geom-core` | T022, T023 |
+| `chore/clippy-boundary-lints` | T172 (landed as #33) |
+| `chore/check-script` | T173 (landed as #34) |
 | `001/NN-T028-error-warning-types` | T028, T029, T030, T031, T043 |
 | `001/NN-T032-testkit` | T032, T033, T034 |
 | `001/NN-T050-obj-import` | T050, T053 |
 | `001/NN-T055-validators` | T055, T056, T057 |
 
 `NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks (Phase 1) are repo plumbing, so they are `chore/` branches, not 001 slices.
+
+T022–T027 were planned as one batch and landed as one slice per task, because each was over budget on its own: `001/11-T022-geom-core` (#37), `001/12-T023-robust-predicates` (#38), `001/13-T024-triangle-soup` (#39), `001/14-T025-halfedge-mesh` (#40), `001/15-T026-debug-validate` (#41), `001/16-T027-invariant-proptests` (#42).
 
 ### Split these — one task, several PRs
 
@@ -100,21 +103,21 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 
 **Purpose**: An empty but fully gated repository. A contributor can clone, build nothing, and still have every CI gate run.
 
-- [ ] T009 Create Cargo workspace: `Cargo.toml` with the workspace members from the plan tree, `rust-toolchain.toml` pinning MSRV, `.cargo/config.toml`
-- [ ] T010 [P] `deny.toml` — license allowlist exactly as Constitution IX states (MIT, Apache-2.0, BSD-2/3, ISC, Zlib, Unicode, MPL-2.0); deny GPL, AGPL, LGPL
-- [ ] T011 [P] `pnpm-workspace.yaml` and root `package.json` with the `apps/*` and `packages/*` globs
-- [ ] T012 [P] `rustfmt.toml` and clippy lint configuration; document the deny-warnings policy
-- [ ] T013 [P] `.github/workflows/engine.yml` — fmt, clippy with `-D warnings`, `cargo test --workspace`, `cargo deny check`
-- [ ] T014 [P] `.github/workflows/wasm.yml` — build `wasm32-unknown-unknown`, run `wasm-bindgen-test`
-- [ ] T015 [P] `.github/workflows/shell.yml` — typecheck, Vitest, Playwright
-- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a workspace crate other than `openplush-pipeline` (D-020). Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
+- [x] T009 Create Cargo workspace: `Cargo.toml` with the workspace members from the plan tree, `rust-toolchain.toml` pinning MSRV, `.cargo/config.toml` — *merged in #26*
+- [x] T010 [P] `deny.toml` — license allowlist exactly as Constitution IX states (MIT, Apache-2.0, BSD-2/3, ISC, Zlib, Unicode, MPL-2.0); deny GPL, AGPL, LGPL — *merged in #26*
+- [x] T011 [P] `pnpm-workspace.yaml` and root `package.json` with the `apps/*` and `packages/*` globs — *merged in #26*
+- [x] T012 [P] `rustfmt.toml` and clippy lint configuration; document the deny-warnings policy — *merged in #26*
+- [x] T013 [P] `.github/workflows/engine.yml` — fmt, clippy with `-D warnings`, `cargo test --workspace`, `cargo deny check` — *merged in #27*
+- [x] T014 [P] `.github/workflows/wasm.yml` — build `wasm32-unknown-unknown`, run `wasm-bindgen-test` — *merged in #29*
+- [x] T015 [P] `.github/workflows/shell.yml` — typecheck, Vitest, Playwright — *merged in #29*
+- [x] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a workspace crate other than `openplush-pipeline` (D-020). Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion** — *merged in #28*
 - [ ] T017 [P] `.github/workflows/determinism.yml` — run the fixture corpus native and WASM, compare export hashes (SC-008)
 - [ ] T018 [P] `.github/workflows/golden.yml` — `insta` snapshot diff, PR comment with rendered SVG diffs
-- [ ] T019 [P] `.github/CODEOWNERS`, lane labels (`lane:engine`, `lane:shell`, `lane:fixtures`, `lane:docs`), issue forms
-- [ ] T020 [P] `docs/` Diátaxis skeleton (`tutorials/`, `how-to/`, `reference/`, `explanation/`) and `docs/adr/0000-template.md` in MADR format
-- [ ] T021 [P] `CODE_OF_CONDUCT.md` and `GOVERNANCE.md`
-- [ ] T172 `crates/clippy.toml` — compiler-resolved boundary layer behind T016: `disallowed-methods`/`disallowed-types` for `std::fs`, `std::thread::spawn`, `std::time::{Instant, SystemTime}`, `std::net`, `std::process`, so aliased forms (`use std::time;`, `use std as s;`) that T016's text scan cannot see fail clippy. Repeats the root `clippy.toml` entries (clippy reads only the nearest file); `openplush-testkit` keeps file access. Self-test proving each aliased form is rejected. *Added 2026-10-14 from PR review; ID out of phase order because T022+ were already numbered*
-- [ ] T173 `scripts/check.sh` — one entry point for every gate (`engine`, `wasm`, `shell`, or all), plus `--setup` to install `cargo-deny` and the lockfile-matched `wasm-bindgen-cli`; CI calls it so local and CI cannot drift. CONTRIBUTING documents three commands: clone, `scripts/check.sh --setup`, `scripts/check.sh` (Constitution IX: ≤ 3). *Added 2026-10-14 from PR review*
+- [x] T019 [P] `.github/CODEOWNERS`, lane labels (`lane:engine`, `lane:shell`, `lane:fixtures`, `lane:docs`), issue forms — *merged in #36*
+- [x] T020 [P] `docs/` Diátaxis skeleton (`tutorials/`, `how-to/`, `reference/`, `explanation/`) and `docs/adr/0000-template.md` in MADR format — *merged in #36*
+- [x] T021 [P] `CODE_OF_CONDUCT.md` and `GOVERNANCE.md` — *merged in #36*
+- [x] T172 `crates/clippy.toml` — compiler-resolved boundary layer behind T016: `disallowed-methods`/`disallowed-types` for `std::fs`, `std::thread::spawn`, `std::time::{Instant, SystemTime}`, `std::net`, `std::process`, so aliased forms (`use std::time;`, `use std as s;`) that T016's text scan cannot see fail clippy. Repeats the root `clippy.toml` entries (clippy reads only the nearest file); `openplush-testkit` keeps file access. Self-test proving each aliased form is rejected. *Added 2026-10-14 from PR review; ID out of phase order because T022+ were already numbered* — *merged in #33*
+- [x] T173 `scripts/check.sh` — one entry point for every gate (`engine`, `wasm`, `shell`, or all), plus `--setup` to install `cargo-deny` and the lockfile-matched `wasm-bindgen-cli`; CI calls it so local and CI cannot drift. CONTRIBUTING documents three commands: clone, `scripts/check.sh --setup`, `scripts/check.sh` (Constitution IX: ≤ 3). *Added 2026-10-14 from PR review* — *merged in #34; CI workflows switched to it in #43*
 
 **Checkpoint**: CI runs and passes on an empty workspace.
 
@@ -126,12 +129,12 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 
 ### Geometry and mesh core
 
-- [ ] T022 `crates/openplush-geom/src/lib.rs` — `DVec2` and `DVec3`, plus `epsilon.rs` implementing the policy in data-model section 11: relative epsilons vs. absolute millimetres, each named and documented
-- [ ] T023 [P] `crates/openplush-geom/src/predicates.rs` — robust orientation and in-circle predicates with a `proptest` suite against exact rational evaluation
-- [ ] T024 `crates/openplush-mesh/src/soup.rs` — `TriangleSoup` carrying per-corner provenance (`SourceCorner`)
-- [ ] T025 `crates/openplush-mesh/src/halfedge.rs` — `ManifoldMesh` struct-of-arrays arenas exactly as data-model section 2 specifies: paired-index twins, explicit boundary half-edges, stored `prev`, per-corner attributes
-- [ ] T026 `crates/openplush-mesh/src/halfedge.rs` — `debug_validate()` checking all five invariants from section 2
-- [ ] T027 [P] `crates/openplush-mesh/tests/invariants.rs` — `proptest` generating random meshes; every constructed `ManifoldMesh` satisfies `debug_validate()`
+- [x] T022 `crates/openplush-geom/src/lib.rs` — `DVec2` and `DVec3`, plus `epsilon.rs` implementing the policy in data-model section 11: relative epsilons vs. absolute millimetres, each named and documented — *merged in #37*
+- [x] T023 [P] `crates/openplush-geom/src/predicates.rs` — robust orientation and in-circle predicates with a `proptest` suite against exact rational evaluation — *merged in #38*
+- [x] T024 `crates/openplush-mesh/src/soup.rs` — `TriangleSoup` carrying per-corner provenance (`SourceCorner`) — *merged in #39*
+- [x] T025 `crates/openplush-mesh/src/halfedge.rs` — `ManifoldMesh` struct-of-arrays arenas exactly as data-model section 2 specifies: paired-index twins, explicit boundary half-edges, stored `prev`, per-corner attributes — *merged in #40*
+- [x] T026 `crates/openplush-mesh/src/halfedge.rs` — `debug_validate()` checking all five invariants from section 2 — *merged in #41*
+- [x] T027 [P] `crates/openplush-mesh/tests/invariants.rs` — `proptest` generating random meshes; every constructed `ManifoldMesh` satisfies `debug_validate()` — *merged in #42*
 
 ### Error and warning channels
 
@@ -210,6 +213,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T073 [US1] `crates/openplush-seams/src/chart.rs` — flood fill across non-seam edges, duplicating vertices along interior seam edges; provenance maps back to global IDs
 - [ ] T074 [US1] `crates/openplush-seams/src/sewing_map.rs` — `SewingMap` with `k >= 2` sides per chain. v0.1 exposes `k = 2`; the model supports more from day one so FR-016 is not a migration later
 - [ ] T075 [US1] `crates/openplush-seams/src/topology.rs` — Euler characteristic check; flattenable iff genus 0 with exactly one boundary loop
+- [ ] T174 [US1] `crates/openplush-seams/src/fold.rs` — refuse a **folded chart** before flattening: adjacent faces whose normals are within a new named angle tolerance (`FOLD_ANGLE`, added to data-model §11 and `openplush_geom::epsilon` by this task) of antiparallel across a shared edge, i.e. a surface lying back over itself. A typed error naming the chart and the edge, upstream of T079–T080; never left for the flattener to discover as an injectivity failure. Needs an `EngineError` entry (contracts/engine-api.md §5) agreed in this task's PR. Test first with S7's folded synthetic caps (`research/s7_boundary_pinned/`). *Added 2026-10-14 from S7 finding 3*
 - [ ] T076 [US1] `crates/openplush-seams/src/proposals.rs` — minimal extra cuts for each failure mode in data-model section 4: closed region, multiple boundaries, positive genus. Returned **inside** `EngineError::ChartNotDisk` so the error is the suggestion (FR-013)
 - [ ] T077 [US1] `crates/openplush-seams/src/opening.rs` — mark any chain as the stuffing opening (FR-012)
 
@@ -482,7 +486,7 @@ The tasks template wants every story independently deliverable. **US1 is not ind
 | FR-001 … FR-006 import, health, scale | T050–T068 |
 | FR-010 … FR-014 seams | T069–T077 |
 | FR-015, FR-016 auto-seams, inserted pieces | **deferred (D-015)** — none |
-| FR-020 … FR-026 flatten and quality | T078–T083, T100–T107 |
+| FR-020 … FR-026 flatten and quality | T078–T083, T100–T107, T174 |
 | FR-030 … FR-036 pattern features | T084–T087, T110–T119 |
 | FR-040 … FR-042 markings and details | T131–T139 |
 | FR-043 texture transfer | **deferred** — none |

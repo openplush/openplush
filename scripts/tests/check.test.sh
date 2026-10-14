@@ -33,6 +33,9 @@ expect_plan "default runs every gate" "" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
   "pnpm install --frozen-lockfile" "pnpm typecheck" "pnpm test"
+expect_plan "wasm step requires every wasm canary to run at least one test" "wasm" \
+  "--test wasm_determinism --target wasm32-unknown-unknown --locked (must run at least 1 test)" \
+  "--test wasm_predicates --target wasm32-unknown-unknown --locked (must run at least 1 test)"
 expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "engine group is boundary, fmt, clippy, test" "engine" \

@@ -108,6 +108,21 @@ for step in "${steps[@]}"; do
       run cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings
       # Only #[wasm_bindgen_test] tests run here; see CONTRIBUTING.
       run cargo test --workspace --target wasm32-unknown-unknown --locked
+      # Each wasm canary (crates/*/tests/wasm_*.rs) must actually run on wasm32.
+      # Without its #[wasm_bindgen_test] attribute, wasm32 reports "no tests to
+      # run!" and exits 0, so the line above would pass with nothing checked.
+      for canary in crates/*/tests/wasm_*.rs; do
+        [[ -e $canary ]] || continue
+        crate=$(basename "$(dirname "$(dirname "$canary")")")
+        name=$(basename "$canary" .rs)
+        echo "+ cargo test -p $crate --test $name --target wasm32-unknown-unknown --locked (must run at least 1 test)"
+        if ! ((dry)); then
+          out=$(cargo test -p "$crate" --test "$name" --target wasm32-unknown-unknown --locked 2>&1) ||
+            { echo "$out"; die "wasm canary $name failed"; }
+          grep -Eq 'test result: ok\. [1-9][0-9]* passed' <<<"$out" ||
+            { echo "$out"; die "wasm canary $name ran no tests on wasm32 (missing #[wasm_bindgen_test]?)"; }
+        fi
+      done
       ;;
     shell)
       run pnpm install --frozen-lockfile

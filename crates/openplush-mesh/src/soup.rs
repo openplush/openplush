@@ -1,15 +1,21 @@
 use openplush_geom::{DVec2, DVec3};
 
-use crate::{FaceId, MeshError, VertexId};
+use crate::{CornerArray, Counted, FaceId, MeshError, VertexId};
 
-/// Where a triangle corner came from in the source file: which primitive (glTF
-/// primitive, OBJ group) and which source vertex index. Provenance survives repair,
-/// so a saved project can find the same corner again after re-import (T125).
+/// Where a triangle corner came from in the source file. Provenance survives
+/// repair, so a saved project can find the same corner again after re-import
+/// (T125). The importer (T042-T045) owns the numbering and must keep it stable for
+/// the same file:
+/// - `primitive` is unique across the whole file. For glTF it counts each drawn
+///   instance (node × mesh × primitive) separately, because one mesh instanced by
+///   two nodes gives two different pieces of surface.
+/// - `vertex` indexes that primitive's vertex array. For OBJ, whose indices are
+///   file-global and separate per attribute, it is the position (`v`) index.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SourceCorner {
-    /// Source primitive or group index.
+    /// Source primitive (drawn instance) index, unique within the file.
     pub primitive: u32,
-    /// Vertex index within the source primitive.
+    /// Source vertex index within the primitive (OBJ: the position index).
     pub vertex: u32,
 }
 
@@ -32,23 +38,50 @@ impl TriangleSoup {
     /// Builds a soup. `corner_src` (and `corner_uv`, if given) hold three entries per
     /// triangle, in triangle order then corner order.
     ///
-    /// Errors: [`MeshError::NonFiniteVertex`], [`MeshError::IndexOutOfRange`],
-    /// [`MeshError::CornerCountMismatch`], [`MeshError::TooLarge`].
+    /// Errors, in the order they are checked: [`MeshError::TooLarge`] (vertices,
+    /// then triangles), [`MeshError::CornerCountMismatch`] (sources, then UVs),
+    /// [`MeshError::NonFiniteVertex`], [`MeshError::IndexOutOfRange`]. Within each,
+    /// the lowest-indexed offender is reported.
+    ///
+    /// The triangle cap is `u32`, so a soup can hold more corners than a
+    /// `ManifoldMesh` has half-edge IDs for; building the mesh checks its own
+    /// half-edge count.
     pub fn new(
         positions: Vec<DVec3>,
         triangles: Vec<[u32; 3]>,
         corner_src: Vec<SourceCorner>,
         corner_uv: Option<Vec<Option<DVec2>>>,
     ) -> Result<Self, MeshError> {
+        // Checked in this order, so the same input always reports the same error:
+        // sizes and array lengths (O(1)), then coordinates, then indices.
         let vertex_count = positions.len();
         if u32::try_from(vertex_count).is_err() {
             return Err(MeshError::TooLarge {
+                what: Counted::Vertices,
                 count: vertex_count,
             });
         }
         if u32::try_from(triangles.len()).is_err() {
             return Err(MeshError::TooLarge {
+                what: Counted::Triangles,
                 count: triangles.len(),
+            });
+        }
+        let expected = triangles.len() * 3;
+        if corner_src.len() != expected {
+            return Err(MeshError::CornerCountMismatch {
+                array: CornerArray::Sources,
+                expected,
+                found: corner_src.len(),
+            });
+        }
+        if let Some(uv) = &corner_uv
+            && uv.len() != expected
+        {
+            return Err(MeshError::CornerCountMismatch {
+                array: CornerArray::Uvs,
+                expected,
+                found: uv.len(),
             });
         }
         for (i, p) in positions.iter().enumerate() {
@@ -68,21 +101,6 @@ impl TriangleSoup {
                     vertex_count,
                 });
             }
-        }
-        let expected = triangles.len() * 3;
-        if corner_src.len() != expected {
-            return Err(MeshError::CornerCountMismatch {
-                expected,
-                found: corner_src.len(),
-            });
-        }
-        if let Some(uv) = &corner_uv
-            && uv.len() != expected
-        {
-            return Err(MeshError::CornerCountMismatch {
-                expected,
-                found: uv.len(),
-            });
         }
         Ok(Self {
             positions,
@@ -133,11 +151,20 @@ impl TriangleSoup {
             .flatten()
     }
 
-    /// The bounding-box diagonal: the scale every model-space tolerance derives from
-    /// (`openplush_geom::epsilon`). `None` for an empty soup.
+    /// The bounding-box diagonal of the vertices triangles use: the scale every
+    /// model-space tolerance derives from (`openplush_geom::epsilon`). Unused
+    /// vertices are left out, so one stray point cannot inflate the weld and area
+    /// tolerances. `None` if no triangle exists. The result can be 0 (all corners
+    /// at one point) or overflow to +inf; `ModelTolerances::for_diagonal` refuses
+    /// both.
     pub fn bbox_diagonal(&self) -> Option<f64> {
-        let first = *self.positions.first()?;
-        let (lo, hi) = self.positions.iter().fold((first, first), |(lo, hi), p| {
+        let mut used = self
+            .triangles
+            .iter()
+            .flatten()
+            .filter_map(|&v| self.positions.get(v as usize));
+        let first = *used.next()?;
+        let (lo, hi) = used.fold((first, first), |(lo, hi), p| {
             (
                 DVec3::new(lo.x.min(p.x), lo.y.min(p.y), lo.z.min(p.z)),
                 DVec3::new(hi.x.max(p.x), hi.y.max(p.y), hi.z.max(p.z)),

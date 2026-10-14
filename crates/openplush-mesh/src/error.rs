@@ -26,17 +26,41 @@ pub enum MeshError {
         vertex_count: usize,
     },
     /// A per-corner array (provenance or UVs) does not have three entries per triangle.
-    #[error("expected {expected} per-corner entries (three per triangle), found {found}")]
+    #[error("expected {expected} per-corner {array:?} (three per triangle), found {found}")]
     CornerCountMismatch {
+        /// Which per-corner array has the wrong length.
+        array: CornerArray,
         /// Three times the triangle count.
         expected: usize,
         /// The length supplied.
         found: usize,
     },
     /// More vertices or triangles than a `u32` index can address.
-    #[error("{count} elements exceed the u32 index space")]
+    #[error("{count} {what:?} exceed the u32 index space")]
     TooLarge {
+        /// What was counted.
+        what: Counted,
         /// The element count.
         count: usize,
     },
+}
+
+/// The per-corner arrays a soup is built from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CornerArray {
+    /// Provenance records (`SourceCorner`).
+    Sources,
+    /// Texture coordinates.
+    Uvs,
+}
+
+/// What a [`MeshError::TooLarge`] counted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Counted {
+    /// Vertices.
+    Vertices,
+    /// Triangles.
+    Triangles,
+    /// Half-edges (twice the edge count).
+    HalfEdges,
 }

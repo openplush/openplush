@@ -10,6 +10,6 @@ mod error;
 mod ids;
 mod soup;
 
-pub use error::MeshError;
+pub use error::{CornerArray, Counted, MeshError};
 pub use ids::{FaceId, VertexId};
 pub use soup::{SourceCorner, TriangleSoup};

@@ -17,7 +17,7 @@
 #      specs/001-pattern-pipeline/plan.md, or a crate is missing from that DAG.
 #   5. A crate takes openplush-testkit as a normal or build dependency.
 #   6. A binding (bindings/*) depends on a workspace crate other than
-#      openplush-pipeline and openplush-project.
+#      openplush-pipeline (Constitution I; the project API is re-exported, D-020).
 #   7. A workspace member lives outside crates/ and bindings/, or does not inherit
 #      the workspace lints ([lints] workspace = true), which carry forbid(unsafe_code).
 #
@@ -57,7 +57,7 @@ declare -A parents=(
   [openplush-pipeline]="openplush-io openplush-decal openplush-layout openplush-export openplush-project"
   [openplush-testkit]="openplush-pipeline"
 )
-binding_may_use=" openplush-pipeline openplush-project "
+binding_may_use=" openplush-pipeline "  # D-020: project API arrives as openplush_pipeline::project
 testkit=openplush-testkit
 
 # below <crate>: every crate reachable downward from <crate>, space-separated.
@@ -147,7 +147,7 @@ sys.exit(0 if d.get("lints", {}).get("workspace") is True else 1)' "$dir/Cargo.t
         violations+=("$from -> $to: openplush-testkit is a dev-dependency only")
       elif [[ $area == bindings ]]; then
         [[ $binding_may_use == *" $to "* ]] ||
-          violations+=("$from -> $to: bindings depend on openplush-pipeline and openplush-project only")
+          violations+=("$from -> $to: bindings depend on openplush-pipeline only; use its re-exports (Constitution I, D-020)")
       elif [[ $area == crates && -v "parents[$from]" ]]; then
         [[ $(below "$from") == *" $to "* ]] ||
           violations+=("$from -> $to: not downward in the crate DAG (plan.md); a sideways or upward edge needs an ADR")

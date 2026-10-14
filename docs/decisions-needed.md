@@ -1,21 +1,25 @@
 # Decisions needed
 
-Open questions for the maintainer, found while working feature 001. Each item: what, the options, a recommendation, and what it blocks. Nothing here is implemented; work continues around each item. Delete an item when it is decided (the decision goes in the plan's Decision Ledger or an ADR).
-
-Last updated: 2026-10-14.
+Open questions for the maintainer, found while working feature 001. Each item gives what the question is, the options, a recommendation, and what it blocks. Delete an item once it is decided; the decision goes in the plan's Decision Ledger or an ADR.
 
 ## 1. Where the ID newtype macro lives
 
-**What.** Seven ID newtypes (`VertexId`, `FaceId`, `HalfEdgeId`, `EdgeId`, `ComponentId` in `openplush-mesh`; `ChartId`, `SeamChainId` in `openplush-seams`; `PieceId` in `openplush-pattern`) repeat the same `new`/`index` boilerplate. AGENTS.md says the third copy becomes a macro. A shared macro has to live in a crate every owner depends on, so placing it is a crate-graph decision.
+**What.** Eight ID newtypes repeat the same `new`/`index` boilerplate:
+- `VertexId`, `FaceId`, `HalfEdgeId`, `EdgeId` and `ComponentId` in `openplush-mesh`;
+- `ChartId` and `SeamChainId` in `openplush-seams`;
+- `PieceId` in `openplush-pattern`.
+
+AGENTS.md says the third copy becomes a macro, so the rule is already overdue. The macro has to live in a crate that every owner depends on, which makes placing it a crate-graph decision. Today's edges are `mesh → geom` and `seams → mesh`; `pattern` depends on no workspace crate.
 
 **Options.**
-- **A. `openplush-geom` exports `id_newtype!`.** Every engine crate already depends on `geom` (the bottom of the DAG). Cost: `geom` gains a responsibility (IDs) that isn't geometry.
-- **B. A new leaf crate `openplush-ids`** holding only the macro. Cleanest single responsibility; costs a crate, a DAG row, and an `architecture.md` edge.
-- **C. One macro per owning crate** (`mesh` and `seams` each get a `macro_rules!`). No graph change, but two copies of the macro, which DRY forbids.
+- **A. `openplush-mesh` exports `id_newtype!`.** It already owns five of the eight types, and `seams` already depends on it. One new edge, `pattern → mesh`. That edge points downward in the plan's DAG (`pattern → flatten → seams → mesh`), so the boundary check allows it with no ADR. `pattern` will depend on mesh types anyway once pieces reference faces.
+- **B. `openplush-geom` exports it.** Two new edges, `seams → geom` and `pattern → geom`, both downward. Cost: `geom` (vectors, predicates, tolerances, units) takes on an unrelated responsibility.
+- **C. A new leaf crate `openplush-ids`.** Cleanest single responsibility. Costs a crate, a DAG row in plan.md and `scripts/check-boundary.sh`, three new edges, and an `architecture.md` update.
+- **D. A copy of the macro in each owning crate.** No graph change, but three copies of the macro, which is what DRY forbids.
 
-**Recommendation.** A, with the macro in `openplush_geom::id` and a one-line note in `crates/AGENTS.md`'s crate table ("…and the ID newtype macro"). The macro is ~20 lines with no dependencies; a crate for it (B) is ceremony.
+**Recommendation.** A. It adds the fewest edges, and only one of them is not already implied by the planned graph. The macro is about 20 lines with no dependencies. Add "…and the ID newtype macro" to `openplush-mesh`'s row in `crates/AGENTS.md`.
 
-**Blocks.** Nothing yet. Becomes pressing when the next ID type lands (Phase 3).
+**Blocks.** Nothing functionally. The longer it waits, the more copies there are to collapse.
 
 ## 2. Splitting the three over-long functions in `openplush-mesh/src/halfedge/`
 

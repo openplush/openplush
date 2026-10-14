@@ -175,6 +175,22 @@ jobs:
             echo "::error::The review agent finished without posting a summary, so nothing was reviewed. Its transcript is in this run's artifacts; add the rereview label to run it again."
             exit 1
           fi
+      # The artifact needs a browser and repository access to read; the log does not.
+      # So when no summary was posted, print the agent's last words, its tool calls
+      # and its result line, which is usually enough to see why it stopped.
+      - name: show why the agent stopped
+        if: failure() && env.HAS_CREDENTIAL == 'true'
+        run: |
+          f="$RUNNER_TEMP/claude-execution-output.json"
+          [[ -f $f ]] || { echo "no transcript at $f"; exit 0; }
+          jq -r '.[] | select(.type == "assistant") | .message.content[]?
+            | if .type == "text" then "says: \(.text)"
+              elif .type == "tool_use" then "calls \(.name): \(.input | tostring | .[0:300])"
+              else empty end' "$f" | tail -n 40
+          jq -r '.[] | select(.type == "user") | .message.content[]? | select(.type? == "tool_result")
+            | "result: \(.content | tostring | .[0:300])"' "$f" | tail -n 20
+          jq -r '.[] | select(.type == "result")
+            | "final: \(.subtype), \(.num_turns) turns, \(.result // "" | .[0:1500])"' "$f"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always() && env.HAS_CREDENTIAL == 'true'
         with:

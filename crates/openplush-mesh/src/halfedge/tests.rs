@@ -1,4 +1,4 @@
-//! ManifoldMesh construction (T025).
+//! ManifoldMesh construction (T025) and invariants (T026).
 //!
 //! These live inside the crate because `ManifoldMesh` has no public constructor
 //! (data-model section 1: only repair may produce one). The builder under test,
@@ -71,6 +71,8 @@ fn square_counts_and_boundary() {
     let loops = m.boundary_loops();
     assert_eq!(loops.len(), 1);
     assert_eq!(loops[0].len(), 4);
+    m.debug_validate(&tol(&soup(square().0, square().1)))
+        .unwrap();
 }
 
 #[test]
@@ -91,13 +93,14 @@ fn boundary_vertex_points_at_its_boundary_half_edge() {
 #[test]
 fn closed_tetrahedron_has_no_boundary() {
     let (v, t) = tetrahedron();
-    let m = build(v, t).unwrap();
+    let m = build(v.clone(), t.clone()).unwrap();
     assert_eq!(
         (m.vertex_count(), m.edge_count(), m.face_count()),
         (4, 6, 4)
     );
     assert!(m.boundary_loops().is_empty());
     assert!((0..4).all(|i| !m.is_boundary_vertex(VertexId::new(i))));
+    m.debug_validate(&tol(&soup(v, t))).unwrap();
 }
 
 #[test]
@@ -226,4 +229,13 @@ fn isolated_vertex_is_refused() {
             vertex: VertexId::new(4)
         })
     );
+}
+
+#[test]
+fn debug_validate_catches_a_corrupted_mesh() {
+    let (v, t) = square();
+    let s = soup(v, t);
+    let mut m = ManifoldMesh::from_oriented_triangles(&s, &tol(&s)).unwrap();
+    m.corrupt_next_for_test(HalfEdgeId::new(0));
+    assert!(m.debug_validate(&tol(&s)).is_err());
 }

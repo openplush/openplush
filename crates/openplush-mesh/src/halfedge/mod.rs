@@ -10,6 +10,7 @@
 //! is a caller bug and indexing panics on it, like a slice.
 
 mod build;
+mod validate;
 
 use openplush_geom::epsilon::{AREA_RELATIVE_SQ, ModelTolerances};
 use openplush_geom::{DVec2, DVec3};
@@ -146,7 +147,7 @@ impl ManifoldMesh {
             mesh: self,
             start,
             current: Some(start),
-            // Bound the walk even if `next`/`prev` were ever corrupted.
+            // Bound the walk even on a corrupted mesh (see `debug_validate`).
             remaining: self.half_edge_count(),
         }
     }
@@ -178,6 +179,14 @@ impl ManifoldMesh {
             loops.push(ring);
         }
         loops
+    }
+
+    /// Test-only: break invariant 1 at `h` so `debug_validate` can be shown to
+    /// catch it.
+    #[cfg(test)]
+    pub(crate) fn corrupt_next_for_test(&mut self, h: HalfEdgeId) {
+        let skip = self.next(self.next(h));
+        self.he_next[ix(h.index())] = skip;
     }
 }
 

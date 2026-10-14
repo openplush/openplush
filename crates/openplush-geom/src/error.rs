@@ -26,4 +26,14 @@ pub enum GeomError {
         /// The rejected value.
         mm_per_unit: f64,
     },
+    /// A predicate's coordinates span too many orders of magnitude for its sign to
+    /// be guaranteed exact: some nonzero coordinate is below 2^-150 times the
+    /// largest. Real models never get near this; it means corrupt or synthetic
+    /// input, and a guessed sign would be silent wrong output.
+    #[error("geometric predicate coordinates span more than 2^150 in magnitude")]
+    UnsupportedMagnitude,
+    /// A predicate received a NaN or infinite coordinate. Imported geometry is
+    /// guaranteed finite, so this means an upstream stage produced bad data.
+    #[error("geometric predicate received a non-finite coordinate")]
+    NonFinite,
 }

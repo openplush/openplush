@@ -16,6 +16,13 @@ use crate::units::Mm;
 pub const WELD_RELATIVE: f64 = 1e-6;
 /// Triangles with area below this fraction of diagonal² are degenerate.
 pub const AREA_RELATIVE_SQ: f64 = 1e-12;
+/// The smallest bounding-box diagonal tolerances can be derived for. Below it the
+/// area tolerance (`1e-12 * diagonal²`) is subnormal or zero, so zero-area
+/// triangles would pass the degeneracy check.
+pub const MIN_DIAGONAL: f64 = 1e-100;
+/// The largest bounding-box diagonal. Above it, cross products of coordinates can
+/// overflow to infinity.
+pub const MAX_DIAGONAL: f64 = 1e100;
 /// A flattened triangle needs det J above this to count as unflipped. det J is a
 /// ratio of areas, so this threshold is dimensionless and does not scale.
 pub const MIN_DET_J: f64 = 1e-10;
@@ -28,10 +35,11 @@ pub struct ModelTolerances {
 
 impl ModelTolerances {
     /// Tolerances for a model whose bounding-box diagonal is `diagonal` (model units).
-    /// Errors on a zero, negative, subnormal, or non-finite diagonal: such a model is
-    /// degenerate, and inventing a tolerance for it would hide that.
+    /// Errors outside [`MIN_DIAGONAL`, `MAX_DIAGONAL`] (zero, negative, and
+    /// non-finite included): such a model is degenerate or out of range, and
+    /// inventing a tolerance for it would hide that.
     pub fn for_diagonal(diagonal: f64) -> Result<Self, GeomError> {
-        if diagonal.is_finite() && diagonal >= f64::MIN_POSITIVE {
+        if (MIN_DIAGONAL..=MAX_DIAGONAL).contains(&diagonal) {
             Ok(Self { diagonal })
         } else {
             Err(GeomError::InvalidDiagonal { diagonal })
@@ -76,7 +84,8 @@ impl SeamParity {
         ratio: 0.005,
     };
 
-    /// The allowed difference for a seam of length `length`.
+    /// The allowed difference for a seam of length `length`. Both operands are
+    /// finite and not negative (an [`Mm`] cannot be otherwise), so the result is too.
     pub fn allowed(&self, length: Mm) -> Mm {
         Mm::new(self.floor.get().max(self.ratio * length.get()))
     }

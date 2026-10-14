@@ -13,8 +13,9 @@ robust = "1.2.0"
 thiserror = "2.0.21"
 
 # Native only: proptest pulls in getrandom, which does not build for
-# wasm32-unknown-unknown without a JS backend, and the exact oracle is a
-# native-side check. wasm32 determinism is covered by tests/wasm_determinism.rs.
+# wasm32-unknown-unknown without a JS backend, so tests/predicates.rs (which uses
+# it) runs natively only. No predicate is exercised on wasm32 yet; the wasm
+# canary (tests/wasm_determinism.rs) covers basic float operations only.
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 proptest = { version = "1.12.0", default-features = false, features = ["std"] }
 num-rational = { version = "0.4.2", default-features = false, features = ["num-bigint-std"] }

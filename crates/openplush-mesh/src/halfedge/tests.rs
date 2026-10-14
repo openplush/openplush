@@ -5,8 +5,8 @@
 //! `ManifoldMesh::from_oriented_triangles`, is what repair (T067) calls once the soup
 //! is clean.
 
-use openplush_geom::DVec3;
 use openplush_geom::epsilon::ModelTolerances;
+use openplush_geom::{DVec2, DVec3};
 
 use super::{HalfEdgeId, ManifoldMesh};
 use crate::{MeshError, SourceCorner, TriangleSoup, VertexId};
@@ -238,4 +238,167 @@ fn debug_validate_catches_a_corrupted_mesh() {
     let mut m = ManifoldMesh::from_oriented_triangles(&s, &tol(&s)).unwrap();
     m.corrupt_next_for_test(HalfEdgeId::new(0));
     assert!(m.debug_validate(&tol(&s)).is_err());
+}
+
+// ---- Review of #40 --------------------------------------------------------
+
+#[test]
+fn a_sub_tolerance_sliver_is_refused_at_any_scale() {
+    // At a diagonal near 1e90 the area tolerance is ~2e168, but |e1 x e2|^2
+    // overflows to inf, which once compared as "inf > tolerance" and let this
+    // 1e160-area triangle through.
+    let v = vec![
+        p(0., 0., 0.),
+        p(1e90, 0., 0.),
+        p(0., 1e90, 0.),
+        p(0., 2e70, 0.),
+    ];
+    assert_eq!(
+        build(v, vec![[0, 1, 2], [1, 0, 3]]).err(),
+        Some(MeshError::ZeroAreaTriangle {
+            triangle: crate::FaceId::new(1)
+        })
+    );
+}
+
+#[test]
+fn the_area_threshold_is_half_the_cross_product_against_the_tolerance() {
+    // A sliver hanging off a unit square's bottom edge: area h/2 against a
+    // tolerance of about 1e-12 * 2 = 2e-12, so the threshold is h = 4e-12.
+    let with_sliver = |h: f64| {
+        let (mut v, mut t) = square();
+        v.push(p(0.5, -h, 0.));
+        t.push([1, 0, 4]);
+        build(v, t)
+    };
+    assert!(with_sliver(5e-12).is_ok());
+    assert_eq!(
+        with_sliver(3e-12).err(),
+        Some(MeshError::ZeroAreaTriangle {
+            triangle: crate::FaceId::new(2)
+        })
+    );
+}
+
+#[test]
+fn duplicate_triangles_are_refused_as_duplicates() {
+    // Same vertices in either winding: a coincident "pillow" is not a surface a
+    // pattern can come from, and the orientation error would mislead.
+    let v = vec![p(0., 0., 0.), p(1., 0., 0.), p(0., 1., 0.)];
+    for second in [[0, 2, 1], [1, 2, 0], [0, 1, 2]] {
+        assert_eq!(
+            build(v.clone(), vec![[0, 1, 2], second]).err(),
+            Some(MeshError::DuplicateTriangle {
+                triangle: crate::FaceId::new(1),
+                first: crate::FaceId::new(0),
+            }),
+            "{second:?}"
+        );
+    }
+}
+
+#[test]
+fn outgoing_rotates_counter_clockwise_from_vertex_out() {
+    // A fan of four counter-clockwise triangles around vertex 4.
+    let v = vec![
+        p(1., 0., 0.),
+        p(0., 1., 0.),
+        p(-1., 0., 0.),
+        p(0., -1., 0.),
+        p(0., 0., 0.),
+    ];
+    let m = build(v, vec![[4, 0, 1], [4, 1, 2], [4, 2, 3], [4, 3, 0]]).unwrap();
+    let ring: Vec<u32> = m
+        .outgoing(VertexId::new(4))
+        .map(|h| m.dest(h).index())
+        .collect();
+    assert_eq!(ring, vec![0, 1, 2, 3]);
+    // At a boundary vertex the walk starts on the boundary half-edge, then sweeps
+    // counter-clockwise: vertex 0 of the square sees 3 (boundary), then 1, then 2.
+    let (v, t) = square();
+    let m = build(v, t).unwrap();
+    let ring: Vec<u32> = m
+        .outgoing(VertexId::new(0))
+        .map(|h| m.dest(h).index())
+        .collect();
+    assert_eq!(ring, vec![3, 1, 2]);
+}
+
+#[test]
+fn face_half_edge_leaves_the_first_corner() {
+    let (v, t) = square();
+    let m = build(v, t.clone()).unwrap();
+    for (f, tri) in t.iter().enumerate() {
+        let h = m.face_half_edge(crate::FaceId::new(f as u32));
+        assert_eq!(m.origin(h), VertexId::new(tri[0]));
+        assert_eq!(m.dest(h), VertexId::new(tri[1]));
+    }
+}
+
+#[test]
+fn corner_uvs_survive_the_build() {
+    let (v, t) = square();
+    let corners = (0..6)
+        .map(|i| SourceCorner {
+            primitive: 0,
+            vertex: i,
+        })
+        .collect();
+    let uvs = (0..6)
+        .map(|i| (i != 4).then(|| DVec2::new(f64::from(i), 0.5)))
+        .collect();
+    let s = TriangleSoup::new(v, t, corners, Some(uvs)).unwrap();
+    let m = ManifoldMesh::from_oriented_triangles(&s, &tol(&s)).unwrap();
+    for f in 0..2u32 {
+        let mut h = m.face_half_edge(crate::FaceId::new(f));
+        for corner in 0..3 {
+            let i = f * 3 + corner;
+            let want = (i != 4).then(|| DVec2::new(f64::from(i), 0.5));
+            assert_eq!(m.corner_uv(h), want, "face {f} corner {corner}");
+            h = m.next(h);
+        }
+    }
+}
+
+#[test]
+fn an_interior_vertex_points_at_its_lowest_outgoing_half_edge() {
+    let (v, t) = tetrahedron();
+    let m = build(v, t).unwrap();
+    for i in 0..4 {
+        let lowest = m.outgoing(VertexId::new(i)).min().unwrap();
+        assert_eq!(m.vertex_out(VertexId::new(i)), lowest);
+    }
+}
+
+#[test]
+fn the_lowest_non_manifold_vertex_is_reported() {
+    // Bowties at vertex 0 (triangles A and B) and at vertex 3 (B and C).
+    let v = vec![
+        p(0., 0., 0.),
+        p(1., 0., 0.),
+        p(1., 1., 0.),
+        p(-1., 0., 0.),
+        p(-1., -1., 0.),
+        p(-2., 1., 0.),
+        p(-3., 0., 0.),
+    ];
+    assert_eq!(
+        build(v, vec![[0, 1, 2], [0, 3, 4], [3, 5, 6]]).err(),
+        Some(MeshError::NonManifoldVertex {
+            vertex: VertexId::new(0)
+        })
+    );
+}
+
+#[test]
+fn a_disk_plus_a_separate_half_disk_at_one_vertex_is_refused() {
+    let (mut v, mut t) = tetrahedron();
+    v.extend([p(-1., -1., -1.), p(-1., -2., -1.)]);
+    t.push([0, 4, 5]);
+    assert_eq!(
+        build(v, t).err(),
+        Some(MeshError::NonManifoldVertex {
+            vertex: VertexId::new(0)
+        })
+    );
 }

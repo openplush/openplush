@@ -29,7 +29,10 @@
 # comments or strings, and it misses aliasing (`use std::time;` then
 # `time::Instant`, `use std as s;`), nested groups (`use std::{io::{self, Read}, fs}`)
 # and a `use` split across lines. It is a tripwire for honest mistakes, not a
-# sandbox; a compiler-resolved layer (clippy disallowed-methods) would close these.
+# sandbox; crates/clippy.toml (T172) is the compiler-resolved layer behind it.
+# Third-party crates are trusted apart from the dependency denylist above: neither
+# layer reads dependency source, so a crate that spawns threads or reads the clock
+# internally is caught only by dependency review (and an ADR for a new category).
 set -euo pipefail
 ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 3))) ||
   { echo "check-boundary: bash >= 4.3 required (macOS: brew install bash)" >&2; exit 2; }
@@ -125,17 +128,38 @@ sys.exit(0 if d.get("lints", {}).get("workspace") is True else 1)' "$dir/Cargo.t
         violations+=("$name is not in the DAG table in scripts/check-boundary.sh (plan.md's crate DAG; a new crate needs its place there)")
       fi
       if [[ $area == crates && $name != "$testkit" && -d $dir ]]; then
-        # Captured, not process-substituted, so a failing find/awk fails the script.
+        # Captured, not process-substituted, so a failing awk fails the script.
+        # Every .rs outside tests/, benches/, examples/, plus any file a scanned file
+        # pulls in with #[path = "..."], wherever it lives (a #[path] into tests/ is
+        # still library code).
+        files=()
+        while IFS= read -r -d '' f; do files+=("$f"); done < <(find "$dir" -name '*.rs' -not -path "$dir/tests/*" \
+          -not -path "$dir/benches/*" -not -path "$dir/examples/*" -not -path "$dir/target/*" -print0)
+        declare -A seen=()
+        for ((i = 0; i < ${#files[@]}; i++)); do
+          seen[${files[i]}]=1
+        done
+        for ((i = 0; i < ${#files[@]}; i++)); do
+          while IFS= read -r rel; do
+            # Canonical path without GNU realpath -m (macOS has no -m).
+            target_dir=$(cd "$(dirname "${files[i]}")/$(dirname "$rel")" 2>/dev/null && pwd -P) || continue
+            target="$target_dir/$(basename "$rel")"
+            if [[ -f $target && -z ${seen[$target]:-} ]]; then
+              seen[$target]=1
+              files+=("$target")
+            fi
+          done < <(grep -oE '#\[path *= *"[^"]+"\]' "${files[i]}" | sed -E 's/.*"([^"]+)".*/\1/' || true)
+        done
+        unset seen
+        ((${#files[@]})) || continue
         # shellcheck disable=SC2016  # $0 below is awk's, not the shell's
-        hits=$(find "$dir" -name '*.rs' -not -path "$dir/tests/*" -not -path "$dir/benches/*" \
-          -not -path "$dir/examples/*" -not -path "$dir/target/*" -print0 |
-          xargs -0 -r awk '{ line = $0; sub(/(^|[[:space:]])\/\/.*/, "", line) }
+        hits=$(awk '{ line = $0; sub(/(^|[[:space:]])\/\/.*/, "", line) }
             line ~ /(^|[^A-Za-z0-9_])std::(fs|thread|net|process)([^A-Za-z0-9_]|$)/ ||
             line ~ /(^|[^A-Za-z0-9_])std::time::(Instant|SystemTime|\*)/ ||
             line ~ /(^|[^A-Za-z0-9_])std::\{([^}]*[^A-Za-z0-9_])?(fs|thread|net|process)([^A-Za-z0-9_]|$)/ ||
             line ~ /(^|[^A-Za-z0-9_])std::time::\{[^}]*(Instant|SystemTime)/ ||
             line ~ /(^|[^A-Za-z0-9_])std::\{.*time::(\{[^}]*)?(Instant|SystemTime|\*)/ {
-              printf "%s:%d: %s\n", FILENAME, FNR, $0 }')
+              printf "%s:%d: %s\n", FILENAME, FNR, $0 }' "${files[@]}")
         while IFS= read -r hit; do
           [[ -n $hit ]] && violations+=("${hit#"$root"/} (engine crates never touch the filesystem, threads, clock, network, or processes)")
         done <<<"$hits"

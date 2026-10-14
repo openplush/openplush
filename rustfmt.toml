@@ -1,0 +1,3 @@
+# Stable options only, so `cargo fmt --check` behaves the same on the pinned toolchain everywhere.
+edition = "2024"
+style_edition = "2024"

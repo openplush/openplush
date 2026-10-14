@@ -1,0 +1,12 @@
+[package]
+name = "openplush-geom"
+description = "f64 vectors, robust predicates, and the epsilon policy"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true

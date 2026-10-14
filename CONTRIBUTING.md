@@ -68,7 +68,31 @@ On Windows, Claude Code runs the `sh` scripts through Git Bash. Verified working
 `/speckit-specify` creates a local `NNN-feature-slug` branch from `main`, which is the trunk. Rename it to the slice name before pushing: `git branch -m 003/01-spec`.
 
 ## Development environment
-The build setup is tasks `T009`–`T021` in [001's tasks](specs/001-pattern-pipeline/tasks.md) and does not exist yet. Planned: Rust stable with the `wasm32-unknown-unknown` target, Node LTS, and pnpm. Once it lands, [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the walkthrough.
+You need [rustup](https://rustup.rs), Node 22+, and pnpm 10. `rust-toolchain.toml` pins the exact Rust toolchain (it is also the MSRV), with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target. rustup installs it on first use.
+
+```sh
+cargo test --workspace
+cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
+cargo build --workspace --target wasm32-unknown-unknown
+cargo deny check          # cargo install cargo-deny --locked
+pnpm install
+```
+
+The engine crates in `crates/` are scaffolds until their tasks land. [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough once the pipeline exists.
+
+### Warnings are errors
+CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deliberate. The workspace lints (`[workspace.lints]` in `Cargo.toml` and `clippy.toml`) only flag things this project has decided are bugs:
+
+| Lint | Why |
+|---|---|
+| `unsafe_code = "forbid"` | Constitution, engine lane. Exceptions need an ADR. |
+| `missing_docs` | Public items document their pre- and postconditions (`crates/AGENTS.md`). |
+| `missing_docs` on test files | Each `tests/*.rs` file is its own crate, so it needs a `//!` line. Make it say what the file proves. |
+| `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed in `#[test]` functions and `#[cfg(test)]` modules (`clippy.toml`). Code outside those, such as helpers in `tests/*.rs` and everything in `openplush-testkit`, returns `Result` and uses `?`. |
+| `disallowed_types`: `HashMap`, `HashSet` | Iteration order is unspecified, which breaks byte-identical output (Constitution V). |
+| `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |
+
+If a lint is wrong for one specific line, put `#[allow(clippy::…)]` on that item and a comment saying why. For `unwrap`/`expect`, the comment is `// INVARIANT: …` naming the invariant that makes it safe. Never turn a lint off workspace-wide to get one PR green; that needs its own PR and a reason.
 
 ## Tests come first
 Not a style preference — [constitution](.specify/memory/constitution.md) principle IV. Add or update the failing test, then implement. Two rules that have no exceptions:

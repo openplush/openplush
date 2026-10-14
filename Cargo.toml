@@ -1,0 +1,29 @@
+[workspace]
+resolver = "3"
+# Add "bindings/*" with the first binding (T038/T039). Cargo rejects a member
+# glob that matches nothing, so it cannot be listed ahead of time.
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+# Must equal the channel in rust-toolchain.toml: the pinned toolchain is the MSRV
+# (Constitution, Technology Constraints). Bump both in one PR.
+rust-version = "1.97"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/openplush/openplush"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+# crates/AGENTS.md: no unwrap/expect/panic on user-derived data. Internal
+# invariants opt out locally with #[allow(...)] plus an `// INVARIANT:` comment,
+# so every exception is visible in review.
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+unimplemented = "warn"
+dbg_macro = "warn"

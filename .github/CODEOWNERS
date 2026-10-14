@@ -1,0 +1,30 @@
+# T019. Review routing by contribution lane (CONTRIBUTING.md#lanes). Each lane has
+# its own line so a lane reviewer can be added without touching the others.
+# Later lines win, so the catch-all comes first.
+*                         @lvndrpup
+
+# Engine lane: Rust geometry. Constitution I-VI apply.
+/crates/                  @lvndrpup
+/bindings/                @lvndrpup
+/Cargo.toml               @lvndrpup
+/Cargo.lock               @lvndrpup
+/deny.toml                @lvndrpup
+
+# Shell lane: TypeScript / Three.js.
+/apps/                    @lvndrpup
+/packages/                @lvndrpup
+
+# Fixtures lane: test models and their licenses.
+/fixtures/                @lvndrpup
+
+# Docs lane.
+/docs/                    @lvndrpup
+
+# Rules, specs, and gates: changes here change what every lane must do.
+/.specify/                @lvndrpup
+/specs/                   @lvndrpup
+/AGENTS.md                @lvndrpup
+/crates/AGENTS.md         @lvndrpup
+/apps/AGENTS.md           @lvndrpup
+/.github/                 @lvndrpup
+/scripts/                 @lvndrpup

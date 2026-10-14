@@ -1,0 +1,28 @@
+name: Propose or claim work
+description: Pick up a task from a tasks.md, or propose something that needs one.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every non-trivial change maps to a task ID in `specs/<feature>/tasks.md` (AGENTS.md). If there's no task for what you want to do, say so: it may need a spec or plan change first.
+  - type: input
+    id: task
+    attributes:
+      label: Task ID
+      placeholder: "e.g. T050 (specs/001-pattern-pipeline/tasks.md), or 'none yet'"
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Lane
+      options: [engine, shell, fixtures, docs]
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: What you'll do, and how you'll test it
+      description: Tests come first (Constitution IV). Name the oracle if there is one.
+    validations:
+      required: true

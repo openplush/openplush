@@ -1,0 +1,45 @@
+name: Wrong output or a failure
+description: A pattern that looks wrong, a crash, or an error message that doesn't help.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A pattern that looks right but is wrong is the worst bug this project can have, because you find out after cutting fabric. Please describe it even if you're not sure it's a bug.
+
+        **Privacy:** everything runs on your device and the app never uploads your model. Only attach a model here if you have the right to share it publicly.
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Where did it happen?
+      options:
+        - Web app
+        - Command line (openplush-cli)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      placeholder: "e.g. The ear piece is 4 mm shorter along the seam than the head piece it sews to."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The model (or how to get it), the seams you drew, the fabric and scale settings.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Error message or warning text
+      description: Copied exactly. Leave empty if there was none.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "e.g. v0.1.0, or the commit SHA"

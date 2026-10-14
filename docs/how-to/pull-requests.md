@@ -20,6 +20,7 @@ Not counted:
 | Generated TypeScript types | Reviewed by checking the generator, once |
 | Snapshot files (`*.snap`, `fixtures/golden/**`) | Reviewed as rendered output in the PR comment |
 | Lock files | Reviewed by `cargo deny` |
+| Docs prose (`docs/**`) | Docs ship with the change they describe, and counting them would push them out of the PR; the docs-reviewer agent checks them instead |
 
 Going over is allowed when the work is genuinely indivisible — one algorithm, one solver, one parser. Say so in a `**Size**` section and name what makes it indivisible. These are real:
 
@@ -98,6 +99,9 @@ Added or changed, and what each proves. Name the oracle if there is one.
 ## Skipped
 Anything deliberately deferred. Error handling you did not write. Say it
 explicitly — a reviewer cannot see an absence.
+
+## Docs
+The as-built docs this PR updates, or "n/a: no public change".
 
 ## Size
 Only if over budget. What makes the change indivisible.
@@ -200,3 +204,4 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 - [ ] No golden snapshot updated to make a test pass ([`AGENTS.md`](../../AGENTS.md))
 - [ ] Task ID referenced, or the change is in the trivial-change lane
 - [ ] `Skipped` section filled in honestly
+- [ ] Public changes have their as-built docs, or `Docs` says n/a

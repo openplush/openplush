@@ -89,7 +89,7 @@ CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deli
 | `unsafe_code = "forbid"` | Constitution, engine lane. Exceptions need an ADR. |
 | `missing_docs` | Public items document their pre- and postconditions (`crates/AGENTS.md`). |
 | `missing_docs` on test files | Each `tests/*.rs` file is its own crate, so it needs a `//!` line. Make it say what the file proves. |
-| `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed inside `#[test]` code (`clippy.toml`); test helpers outside a `#[test]` fn return `Result` and use `?`. |
+| `unwrap_used`, `expect_used`, `panic` | No panics on user-derived data. Panics never cross into JS. Allowed in `#[test]` functions and `#[cfg(test)]` modules (`clippy.toml`). Code outside those, such as helpers in `tests/*.rs` and everything in `openplush-testkit`, returns `Result` and uses `?`. |
 | `disallowed_types`: `HashMap`, `HashSet` | Iteration order is unspecified, which breaks byte-identical output (Constitution V). |
 | `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |
 

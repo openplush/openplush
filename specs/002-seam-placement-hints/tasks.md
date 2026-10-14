@@ -148,7 +148,7 @@ That is partway through 001's Phase 3, not after all of 001. H001–H004 (fixtur
 ### Pipeline, CLI, and shell
 
 - [ ] H033 [US1] `crates/openplush-pipeline/src/hints.rs` — expose the `hints` stage; cache signals by mesh hash, re-filter on sensitivity change only
-- [ ] H034 [US1] `specs/001-pattern-pipeline/contracts/engine-api.md` — reconcile the `hints` stage signature with what was actually built. The signature is already documented there; this task is to correct it if implementation diverged, since the contract is the source of truth for bindings
+- [ ] H034 [US1] `specs/001-pattern-pipeline/contracts/engine-api.md` — reconcile the `hints` stage signature with what was actually built. The signature is already documented there; this task is to correct it if implementation diverged. *2026-10-14: once `hints` is built, the code is the source of truth ([ADR 0003](../../docs/adr/0003-as-built-docs.md)): document the built signature in rustdoc and `docs/reference/engine-api.md` in the PR that adds it, and give the contract's `hints` entry an "As built" pointer instead of editing the signature*
 - [ ] H035 [US1] `bindings/openplush-cli/src/commands/hints.rs` — `hints` subcommand with `--only`, `--sensitivity`, `--json` (FR-050, Constitution II)
 - [ ] H036 [US1] `packages/engine-client/src/ops/hints.ts` — the `hints` op in the typed protocol, with the mock-worker implementation so shell tests need no WASM
 - [ ] H037 [US1] `apps/web/src/hints/overlay.tsx` — 3D overlay, one visually distinct treatment per category, **colour-blind-safe palettes** (FR-020, Constitution accessibility constraint)
@@ -271,7 +271,7 @@ That is partway through 001's Phase 3, not after all of 001. H001–H004 (fixtur
 - [ ] H076 [P] `apps/web/tests/hints-no-network.spec.ts` — zero network requests during detection and display (SC-009, FR-051)
 - [ ] H077 [P] Accessibility pass: verify category palettes against a colour-blindness simulator; confirm the panel is fully keyboard-operable (FR-020, FR-023)
 - [ ] H078 [P] `docs/explanation/why-seams-go-there.md` — extend 001's teaching document with what each hint category means and why. The same material as the in-app explanations, at length
-- [ ] H079 [P] `docs/reference/hint-categories.md` — reference for each category: signal, default threshold, what acceptance does
+- [ ] H079 [P] `docs/reference/hint-categories.md` — reference for each category: signal, default threshold, what acceptance does. *2026-10-14: written incrementally ([ADR 0003](../../docs/adr/0003-as-built-docs.md)): each PR that adds a hint category documents it here; H079 is the closing pass, an index and a check against the code*
 - [ ] H080 Run the full [quickstart.md](./quickstart.md) walkthrough, including the monotonicity shell assertions
 - [ ] H081 SC-002 usability test: five or more first-time makers, measure time to first seam with hints on vs. off, target 30% median improvement. Needs recruiting and a protocol; gates the release claim, not the build
 - [ ] H082 SC-001 evaluation, **if H004 has landed**: 70% of hand-placed seam length within 5 mm of a hint. If the fixtures do not exist, **say so at release rather than quietly dropping the criterion** — an unverified headline claim is worth naming

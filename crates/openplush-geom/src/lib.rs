@@ -1,4 +1,4 @@
-//! f64 vectors and the epsilon policy.
+//! f64 vectors, robust predicates, and the epsilon policy.
 //!
 //! The bottom of the engine's crate DAG: everything geometric depends on these
 //! types, so they stay small, dependency-light, and deterministic. Plain IEEE-754
@@ -7,8 +7,10 @@
 
 pub mod epsilon;
 mod error;
+pub mod predicates;
 pub mod units;
 mod vector;
 
 pub use error::GeomError;
+pub use predicates::Sign;
 pub use vector::{DVec2, DVec3};

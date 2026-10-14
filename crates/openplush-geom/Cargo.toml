@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+robust = "1.2.0"
 thiserror = "2.0.21"
 
 # Native only: proptest pulls in getrandom, which does not build for

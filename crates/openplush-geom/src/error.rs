@@ -19,4 +19,8 @@ pub enum GeomError {
         /// The rejected value.
         mm_per_unit: f64,
     },
+    /// A predicate received a NaN or infinite coordinate. Imported geometry is
+    /// guaranteed finite, so this means an upstream stage produced bad data.
+    #[error("geometric predicate received a non-finite coordinate")]
+    NonFinite,
 }

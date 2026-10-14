@@ -8,5 +8,12 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[dependencies]
+openplush-io = { path = "../openplush-io" }
+openplush-mesh = { path = "../openplush-mesh" }
+openplush-pattern = { path = "../openplush-pattern" }
+openplush-seams = { path = "../openplush-seams" }
+thiserror = "2.0.21"
+
 [lints]
 workspace = true

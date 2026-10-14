@@ -402,3 +402,185 @@ fn a_disk_plus_a_separate_half_disk_at_one_vertex_is_refused() {
         })
     );
 }
+
+// ---- Review of #41: one corruption per check, exact location ---------------
+
+use crate::MeshElement;
+
+fn broken(invariant: u8, element: MeshElement) -> Option<MeshError> {
+    Some(MeshError::BrokenInvariant { invariant, element })
+}
+
+fn built_square() -> (ManifoldMesh, ModelTolerances) {
+    let (v, t) = square();
+    let s = soup(v, t);
+    let t = tol(&s);
+    (ManifoldMesh::from_oriented_triangles(&s, &t).unwrap(), t)
+}
+
+#[test]
+fn invariant_0_a_short_array_is_named() {
+    let (mut m, t) = built_square();
+    m.he_prev.pop();
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(0, MeshElement::Storage("he_prev"))
+    );
+    let (mut m, t) = built_square();
+    m.v_out.pop();
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(0, MeshElement::Storage("v_out"))
+    );
+}
+
+#[test]
+fn invariant_0_an_out_of_range_link_is_located() {
+    let (mut m, t) = built_square();
+    m.he_next[3] = HalfEdgeId::new(999);
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(0, MeshElement::HalfEdge(HalfEdgeId::new(3)))
+    );
+}
+
+#[test]
+fn invariant_0_the_boundary_vertex_rule() {
+    let (mut m, t) = built_square();
+    let interior = m
+        .outgoing(VertexId::new(0))
+        .find(|&h| m.face(h).is_some())
+        .unwrap();
+    m.v_out[0] = interior;
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(0, MeshElement::Vertex(VertexId::new(0)))
+    );
+}
+
+#[test]
+fn invariant_1_next_of_prev() {
+    let (mut m, t) = built_square();
+    let h = HalfEdgeId::new(0);
+    let old_next = m.next(h);
+    m.corrupt_next_for_test(h);
+    // prev(old_next) is still h, but next(h) no longer is old_next.
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(1, MeshElement::HalfEdge(old_next))
+    );
+}
+
+#[test]
+fn invariant_2_every_face_loop_has_length_three() {
+    // Label the square's boundary loop (length 4) as face 0: every link stays
+    // consistent, so only the loop-length check can see it.
+    let (mut m, t) = built_square();
+    let boundary: Vec<usize> = (0..m.half_edge_count())
+        .filter(|&i| m.he_face[i].is_none())
+        .collect();
+    for &i in &boundary {
+        m.he_face[i] = Some(crate::FaceId::new(0));
+    }
+    let lowest = HalfEdgeId::new(boundary[0] as u32);
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(2, MeshElement::HalfEdge(lowest))
+    );
+}
+
+#[test]
+fn invariant_3_a_bowtie_with_one_linked_boundary_loop() {
+    // Triangles (0,1,2) and (0,3,4) share only vertex 0. Linked as a single
+    // boundary loop, every link checks out and the rotation at vertex 0 visits all
+    // four of its half-edges, so only "one outgoing boundary half-edge per vertex"
+    // catches it.
+    let h = HalfEdgeId::new;
+    let f = |i| Some(crate::FaceId::new(i));
+    let v = |i| VertexId::new(i);
+    let m = ManifoldMesh {
+        pos: vec![
+            p(0., 0., 0.),
+            p(1., 0., 0.),
+            p(1., 1., 0.),
+            p(-1., 0., 0.),
+            p(-1., -1., 0.),
+        ],
+        v_out: vec![h(5), h(1), h(3), h(7), h(9)],
+        // Edges 0-1, 1-2, 2-0 (face 0) and 0-3, 3-4, 4-0 (face 1); odd = boundary.
+        he_origin: vec![
+            v(0),
+            v(1),
+            v(1),
+            v(2),
+            v(2),
+            v(0),
+            v(0),
+            v(3),
+            v(3),
+            v(4),
+            v(4),
+            v(0),
+        ],
+        he_face: vec![
+            f(0),
+            None,
+            f(0),
+            None,
+            f(0),
+            None,
+            f(1),
+            None,
+            f(1),
+            None,
+            f(1),
+            None,
+        ],
+        he_next: vec![
+            h(2),
+            h(11),
+            h(4),
+            h(1),
+            h(0),
+            h(3),
+            h(8),
+            h(5),
+            h(10),
+            h(7),
+            h(6),
+            h(9),
+        ],
+        he_prev: vec![
+            h(4),
+            h(3),
+            h(0),
+            h(5),
+            h(2),
+            h(7),
+            h(10),
+            h(9),
+            h(6),
+            h(11),
+            h(8),
+            h(1),
+        ],
+        f_he: vec![h(0), h(6)],
+        corner_src: vec![None; 12],
+        corner_uv: vec![None; 12],
+    };
+    let s = soup(m.pos.clone(), vec![[0, 1, 2], [0, 3, 4]]);
+    assert_eq!(
+        m.debug_validate(&tol(&s)).err(),
+        broken(3, MeshElement::Vertex(v(0)))
+    );
+}
+
+#[test]
+fn invariant_5_a_face_collapsed_by_moving_a_vertex() {
+    let (mut m, t) = built_square();
+    m.pos[2] = m.pos[0];
+    assert_eq!(
+        m.debug_validate(&t).err(),
+        broken(5, MeshElement::Face(crate::FaceId::new(0)))
+    );
+}

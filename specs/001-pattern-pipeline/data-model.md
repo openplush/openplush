@@ -305,6 +305,85 @@ pub enum Remedy {
 
 **Export** (FR-064): `export` takes the `WarningSet`. Unresolved entries render as a summary block on the pattern's first page — code, location, explanation, remedy. Export is never refused. The summary is part of the golden snapshot, so a warning silently vanishing from the printed page is a test failure.
 
+## 13a. Proposals, Locations, and Warning Codes (D-022)
+
+The error and warning channels (§13, engine-api §5) refer to a proposal type and to IDs that no stage had defined. They are defined here so T028–T029 implement a decision instead of making one.
+
+### Element IDs and who owns them
+
+Every ID is owned by the crate that creates it. A crate can only name types from itself or crates below it (plan's crate DAG), so this table follows the DAG.
+
+| ID | Names | Owned by | Stable across |
+|---|---|---|---|
+| `VertexId`, `EdgeId`, `HalfEdgeId`, `FaceId` | `ManifoldMesh` elements (§2) | `openplush-mesh` | One repaired mesh. Persisted state never stores them; it stores provenance (§12) |
+| `ComponentId` | A connected component after repair, numbered by its lowest `FaceId` | `openplush-mesh`, created by repair step 6 (T065) | One repaired mesh |
+| `ChartId` | A chart, numbered by its lowest `FaceId` | `openplush-seams` | One `SeamSet` |
+| `SeamChainId` | A seam chain (§4), numbered by its lowest `EdgeId` | `openplush-seams` | One `SeamSet` |
+| `PieceId` | A pattern piece; one per chart, numbered as its chart. When mirror-image pieces collapse into one template (FR-034, T116), the template lists its member `PieceId`s and is named by the lowest | `openplush-pattern` | One `SeamSet` |
+| `ProposalId` | A proposal, derived from its content (below) | `openplush-seams` | One repaired mesh |
+
+All are `u32` newtypes except `ProposalId`, which is a `u64`. Numbering by lowest member makes them deterministic (Constitution V) without a hash map.
+
+### Proposal: a seam-set delta
+
+Every remedy the engine can carry out is a seam edit: extra seams to make a chart a disk (FR-013), darts (FR-022; a dart *is* a seam ending inside a piece, §4), piece splits (FR-052), and seams along creases (FR-025). The mesh never changes when seams change (§4). So one type covers all of them, and accepting one is the same operation every time:
+
+```rust
+pub struct Proposal {
+    pub id: ProposalId,
+    pub kind: ProposalKind,
+    pub add: BTreeMap<EdgeId, SeamKind>,   // never empty; never an edge already in the SeamSet
+    pub explanation: String,               // plain language: what it fixes and what it costs
+}
+
+#[non_exhaustive]
+pub enum ProposalKind {
+    CloseChart { chart: ChartId, failure: ChartFailure },   // FR-013: make a chart a disk
+    Dart { chart: ChartId },                                // FR-022: relieve distortion
+    SplitPiece { chart: ChartId },                          // FR-052: nap coherence (the piece is its chart's)
+    Seam { reason: SeamReason },                            // any other seam the engine suggests
+}
+
+#[non_exhaustive]
+pub enum SeamReason {
+    Crease,      // FR-025, T106: a concave region with no seam through it
+    SeamHint,    // feature 002: an accepted placement hint (its `to_proposal`)
+}
+```
+
+- **Ownership**: `Proposal`, `ProposalKind`, `SeamReason` and `ProposalId` live in `openplush-seams`, which produces proposals (T076, T105, T106); `openplush-pipeline` re-exports them. `SplitPiece` names the chart, not the `PieceId`, because seams sits below pattern.
+- **Edges only**: a suggested seam that does not follow mesh edges (a self-intersection curve, §3 step 8) is snapped to the shortest edge path along it (T071) or, failing that, offered as an `Advisory` remedy, never as a proposal.
+- **Accepting** a proposal inserts `add` into the `SeamSet` and re-runs the affected charts (FR-014). Preview is the same insertion on a copy (Constitution VII).
+- **Proposals only add seams.** Removing a seam is never an automatic remedy in v0.1.
+
+### ProposalId
+
+A 64-bit FNV-1a hash (offset basis `0xcbf29ce484222325`, prime `0x100000001b3`) of the proposal's edit, not a counter, so the same fix proposed twice has the same ID even after unrelated seam changes renumber charts:
+- **Bytes hashed**, in order: one byte for the `ProposalKind` variant (0 `CloseChart`, 1 `Dart`, 2 `SplitPiece`, 3 `Seam`); then, for each entry of `add` in key order, the `EdgeId` as 4 bytes little-endian followed by one byte for the `SeamKind` (§4 declaration order). Chart IDs and text are deliberately left out: they can change while the edit stays the same.
+- **Stable** for as long as the repaired mesh is, since `EdgeId`s are.
+- **On the wire** (worker protocol) it is a 16-character lowercase hex string: a `u64` as a JSON number loses precision above 2^53.
+- **Applying an ID no longer offered** (the edit is no longer proposed, or the mesh was re-repaired) is the typed error `EngineError::ProposalNotOffered { id }`, never a silent no-op.
+
+### Locations
+
+```rust
+#[non_exhaustive]
+pub enum WarningTarget { Face(FaceId), Edge(EdgeId), Chain(SeamChainId), Piece(PieceId), Component(ComponentId), Project }
+```
+
+### Warning codes and order
+
+`WarningCode` is a `#[non_exhaustive]` enum. Each variant has a stable string form (`"stretch-exceeds-fabric"`, kebab-case) that never changes once released, because acknowledgements are persisted by code (§12, §13). The variants are added by the tasks that first raise them. `docs/reference/` lists every code with its meaning and remedies (T168).
+
+`WarningSet` is sorted by the code's **string** (not its declaration order, so adding a variant never reorders a printed summary, T157), then by target (variant order as declared above, then ID), then by the remedy (an `Actionable` proposal's `ProposalId`, then an `Advisory`'s text), then by explanation. Two warnings equal in all of these are one warning. The order is therefore total and independent of insertion order (T030).
+
+### Import format
+
+```rust
+#[non_exhaustive]
+pub enum Format { Obj, Gltf, Glb, Stl, Ply }
+```
+
 ## 14. Contracts to Write Next (`contracts/`)
 1. `engine-api.md` — `openplush-pipeline` functions, inputs/outputs, error enum, `WarningSet`.
 2. `worker-protocol.md` — message types, handle lifetime, transferables, cancellation.

@@ -1,8 +1,8 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-14 | **Version**: 0.2 (draft) | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-14 | **Version**: 0.3 (draft) | **Status**: Draft contract
 
-*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020).
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022).
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
@@ -109,20 +109,23 @@ pub enum EngineError {
     NotManifold  { edges: Vec<EdgeId>, vertices: Vec<VertexId> },
     ChartNotDisk { chart: ChartId, failure: ChartFailure, proposals: Vec<Proposal> },
     Flip         { chart: ChartId, faces: Vec<FaceId> },
-    BoundaryNotRealizable { chart: ChartId, residual_mm: f64 },
+    BoundaryNotRealizable { chart: ChartId, residual_mm: f64, proposals: Vec<Proposal> },
     SeamParity   { chain: SeamChainId, a_mm: f64, b_mm: f64, tolerance_mm: f64 },
     OffsetFailed { piece: PieceId, detail: String },
-    Unsewable    { piece: PieceId, reason: UnsewableReason },
+    ProposalNotOffered { id: ProposalId },
     Cancelled,
 }
 
 pub enum ChartFailure { Closed, MultipleBoundaries { count: u32 }, PositiveGenus { genus: u32 } }
 ```
 
+`Proposal`, `ProposalId`, `ChartId`, `SeamChainId`, `PieceId`, and `Format` are defined in data-model §13a. `Proposal` lives in `openplush-seams` and is re-exported here.
+
 Every variant **locates** the problem — an ID the UI can highlight in 3D. An error without a location is useless to a maker staring at a model, so "where" is part of the type.
 
 - `ChartNotDisk` carries `proposals` so the UI can offer the minimal extra seams immediately (FR-013). The error *is* the suggestion.
-- `BoundaryNotRealizable` is specific to the boundary-pinned solve (D-013): the prescribed lengths cannot close into a flat polygon. The remedy is a dart proposal; parity is never relaxed to escape it.
+- `BoundaryNotRealizable` is specific to the boundary-pinned solve (D-013): the prescribed lengths cannot close into a flat polygon. It carries the dart proposals that fix it; parity is never relaxed to escape it.
+- `ProposalNotOffered` means `apply` was asked for a `ProposalId` the current state does not offer (the edit is no longer proposed, or the mesh was re-repaired). Nothing is applied.
 - `SeamParity` should be unreachable by construction. It exists as a last-line assertion because a silently mismatched seam is the exact failure mode Constitution III names as worse than a crash. If it ever fires, that is a bug in the flattener, not bad user input.
 
 ## 6. Headless parity (Constitution II)

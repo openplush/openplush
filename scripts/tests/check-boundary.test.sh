@@ -223,6 +223,13 @@ mkdir -p "$r/crates/openplush-geom/extra"
 echo 'pub fn f() { let _ = std::fs::read("x"); }' >"$r/crates/openplush-geom/extra/io.rs"
 expect fail "#[path] module outside src/" "$r" "extra/io.rs"
 
+r=$(new_case src-path-into-tests)
+workspace "$r" crates/openplush-geom
+crate "$r" crates/openplush-geom openplush-geom '' '' '#[path = "../tests/hidden.rs"] mod hidden;'
+mkdir -p "$r/crates/openplush-geom/tests"
+echo 'pub fn f() { let _ = std::fs::read("x"); }' >"$r/crates/openplush-geom/tests/hidden.rs"
+expect fail "#[path] into tests/ is still library code" "$r" "tests/hidden.rs"
+
 r=$(new_case build-script)
 workspace "$r" crates/openplush-geom
 crate "$r" crates/openplush-geom openplush-geom

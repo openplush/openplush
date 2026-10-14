@@ -15,9 +15,13 @@ trap 'rm -rf "$tmp"' EXIT
 pass=0
 fail=0
 
-# crate <root> <dir> <name> [<deps toml>] [<dev-deps toml>] [<src extra>]
+# crate <root> <dir> <name> [<deps toml>] [<dev-deps toml>] [<src extra>] [<extra toml>]
+# Workspace members inherit the workspace lints, as AGENTS.md requires; crates under
+# vendor/ stand in for third-party crates and are not members. NO_LINTS=1 omits it.
 crate() {
-  local root=$1 dir=$2 name=$3 deps=${4:-} devdeps=${5:-} src=${6:-}
+  local root=$1 dir=$2 name=$3 deps=${4:-} devdeps=${5:-} src=${6:-} extra=${7:-}
+  local lints=$'[lints]\nworkspace = true'
+  [[ $dir == vendor/* || ${NO_LINTS:-} == 1 ]] && lints=""
   mkdir -p "$root/$dir/src"
   cat >"$root/$dir/Cargo.toml" <<TOML
 [package]
@@ -31,6 +35,10 @@ $deps
 
 [dev-dependencies]
 $devdeps
+
+$extra
+
+$lints
 TOML
   printf '%s\n' "$src" >"$root/$dir/src/lib.rs"
 }
@@ -42,7 +50,8 @@ workspace() {
   local members
   members=$(printf '"%s",' "$@")
   mkdir -p "$root"
-  printf '[workspace]\nresolver = "2"\nmembers = [%s]\nexclude = ["vendor"]\n' "${members%,}" >"$root/Cargo.toml"
+  printf '[workspace]\nresolver = "2"\nmembers = [%s]\nexclude = ["vendor"]\n\n[workspace.lints.rust]\nunsafe_code = "forbid"\n' \
+    "${members%,}" >"$root/Cargo.toml"
 }
 
 # expect <pass|fail> <case name> <root> [<pattern the failure output must contain>]
@@ -175,6 +184,76 @@ r=$(new_case src-comment)
 workspace "$r" crates/openplush-geom
 crate "$r" crates/openplush-geom openplush-geom '' '' '//! Never use std::fs here; see crates/AGENTS.md.'
 expect pass "a comment mentioning std::fs is not a use" "$r"
+
+# 11. Grouped imports in rustfmt's canonical order: the banned item is often first.
+for src in 'use std::{fs, io};' 'use std::{fs::File, path::Path};' 'use std::{net::TcpStream};' \
+  'use std::{fmt, time::Instant};' 'use std::time::*;'; do
+  r=$(new_case "grp-$(tr -c '[:lower:]' '-' <<<"$src" | cut -c1-28)")
+  workspace "$r" crates/openplush-geom
+  crate "$r" crates/openplush-geom openplush-geom '' '' "$src"
+  expect fail "grouped or glob import: $src" "$r" "std::"
+done
+for src in 'use std::{fmt, io};' 'use std::{f64::consts::PI, ops::Add};' 'use std::time::Duration;' \
+  'pub fn process(v: std::vec::Vec<u8>) -> usize { v.len() }' 'mod nostd { pub mod fs {} } use nostd::fs;'; do
+  r=$(new_case "ok-$(tr -c '[:lower:]' '-' <<<"$src" | cut -c1-28)")
+  workspace "$r" crates/openplush-geom
+  crate "$r" crates/openplush-geom openplush-geom '' '' "$src"
+  expect pass "allowed std use: $src" "$r"
+done
+
+# 12. A call after a string containing // is code, not a comment.
+r=$(new_case src-string-slashes)
+workspace "$r" crates/openplush-geom
+crate "$r" crates/openplush-geom openplush-geom '' '' 'pub fn f() { let _ = ("//", std::fs::read("x")); }'
+expect fail "std::fs after a string containing //" "$r" "std::fs"
+
+# 13. Engine code outside src/ is still engine code.
+r=$(new_case src-path-module)
+workspace "$r" crates/openplush-geom
+crate "$r" crates/openplush-geom openplush-geom '' '' '#[path = "../extra/io.rs"] mod io;'
+mkdir -p "$r/crates/openplush-geom/extra"
+echo 'pub fn f() { let _ = std::fs::read("x"); }' >"$r/crates/openplush-geom/extra/io.rs"
+expect fail "#[path] module outside src/" "$r" "extra/io.rs"
+
+r=$(new_case build-script)
+workspace "$r" crates/openplush-geom
+crate "$r" crates/openplush-geom openplush-geom
+echo 'fn main() {}' >"$r/crates/openplush-geom/build.rs"
+expect fail "engine crate with a build.rs" "$r" "build.rs"
+
+# 14. Threads: rayon is banned on the engine path (crates/AGENTS.md), directly or not.
+r=$(new_case rayon-direct)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/rayon rayon
+crate "$r" crates/openplush-geom openplush-geom 'rayon = { path = "../../vendor/rayon" }'
+expect fail "direct dependency on rayon" "$r" "rayon"
+
+r=$(new_case rayon-transitive)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/rayon rayon
+crate "$r" vendor/solver solver 'rayon = { path = "../rayon" }'
+crate "$r" crates/openplush-geom openplush-geom 'solver = { path = "../../vendor/solver" }'
+expect fail "transitive dependency on rayon" "$r" "rayon"
+
+# 15. A browser crate behind a feature no member enables still ships if anyone enables it.
+r=$(new_case optional-web)
+workspace "$r" crates/openplush-geom
+crate "$r" vendor/web-sys web-sys
+crate "$r" crates/openplush-geom openplush-geom 'web-sys = { path = "../../vendor/web-sys", optional = true }' '' '' \
+  $'[features]\nweb = ["dep:web-sys"]'
+expect fail "optional web-sys behind an unused feature" "$r" "web-sys"
+
+# 16. Every member lives under crates/ or bindings/ and inherits the workspace lints.
+r=$(new_case member-elsewhere)
+workspace "$r" crates/openplush-geom tools/xtask
+crate "$r" crates/openplush-geom openplush-geom
+crate "$r" tools/xtask xtask
+expect fail "workspace member outside crates/ and bindings/" "$r" "xtask"
+
+r=$(new_case no-workspace-lints)
+workspace "$r" crates/openplush-geom
+NO_LINTS=1 crate "$r" crates/openplush-geom openplush-geom
+expect fail "crate that does not inherit the workspace lints" "$r" "lints"
 
 echo
 echo "$pass passed, $fail failed"

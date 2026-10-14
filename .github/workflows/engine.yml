@@ -28,21 +28,10 @@ jobs:
           persist-credentials: false
       # Installs exactly what rust-toolchain.toml pins (toolchain = MSRV).
       - run: rustup toolchain install
-      # T016, Constitution I. Needs only cargo metadata (seconds), so it runs before
-      # the build: a failing test must not hide a boundary violation. The self-test
-      # runs first so a broken checker cannot pass everything.
-      - name: boundary check self-test
-        run: scripts/tests/check-boundary.test.sh
-      - name: boundary check
-        run: scripts/check-boundary.sh
-      # T172: the compiler-resolved layer (crates/clippy.toml) rejects what the text
-      # scan cannot see; the clippy step below enforces it on the real crates.
-      - name: clippy boundary layer self-test
-        run: scripts/tests/clippy-boundary.test.sh
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - run: cargo fmt --check
-      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
-      - run: cargo test --workspace --locked
+      # T173: the same entry point contributors run. "engine" is boundary (every
+      # self-test, then the boundary check, before any build), fmt, clippy, test.
+      - run: scripts/check.sh engine
 
   deny:
     name: licenses and advisories
@@ -59,5 +48,6 @@ jobs:
         with:
           tool: cargo-deny@0.20.2
           fallback: none
-      # --locked: a stale Cargo.lock must fail, not be regenerated and checked instead.
-      - run: cargo deny --locked check
+      # check.sh runs cargo deny --locked: a stale Cargo.lock must fail, not be
+      # regenerated and checked instead.
+      - run: scripts/check.sh deny

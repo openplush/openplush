@@ -47,6 +47,14 @@ Use Conventional Commits (`feat(flatten): …`, `fix(mesh): …`, `docs(spec): �
 ## AI coding agents
 Agent rules live in [`AGENTS.md`](AGENTS.md) (plus `crates/AGENTS.md` and `apps/AGENTS.md`). They apply to you too. You're responsible for everything you submit, whoever or whatever wrote it.
 
+### Automated review
+Every non-draft pull request gets an adversarial review from the agents in [`.claude/agents/`](.claude/agents/), run by `.github/workflows/review.yml`:
+- `pr-reviewer` on every PR: bugs, rule violations, and claims the code doesn't back.
+- `spec-reviewer` when `specs/` changes: contradictions between documents, missing ledger entries.
+- `mutation-auditor` when engine code changes: breaks each new check in turn and reports the ones no test catches.
+
+Findings arrive as review comments marked 🔴 blocking, 🟡 optional, or 🟣 pre-existing. Answer every 🔴: fix it or reply with why not. The review is advisory; it never approves, and a maintainer still merges. To run the same agents before you push, ask Claude Code in this repository to use them by name, for example "run the mutation-auditor agent on my branch against main".
+
 ## Authoring specs (maintainers)
 Needs Python 3.11+, [uv](https://docs.astral.sh/uv/), and Spec Kit:
 

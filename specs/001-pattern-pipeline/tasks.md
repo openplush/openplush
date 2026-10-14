@@ -184,7 +184,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T050 [US1] `crates/openplush-io/src/obj.rs` — OBJ plus MTL and textures, via `tobj`
 - [ ] T051 [P] [US1] `crates/openplush-io/src/gltf.rs` — glTF 2.0 and GLB via `gltf`; skinned and animated data ignored with a warning
 - [ ] T052 [P] [US1] `crates/openplush-io/src/stl_ply.rs` — STL and PLY (the minor default was yes)
-- [ ] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002)
+- [ ] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002). Also drops faces with a non-finite corner (and vertices left unused by that), each as an import warning naming its `SourceCorner` (D-021)
 - [ ] T054 [US1] `crates/openplush-mesh/src/validate/nonmanifold.rs` — non-manifold edges and bowtie vertices, each located
 - [ ] T055 [P] [US1] `crates/openplush-mesh/src/validate/degenerate.rs` — zero-area, duplicate, and repeated-index faces
 - [ ] T056 [P] [US1] `crates/openplush-mesh/src/validate/topology.rs` — holes, boundary loops, connected components

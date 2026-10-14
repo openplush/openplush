@@ -59,6 +59,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
         run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label rereview --remove-label mutation-audit || true
+      # A pasted token often carries a stray space or newline, and the action
+      # then fails in milliseconds with no reason given. Say what is wrong
+      # instead. Prints nothing about the token beyond these two facts.
+      - name: check the credential
+        if: env.HAS_CREDENTIAL == 'true'
+        env:
+          TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          if [[ "$TOKEN" =~ [[:space:]] ]]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN contains a space or line break. Re-save the secret with only the token."
+            exit 1
+          fi
+          if [[ "$TOKEN" != sk-ant-oat* ]]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is not a subscription token (those start with sk-ant-oat). Run 'claude setup-token' and save its output."
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: env.HAS_CREDENTIAL == 'true'
         with:

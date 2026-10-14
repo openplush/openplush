@@ -35,7 +35,7 @@ These are not:
 **The test task plus the implementation that makes it pass.** Commit the test first, then the implementation, so the history shows test-first and CI is green at the PR tip.
 
 ```
-001/07-T050-obj-import
+001/42-T050-obj-import
 ├── test(io): OBJ import preserves per-corner UVs and materials   ← fails
 └── feat(io): OBJ import via tobj                                  ← passes
 ```
@@ -50,21 +50,21 @@ Because `AGENTS.md` also says tests come first and never weaken a test. A PR con
 
 ### Several tiny tasks, one PR
 
-`T010`–`T012` are `deny.toml`, `pnpm-workspace.yaml`, and `rustfmt.toml`. Three tasks, about 60 lines, one concern (workspace configuration). One PR:
+`T009`–`T012` are the Cargo workspace, `deny.toml`, `pnpm-workspace.yaml`, and `rustfmt.toml`. Four tasks, one concern (workspace configuration). One PR:
 
 ```
-001/02-workspace-config     Tasks: T010, T011, T012
+chore/workspace-config     Tasks: T009, T010, T011, T012
 ```
 
-Splitting these into three PRs is ceremony, not review.
+Splitting these into four PRs is ceremony, not review.
 
 ### One task, several PRs
 
 `T060` is the weld step. It is one task and it will exceed the budget, because welding needs a spatial hash, a deterministic tie-break, and the glTF split-vertex handling that is the entire reason it matters. Split by capability, each with its own test:
 
 ```
-001/09-T060a-weld-spatial-hash      the hash and its determinism test
-001/10-T060b-weld-gltf-split-verts  the case that makes or breaks glTF import   (stacked on 09)
+001/57-T060a-weld-spatial-hash      the hash and its determinism test
+001/58-T060b-weld-gltf-split-verts  the case that makes or breaks glTF import   (stacked on 57)
 ```
 
 Then annotate `T060` in `tasks.md` with both branch names so the task's history is findable. Splitting a task is fine; losing the trace is not.
@@ -122,7 +122,7 @@ Only if over budget. What makes the change indivisible.
 chore/pr-policy
 ```
 
-`NNN` is the feature, `NN` is the merge order, and the slug is what the slice contains. You should be able to pick any branch and know what it is and what it waits on without opening it.
+`NNN` is the feature, `NN` is the slice's position in it (assigned when the PR opens, never reused), and the slug is what the slice contains. Stacked slices merge in `NN` order. You should be able to pick any branch and know what it is and what it waits on without opening it.
 
 ### Why stack
 

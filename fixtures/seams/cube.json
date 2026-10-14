@@ -1,0 +1,30 @@
+{
+  "format": "openplush-seam-set",
+  "version": 1,
+  "mesh": "meshes/cube.obj",
+  "vertexIndexBase": 0,
+  "note": "a cross-shaped cube net: three top, three bottom, and one vertical cube edge",
+  "seams": [
+    {"edge": [0, 1], "kind": "cut"},
+    {"edge": [1, 8], "kind": "cut"},
+    {"edge": [6, 7], "kind": "cut"},
+    {"edge": [6, 11], "kind": "cut"},
+    {"edge": [8, 12], "kind": "cut"},
+    {"edge": [11, 15], "kind": "cut"},
+    {"edge": [12, 35], "kind": "cut"},
+    {"edge": [15, 39], "kind": "cut"},
+    {"edge": [16, 19], "kind": "cut"},
+    {"edge": [19, 21], "kind": "cut"},
+    {"edge": [21, 23], "kind": "cut"},
+    {"edge": [22, 23], "kind": "cut"},
+    {"edge": [22, 27], "kind": "cut"},
+    {"edge": [23, 33], "kind": "cut"},
+    {"edge": [27, 31], "kind": "cut"},
+    {"edge": [28, 29], "kind": "cut"},
+    {"edge": [29, 30], "kind": "cut"},
+    {"edge": [30, 31], "kind": "cut"},
+    {"edge": [31, 38], "kind": "cut"},
+    {"edge": [33, 35], "kind": "cut"},
+    {"edge": [38, 39], "kind": "cut"}
+  ]
+}

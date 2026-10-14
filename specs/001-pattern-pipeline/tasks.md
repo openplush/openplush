@@ -107,7 +107,7 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 - [ ] T013 [P] `.github/workflows/engine.yml` — fmt, clippy with `-D warnings`, `cargo test --workspace`, `cargo deny check`
 - [ ] T014 [P] `.github/workflows/wasm.yml` — build `wasm32-unknown-unknown`, run `wasm-bindgen-test`
 - [ ] T015 [P] `.github/workflows/shell.yml` — typecheck, Vitest, Playwright
-- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a crate other than `openplush-pipeline` and `openplush-project`. Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
+- [ ] T016 `scripts/check-boundary.sh` — parse `cargo metadata`; fail if `crates/` depends on `wasm-bindgen`, `web-sys`, `js-sys`, or `std::fs`, or if anything in `bindings/` depends on a workspace crate other than `openplush-pipeline` (D-020). Wire into `engine.yml`. **This is Constitution I's enforcement; without it the boundary is a suggestion**
 - [ ] T017 [P] `.github/workflows/determinism.yml` — run the fixture corpus native and WASM, compare export hashes (SC-008)
 - [ ] T018 [P] `.github/workflows/golden.yml` — `insta` snapshot diff, PR comment with rendered SVG diffs
 - [ ] T019 [P] `.github/CODEOWNERS`, lane labels (`lane:engine`, `lane:shell`, `lane:fixtures`, `lane:docs`), issue forms
@@ -315,13 +315,13 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Implementation
 
-- [ ] T124 [US7] `crates/openplush-project/src/document.rs` — the document type matching the schema
+- [ ] T124 [US7] `crates/openplush-project/src/document.rs` — the document type matching the schema; re-export the public document API from `openplush-pipeline` as `openplush_pipeline::project` (D-020)
 - [ ] T125 [US7] `crates/openplush-project/src/provenance.rs` — stable keys from source provenance: sorted source-vertex pairs for edges, sorted source-corner triples for faces. Never `EdgeId`, which moves when repair settings change
 - [ ] T126 [US7] `crates/openplush-project/src/serde.rs` — JSON plus embedded binary mesh chunk; store the repair **plan**, not the repaired mesh, so a later engine with better repair improves old projects
 - [ ] T127 [US7] `crates/openplush-project/src/migrate.rs` — `schemaVersion` with forward migrations (FR-070)
 - [ ] T128 [US7] `crates/openplush-pipeline/src/undo.rs` — undo and redo for every edit, as diffs over `SeamSet` and the option structs (FR-071)
 - [ ] T129 [US7] `apps/web/src/project/` — save, load, and recent-project UI
-- [ ] T130 [US7] `bindings/openplush-cli/src/commands/project.rs` — CLI save and load, for headless parity
+- [ ] T130 [US7] `bindings/openplush-cli/src/commands/project.rs` — CLI save and load, for headless parity. Uses `openplush_pipeline::project`, never `openplush-project` directly (D-020)
 
 **Checkpoint**: work is durable. Everything before this was ephemeral.
 

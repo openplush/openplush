@@ -32,10 +32,11 @@ Chosen option: **`robust`**. It is a direct port of Shewchuk's public-domain ref
 * Good: exact signs for orient2d, orient3d, and incircle; nothing to maintain.
 * Good: the public API (`openplush_geom::predicates`) exposes only `Sign`, so swapping the implementation later changes no caller.
 * Bad: a third-party crate on the engine's lowest layer. Mitigated by the exact-oracle tests below, which would catch a regression in an upgrade.
+* Bad: Shewchuk's arithmetic is exact only while no intermediate overflows or underflows, and `robust` returns NaN or a flushed zero when one does (found in review of the T023 PR: `incircle` on coordinates near 1e200 returned NaN). Mitigated in the wrapper: inputs are scaled by a power of two so the largest magnitude is in [0.5, 1), which is exact and sign-preserving, and inputs whose nonzero magnitudes span more than 2^150 get a typed `UnsupportedMagnitude` error instead of a sign.
 
 ### Confirmation
 
-`crates/openplush-geom/tests/predicates.rs` checks every predicate against exact big-rational evaluation (a dev-dependency only) on near-degenerate inputs, including the Kettner et al. classroom grid. It also asserts that naive f64 is wrong on the same inputs, so the tests cannot pass on easy cases. `cargo deny` gates the license, and the wasm32 build gates portability.
+`crates/openplush-geom/tests/predicates.rs` checks every predicate against exact big-rational evaluation (a dev-dependency only) on near-degenerate inputs, including the Kettner et al. classroom grid, and at power-of-two scales from 2^-700 to 2^700. It also asserts that naive f64 is wrong on the same inputs, so the tests cannot pass on easy cases. `cargo deny` gates the license, and the wasm32 build gates portability.
 
 ## More information
 

@@ -27,6 +27,9 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 from scipy.optimize import minimize
 
+# Turning below this is float noise on a straight boundary run, not a reflex corner.
+STRAIGHT_CORNER_RAD = 1e-9
+
 # ---------------------------------------------------------------- topology
 
 
@@ -506,7 +509,7 @@ def run_chart(chart) -> ChartResult:
         closure_ok=closure.success,
         closure_max_change_deg=float(np.rad2deg(closure.max_change)),
         boundary_simple=simple,
-        reflex_corners=int(np.sum(closure.kappa < -1e-9)),  # below 1e-9 rad is a straight corner
+        reflex_corners=int(np.sum(closure.kappa < -STRAIGHT_CORNER_RAD)),
         min_angle_deg=float(np.degrees(geo.min_angle)),
         max_cone_deg=float(np.rad2deg(np.abs(geo.gauss_interior).max())) if len(geo.interior) else 0.0,
         pinned=pinned,

@@ -1,0 +1,27 @@
+//! A shell names the error a proposal-ID parse returns through this crate alone.
+
+use openplush_pipeline::{ProposalId, SeamsError};
+
+#[test]
+fn a_bad_proposal_id_is_a_pipeline_nameable_error() {
+    let err: SeamsError = ProposalId::from_hex("XYZ").expect_err("not 16 lowercase hex digits");
+    assert_eq!(
+        err,
+        SeamsError::BadProposalId {
+            text: "XYZ".to_owned()
+        }
+    );
+}
+
+#[test]
+fn seams_error_messages_are_pinned() {
+    let bad = ProposalId::from_hex("XYZ").expect_err("not 16 lowercase hex digits");
+    assert_eq!(
+        bad.to_string(),
+        r#""XYZ" is not a proposal id (16 lowercase hex digits)"#
+    );
+    assert_eq!(
+        SeamsError::EmptyProposal.to_string(),
+        "a proposal must add at least one seam edge"
+    );
+}

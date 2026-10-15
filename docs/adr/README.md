@@ -16,3 +16,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0001](0001-preprocessing.md) | Do not adopt `baby_shark` 0.3.12; both targets flatten the repaired mesh until a gate-clean release exists | Proposed |
 | [0002](0002-robust-predicates.md) | Use the `robust` crate for exact geometric predicates | Accepted |
 | [0003](0003-as-built-docs.md) | Once code lands, the code and `docs/` are the source of truth | Accepted |
+| [0004](0004-cli-argument-parsing.md) | Use `clap` to parse the CLI's arguments | Proposed |

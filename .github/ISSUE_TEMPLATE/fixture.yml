@@ -17,7 +17,7 @@ body:
     id: license
     attributes:
       label: License
-      description: Only these can ship in the repository (plan.md, fixture corpus; each model gets an entry in fixtures/meshes/LICENSES.md).
+      description: Only these can ship in the repository (plan.md, fixture corpus; each model gets an entry in fixtures/LICENSES.md).
       options:
         - CC0
         - CC-BY (I'll give the attribution text below)

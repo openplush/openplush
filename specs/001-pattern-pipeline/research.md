@@ -175,16 +175,16 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 
 Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). Verdict: [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md).
 
-**Corpus.** 34 runs of 28–1,728 triangles:
-- every chart of the three reference seam sets in `fixtures/`: 6 sphere gores, 2 capsule caps, a slit tube and a cube net;
-- the same charts with seeded asymmetric jitter;
-- two refinement levels.
+**Corpus.** 36 runs of 28–1,728 triangles:
+- every chart of the three reference seam sets in `fixtures/`: 6 sphere gores, 2 capsule caps, a slit capsule tube and a cube net, so 10 charts;
+- the same 10 charts with seeded asymmetric jitter;
+- 16 runs at one and two refinement levels.
 
-The earlier synthetic set (19 charts plus a 12-run sweep, up to 6,144 triangles) remains the stress evidence.
+The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) is still the stress evidence.
 
 - **Closure never failed** [likely].
   - The committed charts close by symmetry alone.
-  - On the jittered variants, the natural gap was at most 0.04% of the perimeter. Closing it with lengths held exact took at most 0.026° of turning-angle change, and the gap shrinks with refinement.
+  - On the jittered variants the natural gap was at most 0.04% of the perimeter. Closing it with lengths held exact took at most 0.026° of turning-angle change, and the gap shrinks when the same polyhedron is refined.
 - **Injectivity never failed** [likely].
   - Every run started from an injective cotan fill; the uniform fallback was never needed.
   - Every run converged with zero flips.
@@ -194,18 +194,19 @@ The earlier synthetic set (19 charts plus a 12-run sweep, up to 6,144 triangles)
   | Chart | SD pinned | SD free | Min compression pinned | Min compression free | Free solve's seam-length drift |
   |---|---|---|---|---|---|
   | Developable (tube, cube net) | 4.000 | 4.000 | — | — | — |
-  | 60° sphere gore | 4.03 | 4.01 | 0.90 | 0.94 | 5–9% |
-  | Hemisphere cap | 5.2 | 4.2 | 0.61 | 0.87 | 41–46% |
+  | 60° sphere gore | 4.02–4.03 | 4.00–4.01 | 0.88–0.91 | 0.92–0.96 | 5–8% |
+  | Hemisphere cap | 5.07–5.28 | 4.15–4.23 | 0.60–0.63 | 0.85–0.87 | 41–47% |
 
   Developable charts have no penalty: they flatten to the exact net [solid].
-- **The dart signal must be area-integrated** [likely]. Mean compression deficit was stable under refinement (cap: 37.3%, 36.5%, 36.3%). The single worst triangle's compression was not (synthetic stress caps: 0.145 down to 0.051).
-- **Implication for T079–T082 and T105**:
-  - closure is least-squares *angle* closure, never length closure;
-  - T080 starts from cotan, falling back to uniform;
-  - folded input is rejected upstream (T174);
-  - T082 fires only on an actual failure, as a typed error plus a proposal; no pre-emptive splitting;
-  - T105 thresholds on area-integrated compression, while per-triangle σ stays the heatmap's input;
-  - an untangling rung is needed only if a future fixture calls for one [speculative].
+- **The dart signal must be area-integrated** [likely].
+  - Mean compression deficit settles under refinement. Unjittered cap: 37.3%, 36.5%, 36.3%. On a jittered polyhedron its steps shrink (cube: 0.53%, 0.44%, 0.40%).
+  - The single worst triangle's compression does not settle. It falls by a near-constant step per level near fixed cones (cube: 0.963, 0.957, 0.951), and from 0.145 to 0.051 on the synthetic stress caps.
+- **Implications**:
+  - T079: least-squares *angle* closure, never length closure.
+  - T080: a cotan start, falling back to uniform.
+  - T174: folded input is rejected upstream.
+  - T082: fires only on an actual failure, as a typed error plus a proposal; no pre-emptive splitting.
+  - T105: thresholds on area-integrated compression; per-triangle σ stays the heatmap's input.
 - **Limits** [solid]:
   - three coarse procedural shapes with symmetric seams;
   - no interior cone sharper than 20°;

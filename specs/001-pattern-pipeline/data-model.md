@@ -242,7 +242,7 @@ pub struct Fabric {
 - **Zero allowance** (FR-057): legal only when `!fabric.frays`, and only on edges the user marked edge-stitched or appliqué. The cut line then coincides with the sewing line, which means the piece has no offset polygon at all — a case the offset code must handle rather than divide by zero on. Pieces with zero allowance are excluded from clip/notch-out marking (§7 tight curves), since there is no allowance to clip into.
 - **Corners**: MVP uses miter joins with a miter limit (prevents spikes at acute corners). v0.2: drafting-standard **reflected corners** — allowance ends shaped as the mirror of the adjacent seam's allowance so edges align when pressed [likely].
 - **Tight curves**: where sewing-line curvature radius < allowance, the offset self-intersects; the union resolves it, and the piece gets **clip marks** (concave) or **notch-out marks** (convex) at a spacing proportional to curvature (FR-035).
-- **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (S3).
+- **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (S3). *Superseded 2026-10-15 by [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md): a panic cannot be caught on wasm32, so it is a crash on both targets and nothing catches it.*
 
 ## 8. Notches and Labels
 

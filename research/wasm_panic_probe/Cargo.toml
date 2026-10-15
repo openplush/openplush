@@ -1,0 +1,23 @@
+[package]
+name = "wasm-panic-probe"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "=0.2.129"
+
+[lints.rust]
+unsafe_code = "forbid"
+unreachable_pub = "warn"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+
+[workspace]

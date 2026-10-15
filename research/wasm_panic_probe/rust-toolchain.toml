@@ -1,0 +1,7 @@
+# The pinned toolchain is the MSRV (Constitution, Technology Constraints).
+# Keep `channel` equal to `rust-version` in Cargo.toml; bump both together.
+[toolchain]
+channel = "1.97.0"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

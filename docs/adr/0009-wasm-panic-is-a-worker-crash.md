@@ -30,7 +30,7 @@ The worker protocol has to say what the shell sees when the engine dies mid-requ
 Chosen option: **1**, because it is the only one that works on the pinned stable toolchain and behaves the same on both targets.
 
 * **No engine code uses `catch_unwind`.** A panic stays what `crates/AGENTS.md` already says it is: a bug, allowed only behind an `// INVARIANT:`. The native CLI exits with Rust's panic code (101); the browser reports `EngineCrashed`. Both are "the engine crashed", on both targets.
-* **`openplush-wasm` installs a panic hook at start** that forwards the panic message to the worker console. Without it, the message is lost: the default hook writes to a stderr that goes nowhere on this target. Out of memory aborts without running the hook, so the host never depends on a message.
+* **`openplush-wasm` installs a panic hook at start** that forwards the panic message to the worker console. Without it, the message is lost: the default hook writes to stderr, which has no destination on this target [likely]. Out of memory aborts without running the hook, so the host never depends on a message.
 * **The worker wrapper treats any exception from an export as a crash**: `RuntimeError` from a trap, `RangeError` from stack exhaustion, anything else. It posts `EngineCrashed` as the terminal message for the request in flight, posts `crashed`, and handles no further messages. The instance is never called again.
 * **The client**, on `crashed` or on the `Worker`'s `error` event (which carries no request id):
   1. answers every other pending request with `EngineCrashed`;
@@ -39,7 +39,7 @@ Chosen option: **1**, because it is the only one that works on the pinned stable
   4. starts a new worker on the next request.
 * **Handles carry the worker generation** on the client side. A handle from an earlier generation gets `StaleHandle` from the client without being sent, even if the new worker has reused its number. `StaleHandle` therefore has two sources: the binding (a released handle) and the client (an earlier generation).
 * **Cancelling a request that already has its terminal message is a no-op.** Progress messages from an earlier generation are dropped.
-* **`EngineCrashed` is defined in the binding's own code list**, next to `StaleHandle`, so the generated TypeScript names it. Only the host raises it.
+* **`EngineCrashed` is listed in the binding's own code list**, next to `StaleHandle`, so the code has one Rust definition that T179(b) exports to TypeScript (`EngineErrorDto.code` itself stays a `string`, so an unknown code still displays). Only the host raises it.
 * **Replay.** The client commits a change to the project document only after the operation's success response. So the last committed document never contains the change that crashed, and replaying it after a restart cannot repeat the crash. Replay needs the project document API (US7). Until then, the shell reports the crash and the maker re-imports.
 
 ### Consequences
@@ -74,4 +74,4 @@ Chosen option: **1**, because it is the only one that works on the pinned stable
 ## More information
 
 * As built, once T040 and T099 land: `docs/reference/` gets the worker protocol page. Until then the contract is [`contracts/worker-protocol.md`](../../specs/001-pattern-pipeline/contracts/worker-protocol.md) §4 and §6.
-* Changes ADR 0006 step 7, D-026, the T003 note and research.md's S3 recommendation 5. Each said "catch panics at the stage boundary".
+* Changes ADR 0006 step 7, D-026, the T003 note, research.md's S3 recommendation 5 and data-model §7's Robustness bullet. Each said "catch panics at the stage boundary".

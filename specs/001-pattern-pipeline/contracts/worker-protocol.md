@@ -23,10 +23,11 @@ type Request  = { id: number; op: string; payload: unknown };
 type Response =
   | { id: number; ok: true;  result: unknown; warnings: Warning[]; transfer?: ArrayBuffer[] }
   | { id: number; ok: false; error: EngineErrorDto }
-  | { id: number; progress: Progress };          // zero or more, before the terminal message
+  | { id: number; progress: Progress }           // zero or more, before the terminal message
+  | { crashed: true };                           // the worker host's own message; see §4, Worker crash
 ```
 
-Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `progress` messages are advisory and may be dropped under load.
+Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `{ crashed: true }` is the one message with no `id` and no Rust counterpart: the worker host sends it after a trap, so `packages/engine-client` types it by hand next to the generated types. `progress` messages are advisory and may be dropped under load.
 
 `warnings` rides on every success. The UI is responsible for showing them and for FR-064's one-time acknowledgement; the worker only reports.
 
@@ -61,7 +62,7 @@ type PipelineHandle = { readonly __brand: 'pipeline'; readonly n: number };
 
 - Handles are opaque integers, branded in TS so they cannot be swapped or arithmetic'd.
 - The worker owns the objects. `release(handle)` frees; using a released handle returns an error with code `StaleHandle` rather than undefined behaviour. That code belongs to the binding, not to `EngineError`: the engine has no handles, so the WASM binding raises it before calling the engine (D-022).
-- Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state. The client commits a change to that document only after the operation's success response, so replay never repeats an operation that crashed.
+- Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state; replay arrives with the project document API (US7), and until then the shell reports the crash and the maker re-imports. The client commits a change to that document only after the operation's success response, so replay never repeats an operation that crashed.
 
 ### Worker crash
 
@@ -69,7 +70,7 @@ A panic in the engine traps the WASM instance; it cannot be caught on `wasm32-un
 
 - The worker treats **any** exception from an export as a crash. It sends `EngineCrashed` as the terminal message for the request in flight, then `crashed`, then handles nothing more.
 - On `crashed`, or on the `Worker`'s `error` event, the client answers every other pending request with `EngineCrashed`. It detaches its listeners before terminating the worker, so no request gets a second terminal message. It then increments the worker generation, emits one `restarted` event, and starts a new worker on the next request.
-- Handles carry the generation they were issued in. A handle from an earlier generation gets `StaleHandle` from the client without reaching the worker, even if the new worker has reused its number.
+- The client never gives the app a bare wire handle. It wraps each one with the worker generation it was issued in (`{ generation, handle }`, a type of `packages/engine-client`'s own), so the wire types above stay as they are. A handle from an earlier generation gets `StaleHandle` from the client without reaching the worker, even if the new worker has reused its number.
 - Cancelling a request that already has its terminal message does nothing. Progress from an earlier generation is dropped.
 
 ## 5. Progress and cancellation

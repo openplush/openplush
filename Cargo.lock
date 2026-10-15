@@ -397,6 +397,9 @@ dependencies = [
 [[package]]
 name = "openplush-pattern"
 version = "0.0.0"
+dependencies = [
+ "openplush-mesh",
+]
 
 [[package]]
 name = "openplush-pipeline"

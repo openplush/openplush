@@ -140,6 +140,36 @@ Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_
   - the §3 voxel last resort is out of v0.1;
   - re-adopt only from a crates.io release that has opt-out features.
 
+### S3 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
+
+Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Proposed).
+
+- **No panics** [solid for the corpus].
+  - The corpus: 10,000 seeded near-degenerate outlines × 4 methods, plus six invalid inputs. The release and debug-assert builds gave byte-identical output.
+  - Issue 74 is very likely the outline `debug_assert!` that upstream PR #75 removed, which shipped in 9.0.1 [likely].
+- **No wrong booleans on valid input** [solid]. The construction makes one `i_overlay` call over the per-edge strips, miter/bevel wedges and fold guards. Against an independent convex-membership oracle, it never lost or gained area.
+- **Wrong output with no error** [solid] comes from three causes:
+  - a clockwise or bow-tie outline gives islands from the strips, and the built-in `outline` returns an empty result;
+  - edges shorter than the integer grid lose their allowance, by up to 6.9 mm;
+  - chaining two booleans leaves sub-grid slivers along folds.
+- **Precision** [solid]:
+  - `i64`, after merging edges shorter than 1e-6 × the diagonal: worst case 1.3e-10 mm;
+  - `i32`: up to 1.6e-6 mm short at plush scale;
+  - the built-in `outline`: takes only one distance, and its integer mode falls up to 2.6e-4 mm short.
+- **Determinism** [solid]: native and wasm32 are byte-identical. The construction needs only `+ − × ÷ sqrt`.
+- **What T085 must do:**
+  1. Validate the outline and the allowances before the call.
+  2. Merge sub-grid edges.
+  3. Make one `i64` call: `(outline ∪ strips ∪ wedges) − fold guards`.
+  4. Check the result: one simple contour, no holes, and fold guards clear of the outline. Each failure becomes a typed error: `AllowanceSplitsPiece`, `AllowanceEnclosesGap`, `AllowanceNotSimple` or `FoldConflict`.
+  5. Still catch panics at the stage boundary.
+- **Not yet measured** [verify, with fixtures]: how often real pieces hit an allowance conflict.
+- **Corner rule** (ADR 0006 changes data-model §7):
+  - corners are mitered, with a limit;
+  - beside a fold, the miter runs out to the fold line;
+  - corners sharper than about 29° are beveled;
+  - strips stay off the outer side of any zero-allowance edge.
+
 ### S4 result: `jagua-rs` on wasm32, bundle size, rotation sets (2026-10-15) ✅ closed
 
 Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md). Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).

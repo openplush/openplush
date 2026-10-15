@@ -211,5 +211,30 @@ class Oracles(unittest.TestCase):
                 self.assertEqual(r.free.flips, 0)
 
 
+class AreaMeasures(unittest.TestCase):
+    """Prevents a dart signal built on area measures that misreport a known linear map."""
+
+    def stats(self, scale: tuple[float, float]) -> fl.Stats:
+        chart = ms.flat_disk(rings=6)
+        geo = fl.Geometry(chart.vertices, chart.faces)
+        return fl._stats(geo, chart.vertices[:, :2] * np.asarray(scale), "ok", "-", 0, 0)
+
+    def test_anisotropic_scale_has_known_deficit_and_excess(self):
+        # x -> 1.2 x, y -> 0.9 y: singular values 1.2 and 0.9 on every triangle.
+        s = self.stats((1.2, 0.9))
+        self.assertAlmostEqual(s.compress_deficit, 0.1, places=12)
+        self.assertAlmostEqual(s.stretch_excess, 0.2, places=12)
+        self.assertAlmostEqual(s.compress_p5, 0.9, places=12)
+        self.assertTrue(s.outline_simple)
+
+    def test_isometry_has_no_deficit_or_excess(self):
+        s = self.stats((1.0, 1.0))
+        self.assertAlmostEqual(s.compress_deficit, 0.0, places=12)
+        self.assertAlmostEqual(s.stretch_excess, 0.0, places=12)
+
+    def test_mirrored_outline_is_not_simple(self):
+        self.assertFalse(self.stats((-1.0, 1.0)).outline_simple)
+
+
 if __name__ == "__main__":
     unittest.main()

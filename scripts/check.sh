@@ -135,6 +135,7 @@ for step in "${steps[@]}"; do
       ;;
     shell)
       run pnpm install --frozen-lockfile
+      run scripts/check-js-licenses.sh
       run pnpm typecheck
       run pnpm test
       if [[ -f apps/web/package.json ]]; then

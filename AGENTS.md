@@ -24,7 +24,7 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 - **Determinism**: same input → byte-identical output, native and WASM. No `HashMap`/`HashSet` iteration on output paths; `BTreeMap`, index order, stable sorts, `f64::total_cmp`.
 - **Privacy**: no runtime network calls, telemetry, analytics, or remote fonts/scripts.
 - **Units**: millimetres after scaling; model units and mm meet only through a named conversion.
-- **Licenses**: dependencies are MIT, Apache-2.0, BSD-2/3, ISC, Zlib, Unicode, or MPL-2.0 and pass `cargo deny` / the JS license check. A new dependency category needs an ADR in `docs/adr/`.
+- **Licenses**: dependencies are MIT, Apache-2.0, BSD-2/3, ISC, Zlib, Unicode, or MPL-2.0 and pass `cargo deny` / [`scripts/check-js-licenses.sh`](scripts/check-js-licenses.sh). A new dependency category needs an ADR in `docs/adr/`.
 
 ## Engineering rules
 - **SOLID**: one responsibility per module and crate; the crate table in `crates/AGENTS.md` is the map. Depend downward only. Traits only at the plug-in points the constitution names (Principle X).

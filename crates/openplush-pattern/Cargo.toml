@@ -8,5 +8,8 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[dependencies]
+openplush-mesh = { path = "../openplush-mesh" }
+
 [lints]
 workspace = true

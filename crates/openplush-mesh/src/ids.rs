@@ -1,4 +1,4 @@
-/// Defines a public `u32` index newtype with `new`, `index`, and the derives every ID shares; only for IDs other crates use.
+/// Defines a public `u32` index newtype with `new`, `index`, and the derives every ID shares. For IDs that cross crate boundaries: it always emits `pub`.
 #[macro_export]
 macro_rules! id_newtype {
     ($(#[$meta:meta])* $name:ident) => {

@@ -205,20 +205,28 @@ class Jitter(unittest.TestCase):
                         np.testing.assert_array_equal(pos.setdefault(g, c.chart.vertices[local]), c.chart.vertices[local])
 
     def test_jittered_surfaces_do_not_crease_back(self) -> None:
+        # The cube's own edges are 90-degree folds, so an absolute dihedral bound would reject
+        # the unjittered cube. Bound the change instead: no fold opens by more than 30 degrees,
+        # and none passes the 120-degree crease limit test_s7.Validity uses.
+        def bends(c: corpus.FixtureChart) -> np.ndarray:
+            v, f = c.chart.vertices, c.chart.faces
+            n = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
+            n /= np.linalg.norm(n, axis=1)[:, None]
+            pairs: dict[Edge, list[int]] = {}
+            for t, tri in enumerate(f.tolist()):
+                for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
+                    pairs.setdefault((min(a, b), max(a, b)), []).append(t)
+            two = np.array([p for _, p in sorted(pairs.items()) if len(p) == 2])
+            return np.degrees(np.arccos(np.clip(np.einsum("ij,ij->i", n[two[:, 0]], n[two[:, 1]]), -1, 1)))
+
         for name in EXPECTED:
             for levels in (0, 1):
-                for c in corpus.load(name, levels=levels, jitter=corpus.JITTER):
-                    with self.subTest(c.chart.name):
-                        v, f = c.chart.vertices, c.chart.faces
-                        n = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
-                        n /= np.linalg.norm(n, axis=1)[:, None]
-                        pairs: dict[Edge, list[int]] = {}
-                        for t, tri in enumerate(f.tolist()):
-                            for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
-                                pairs.setdefault((min(a, b), max(a, b)), []).append(t)
-                        two = np.array([p for p in pairs.values() if len(p) == 2])
-                        self.assertGreater(np.einsum("ij,ij->i", n[two[:, 0]], n[two[:, 1]]).min(), 0.0)
-
+                pairs = zip(corpus.load(name, levels=levels), corpus.load(name, levels=levels, jitter=corpus.JITTER), strict=True)
+                for base, moved in pairs:
+                    with self.subTest(moved.chart.name):
+                        before, after = bends(base), bends(moved)
+                        self.assertLess(after.max(), 120.0)
+                        self.assertLess((after - before).max(), 30.0)
 
 if __name__ == "__main__":
     unittest.main()

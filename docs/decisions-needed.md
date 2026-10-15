@@ -72,3 +72,19 @@ AGENTS.md says the third copy becomes a macro, so the rule is already overdue. T
 **Recommendation.** A. It is about 40 lines plus a self-test and needs no new tooling. Adding a gate is not a trivial-lane change, so it needs a task ID from you; something like "T176 JS license gate (blocks T040)".
 
 **Blocks.** T040, and every later `apps/` or `packages/` task.
+
+## 6. Post-spike spec sweep
+
+**What.** The spikes (ADRs 0001 and 0005–0008, all Proposed) leave spec text that only changes once you accept them, or that touches a contract or another feature:
+- data-model §7: the corner rule (miter to the fold line, bevel below about 29°, merge short edges instead of "simplify first"). R2's `i_overlay` row. Both follow ADR 0006.
+- `contracts/project.schema.json`: `repair.voxelRemesh` contradicts D-024 (no remeshing in v0.1).
+- 002's quickstart and tasks.md use `.glb` fixtures and call `sphere.glb` "shared with 001". 001 ships `.obj` (#71).
+- 001 quickstart lists `quadruped`, `teddy` and `golden/`, none of which exist yet. The contract's CLI example uses `model.glb`.
+
+**Options.**
+- **A.** Accept or amend ADRs 0001 and 0005–0008, then one spec-only PR updates all of the above. The schema field is marked `reserved` with a note, rather than removed.
+- **B.** Fold each item into the implementation task that next touches it: §7 with T085, the schema with T130, 002's fixtures with 002's first task.
+
+**Recommendation.** A for the ADR-dependent items, once you've read the ADRs, because stale spec text is how the wrong rule gets built. B for 002, since it is a separate feature.
+
+**Blocks.** Nothing now. T085 must not start from §7's current text.

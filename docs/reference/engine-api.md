@@ -15,6 +15,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `StageResult<T>` | type alias | `Result<Staged<T>, EngineError>`: what every stage will return |
 | `Staged<T>` | struct | `value: T` plus `warnings: WarningSet`; warnings never turn `Ok` into `Err` |
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
+| `ErrorLocations` | struct | What `EngineError::locations()` returns: every element an error names, by category, sorted |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
 | `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what `ProposalId::from_hex` and `Proposal::new` return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |

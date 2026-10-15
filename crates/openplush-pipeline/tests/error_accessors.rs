@@ -129,9 +129,9 @@ fn only_parse_and_cancelled_have_no_locations() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn not_manifold_locates_its_edges_and_vertices_sorted() {
+fn not_manifold_locates_its_edges_and_vertices_sorted_without_duplicates() {
     let e = EngineError::NotManifold {
-        edges: vec![EdgeId::new(8), EdgeId::new(3)],
+        edges: vec![EdgeId::new(8), EdgeId::new(3), EdgeId::new(8)],
         vertices: vec![VertexId::new(5), VertexId::new(1)],
     };
     let expected = ErrorLocations {
@@ -225,4 +225,44 @@ fn proposals_come_from_the_two_variants_that_carry_them() -> Result<(), Box<dyn 
     };
     assert!(flip.proposals().is_empty());
     Ok(())
+}
+
+#[test]
+fn boundary_not_realizable_locates_its_chart_not_its_darts() -> Result<(), Box<dyn Error>> {
+    let e = EngineError::BoundaryNotRealizable {
+        chart: ChartId::new(6),
+        residual_mm: 1.25,
+        proposals: vec![dart(6, 2)?],
+    };
+    let expected = ErrorLocations {
+        charts: vec![ChartId::new(6)],
+        ..ErrorLocations::default()
+    };
+    assert_eq!(e.locations(), expected);
+    Ok(())
+}
+
+#[test]
+fn seam_parity_and_offset_failed_locate_their_own_element() {
+    let parity = EngineError::SeamParity {
+        chain: SeamChainId::new(6),
+        a_mm: 10.0,
+        b_mm: 12.0,
+        tolerance_mm: 1.0,
+    };
+    let chain = ErrorLocations {
+        chains: vec![SeamChainId::new(6)],
+        ..ErrorLocations::default()
+    };
+    assert_eq!(parity.locations(), chain);
+
+    let offset = EngineError::OffsetFailed {
+        piece: PieceId::new(2),
+        detail: "self-intersection".into(),
+    };
+    let piece = ErrorLocations {
+        pieces: vec![PieceId::new(2)],
+        ..ErrorLocations::default()
+    };
+    assert_eq!(offset.locations(), piece);
 }

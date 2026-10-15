@@ -201,6 +201,12 @@ install "$r" pkg '"license": "MIT"'
 lock "$r" "pkg@1.0.0(react@18.0.0)"
 expect pass "a lockfile key's peer suffix is not part of its version" "$r" "1 package"
 
+r=$(new_case versionless-key)
+install "$r" pkg '"license": "MIT"'
+lock "$r" "loose"
+registry "$r" "loose" '"MIT"'
+expect fail "a lockfile key without a version is not looked up as the latest" "$r" "loose: lockfile key is not name@version"
+
 # listing <root> <JSON>: replace the canned listing.
 listing() { printf '%s' "$2" >"$1/licenses.out"; }
 

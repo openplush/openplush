@@ -94,7 +94,10 @@ for step in "${steps[@]}"; do
       for t in scripts/tests/*.test.sh; do run "$t"; done
       run scripts/check-boundary.sh
       ;;
-    hygiene) run scripts/check-hygiene.sh ;;
+    hygiene)
+      run scripts/check-hygiene.sh
+      run scripts/check-opt-outs.sh
+      ;;
     fmt) run cargo fmt --check ;;
     clippy) run cargo clippy --workspace --all-targets --locked -- -D warnings ;;
     test) run cargo test --workspace --locked ;;

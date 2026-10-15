@@ -124,7 +124,7 @@ fn damaged_grid(w: usize, h: usize, delete: &[usize]) -> (Vec<DVec3>, Vec<[u32; 
         }
     }
     // Renumber in original order, so vertex order does not depend on face order.
-    out.sort_unstable();
+    out.sort();
     for (n, &v) in out.iter().enumerate() {
         new_index[v as usize] = Some(n as u32);
     }

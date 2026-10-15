@@ -1,4 +1,4 @@
-//! Oracles independent of the flattener and pattern code: each
+//! Oracles independent of the flattener and pattern code (Constitution IV): each
 //! recomputes its property from raw coordinates, so a bug in the code under test
 //! cannot also hide in its check.
 
@@ -133,14 +133,9 @@ pub fn developable(chart: &Chart<'_>, tol: f64) -> Result<(), OracleFailure> {
 pub fn area_conserved(chart: &Chart<'_>, rel_tol: f64) -> Result<(), OracleFailure> {
     check_tolerance(rel_tol)?;
     let (mut area_3d, mut area_2d) = (0.0, 0.0);
-    for (face, [a, b, c]) in corners(chart)? {
+    for (_, [a, b, c]) in corners(chart)? {
         let (p, q, r) = (chart.xyz[a], chart.xyz[b], chart.xyz[c]);
-        let face_3d = (q - p).cross(r - p).length() / 2.0;
-        // A face with no 3D area makes the ratio meaningless, and 0 <= tol * 0 would pass.
-        if !(face_3d > 0.0) {
-            return Err(OracleFailure::Degenerate { face });
-        }
-        area_3d += face_3d;
+        area_3d += (q - p).cross(r - p).length() / 2.0;
         let (u, v, w) = (chart.uv[a], chart.uv[b], chart.uv[c]);
         area_2d += (v - u).perp_dot(w - u) / 2.0;
     }

@@ -176,5 +176,49 @@ class Refinement(unittest.TestCase):
             np.testing.assert_allclose(np.linalg.norm(c.chart.vertices, axis=1), 50.0, rtol=1e-12)
 
 
+class Jitter(unittest.TestCase):
+    """Prevents the asymmetric variants from being folded input, irreproducible, or unequal across a seam.
+
+    Every fixture chart is symmetric or developable, so its outline closes for free; the
+    jittered copies are what exercise closure. They are only meaningful if still valid.
+    """
+
+    def test_jitter_is_seeded_and_bounded(self) -> None:
+        for name in EXPECTED:
+            with self.subTest(name):
+                base, a, b = (corpus.load(name, jitter=j) for j in (0.0, corpus.JITTER, corpus.JITTER))
+                for c0, c1, c2 in zip(base, a, b, strict=True):
+                    np.testing.assert_array_equal(c1.chart.vertices, c2.chart.vertices)
+                    np.testing.assert_array_equal(c0.chart.faces, c1.chart.faces)
+                    moved = np.linalg.norm(c1.chart.vertices - c0.chart.vertices, axis=1)
+                    self.assertGreater(moved.max(), 0.0)
+                    # A vertex moves at most JITTER x its shortest edge, so never more than JITTER x the longest.
+                    edges = c0.chart.vertices[c0.chart.faces] - c0.chart.vertices[np.roll(c0.chart.faces, -1, 1)]
+                    self.assertLessEqual(moved.max(), corpus.JITTER * np.linalg.norm(edges, axis=2).max())
+
+    def test_copies_of_one_mesh_vertex_move_together(self) -> None:
+        for name in EXPECTED:
+            with self.subTest(name):
+                pos: dict[int, np.ndarray] = {}
+                for c in corpus.load(name, jitter=corpus.JITTER):
+                    for local, g in enumerate(c.to_global.tolist()):
+                        np.testing.assert_array_equal(pos.setdefault(g, c.chart.vertices[local]), c.chart.vertices[local])
+
+    def test_jittered_surfaces_do_not_crease_back(self) -> None:
+        for name in EXPECTED:
+            for levels in (0, 1):
+                for c in corpus.load(name, levels=levels, jitter=corpus.JITTER):
+                    with self.subTest(c.chart.name):
+                        v, f = c.chart.vertices, c.chart.faces
+                        n = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
+                        n /= np.linalg.norm(n, axis=1)[:, None]
+                        pairs: dict[Edge, list[int]] = {}
+                        for t, tri in enumerate(f.tolist()):
+                            for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
+                                pairs.setdefault((min(a, b), max(a, b)), []).append(t)
+                        two = np.array([p for p in pairs.values() if len(p) == 2])
+                        self.assertGreater(np.einsum("ij,ij->i", n[two[:, 0]], n[two[:, 1]]).min(), 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -211,5 +211,48 @@ class Oracles(unittest.TestCase):
                 self.assertEqual(r.free.flips, 0)
 
 
+class AreaMeasures(unittest.TestCase):
+    """Prevents a dart signal built on area measures that misreport a known linear map."""
+
+    def stats(self, scale: tuple[float, float]) -> fl.Stats:
+        chart = ms.flat_disk(rings=6)
+        geo = fl.Geometry(chart.vertices, chart.faces)
+        return fl._stats(geo, chart.vertices[:, :2] * np.asarray(scale), "ok", "-", 0, 0)
+
+    def test_anisotropic_scale_has_known_deficit_and_excess(self) -> None:
+        # x -> 1.2 x, y -> 0.9 y: singular values 1.2 and 0.9 on every triangle.
+        s = self.stats((1.2, 0.9))
+        self.assertAlmostEqual(s.compress_deficit, 0.1, places=12)
+        self.assertAlmostEqual(s.stretch_excess, 0.2, places=12)
+        self.assertAlmostEqual(s.compress_p5, 0.9, places=12)
+        self.assertTrue(s.outline_simple)
+
+    def test_isometry_has_no_deficit_or_excess(self) -> None:
+        s = self.stats((1.0, 1.0))
+        self.assertAlmostEqual(s.compress_deficit, 0.0, places=12)
+        self.assertAlmostEqual(s.stretch_excess, 0.0, places=12)
+
+    def test_mirrored_outline_is_not_simple(self) -> None:
+        self.assertFalse(self.stats((-1.0, 1.0)).outline_simple)
+
+    def test_measures_weight_by_area(self) -> None:
+        # A 2 x 2-quad flat square whose rows are unequal: the top row (y in [0.8, 1]) holds half
+        # the triangles but a tenth of the area. The map halves y in the top row only, so the
+        # top triangles have sigma = (1, 0.5) and the rest are isometric. An unweighted mean
+        # would give a deficit of 0.25, not 0.05; a 50% quantile or the maximum would give 1.
+        uv, f = ms.rect_grid(3, 3)
+        y = np.where(uv[:, 1] > 0.5, 1.0, np.where(uv[:, 1] > -0.5, 0.8, -1.0))
+        geo = fl.Geometry(np.column_stack([uv[:, 0], y, 0 * y]), f)
+        x = np.column_stack([uv[:, 0], np.where(y > 0.8, 0.8 + 0.5 * (y - 0.8), y)])
+        top = y[f].min(axis=1) >= 0.8
+        self.assertEqual(int(top.sum()), len(f) // 2)
+        top_area = geo.area[top].sum() / geo.area.sum()
+        self.assertAlmostEqual(top_area, 0.1, places=12)
+        s = fl._stats(geo, x, "ok", "-", 0, 0)
+        self.assertAlmostEqual(s.compress_deficit, top_area * 0.5, places=12)
+        self.assertAlmostEqual(s.stretch_excess, 0.0, places=12)
+        self.assertAlmostEqual(s.compress_p5, 0.5, places=12, msg="the 5% area quantile lies in the top row")
+        self.assertAlmostEqual(s.compress_min, 0.5, places=12)
+
 if __name__ == "__main__":
     unittest.main()

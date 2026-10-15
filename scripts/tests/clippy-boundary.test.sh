@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tests for the compiler-resolved boundary layer: crates/clippy.toml and
-# crates/openplush-testkit/clippy.toml.
+# crates/openplush-testkit/clippy.toml, and the root rules both repeat.
 #
 # Each case copies the repository's real clippy configs into a throwaway workspace,
 # adds one probe crate, and runs clippy with -D warnings. The point is the forms
@@ -91,6 +91,38 @@ expect pass "testkit may read fixture files" openplush-testkit \
   'pub fn load() -> usize { std::fs::read("fixture.glb").map(|v| v.len()).unwrap_or(0) }'
 expect fail "testkit still may not use HashMap" openplush-testkit \
   'pub fn f() -> usize { std::collections::HashMap::<u8, u8>::new().len() }' "\`std::collections::HashMap\`"
+
+# Determinism (root rules, so every clippy.toml carries them): which order an
+# unstable sort or select_nth_unstable leaves equal elements in is an implementation
+# detail. Rust 1.80 left them in different orders on x86_64 and wasm32, and 1.97
+# in a third; a stable sort's order is fixed by its contract.
+for crate in $geom openplush-testkit; do
+  for call in 'sort_unstable()' 'sort_unstable_by(|a, b| b.cmp(a))' 'sort_unstable_by_key(|p| p.0)' \
+    'select_nth_unstable(0)' 'select_nth_unstable_by(0, |a, b| b.cmp(a))' 'select_nth_unstable_by_key(0, |p| p.0)'; do
+    m=${call%%(*}
+    expect fail "$crate: slice::$m" "$crate" "pub fn f(v: &mut [(u32, u8)]) { v.$call; }" "\`slice::$m\`"
+  done
+  expect fail "$crate: sort_unstable through a Vec and a path" "$crate" \
+    'pub fn f() -> u32 { let mut v = vec![2u32, 1]; let s: fn(&mut [u32]) = <[u32]>::sort_unstable; s(&mut v); v[0] }' \
+    "\`slice::sort_unstable\`"
+  expect pass "$crate: stable sorts" "$crate" \
+    'pub fn f(v: &mut [f64], w: &mut [(u32, u8)]) { v.sort_by(f64::total_cmp); w.sort(); w.sort_by_key(|p| p.0); }'
+done
+
+# Clippy reads only the nearest clippy.toml, so each nested one must repeat every
+# rule of the root file; the cases above prove the shared rules resolve.
+trimmed() { sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$1"; }
+for nested in crates/clippy.toml crates/openplush-testkit/clippy.toml; do
+  missing=$(grep -vxF -f <(trimmed "$repo/$nested") <(trimmed "$repo/clippy.toml" | grep -vE '^(#|$)') || true)
+  if [[ -z $missing ]]; then
+    pass=$((pass + 1))
+    echo "ok   $nested repeats every root rule"
+  else
+    fail=$((fail + 1))
+    echo "FAIL $nested repeats every root rule; missing:"
+    while IFS= read -r line; do echo "     | $line"; done <<<"$missing"
+  fi
+done
 
 # Size limits (AGENTS.md, Small units): each clippy.toml sets them, since clippy
 # reads only the nearest one. The defaults (100 lines, 7 arguments) would pass

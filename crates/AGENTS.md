@@ -43,7 +43,7 @@ Every crate in `crates/` must build for `wasm32-unknown-unknown`.
 - Panics never cross into JS: `openplush-wasm` wraps each export and converts panics to typed errors.
 
 ## Determinism
-- `HashMap`/`HashSet` are disallowed in output-affecting code (clippy `disallowed-types`).
+- `HashMap`/`HashSet` and unstable sorts are disallowed in output-affecting code (clippy `disallowed-types`, `disallowed-methods`); each opt-out is listed in `scripts/disallowed-opt-outs.txt`.
 - Sort with a total order (`total_cmp`), tie-breaking on ID.
 - Property tests run with fixed seeds in CI; a failing seed becomes a committed regression case.
 

@@ -179,5 +179,81 @@ class FailsLoudly(unittest.TestCase):
                     corpus.read_obj(path)
 
 
+class Refinement(unittest.TestCase):
+    """Prevents a refinement sweep that changes topology or breaks seam parity."""
+
+    def test_subdivision_quadruples_faces_and_keeps_disks(self) -> None:
+        for name in EXPECTED:
+            with self.subTest(name):
+                base = corpus.load(name)
+                fine = corpus.load(name, levels=1)
+                self.assertEqual([4 * len(c.chart.faces) for c in base], [len(c.chart.faces) for c in fine])
+                for c in fine:
+                    self.assertEqual(boundary_loop_count(c.chart.faces), 1)
+
+    def test_subdivided_sphere_stays_on_the_sphere(self) -> None:
+        for c in corpus.load("sphere", levels=2):
+            np.testing.assert_allclose(np.linalg.norm(c.chart.vertices, axis=1), 50.0, rtol=1e-12)
+
+
+class Jitter(unittest.TestCase):
+    """Prevents the asymmetric variants from being folded input, irreproducible, or unequal across a seam.
+
+    Every fixture chart is symmetric or developable, so its outline closes for free; the
+    jittered copies are what exercise closure. They are only meaningful if still valid.
+    """
+
+    def test_jitter_is_seeded_and_bounded(self) -> None:
+        for name in EXPECTED:
+            with self.subTest(name):
+                base, a, b = (corpus.load(name, jitter=j) for j in (0.0, corpus.JITTER, corpus.JITTER))
+                for c0, c1, c2 in zip(base, a, b, strict=True):
+                    np.testing.assert_array_equal(c1.chart.vertices, c2.chart.vertices)
+                    np.testing.assert_array_equal(c0.chart.faces, c1.chart.faces)
+                    moved = np.linalg.norm(c1.chart.vertices - c0.chart.vertices, axis=1)
+                    self.assertGreater(moved.max(), 0.0)
+                    # A vertex moves at most JITTER x its shortest mesh edge, which is no longer
+                    # than its shortest edge within this chart.
+                    shortest = np.full(len(c0.chart.vertices), np.inf)
+                    for i, j in ((0, 1), (1, 2), (2, 0)):
+                        a, b = c0.chart.faces[:, i], c0.chart.faces[:, j]
+                        length = np.linalg.norm(c0.chart.vertices[a] - c0.chart.vertices[b], axis=1)
+                        np.minimum.at(shortest, a, length)
+                        np.minimum.at(shortest, b, length)
+                    self.assertTrue(np.all(moved <= corpus.JITTER * shortest + 1e-12))
+
+    def test_copies_of_one_mesh_vertex_move_together(self) -> None:
+        for name in EXPECTED:
+            with self.subTest(name):
+                pos: dict[int, np.ndarray] = {}
+                for c in corpus.load(name, jitter=corpus.JITTER):
+                    for local, g in enumerate(c.to_global.tolist()):
+                        np.testing.assert_array_equal(pos.setdefault(g, c.chart.vertices[local]), c.chart.vertices[local])
+
+    def test_jittered_surfaces_do_not_crease_back(self) -> None:
+        # The cube's own edges are 90-degree folds, so an absolute dihedral bound would reject
+        # the unjittered cube. Bound the change instead: no fold opens by more than 30 degrees,
+        # and none passes the 120-degree crease limit test_s7.Validity uses.
+        def bends(c: corpus.FixtureChart) -> np.ndarray:
+            v, f = c.chart.vertices, c.chart.faces
+            n = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
+            n /= np.linalg.norm(n, axis=1)[:, None]
+            pairs: dict[Edge, list[int]] = {}
+            for t, tri in enumerate(f.tolist()):
+                for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
+                    pairs.setdefault((min(a, b), max(a, b)), []).append(t)
+            two = np.array([p for _, p in sorted(pairs.items()) if len(p) == 2])
+            return np.degrees(np.arccos(np.clip(np.einsum("ij,ij->i", n[two[:, 0]], n[two[:, 1]]), -1, 1)))
+
+        for name in EXPECTED:
+            for levels in (0, 1):
+                pairs = zip(corpus.load(name, levels=levels), corpus.load(name, levels=levels, jitter=corpus.JITTER), strict=True)
+                for base, moved in pairs:
+                    with self.subTest(moved.chart.name):
+                        before, after = bends(base), bends(moved)
+                        self.assertLess(after.max(), 120.0)
+                        self.assertLess((after - before).max(), 30.0)
+
+
 if __name__ == "__main__":
     unittest.main()

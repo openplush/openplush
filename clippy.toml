@@ -1,10 +1,22 @@
 # Determinism (Constitution V, crates/AGENTS.md): HashMap/HashSet iteration order is
 # unspecified, so output can differ between runs and between native and WASM.
-# Use BTreeMap/BTreeSet or index-ordered Vecs. A lookup-only use that never reaches
-# output may opt out locally with #[allow(clippy::disallowed_types)] and a comment.
+# Use BTreeMap/BTreeSet or index-ordered Vecs. An unstable sort or select_nth_unstable
+# leaves equal elements in an unspecified order, which has differed between x86_64
+# and wasm32 and between toolchains; sort stably with a total order instead.
+# A use that never reaches output may opt out on the item with #[allow(...)], a
+# comment, and an entry in scripts/disallowed-opt-outs.txt (scripts/check-opt-outs.sh).
 disallowed-types = [
     { path = "std::collections::HashMap", reason = "iteration order is not deterministic; use BTreeMap or an index-ordered Vec" },
     { path = "std::collections::HashSet", reason = "iteration order is not deterministic; use BTreeSet or an index-ordered Vec" },
+]
+
+disallowed-methods = [
+    { path = "slice::sort_unstable", reason = "equal elements end in an unspecified order; use sort, with a total order" },
+    { path = "slice::sort_unstable_by", reason = "equal elements end in an unspecified order; use sort_by, with a total order" },
+    { path = "slice::sort_unstable_by_key", reason = "equal elements end in an unspecified order; use sort_by_key" },
+    { path = "slice::select_nth_unstable", reason = "equal elements end in an unspecified order; sort stably, then index" },
+    { path = "slice::select_nth_unstable_by", reason = "equal elements end in an unspecified order; sort stably, then index" },
+    { path = "slice::select_nth_unstable_by_key", reason = "equal elements end in an unspecified order; sort stably, then index" },
 ]
 
 # Small units (AGENTS.md, Engineering rules); too_many_lines is enabled in Cargo.toml.

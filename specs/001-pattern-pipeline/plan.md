@@ -210,7 +210,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 | 2026-10-12 | D-004 | Seams are non-destructive edge flags; charts are virtual cuts with provenance maps | Proposed |
 | 2026-10-12 | D-005 | Flattening: injective init → SLIM; ARAP as alternative energy | **Superseded by D-013** |
 | 2026-10-12 | D-006 | qew = optional maintainer tooling; not in engine, not required for contributors | Proposed |
-| 2026-10-12 | D-007 | threecrate and ONNX out of MVP; baby_shark for preprocessing pending S1 | Proposed |
+| 2026-10-12 | D-007 | threecrate and ONNX out of MVP; baby_shark for preprocessing pending S1 | Proposed; the baby_shark part resolved by D-024 |
 | 2026-10-12 | D-008 | PDF tiled export in MVP alongside SVG | Proposed |
 | 2026-10-12 | D-009 | Agent rules in `AGENTS.md` (root + `crates/` + `apps/`); `CLAUDE.md` files are one-line imports; `copilot-instructions.md` holds review priorities only; trivial-change lane exempt from task IDs | Proposed |
 | 2026-10-13 | D-010 | Project name **OpenPlush**: repo `openplush`, crate prefix `openplush-`, npm scope `@openplush` | Accepted |
@@ -229,6 +229,9 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 | 2026-10-14 | D-023 | **001 adopts [ADR 0003](../../docs/adr/0003-as-built-docs.md): once code lands, it and `docs/` are the source of truth.** Built sections of the contract and data model get an "As built" pointer and freeze as the record of intent; the first are contract sections 1 and 5 and data-model 13a's `ProposalId` and warning order. T168 stops writing `docs/reference/` at the end. Engine API contract to v0.5 (editorial) | Accepted — mentor review |
 | 2026-10-14 | D-024 | **No remeshing in v0.1 (S1).** `baby_shark` 0.3.12 runs on wasm32 but fails `cargo deny` and the boundary check, with no features to opt out; native-only would break byte-identity. Both targets flatten the repaired mesh; the voxel last resort is out of v0.1. Resolves D-007's "pending S1" | Proposed — [ADR 0001](../../docs/adr/0001-preprocessing.md) |
 | 2026-10-15 | D-025 | **D-013 holds on the fixture corpus (S7).** 0 closure and 0 injectivity failures in 36 runs; T082's fallback is a rare-path typed error plus a dart proposal, never pre-emptive splitting; the dart signal (T105) thresholds on area-integrated compression, not the worst triangle | Proposed — [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md) |
+| 2026-10-15 | D-026 | **Allowances are one `i_overlay` boolean on the `i64` engine, validated before and after (S3).** No panics and no wrong booleans on valid input across 10k fuzzed outlines; invalid input, sub-grid edges and chained booleans are silently wrong, so T085 validates, merges short edges, makes one call, checks the result into typed errors, and catches panics | Proposed — [ADR 0006](../../docs/adr/0006-allowance-construction.md) |
+| 2026-10-15 | D-027 | **v0.2 nesting is our own deterministic placer on a gate-clean `jagua-rs` core; `sparrow` is not a dependency (S4).** Rotation sets supported; +135 KB gzip; 1.1.0 fails the gates until upstream feature-gates `rayon`/`getrandom`/`web-time`; v0.1 layout unchanged | Proposed — [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) |
+| 2026-10-15 | D-028 | **T091 writes PDF directly with `pdf-writer`, labels in standard-14 Helvetica, embeds no fonts (S5).** `svg2pdf` is 4/3 too large at its default dpi and silently drops text without a font, and no allowlisted font exists | Proposed — [ADR 0008](../../docs/adr/0008-pdf-export.md) |
 
 ### Trade-offs accepted
 - Smaller engine contributor pool (Rust) in exchange for zero-install distribution and one engine everywhere.

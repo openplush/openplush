@@ -136,6 +136,8 @@ Every variant **locates** the problem — an ID the UI can highlight in 3D. An e
 
 ## 6. Headless parity (Constitution II)
 
+> **Partly built**: the CLI's argument surface exists. As built: [`docs/reference/cli.md`](../../../docs/reference/cli.md). The stages it calls are still specified here.
+
 Every function above is reachable from `openplush-cli` as file-in / file-out. A bug report is reproducible as a CLI invocation, and golden tests run through the CLI path rather than around it.
 
 ```sh

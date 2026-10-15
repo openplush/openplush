@@ -32,7 +32,7 @@ expect_plan "default runs every gate" "" \
   "cargo build --workspace --target wasm32-unknown-unknown --locked" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
-  "pnpm install --frozen-lockfile" "pnpm typecheck" "pnpm test"
+  "pnpm install --frozen-lockfile" "scripts/check-js-licenses.sh" "pnpm typecheck" "pnpm test"
 expect_plan "wasm step requires every wasm canary to run at least one test" "wasm" \
   "--test wasm_determinism --target wasm32-unknown-unknown --locked (must run at least 1 test)" \
   "--test wasm_predicates --target wasm32-unknown-unknown --locked (must run at least 1 test)"

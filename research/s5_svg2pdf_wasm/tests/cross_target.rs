@@ -44,7 +44,10 @@ fn svg2pdf_is_repeatable_and_matches_native() {
 #[test]
 fn direct_square_is_drawn_in_mm_under_one_transform() {
     let pdf = page_direct();
-    assert!(contains(&pdf, b"q\n2.8346457 0 0 -2.8346457 0 841.8898 cm\n"));
+    assert!(contains(
+        &pdf,
+        b"q\n2.8346457 0 0 -2.8346457 0 841.8898 cm\n"
+    ));
     assert!(contains(&pdf, b"\n10 237 50 50 re\n"));
     assert!(contains(&pdf, b"/BaseFont /Helvetica"));
     assert!(!contains(&pdf, b"/FontFile"), "no font program embedded");

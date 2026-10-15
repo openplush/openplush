@@ -1,6 +1,6 @@
 # Spike S7: boundary-pinned flattening (D-013), synthetic prototype
 
-**Status (2026-10-14): preliminary.** This is a reference prototype run on a **synthetic** corpus. T007 asks for results "on every fixture", and `fixtures/` does not exist yet, so T007 stays open. Running `run.py` on real charts is the remaining step.
+**Status (2026-10-14): preliminary.** This is a reference prototype run on a **synthetic** corpus. T007 asks for results "on every fixture", and `fixtures/` does not exist yet, so T007 stays open. Running `run.py` on real charts is the remaining step. `corpus.py` already loads `fixtures/` and cuts each mesh along its reference seam set into disk charts (data-model §4 virtual cut; a free seam endpoint stays a single vertex, a slit), checked by the oracles in `test_corpus.py`.
 
 Non-shipping research code (plan.md: `research/` holds reference implementations, not product code). It answers the structural questions now so the Rust flattener (T079 boundary, T080 interior, T082 fallback) is designed around the right failure mode.
 

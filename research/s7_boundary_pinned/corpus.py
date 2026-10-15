@@ -22,6 +22,7 @@ type Edge = tuple[int, int]
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 NAMES = ("sphere", "capsule", "cube")
+SEAM_KINDS = ("cut", "dart", "opening", "fabricBoundary", "mandatory")  # contracts/project.schema.json
 
 
 class NotADisk(ValueError):
@@ -99,7 +100,10 @@ def _list(x: object, what: str) -> list[object]:
 
 
 def parse_seam_set(doc: object) -> SeamSet:
-    """fixtures/README.md seam-set format, version 1; raises on any type or value mismatch."""
+    """fixtures/README.md seam-set format, version 1; raises on any type or value mismatch.
+
+    Edges are (smaller, larger) pairs, listed in strictly increasing order: sorted, no repeats.
+    """
     header = (_str(_field(doc, "format"), "format"), _int(_field(doc, "version"), "version"),
               _int(_field(doc, "vertexIndexBase"), "vertexIndexBase"))
     if header != ("openplush-seam-set", 1, 0):
@@ -112,8 +116,12 @@ def parse_seam_set(doc: object) -> SeamSet:
         a, b = _int(pair[0], "edge index"), _int(pair[1], "edge index")
         if not 0 <= a < b:
             raise ValueError(f"edge {pair!r}: indices must be non-negative, smaller first")
-        _str(_field(seam, "kind"), "kind")
+        kind = _str(_field(seam, "kind"), "kind")
+        if kind not in SEAM_KINDS:
+            raise ValueError(f"edge {pair!r}: unknown seam kind {kind!r}")
         edges.append((a, b))
+    if any(e >= f for e, f in zip(edges, edges[1:])):
+        raise ValueError("seam edges must be sorted with no repeats")
     return SeamSet(_str(_field(doc, "mesh"), "mesh"), edges)
 
 

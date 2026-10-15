@@ -13,6 +13,10 @@ fn broken(invariant: u8, element: MeshElement) -> MeshError {
     MeshError::BrokenInvariant { invariant, element }
 }
 
+fn he(i: usize) -> MeshElement {
+    MeshElement::HalfEdge(HalfEdgeId::new(i as u32))
+}
+
 impl ManifoldMesh {
     /// Checks every invariant and returns the first violation as
     /// [`MeshError::BrokenInvariant`]:
@@ -30,17 +34,24 @@ impl ManifoldMesh {
     /// Invariant 0 covers the structure around them: array lengths (located by
     /// array name), IDs in range, `f_he` pointing into its own face, and the
     /// boundary-vertex rule (`v_out` is the boundary half-edge if one exists).
-    #[expect(
-        clippy::too_many_lines,
-        reason = "predates the limit; split one check per invariant"
-    )]
     pub fn debug_validate(&self, tol: &ModelTolerances) -> Result<(), MeshError> {
-        let n = self.half_edge_count();
-        let nv = self.vertex_count();
-        let nf = self.face_count();
-        let he = |i: usize| MeshElement::HalfEdge(HalfEdgeId::new(i as u32));
+        // Each check may assume the ones before it passed: shapes and ranges come
+        // first so that everything after can index and follow links safely.
+        self.check_storage()?;
+        self.check_links_in_range()?;
+        self.check_face_half_edges()?;
+        self.check_links()?;
+        self.check_face_loops()?;
+        self.check_edge_sides()?;
+        self.check_areas(tol)?;
+        self.check_vertices()
+    }
 
-        // 0. Shapes and ranges, so everything below can index safely.
+    fn check_storage(&self) -> Result<(), MeshError> {
+        let n = self.half_edge_count();
+        if !n.is_multiple_of(2) {
+            return Err(broken(0, MeshElement::Storage("he_next")));
+        }
         let lengths = [
             ("he_next", self.he_next.len(), n),
             ("he_prev", self.he_prev.len(), n),
@@ -48,14 +59,20 @@ impl ManifoldMesh {
             ("he_face", self.he_face.len(), n),
             ("corner_src", self.corner_src.len(), n),
             ("corner_uv", self.corner_uv.len(), n),
-            ("v_out", self.v_out.len(), nv),
+            ("v_out", self.v_out.len(), self.vertex_count()),
         ];
-        if !n.is_multiple_of(2) {
-            return Err(broken(0, MeshElement::Storage("he_next")));
+        match lengths.iter().find(|(_, len, want)| len != want) {
+            Some(&(name, _, _)) => Err(broken(0, MeshElement::Storage(name))),
+            None => Ok(()),
         }
-        if let Some(&(name, _, _)) = lengths.iter().find(|(_, len, want)| len != want) {
-            return Err(broken(0, MeshElement::Storage(name)));
-        }
+    }
+
+    fn check_links_in_range(&self) -> Result<(), MeshError> {
+        let (n, nv, nf) = (
+            self.half_edge_count(),
+            self.vertex_count(),
+            self.face_count(),
+        );
         for i in 0..n {
             let in_range = ix(self.he_next[i].index()) < n
                 && ix(self.he_prev[i].index()) < n
@@ -65,14 +82,23 @@ impl ManifoldMesh {
                 return Err(broken(0, he(i)));
             }
         }
+        Ok(())
+    }
+
+    fn check_face_half_edges(&self) -> Result<(), MeshError> {
+        let n = self.half_edge_count();
         for (f, h) in self.f_he.iter().enumerate() {
-            if ix(h.index()) >= n || self.he_face[ix(h.index())] != Some(FaceId::new(f as u32)) {
-                return Err(broken(0, MeshElement::Face(FaceId::new(f as u32))));
+            let face = FaceId::new(f as u32);
+            if ix(h.index()) >= n || self.he_face[ix(h.index())] != Some(face) {
+                return Err(broken(0, MeshElement::Face(face)));
             }
         }
+        Ok(())
+    }
 
-        // 1, per half-edge.
-        for i in 0..n {
+    /// Invariant 1, per half-edge.
+    fn check_links(&self) -> Result<(), MeshError> {
+        for i in 0..self.half_edge_count() {
             let h = HalfEdgeId::new(i as u32);
             if self.next(self.prev(h)) != h
                 || self.origin(self.next(h)) != self.dest(h)
@@ -81,11 +107,14 @@ impl ManifoldMesh {
                 return Err(broken(1, he(i)));
             }
         }
+        Ok(())
+    }
 
-        // 2. Every half-edge in a face is on a loop of exactly three, and there are
-        //    exactly three per face, so no face has a second (stray) loop.
+    /// Invariant 2. Every half-edge in a face is on a loop of exactly three, and
+    /// there are exactly three per face, so no face has a second (stray) loop.
+    fn check_face_loops(&self) -> Result<(), MeshError> {
         let mut in_faces = 0usize;
-        for i in 0..n {
+        for i in 0..self.half_edge_count() {
             let h = HalfEdgeId::new(i as u32);
             if self.face(h).is_none() {
                 continue;
@@ -96,19 +125,25 @@ impl ManifoldMesh {
                 return Err(broken(2, he(i)));
             }
         }
-        if in_faces != 3 * nf {
+        if in_faces != 3 * self.face_count() {
             return Err(broken(2, MeshElement::Storage("he_face")));
         }
+        Ok(())
+    }
 
-        // 4. The two sides of an edge lie in different faces.
-        for i in 0..n {
+    /// Invariant 4: the two sides of an edge lie in different faces.
+    fn check_edge_sides(&self) -> Result<(), MeshError> {
+        for i in 0..self.half_edge_count() {
             let h = HalfEdgeId::new(i as u32);
             if self.face(h).is_some() && self.face(h) == self.face(h.twin()) {
                 return Err(broken(4, he(i)));
             }
         }
+        Ok(())
+    }
 
-        // 5, per face.
+    /// Invariant 5, per face.
+    fn check_areas(&self, tol: &ModelTolerances) -> Result<(), MeshError> {
         for (f, &h0) in self.f_he.iter().enumerate() {
             let (h1, h2) = (self.next(h0), self.next(self.next(h0)));
             let (a, b, c) = (
@@ -120,8 +155,12 @@ impl ManifoldMesh {
                 return Err(broken(5, MeshElement::Face(FaceId::new(f as u32))));
             }
         }
+        Ok(())
+    }
 
-        // 3 and the boundary-vertex rule, per vertex.
+    /// The boundary-vertex rule (invariant 0), then invariant 3, vertex by vertex.
+    fn check_vertices(&self) -> Result<(), MeshError> {
+        let (n, nv) = (self.half_edge_count(), self.vertex_count());
         let mut degree = vec![0usize; nv];
         let mut boundary_out = vec![0usize; nv];
         for i in 0..n {

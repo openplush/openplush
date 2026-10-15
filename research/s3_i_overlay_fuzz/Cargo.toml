@@ -1,0 +1,31 @@
+# Non-shipping spike. The empty [workspace] table keeps it out of the root
+# workspace (members = ["crates/*"]) and gives it its own Cargo.lock.
+[workspace]
+
+[package]
+name = "s3-i-overlay-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+# Exact pins: the findings are about these versions. 9.0.1 is the version S6 audited.
+i_overlay = "=9.0.1"
+# Exact predicates for the oracle's simplicity tests; the root workspace's version (ADR 0002).
+robust = "=1.2.0"
+# The generator's sin/cos/tan/pow: std's come from the platform libm and differ between
+# native and wasm32. i_float already depends on this version.
+libm = "=0.2.16"
+
+# Release speed with i_overlay's debug_assert!s and integer overflow checks switched on, so
+# that a release build cannot hide an assertion or a wrapped multiplication.
+[profile.checked]
+inherits = "release"
+debug-assertions = true
+overflow-checks = true
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+# Same versions as the root Cargo.lock, so the installed test runner matches.
+wasm-bindgen = "=0.2.129"
+wasm-bindgen-test = "=0.3.79"

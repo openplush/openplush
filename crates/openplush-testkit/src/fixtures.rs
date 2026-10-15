@@ -1,8 +1,9 @@
 //! Fixture loader: `fixtures/<kind>/<name>.<ext>` by kind and name.
 
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use thiserror::Error;
 
@@ -53,6 +54,12 @@ pub enum FixtureError {
         /// The underlying error.
         source: io::Error,
     },
+    /// An entry with a fixture's extension that is not a regular file.
+    #[error("{} is not a file", path.display())]
+    NotAFile {
+        /// The entry.
+        path: PathBuf,
+    },
     /// The file or directory exists but could not be read.
     #[error("could not read {}: {source}", path.display())]
     Read {
@@ -71,21 +78,33 @@ pub fn load(kind: Kind, name: &str) -> Result<Vec<u8>, FixtureError> {
 }
 
 /// The names of every fixture of `kind`, sorted, so a test can run on each one.
-/// A file whose stem [`load`] would refuse is a `BadName` error, not skipped.
+/// Every entry with the kind's extension counts: a stem [`load`] would refuse is
+/// `BadName` and a directory is `NotAFile`, never skipped.
 pub fn names(kind: Kind) -> Result<Vec<String>, FixtureError> {
-    let dir = kind_dir(kind);
-    let entries = fs::read_dir(&dir).map_err(|source| io_error(dir.clone(), source))?;
+    names_in(&kind_dir(kind), kind.extension())
+}
+
+fn names_in(dir: &Path, extension: &str) -> Result<Vec<String>, FixtureError> {
+    let entries = fs::read_dir(dir).map_err(|source| io_error(dir.to_owned(), source))?;
     let mut names = Vec::new();
     for entry in entries {
         let path = entry
-            .map_err(|source| io_error(dir.clone(), source))?
+            .map_err(|source| io_error(dir.to_owned(), source))?
             .path();
-        if path.extension().and_then(|e| e.to_str()) == Some(kind.extension())
-            && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
-        {
-            check_name(stem)?;
-            names.push(stem.to_owned());
+        if path.extension() != Some(OsStr::new(extension)) {
+            continue;
         }
+        let stem = path.file_stem().unwrap_or_default();
+        let Some(stem) = stem.to_str() else {
+            return Err(FixtureError::BadName {
+                name: stem.to_string_lossy().into_owned(),
+            });
+        };
+        check_name(stem)?;
+        if !path.is_file() {
+            return Err(FixtureError::NotAFile { path });
+        }
+        names.push(stem.to_owned());
     }
     names.sort();
     Ok(names)
@@ -113,5 +132,41 @@ fn io_error(path: PathBuf, source: io::Error) -> FixtureError {
         FixtureError::NotFound { path, source }
     } else {
         FixtureError::Read { path, source }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::{FixtureError, names_in};
+
+    #[test]
+    fn a_directory_with_a_fixture_extension_is_refused_not_listed() {
+        let dir = std::env::temp_dir().join(format!("openplush-names-{}", std::process::id()));
+        fs::create_dir_all(dir.join("nested.obj")).expect("scratch dir");
+        fs::write(dir.join("ok.obj"), b"v 0 0 0\n").expect("scratch file");
+        let result = names_in(&dir, "obj");
+        fs::remove_dir_all(&dir).expect("cleanup");
+        assert!(
+            matches!(result, Err(FixtureError::NotAFile { .. })),
+            "{result:?}"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_non_utf8_stem_is_a_bad_name() {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        let dir = std::env::temp_dir().join(format!("openplush-utf8-{}", std::process::id()));
+        fs::create_dir_all(&dir).expect("scratch dir");
+        fs::write(dir.join(OsStr::from_bytes(b"bad\xff.obj")), b"").expect("scratch file");
+        let result = names_in(&dir, "obj");
+        fs::remove_dir_all(&dir).expect("cleanup");
+        assert!(
+            matches!(result, Err(FixtureError::BadName { .. })),
+            "{result:?}"
+        );
     }
 }

@@ -79,7 +79,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 - **Option A — chosen (D-013)**: boundary lengths fixed to 3D lengths (BFF prescribes exactly this; Sawhney & Crane 2017) → exact parity, interior absorbs distortion.
 - **Option B — rejected**: SLIM/ARAP with a heavy boundary-length weight → small residual mismatch, reported as ease. Rejected because FR-023 now forbids handing the sewist a residual.
 
-**Risk this introduces** [verify — spike S7]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
+**Risk this introduces** [likely — S7 found no failure, see S7 result]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
 
 **Anisotropic fabric — out of scope (D-014)**: the obvious extension is to replace the identity target metric with a per-fabric tensor `M` (allowed stretch along warp vs. weft), alternating isotropic flatten → grain angle → anisotropic re-flatten. Spec FR-026 excludes it from this feature: per-direction stretch is recorded in the fabric profile and drives warnings (FR-058) only. Recorded here so a future feature does not have to rediscover the approach.
 
@@ -171,13 +171,47 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 
 **Also surfaced (not license issues; for S1/S4)** [verify; the `baby_shark` part is confirmed by S1 above]: `rayon` arrives via `baby_shark` 0.3.12 (which also brings its own `faer` 0.22 beside 0.24), `jagua-rs` 1.1.0 (default features), `sparrow`, and `threecrate`. `faer` 0.24 itself does not pull `rayon` with these features. Since `deny.toml` bans `rayon` (#26), each of these fails `cargo deny` until `rayon` is feature-gated off or the crate is replaced. That is a hard gate now, not a review item. `crates/AGENTS.md` forbids `rayon` on the WASM path, so S1 and S4 need to check whether those dependencies are optional.
 
-### S7 preliminary result — synthetic charts (2026-10-14) ⏳ open until fixtures exist
+### S7 result — boundary-pinned flattening (2026-10-15) ✅ closed
 
-Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts, every one checked for 3D validity first. **Not the fixture corpus**, so T007 stays open.
+Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). Verdict: [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md).
 
-- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.05° of turning-angle change on every chart at 640–1,536 triangles (≤ 0.10° at 384), and the gap shrinks with mesh refinement. The "fails to close" risk below can be downgraded.
-- **Injectivity held on every valid chart** [likely], up to 6,144 triangles and 55 reflex corners, including caps covering 175° of the sphere. A cotan or uniform harmonic start was always injective. An earlier draft reported failures; they came from folded 3D input, not the method.
-- **Implication for T079–T082**: least-squares *angle* closure (dual-length weighted), never length closure. A cotan → uniform start in T080. Validate the 3D chart for folds upstream of T080 as a typed input error (needs its own task). An untangling rung only if fixture runs need one [speculative].
+**Corpus.** 34 runs of 28–1,728 triangles:
+- every chart of the three reference seam sets in `fixtures/`: 6 sphere gores, 2 capsule caps, a slit tube and a cube net;
+- the same charts with seeded asymmetric jitter;
+- two refinement levels.
+
+The earlier synthetic set (19 charts plus a 12-run sweep, up to 6,144 triangles) remains the stress evidence.
+
+- **Closure never failed** [likely].
+  - The committed charts close by symmetry alone.
+  - On the jittered variants, the natural gap was at most 0.04% of the perimeter. Closing it with lengths held exact took at most 0.026° of turning-angle change, and the gap shrinks with refinement.
+- **Injectivity never failed** [likely].
+  - Every run started from an injective cotan fill; the uniform fallback was never needed.
+  - Every run converged with zero flips.
+  - Every outline was simple, and no all-boundary triangle was inverted.
+- **The penalty follows curvature** [likely].
+
+  | Chart | SD pinned | SD free | Min compression pinned | Min compression free | Free solve's seam-length drift |
+  |---|---|---|---|---|---|
+  | Developable (tube, cube net) | 4.000 | 4.000 | — | — | — |
+  | 60° sphere gore | 4.03 | 4.01 | 0.90 | 0.94 | 5–9% |
+  | Hemisphere cap | 5.2 | 4.2 | 0.61 | 0.87 | 41–46% |
+
+  Developable charts have no penalty: they flatten to the exact net [solid].
+- **The dart signal must be area-integrated** [likely]. Mean compression deficit was stable under refinement (cap: 37.3%, 36.5%, 36.3%). The single worst triangle's compression was not (synthetic stress caps: 0.145 down to 0.051).
+- **Implication for T079–T082 and T105**:
+  - closure is least-squares *angle* closure, never length closure;
+  - T080 starts from cotan, falling back to uniform;
+  - folded input is rejected upstream (T174);
+  - T082 fires only on an actual failure, as a typed error plus a proposal; no pre-emptive splitting;
+  - T105 thresholds on area-integrated compression, while per-triangle σ stays the heatmap's input;
+  - an untangling rung is needed only if a future fixture calls for one [speculative].
+- **Limits** [solid]:
+  - three coarse procedural shapes with symmetric seams;
+  - no interior cone sharper than 20°;
+  - no scan or sculpt, and no human-drawn seams.
+
+  Re-run S7 when such a fixture lands. Any failure reopens ADR 0005.
 
 ## R7. Fabric Profiles (FR-050, D-018)
 

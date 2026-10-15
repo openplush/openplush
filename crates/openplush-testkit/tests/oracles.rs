@@ -155,6 +155,20 @@ fn a_degenerate_3d_face_has_no_defined_distortion() {
 }
 
 #[test]
+fn a_chart_with_no_3d_area_has_no_defined_area_ratio() {
+    let flat_needle = triangle(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (2.0, 0.0, 0.0)],
+        [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)],
+    );
+    assert_eq!(
+        area_conserved(&chart(&flat_needle), 0.5),
+        Err(OracleFailure::Degenerate {
+            face: FaceId::new(0)
+        })
+    );
+}
+
+#[test]
 fn a_nan_flat_position_fails_every_chart_oracle() {
     let bad = triangle(RIGHT, [(0.0, 0.0), (f64::NAN, 0.0), (0.0, 1.0)]);
     assert!(matches!(

@@ -12,8 +12,12 @@
 # array of more than one entry, and any expression mixing AND with OR: stricter
 # than cargo deny, deliberately, until a real dependency needs one.
 #
-# pnpm lists the packages but never judges them: when the license field is
-# missing, pnpm 10 guesses one from the LICENSE text and does not mark the guess.
+# pnpm lists the installed packages but never judges them: when the license field
+# is missing, pnpm 10 guesses one from the LICENSE text and does not mark the guess.
+# pnpm also leaves out packages whose os, cpu or libc does not match this machine,
+# though they are in the lockfile and install elsewhere. Every lockfile package the
+# listing does not cover is judged by the license the registry says it declares
+# (`pnpm view`), so this needs registry access, as `pnpm install` does.
 #
 # Usage: scripts/check-js-licenses.sh [root]   (default: the repository)
 # Tests: scripts/tests/check-js-licenses.test.sh
@@ -45,7 +49,8 @@ listing=$(pnpm licenses list --json) || die "pnpm licenses list failed"
 
 # The judge reads the listing on stdin and its own source on fd 3.
 python3 /dev/fd/3 "$allow" <<<"$listing" 3<<'PY'
-import json, sys
+import json, re, subprocess, sys
+from concurrent.futures import ThreadPoolExecutor
 
 def declared(meta):
     """(expression, None), or (what was declared, why it is not an expression)."""
@@ -89,38 +94,83 @@ def verdict(expr, allow):
         return "not allowed" if len(terms) == 1 else "no alternative is allowed"
     return None
 
-def check(name, path, version, allow):
+def judge(spec, meta, allow):
+    """None if the package's declared license passes, else the violation."""
+    lic, why = declared(meta)
+    why = why or verdict(lic, allow)
+    return f"{spec}: {lic} ({why})" if why else None
+
+def installed(spec, path, allow):
     try:
         with open(f"{path}/package.json", encoding="utf-8") as f:
             meta = json.load(f)
     except (OSError, ValueError) as e:
-        return f"{name}@{version}: unreadable package.json ({type(e).__name__})"
-    lic, why = declared(meta)
-    why = why or verdict(lic, allow)
-    return f"{name}@{version}: {lic} ({why})" if why else None
+        return f"{spec}: unreadable package.json ({type(e).__name__})"
+    if not isinstance(meta, dict):
+        return f"{spec}: unreadable package.json (not an object)"
+    return judge(spec, meta, allow)
 
-def main():
-    allow = set(sys.argv[1].splitlines())
+def registry(spec, allow):
+    """Judge the license field the registry holds for spec, as package.json's."""
+    if "@" not in spec[1:]:
+        return f"{spec}: lockfile key is not name@version"
+    r = subprocess.run(["pnpm", "view", spec, "license", "--json"], capture_output=True, text=True)
+    if r.returncode:
+        err = (r.stderr.strip().splitlines() or ["no output"])[-1]
+        return f"{spec}: registry lookup failed ({err})"
+    try:
+        lic = json.loads(r.stdout)
+    except ValueError:
+        return f"{spec}: the registry gave no JSON license ({r.stdout.strip()[:60] or 'empty'})"
+    if not isinstance(lic, str):
+        return f"{spec}: the registry license is not a string ({json.dumps(lic)[:60]})"
+    return judge(spec, {"license": lic}, allow)
+
+def locked():
+    """name@version for each key in pnpm-lock.yaml's top-level packages section."""
+    specs, inside = set(), False
+    with open("pnpm-lock.yaml", encoding="utf-8") as f:
+        for line in f:
+            if line.strip() and not line[0].isspace():
+                inside = line.rstrip() == "packages:"
+            elif inside and (m := re.match(r"  (?:'([^']+)'|([^\s'][^:]*)):", line)):
+                specs.add((m[1] or m[2]).split("(")[0])
+    return specs
+
+def listed():
+    """The package objects pnpm licenses list printed on stdin."""
     try:
         listing = json.load(sys.stdin)
     except ValueError:
         sys.exit("check-js-licenses: pnpm printed no JSON, but pnpm-lock.yaml has packages")
-    seen, bad = set(), []
-    for e in (e for entries in listing.values() for e in entries):
+    if not isinstance(listing, dict) or not all(
+            isinstance(v, list) and all(isinstance(e, dict) for e in v) for v in listing.values()):
+        sys.exit("check-js-licenses: pnpm's listing is not an object of lists of package objects")
+    return [e for entries in listing.values() for e in entries]
+
+def main():
+    allow = set(sys.argv[1].splitlines())
+    seen, covered, bad = set(), set(), []
+    for e in listed():
         paths, versions = e.get("paths") or [], e.get("versions") or []
         if not paths or len(paths) != len(versions):
             bad.append(f"{e.get('name')}: listed without one path per version")
         for path, version in zip(paths, versions):
+            covered.add(f"{e.get('name')}@{version}")
             if path not in seen:
                 seen.add(path)
-                bad.append(check(e.get("name"), path, version, allow))
+                bad.append(installed(f"{e.get('name')}@{version}", path, allow))
+    unlisted = sorted(locked() - covered)
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        bad += pool.map(lambda spec: registry(spec, allow), unlisted)
     bad = sorted(b for b in bad if b)
     if bad:
         print("check-js-licenses: declared license not allowed by deny.toml:", file=sys.stderr)
         print("\n".join(f"  {b}" for b in bad), file=sys.stderr)
         sys.exit(1)
-    n = len(seen)
-    print(f"check-js-licenses: ok ({n} package{'' if n == 1 else 's'})")
+    n = len(seen) + len(unlisted)
+    print(f"check-js-licenses: ok ({n} package{'' if n == 1 else 's'}: "
+          f"{len(seen)} installed, {len(unlisted)} judged from the registry)")
 
 main()
 PY

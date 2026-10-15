@@ -7,7 +7,7 @@ What each engine crate contains **today**, and what it actually depends on. Whic
 | Crate | Public items | Depends on |
 |---|---|---|
 | `openplush-geom` | `DVec2`, `DVec3`; exact predicates `orient2d`, `orient3d`, `incircle` returning `Sign`; `epsilon` (`ModelTolerances`, `SeamParity`, and the constants behind them); `units` (`Mm`, `Scale`); `GeomError` | `robust`, `thiserror` |
-| `openplush-mesh` | `TriangleSoup` and `SourceCorner`; the half-edge `ManifoldMesh` (read-only accessors, `outgoing` returning `Outgoing`, `boundary_loops`, `debug_validate`; no public constructor); IDs `VertexId`, `EdgeId`, `HalfEdgeId`, `FaceId`, `ComponentId`, `MeshElement`; `MeshError` with `CornerArray` and `Counted` | `openplush-geom`, `thiserror` |
+| `openplush-mesh` | `TriangleSoup` and `SourceCorner`; the half-edge `ManifoldMesh` (read-only accessors, `outgoing` returning `Outgoing`, `boundary_loops`, `debug_validate`; no public constructor); IDs `VertexId`, `EdgeId`, `HalfEdgeId`, `FaceId`, `ComponentId`, `MeshElement`, and `id_newtype!`, which defines a `u32` ID with `new`, `index` and the shared derives; `MeshError` with `CornerArray` and `Counted` | `openplush-geom`, `thiserror` |
 | `openplush-seams` | `Proposal` (built only by `Proposal::new`), `ProposalId`, `ProposalKind`, `SeamReason`; `SeamKind`, `ChartFailure`; IDs `ChartId`, `SeamChainId`; `SeamsError`. No `SeamSet` or charting yet | `openplush-mesh`, `thiserror` |
 | `openplush-io` | `Format` (OBJ, glTF, GLB, STL, PLY). No parsers yet | none |
 | `openplush-pattern` | `PieceId`. No pattern code yet | none |

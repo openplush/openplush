@@ -1,52 +1,43 @@
-/// A vertex index. A newtype, never a raw integer, across every API
-/// (crates/AGENTS.md).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct VertexId(u32);
+/// Defines a public `u32` index newtype with `new`, `index`, and the derives every ID shares. For IDs that cross crate boundaries: it always emits `pub`.
+#[macro_export]
+macro_rules! id_newtype {
+    ($(#[$meta:meta])* $name:ident) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub struct $name(u32);
 
-impl VertexId {
-    /// Wraps a raw index.
-    pub const fn new(index: u32) -> Self {
-        Self(index)
-    }
+        impl $name {
+            /// Wraps a raw index.
+            pub const fn new(index: u32) -> Self {
+                Self(index)
+            }
 
-    /// The raw index.
-    pub const fn index(self) -> u32 {
-        self.0
-    }
+            /// The raw index.
+            pub const fn index(self) -> u32 {
+                self.0
+            }
+        }
+    };
 }
 
-/// A face (triangle) index.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FaceId(u32);
-
-impl FaceId {
-    /// Wraps a raw index.
-    pub const fn new(index: u32) -> Self {
-        Self(index)
-    }
-
-    /// The raw index.
-    pub const fn index(self) -> u32 {
-        self.0
-    }
+id_newtype! {
+    /// A vertex index. A newtype, never a raw integer, across every API
+    /// (crates/AGENTS.md).
+    VertexId
 }
 
-/// A half-edge index. Twins are allocated in pairs `(2k, 2k + 1)`, so the twin and
-/// the undirected edge are bit operations, not lookups.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct HalfEdgeId(u32);
+id_newtype! {
+    /// A face (triangle) index.
+    FaceId
+}
+
+id_newtype! {
+    /// A half-edge index. Twins are allocated in pairs `(2k, 2k + 1)`, so the twin and
+    /// the undirected edge are bit operations, not lookups.
+    HalfEdgeId
+}
 
 impl HalfEdgeId {
-    /// Wraps a raw index.
-    pub const fn new(index: u32) -> Self {
-        Self(index)
-    }
-
-    /// The raw index.
-    pub const fn index(self) -> u32 {
-        self.0
-    }
-
     /// The oppositely directed half-edge of the same edge. Always valid: boundary
     /// half-edges are explicit, so every half-edge has a twin.
     #[inline]
@@ -61,21 +52,12 @@ impl HalfEdgeId {
     }
 }
 
-/// An undirected edge index: a half-edge index shifted right by one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct EdgeId(u32);
+id_newtype! {
+    /// An undirected edge index: a half-edge index shifted right by one.
+    EdgeId
+}
 
 impl EdgeId {
-    /// Wraps a raw index.
-    pub const fn new(index: u32) -> Self {
-        Self(index)
-    }
-
-    /// The raw index.
-    pub const fn index(self) -> u32 {
-        self.0
-    }
-
     /// The edge's first half-edge; its twin is the second.
     pub const fn half_edge(self) -> HalfEdgeId {
         HalfEdgeId(self.0 << 1)
@@ -95,19 +77,8 @@ pub enum MeshElement {
     Storage(&'static str),
 }
 
-/// A connected component of a repaired mesh, numbered by its lowest `FaceId`.
-/// Created by repair; stable for one repaired mesh.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ComponentId(u32);
-
-impl ComponentId {
-    /// Wraps a raw index.
-    pub const fn new(index: u32) -> Self {
-        Self(index)
-    }
-
-    /// The raw index.
-    pub const fn index(self) -> u32 {
-        self.0
-    }
+id_newtype! {
+    /// A connected component of a repaired mesh, numbered by its lowest `FaceId`.
+    /// Created by repair; stable for one repaired mesh.
+    ComponentId
 }

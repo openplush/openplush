@@ -40,7 +40,7 @@ impl Kind {
 pub enum FixtureError {
     /// A name must be a bare file stem, so it cannot reach outside its directory.
     #[error(
-        "{name:?} is not a fixture name (a file stem without '/', '\\\\', '.' prefix or extension)"
+        "{name:?} is not a fixture name (a file stem without '/', '\\', '.' prefix or extension)"
     )]
     BadName {
         /// The rejected name.

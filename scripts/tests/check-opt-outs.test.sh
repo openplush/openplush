@@ -208,6 +208,26 @@ r=$(new_case macro 'macro_rules! quiet {
 quiet!(disallowed_types);')
 expect fail "a macro that builds the attribute from a bare lint name" "$r" "$lib: clippy::disallowed_types"
 
+# In a git checkout, files git ignores (another checkout or worktree nested in the
+# tree, build output) are not the repository's, so they are not scanned; an
+# untracked file git would add still is.
+r=$(new_case git-ignored)
+git -C "$r" init -q
+mkdir -p "$r/.claude/worktrees/w/crates/x/src"
+printf 'max-fn-params-bools = 9\n' >"$r/.claude/worktrees/w/clippy.toml"
+printf '%s\n' "$allow_map" >"$r/.claude/worktrees/w/crates/x/src/lib.rs"
+printf '.claude/worktrees/\n' >"$r/.gitignore"
+expect pass "git: an ignored nested checkout is not scanned" "$r"
+
+r=$(new_case git-untracked)
+git -C "$r" init -q
+printf 'max-fn-params-bools = 9\n' >"$r/crates/openplush-mesh/clippy.toml"
+expect fail "git: an untracked, unignored stray config still fails" "$r" "crates/openplush-mesh/clippy.toml: a clippy config"
+
+r=$(new_case git-untracked-optout "$allow_map")
+git -C "$r" init -q
+expect fail "git: an untracked opt-out still counts" "$r" "$lib: clippy::disallowed_types"
+
 echo
 echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]

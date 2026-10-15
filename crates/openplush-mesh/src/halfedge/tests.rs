@@ -768,3 +768,105 @@ fn order_vertex_checks_run_vertex_by_vertex() {
         broken(3, MeshElement::Vertex(VertexId::new(0)))
     );
 }
+
+// ---- Two violations in one soup: the earlier check's error wins ------------
+
+#[test]
+fn a_bad_triangle_is_reported_before_an_earlier_duplicate() {
+    let v = vec![
+        p(0., 0., 0.),
+        p(1., 0., 0.),
+        p(0., 1., 0.),
+        p(2., 0., 0.),
+        p(2., 1., 0.),
+    ];
+    assert_eq!(
+        build(v, vec![[0, 1, 2], [0, 2, 1], [3, 3, 4]]).err(),
+        Some(MeshError::DegenerateTriangle {
+            triangle: crate::FaceId::new(2)
+        })
+    );
+}
+
+#[test]
+fn a_duplicate_is_reported_before_a_lower_isolated_vertex() {
+    let v = vec![p(5., 5., 5.), p(0., 0., 0.), p(1., 0., 0.), p(0., 1., 0.)];
+    assert_eq!(
+        build(v, vec![[1, 2, 3], [1, 3, 2]]).err(),
+        Some(MeshError::DuplicateTriangle {
+            triangle: crate::FaceId::new(1),
+            first: crate::FaceId::new(0),
+        })
+    );
+}
+
+#[test]
+fn an_isolated_vertex_is_reported_before_an_edge_with_three_faces() {
+    let v = vec![
+        p(0., 0., 0.),
+        p(1., 0., 0.),
+        p(0., 1., 0.),
+        p(0., -1., 0.),
+        p(0., 0., 1.),
+        p(5., 5., 5.),
+    ];
+    assert_eq!(
+        build(v, vec![[0, 1, 2], [1, 0, 3], [0, 1, 4]]).err(),
+        Some(MeshError::IsolatedVertex {
+            vertex: VertexId::new(5)
+        })
+    );
+}
+
+#[test]
+fn a_flipped_neighbour_is_reported_before_a_bowtie() {
+    // A bowtie at vertex 0, and a separate square whose second triangle runs
+    // 7 -> 5 the same way as its first.
+    let v = vec![
+        p(0., 0., 0.),
+        p(1., 0., 0.),
+        p(1., 1., 0.),
+        p(-1., 0., 0.),
+        p(-1., -1., 0.),
+        p(3., 0., 0.),
+        p(4., 0., 0.),
+        p(4., 1., 0.),
+        p(3., 1., 0.),
+    ];
+    assert_eq!(
+        build(v, vec![[0, 1, 2], [0, 3, 4], [5, 6, 7], [5, 8, 7]]).err(),
+        Some(MeshError::InconsistentOrientation {
+            a: VertexId::new(5),
+            b: VertexId::new(7)
+        })
+    );
+}
+
+#[test]
+fn a_bowtie_is_reported_before_two_closed_fans_at_a_lower_vertex() {
+    // Two tetrahedra tip to tip at vertex 0, which only the single-fan check sees,
+    // and a bowtie at vertex 7. Both are `NonManifoldVertex`; the vertex tells
+    // which check fired.
+    let (mut v, mut t) = tetrahedron();
+    v.extend([p(-1., 0., 0.), p(0., -1., 0.), p(0., 0., -1.)]);
+    t.extend(
+        tetrahedron()
+            .1
+            .iter()
+            .map(|tri| tri.map(|i| if i == 0 { 0 } else { i + 3 })),
+    );
+    v.extend([
+        p(5., 0., 0.),
+        p(6., 0., 0.),
+        p(6., 1., 0.),
+        p(4., 0., 0.),
+        p(4., -1., 0.),
+    ]);
+    t.extend([[7, 8, 9], [7, 10, 11]]);
+    assert_eq!(
+        build(v, t).err(),
+        Some(MeshError::NonManifoldVertex {
+            vertex: VertexId::new(7)
+        })
+    );
+}

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,12 +19,9 @@ import numpy as np
 from meshes import Chart
 
 type Edge = tuple[int, int]
-type Projection = Callable[[np.ndarray], np.ndarray]
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 NAMES = ("sphere", "capsule", "cube")
-JITTER = 0.1  # largest displacement, as a fraction of the vertex's shortest edge
-SEED = 7
 
 
 class NotADisk(ValueError):
@@ -208,75 +204,10 @@ def cut(pos: np.ndarray, faces: np.ndarray, seams: set[Edge], name: str) -> list
     return out
 
 
-def subdivide(pos: np.ndarray, faces: np.ndarray, seams: set[Edge], project: Projection
-              ) -> tuple[np.ndarray, np.ndarray, set[Edge]]:
-    """One level of midpoint (1-to-4) subdivision; every vertex is then projected onto the surface."""
-    edges = sorted(_edge_faces(faces))
-    mid = {e: len(pos) + i for i, e in enumerate(edges)}
-    new_pos = np.vstack([pos, [(pos[a] + pos[b]) / 2 for a, b in edges]])
-
-    def m(a: int, b: int) -> int:
-        return mid[(min(a, b), max(a, b))]
-
-    new_faces = []
-    for a, b, c in faces.tolist():
-        ab, bc, ca = m(a, b), m(b, c), m(c, a)
-        new_faces += [(a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca)]
-    new_seams = {(min(x, y), max(x, y)) for a, b in seams for x, y in ((a, mid[(a, b)]), (mid[(a, b)], b))}
-    return project(new_pos), np.array(new_faces, dtype=int), new_seams
-
-
-def _sphere(p: np.ndarray) -> np.ndarray:
-    return 50.0 * p / np.linalg.norm(p, axis=1)[:, None]
-
-
-def _capsule(p: np.ndarray) -> np.ndarray:
-    """Radius 30, hemisphere centres at z = +-30, cylinder between (research/fixtures_gen)."""
-    out = p.copy()
-    centre = np.clip(p[:, 2], -30.0, 30.0)
-    on_cap = np.abs(p[:, 2]) > 30.0
-    d = p - np.column_stack([0 * centre, 0 * centre, centre])
-    d[~on_cap, 2] = 0.0
-    out[:, :2] = 30.0 * d[:, :2] / np.linalg.norm(d, axis=1)[:, None]
-    out[:, 2] = centre + 30.0 * d[:, 2] / np.linalg.norm(d, axis=1)
-    return out
-
-
-def _flat(p: np.ndarray) -> np.ndarray:
-    return p
-
-
-def perturb(pos: np.ndarray, faces: np.ndarray, amount: float) -> np.ndarray:
-    """Move each vertex by a seeded random vector of length <= amount x its shortest edge.
-
-    Breaks the fixtures' symmetry, which otherwise closes every outline by symmetry alone.
-    Applied to the whole mesh before cutting, so both sides of a seam move together.
-    """
-    rng = np.random.default_rng(SEED)
-    shortest = np.full(len(pos), np.inf)
-    for a, b in _edge_faces(faces):
-        d = float(np.linalg.norm(pos[a] - pos[b]))
-        shortest[a], shortest[b] = min(shortest[a], d), min(shortest[b], d)
-    direction = rng.normal(size=pos.shape)
-    direction /= np.linalg.norm(direction, axis=1)[:, None]
-    return pos + direction * (amount * shortest * rng.uniform(size=len(pos)))[:, None]
-
-
-PROJECT: dict[str, Projection] = {"sphere": _sphere, "capsule": _capsule, "cube": _flat}
-
-
-def load(name: str, levels: int = 0, jitter: float = 0.0) -> list[FixtureChart]:
-    """fixtures/meshes/<name>.obj cut along fixtures/seams/<name>.json, refined `levels` times, then jittered."""
+def load(name: str) -> list[FixtureChart]:
+    """fixtures/meshes/<name>.obj cut along fixtures/seams/<name>.json."""
     seam_set = parse_seam_set(json.loads((FIXTURES / "seams" / f"{name}.json").read_text(encoding="utf-8")))
     if seam_set.mesh != f"meshes/{name}.obj":
         raise ValueError(f"seams/{name}.json names {seam_set.mesh!r}, not meshes/{name}.obj")
     pos, faces = read_obj(FIXTURES / seam_set.mesh)
-    seams = set(seam_set.edges)
-    if len(seams) != len(seam_set.edges):
-        raise ValueError(f"seams/{name}.json lists an edge twice")
-    for _ in range(levels):
-        pos, faces, seams = subdivide(pos, faces, seams, PROJECT[name])
-    if jitter:
-        pos = perturb(pos, faces, jitter)
-    label = name + (f" L{levels}" if levels else "") + (" jittered" if jitter else "")
-    return cut(pos, faces, seams, label)
+    return cut(pos, faces, set(seam_set.edges), name)

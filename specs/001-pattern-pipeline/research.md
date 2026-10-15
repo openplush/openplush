@@ -162,7 +162,7 @@ Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../resear
   2. Merge sub-grid edges.
   3. Make one `i64` call: `(outline ∪ strips ∪ wedges) − fold guards`.
   4. Check the result: one simple contour, no holes, and fold guards clear of the outline. Each failure becomes a typed error: `AllowanceSplitsPiece`, `AllowanceEnclosesGap`, `AllowanceNotSimple` or `FoldConflict`.
-  5. Still catch panics at the stage boundary.
+  5. Still catch panics at the stage boundary. *Superseded 2026-10-15 by [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md): a panic cannot be caught on wasm32, so it is a crash on both targets.*
 - **Not yet measured** [verify, with fixtures]: how often real pieces hit an allowance conflict.
 - **Corner rule** (ADR 0006 changes data-model §7):
   - corners are mitered, with a limit;

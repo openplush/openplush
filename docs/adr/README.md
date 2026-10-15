@@ -21,3 +21,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0006](0006-allowance-construction.md) | Build allowances as one `i_overlay` boolean of per-edge strips on the `i64` engine, validated before and after | Proposed |
 | [0007](0007-layout-nesting-engine.md) | v0.2 nesting builds its own deterministic placer on a gate-clean `jagua-rs` core; `sparrow` is not a dependency; v0.1 layout is unchanged | Proposed |
 | [0008](0008-pdf-export.md) | Write the tiled PDF directly with `pdf-writer`; label with standard-14 Helvetica, embed no fonts | Proposed |
+| [0009](0009-wasm-panic-is-a-worker-crash.md) | A panic in the WASM engine is a worker crash, not a typed error | Proposed |

@@ -2,7 +2,7 @@
 
 **Feature**: `001-pattern-pipeline` | **Date**: 2026-10-13 | **Status**: Draft contract
 
-*Changes*: 2026-10-14 (D-022): binding-level error codes alongside `EngineError` names, `ProposalId` as a hex string, and chart, chain and component locations.
+*Changes*: 2026-10-14 (D-022): binding-level error codes alongside `EngineError` names, `ProposalId` as a hex string, and chart, chain and component locations. 2026-10-15 ([ADR 0009](../../../docs/adr/0009-wasm-panic-is-a-worker-crash.md)): a panic is a worker crash: the `EngineCrashed` code, worker generations, and what happens to in-flight requests and handles (§4, §6, §7).
 
 The engine runs in a Web Worker so the UI thread never blocks on geometry (Constitution "Technical Constraints"). This file defines the messages between `apps/web` and the worker hosting `bindings/openplush-wasm`, mediated by `packages/engine-client`.
 
@@ -61,7 +61,16 @@ type PipelineHandle = { readonly __brand: 'pipeline'; readonly n: number };
 
 - Handles are opaque integers, branded in TS so they cannot be swapped or arithmetic'd.
 - The worker owns the objects. `release(handle)` frees; using a released handle returns an error with code `StaleHandle` rather than undefined behaviour. That code belongs to the binding, not to `EngineError`: the engine has no handles, so the WASM binding raises it before calling the engine (D-022).
-- Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state.
+- Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state. The client commits a change to that document only after the operation's success response, so replay never repeats an operation that crashed.
+
+### Worker crash
+
+A panic in the engine traps the WASM instance; it cannot be caught on `wasm32-unknown-unknown`, and a trapped instance is never called again ([ADR 0009](../../../docs/adr/0009-wasm-panic-is-a-worker-crash.md)).
+
+- The worker treats **any** exception from an export as a crash. It sends `EngineCrashed` as the terminal message for the request in flight, then `crashed`, then handles nothing more.
+- On `crashed`, or on the `Worker`'s `error` event, the client answers every other pending request with `EngineCrashed`. It detaches its listeners before terminating the worker, so no request gets a second terminal message. It then increments the worker generation, emits one `restarted` event, and starts a new worker on the next request.
+- Handles carry the generation they were issued in. A handle from an earlier generation gets `StaleHandle` from the client without reaching the worker, even if the new worker has reused its number.
+- Cancelling a request that already has its terminal message does nothing. Progress from an earlier generation is dropped.
 
 ## 5. Progress and cancellation
 
@@ -77,8 +86,9 @@ Cancellation is cooperative: the worker checks between `step()` calls. A cancell
 
 ```ts
 type EngineErrorDto = {
-  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle),
-                                    // defined in openplush-wasm's own error type so the TS generator sees it
+  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle,
+                                    // EngineCrashed), defined in openplush-wasm's own error type so the TS
+                                    // generator sees it. EngineCrashed is raised by the host, never by Rust
   message: string;                  // plain language, shown to the maker
   locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[];
                 charts?: number[]; chains?: number[]; components?: number[] };
@@ -90,6 +100,6 @@ The UI highlights `locations` in the 3D view. A code the UI does not recognise m
 
 ## 7. Testing
 
-- `packages/engine-client` is tested against a **mock worker** implementing this contract, so shell tests need no WASM build.
+- `packages/engine-client` is tested against a **mock worker** implementing this contract, so shell tests need no WASM build. The mock can crash on demand, so the crash rules in §4 are tested without a real panic.
 - The real worker is exercised by Playwright smoke tests on three fixtures (plan "CI").
 - Generated TS types are checked into the repo and regenerated in CI; a diff fails the build, which is how drift is caught rather than discovered.

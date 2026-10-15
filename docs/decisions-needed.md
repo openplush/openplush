@@ -59,3 +59,16 @@ AGENTS.md says the third copy becomes a macro, so the rule is already overdue. T
 **Recommendation.** A. It works on stable and fails loudly. A panic is already a bug (no `unwrap` on user data), so the shell only needs to report it and recover, not continue. This is a rule change in `crates/AGENTS.md` and a worker-protocol addition, so it needs your sign-off. A contract change may also need an ADR.
 
 **Blocks.** The first real export in T039 (the skeleton has none), and T040's error handling.
+
+## 5. No JS license gate exists, so the first npm dependency can't be checked
+
+**What.** AGENTS.md says every dependency must pass "`cargo deny` / the JS license check". There is no JS license check: `scripts/check.sh shell` only installs, typechecks and tests, and no task in tasks.md creates one. T040 (`packages/engine-client` and its mock worker) would add the repo's first npm dependencies, `typescript` and `vitest`, plus their transitive tree, and nothing would check them against Constitution IX.
+
+**Options.**
+- **A. Add a task for a JS license gate and land it before T040.** `pnpm licenses list --json` (built into the pinned pnpm 10) piped through `jq` against the same allowlist as `deny.toml`, run in the `shell` step, with a self-test in `scripts/tests/` like the other gates. No new dependency.
+- **B. Use a license-checker package** (e.g. `license-checker-rseidelsohn`). That is a dependency whose own tree must also pass the check.
+- **C. Land T040 now** and add the gate later. This breaks the Licenses rule for as long as the gap lasts.
+
+**Recommendation.** A. It is about 40 lines plus a self-test and needs no new tooling. Adding a gate is not a trivial-lane change, so it needs a task ID from you; something like "T176 JS license gate (blocks T040)".
+
+**Blocks.** T040, and every later `apps/` or `packages/` task.

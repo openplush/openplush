@@ -150,6 +150,26 @@ class FailsLoudly(unittest.TestCase):
             with self.subTest(bad), self.assertRaises((TypeError, ValueError)):
                 corpus.parse_seam_set(bad)
 
+    def test_seam_json_rejects_what_the_format_forbids(self) -> None:
+        """fixtures/README.md: version 1, base 0, smaller index first, sorted list, a schema seam kind."""
+        def doc(seams: list[tuple[list[object], str]], version: int = 1, base: int = 0) -> dict[str, object]:
+            head: dict[str, object] = {"format": "openplush-seam-set", "version": version, "mesh": "m", "vertexIndexBase": base}
+            return head | {"seams": [{"edge": e, "kind": k} for e, k in seams]}
+
+        ok = doc([([0, 1], "cut"), ([0, 2], "dart"), ([1, 2], "fabricBoundary")])
+        self.assertEqual(corpus.parse_seam_set(ok).edges, [(0, 1), (0, 2), (1, 2)])
+        bad = {
+            "unknown kind": doc([([0, 1], "zipper")]),
+            "unsorted list": doc([([1, 2], "cut"), ([0, 1], "cut")]),
+            "repeated edge": doc([([0, 1], "cut"), ([0, 1], "cut")]),
+            "reversed pair": doc([([1, 0], "cut")]),
+            "version 2": doc([([0, 1], "cut")], version=2),
+            "1-based indices": doc([([0, 1], "cut")], base=1),
+        }
+        for what, d in bad.items():
+            with self.subTest(what), self.assertRaises(ValueError):
+                corpus.parse_seam_set(d)
+
     def test_obj_rejects_unknown_lines_and_bad_indices(self) -> None:
         for text in ("v 0 0 0\nvt 0 0\n", "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 4\n", "v 0 0 nan\n", "v 0 0 0\nf 1/1 2 3\n"):
             with self.subTest(text), tempfile.TemporaryDirectory() as tmp:

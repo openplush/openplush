@@ -489,17 +489,23 @@ fn invariant_2_every_face_loop_has_length_three() {
     );
 }
 
-#[expect(
-    clippy::too_many_lines,
-    reason = "predates the limit; one element per line in the id lists"
-)]
+fn hs(ix: &[u32]) -> Vec<HalfEdgeId> {
+    ix.iter().copied().map(HalfEdgeId::new).collect()
+}
+
+fn vs(ix: &[u32]) -> Vec<VertexId> {
+    ix.iter().copied().map(VertexId::new).collect()
+}
+
+fn fs(ix: &[Option<u32>]) -> Vec<Option<crate::FaceId>> {
+    ix.iter().map(|f| f.map(crate::FaceId::new)).collect()
+}
+
 /// Triangles (0,1,2) and (0,3,4) share only vertex 0. Linked as a single boundary
 /// loop, every link checks out and the rotation at vertex 0 visits all four of its
 /// half-edges, so only "one outgoing boundary half-edge per vertex" catches it.
 fn linked_bowtie() -> ManifoldMesh {
-    let h = HalfEdgeId::new;
-    let f = |i| Some(crate::FaceId::new(i));
-    let v = |i| VertexId::new(i);
+    let (f0, f1) = (Some(0), Some(1));
     ManifoldMesh {
         pos: vec![
             p(0., 0., 0.),
@@ -508,65 +514,13 @@ fn linked_bowtie() -> ManifoldMesh {
             p(-1., 0., 0.),
             p(-1., -1., 0.),
         ],
-        v_out: vec![h(5), h(1), h(3), h(7), h(9)],
+        v_out: hs(&[5, 1, 3, 7, 9]),
         // Edges 0-1, 1-2, 2-0 (face 0) and 0-3, 3-4, 4-0 (face 1); odd = boundary.
-        he_origin: vec![
-            v(0),
-            v(1),
-            v(1),
-            v(2),
-            v(2),
-            v(0),
-            v(0),
-            v(3),
-            v(3),
-            v(4),
-            v(4),
-            v(0),
-        ],
-        he_face: vec![
-            f(0),
-            None,
-            f(0),
-            None,
-            f(0),
-            None,
-            f(1),
-            None,
-            f(1),
-            None,
-            f(1),
-            None,
-        ],
-        he_next: vec![
-            h(2),
-            h(11),
-            h(4),
-            h(1),
-            h(0),
-            h(3),
-            h(8),
-            h(5),
-            h(10),
-            h(7),
-            h(6),
-            h(9),
-        ],
-        he_prev: vec![
-            h(4),
-            h(3),
-            h(0),
-            h(5),
-            h(2),
-            h(7),
-            h(10),
-            h(9),
-            h(6),
-            h(11),
-            h(8),
-            h(1),
-        ],
-        f_he: vec![h(0), h(6)],
+        he_origin: vs(&[0, 1, 1, 2, 2, 0, 0, 3, 3, 4, 4, 0]),
+        he_face: fs(&[f0, None, f0, None, f0, None, f1, None, f1, None, f1, None]),
+        he_next: hs(&[2, 11, 4, 1, 0, 3, 8, 5, 10, 7, 6, 9]),
+        he_prev: hs(&[4, 3, 0, 5, 2, 7, 10, 9, 6, 11, 8, 1]),
+        f_he: hs(&[0, 6]),
         corner_src: vec![None; 12],
         corner_uv: vec![None; 12],
     }
@@ -657,17 +611,14 @@ fn invariant_2_a_stray_triangle_loop_reusing_a_face_label() {
 /// self-loop edge at vertex 0. Links, loop length and counts are consistent; the
 /// edge 0-1 has face 0 on both sides.
 fn one_face_on_both_sides() -> ManifoldMesh {
-    let h = HalfEdgeId::new;
-    let v = VertexId::new;
-    let f0 = Some(crate::FaceId::new(0));
     ManifoldMesh {
         pos: vec![p(0., 0., 0.), p(1., 0., 0.)],
-        v_out: vec![h(3), h(1)],
-        he_origin: vec![v(0), v(1), v(0), v(0)],
-        he_face: vec![f0, f0, f0, None],
-        he_next: vec![h(1), h(2), h(0), h(3)],
-        he_prev: vec![h(2), h(0), h(1), h(3)],
-        f_he: vec![h(0)],
+        v_out: hs(&[3, 1]),
+        he_origin: vs(&[0, 1, 0, 0]),
+        he_face: fs(&[Some(0), Some(0), Some(0), None]),
+        he_next: hs(&[1, 2, 0, 3]),
+        he_prev: hs(&[2, 0, 1, 3]),
+        f_he: hs(&[0]),
         corner_src: vec![None; 4],
         corner_uv: vec![None; 4],
     }

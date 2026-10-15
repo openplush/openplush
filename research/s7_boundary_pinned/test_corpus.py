@@ -212,9 +212,15 @@ class Jitter(unittest.TestCase):
                     np.testing.assert_array_equal(c0.chart.faces, c1.chart.faces)
                     moved = np.linalg.norm(c1.chart.vertices - c0.chart.vertices, axis=1)
                     self.assertGreater(moved.max(), 0.0)
-                    # A vertex moves at most JITTER x its shortest edge, so never more than JITTER x the longest.
-                    edges = c0.chart.vertices[c0.chart.faces] - c0.chart.vertices[np.roll(c0.chart.faces, -1, 1)]
-                    self.assertLessEqual(moved.max(), corpus.JITTER * np.linalg.norm(edges, axis=2).max())
+                    # A vertex moves at most JITTER x its shortest mesh edge, which is no longer
+                    # than its shortest edge within this chart.
+                    shortest = np.full(len(c0.chart.vertices), np.inf)
+                    for i, j in ((0, 1), (1, 2), (2, 0)):
+                        a, b = c0.chart.faces[:, i], c0.chart.faces[:, j]
+                        length = np.linalg.norm(c0.chart.vertices[a] - c0.chart.vertices[b], axis=1)
+                        np.minimum.at(shortest, a, length)
+                        np.minimum.at(shortest, b, length)
+                    self.assertTrue(np.all(moved <= corpus.JITTER * shortest + 1e-12))
 
     def test_copies_of_one_mesh_vertex_move_together(self) -> None:
         for name in EXPECTED:
@@ -247,6 +253,7 @@ class Jitter(unittest.TestCase):
                         before, after = bends(base), bends(moved)
                         self.assertLess(after.max(), 120.0)
                         self.assertLess((after - before).max(), 30.0)
+
 
 if __name__ == "__main__":
     unittest.main()

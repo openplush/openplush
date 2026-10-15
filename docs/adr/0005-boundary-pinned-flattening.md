@@ -1,6 +1,6 @@
 ---
 status: Proposed
-date: 2026-10-14
+date: 2026-10-15
 deciders: maintainer (proposed by the implementing agent from spike S7, decided in review of the T007 PR)
 ---
 
@@ -28,7 +28,7 @@ D-013 (plan Decision Ledger) made seam parity exact and hard: every chart's boun
 
 Chosen option: **Option 1**, because on every input S7 tried, the failures T082 guards against did not occur, while the cost of pinning is real but shows up as interior compression, which is exactly what the heatmap and dart suggestions are for.
 
-**S7 verdict on D-013, fixture corpus** [likely]: 36 fixture runs (the 10 charts of the three reference seam sets: 6 sphere gores, 2 capsule caps, a capsule tube and a cube net; the same 10 with seeded asymmetric jitter; and 16 runs at one and two levels of refinement, up to 1,728 triangles): **0 closure failures, 0 injectivity failures**. Every outline was simple and counter-clockwise, no all-boundary triangle was inverted, every run started from an injective cotan fill (the uniform fallback was never needed) and converged with zero flips. Closing the outline with lengths held exact needed at most 0.026° of turning-angle change at any corner. The synthetic stress set (19 charts plus a 12-run resolution sweep, up to 6,144 triangles, 55 reflex corners, caps covering 175° of the sphere) gave the same: no failure on any geometrically valid chart.
+**S7 verdict on D-013, fixture corpus** [likely]: 36 fixture runs (the 10 charts of the three reference seam sets: 6 sphere gores, 2 capsule caps, a capsule tube and a cube net; the same 10 with seeded asymmetric jitter; and 16 runs at one and two levels of refinement, up to 1,728 triangles): **0 closure failures, 0 injectivity failures**. Every outline was simple and counter-clockwise, no all-boundary triangle was inverted, every run started from an injective cotan fill (the uniform fallback was never needed) and converged with zero flips (each solve stopped at the gradient tolerance or with the energy stalled at machine precision, the spike's two converged stops; none hit the iteration or line-search limit). Closing the outline with lengths held exact needed at most 0.026° of turning-angle change at any corner. The synthetic stress set (19 charts plus a 12-run resolution sweep, up to 6,144 triangles, 55 reflex corners, caps covering 175° of the sphere) gave the same: no failure on any geometrically valid chart.
 
 **Distortion penalty** (pinned vs free-boundary SLIM, symmetric Dirichlet, 4.0 is isometric) [likely]:
 
@@ -83,7 +83,7 @@ Developable charts pay nothing, and the pinned pipeline reproduces the exact net
 
 ## More information
 
-* **Corpus limits** [solid]: three procedural shapes (sphere, capsule, cube), ≤ 192 triangles before refinement, smooth or piecewise flat, with symmetric seam layouts. The committed charts close by symmetry alone; seeded jitter (≤ 0.1 × the shortest edge) supplies the asymmetry. No plush scan, no sculpted model, no interior cone sharper than 20°, no human-drawn seams. The synthetic stress set is the only evidence near the failure edge.
+* **Corpus limits** [solid]: three procedural shapes (sphere, capsule, cube), ≤ 192 triangles per mesh and ≤ 108 per chart before refinement, smooth or piecewise flat, with symmetric seam layouts. The committed charts close by symmetry alone; seeded jitter (≤ 0.1 × the shortest edge) supplies the asymmetry. No plush scan, no sculpted model, no interior cone sharper than 20°, no human-drawn seams. The synthetic stress set is the only evidence near the failure edge.
 * **Open** [verify]: behaviour at the ~30k-triangle proxy resolution, and on charts with a sharp interior cone (an ear tip inside a panel), which is where a dart-free chart is most likely to fail injectivity. Revisit when such a fixture exists.
 * **Open** [speculative]: an untangling rung in T080. Not needed on any input so far; add it only if a fixture needs it.
 * Symmetric Dirichlet is a geometric proxy, not a fabric model; compression 0.61 means "needs a dart or gathers", not a measured fabric strain.

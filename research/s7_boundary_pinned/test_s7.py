@@ -254,5 +254,6 @@ class AreaMeasures(unittest.TestCase):
         self.assertAlmostEqual(s.compress_p5, 0.5, places=12, msg="the 5% area quantile lies in the top row")
         self.assertAlmostEqual(s.compress_min, 0.5, places=12)
 
+
 if __name__ == "__main__":
     unittest.main()

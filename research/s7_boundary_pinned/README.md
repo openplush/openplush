@@ -55,7 +55,7 @@ Full tables in [`results.md`](./results.md) (fixture section first).
 
 ## Synthetic corpus (first pass)
 
-The rest of this README is the synthetic prototype that preceded the fixtures. It is the stress evidence: higher resolution, deep lobes, near-full spheres.
+The next three sections describe the synthetic prototype that preceded the fixtures; the recommendations and limits after them cover both runs. It is the stress evidence: higher resolution, deep lobes, near-full spheres.
 
 ### Method
 

@@ -18,7 +18,9 @@
 #      - warnings inside an allow or expect in a .rs file;
 #      - a style, all, or warnings key set to a non-list in a Cargo.toml;
 #      - warnings or cap-lints in a .cargo/config*.
-# Only the top-level target/, .git/, node_modules/ and scripts/tests/ are skipped.
+# In a git checkout the scan covers the files git tracks or would add, so ignored
+# trees (build output, a worktree nested in the checkout) are skipped. Outside one
+# it covers every file. Either way scripts/tests/ is skipped.
 #
 # Known limits: the scan is textual, not a parser. It misses a group lint built
 # by a macro from a bare `style` or `all`, lint flags passed through RUSTFLAGS
@@ -37,10 +39,16 @@ known_configs=" clippy.toml crates/clippy.toml crates/openplush-testkit/clippy.t
 
 [[ -f $allowlist ]] || { echo "opt-outs: $allowlist is missing" >&2; exit 1; }
 
-# repo_find <find predicates...>: repository files, relative, sorted.
-repo_find() {
-  find . \( -path ./target -o -path ./.git -o -path ./node_modules -o -path ./scripts/tests \) -prune \
-    -o -type f \( "$@" \) -print | sed 's|^\./||' | sort
+# repo_files <extended regex>: repository files whose relative path matches, sorted.
+repo_files() {
+  local files
+  if [[ $(git rev-parse --show-toplevel 2>/dev/null) == "$PWD" ]]; then
+    files=$(git ls-files --cached --others --exclude-standard)
+  else
+    files=$(find . \( -path ./target -o -path ./.git -o -path ./node_modules \) -prune -o -type f -print |
+      sed 's|^\./||')
+  fi
+  { grep -E "$1" <<<"$files" || true; } | { grep -v '^scripts/tests/' || true; } | sort -u
 }
 
 lint_re='disallowed[-_](type|method)s?|clippy[[:space:]]*::[[:space:]]*(style|all)\b'
@@ -79,9 +87,9 @@ violations=()
 while IFS= read -r f; do
   [[ $known_configs == *" $f "* ]] ||
     violations+=("$f: a clippy config other than the three known ones drops every ban; remove it")
-done < <(repo_find -name clippy.toml -o -name .clippy.toml)
+done < <(repo_files '(^|/)\.?clippy\.toml$')
 
-configs=$(repo_find -name Cargo.toml -o -path '*/.cargo/config*')
+configs=$(repo_files '(^|/)Cargo\.toml$|(^|/)\.cargo/config')
 while IFS= read -r f; do
   if [[ -n $f ]] && grep -q CLIPPY_CONF_DIR "$f"; then
     violations+=("$f: CLIPPY_CONF_DIR points clippy at another config; remove it")
@@ -91,7 +99,7 @@ done <<<"$configs"
 found=$(
   while IFS= read -r f; do
     rust_lints "$f" | while IFS= read -r lint; do echo "$f $(canon "$lint")"; done
-  done < <(repo_find -path './crates/*' -name '*.rs' -o -path './bindings/*' -name '*.rs')
+  done < <(repo_files '^(crates|bindings)/.*\.rs$')
   while IFS= read -r f; do
     [[ -z $f ]] || config_lints "$f" | while IFS= read -r lint; do echo "$f $(canon "$lint")"; done
   done <<<"$configs"

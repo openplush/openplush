@@ -22,8 +22,9 @@ test-results/
 # Spec Kit local state (each contributor sets their active feature)
 /.specify/feature.json
 
-# Claude Code local settings
+# Claude Code local settings and agent worktrees
 .claude/settings.local.json
+.claude/worktrees/
 
 # IDEs
 .idea/

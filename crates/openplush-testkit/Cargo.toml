@@ -8,5 +8,8 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[dependencies]
+thiserror = "2.0.21"
+
 [lints]
 workspace = true

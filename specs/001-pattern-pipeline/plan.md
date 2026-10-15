@@ -8,14 +8,14 @@
 | Field | Value |
 |---|---|
 | Language/Version | Rust stable (MSRV pinned); TypeScript 5.x `strict` |
-| Primary dependencies | Engine: `faer`, `i_overlay`, `gltf`, `tobj`, `jagua-rs` (v0.2), `baby_shark` (preprocess, pending S1). Shell: `three`, `three-mesh-bvh`, Vite |
+| Primary dependencies | Engine: `faer`, `i_overlay`, `gltf`, `tobj`, `jagua-rs` (v0.2), `baby_shark` (not adopted in v0.1, D-024). Shell: `three`, `three-mesh-bvh`, Vite |
 | Storage | None server-side. Project file (JSON + embedded binary mesh) on the user's disk |
 | Testing | `cargo test`, `proptest`, `insta` (golden), `wasm-bindgen-test`; Vitest; Playwright |
 | Target platform | Evergreen desktop browsers (WASM, Web Worker); native CLI on Linux/macOS/Windows |
 | Project type | Rust workspace + pnpm workspace monorepo |
 | Performance goals | SC-005: ≤ 10 s seam-edit → preview at 50k tris in browser |
 | Constraints | Single-threaded WASM in MVP; deterministic output; offline; no telemetry |
-| Scale/scope | Input ≤ ~200k tris; flattening runs on a remeshed proxy ≤ ~30k tris [provisional, S2]. Finished-toy size: keychain to ~1 m longest dimension (spec FR-006); wearable/costume scale excluded |
+| Scale/scope | Input ≤ ~200k tris; flattening runs on the repaired mesh at input resolution, with no remeshed proxy (D-024) [provisional, S2]. Finished-toy size: keychain to ~1 m longest dimension (spec FR-006); wearable/costume scale excluded |
 
 ## Constitution Check
 
@@ -232,7 +232,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 ### Trade-offs accepted
 - Smaller engine contributor pool (Rust) in exchange for zero-install distribution and one engine everywhere.
 - No free seam-marking UI from Blender; we build seam drawing in Three.js.
-- Single-threaded WASM in MVP; performance budget met by remeshed flattening proxy.
+- Single-threaded WASM in MVP; the performance budget must be met on the repaired mesh, since there is no remeshed proxy (D-024).
 - No Spec Kit agent-context extension: `AGENTS.md` doesn't auto-list the current plan path; `.specify/feature.json` covers that.
 
 ### Open questions

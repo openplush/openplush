@@ -116,7 +116,7 @@ pub fn area_conserved(chart: &Chart<'_>, rel_tol: f64) -> Result<(), OracleFailu
         let (p, q, r) = (chart.xyz[a], chart.xyz[b], chart.xyz[c]);
         let face_3d = (q - p).cross(r - p).length() / 2.0;
         // A face with no 3D area makes the ratio meaningless, and 0 <= tol * 0 would pass.
-        if !(face_3d > 0.0) {
+        if face_3d.is_nan() || face_3d <= 0.0 {
             return Err(OracleFailure::Degenerate { face });
         }
         area_3d += face_3d;

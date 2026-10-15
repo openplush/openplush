@@ -90,7 +90,7 @@ Cancellation is cooperative: the worker checks between `step()` calls. A cancell
 type EngineErrorDto = {
   code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle,
                                     // EngineCrashed), defined in openplush-wasm's own error type so the TS
-                                    // generator sees it. EngineCrashed is raised by the host, never by Rust
+                                    // generator sees it. EngineCrashed is listed there for the generator only: the host raises it, never Rust
   message: string;                  // plain language, shown to the maker
   locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[];
                 charts?: number[]; chains?: number[]; components?: number[];

@@ -163,6 +163,29 @@ Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md)
   - It is not adoptable as a dependency: it is git-only, has no license field, pulls `rayon` unconditionally, and its defaults run on wall-clock time, which breaks Constitution V.
   - v0.2 writes its own deterministic placer over the jagua-rs core.
 
+### S5 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
+
+**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Proposed). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
+
+The spike wrote one A3 pattern page (a 400-vertex outline, the 50.00 mm square, and three labels) two ways: through `svg2pdf` 0.13, and directly with `pdf-writer` 0.15. Both ran natively and on wasm32. An independent pypdf interpreter measured the scale.
+
+- **Both are byte-identical between native and wasm32, and neither writes a date or file ID** [solid].
+- **Scale** [solid]:
+  - both produce exactly 50.0000 mm;
+  - `svg2pdf` does so only at `dpi: 96`; its default prints a `mm` SVG 4/3 too large, with no warning.
+- **Fonts** [solid]:
+  - `svg2pdf` silently drops text when it has no font;
+  - its `text` feature pulls in `fontdb` (filesystem and fontconfig access) and fails `cargo deny` advisories;
+  - no font crate with an allowlisted license exists, and `cargo deny` cannot see font-data licenses.
+- **WASM size over an empty module** [solid]:
+  - direct: +43.6 KB gzip;
+  - `svg2pdf` without its defaults: +256.7 KB;
+  - `svg2pdf` with its defaults: +1.06 MB.
+- **Tiling favours the direct route** [likely]: `svg2pdf::to_pdf` produces a single page.
+- **Text in v0.1**: standard-14 Helvetica, WinAnsi only, nothing embedded or fetched.
+  - T091 returns a typed error for any character outside WinAnsi.
+  - Non-Latin text would need an ADR (OFL) or an allowlisted font.
+
 ### S6 result — licenses (2026-10-14) ✅ closed
 
 **Every candidate dependency, and every crate in their combined dependency graph, passes the Constitution IX allowlist.** No ADR or replacement needed.

@@ -18,3 +18,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0003](0003-as-built-docs.md) | Once code lands, the code and `docs/` are the source of truth | Accepted |
 | [0004](0004-cli-argument-parsing.md) | Use `clap` to parse the CLI's arguments | Proposed |
 | [0005](0005-boundary-pinned-flattening.md) | Boundary-pinned flattening holds; the fallback stays a rare typed error and the dart signal is area-integrated compression | Proposed |
+| [0007](0007-layout-nesting-engine.md) | v0.2 nesting builds its own deterministic placer on a gate-clean `jagua-rs` core; `sparrow` is not a dependency; v0.1 layout is unchanged | Proposed |

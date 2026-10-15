@@ -72,3 +72,9 @@ fn a_name_that_could_leave_its_directory_is_refused() {
         );
     }
 }
+
+#[test]
+fn a_bad_name_message_shows_each_refused_character_once() {
+    let err = load(Kind::Mesh, "a/b").expect_err("a slash is refused");
+    assert!(err.to_string().contains(r"'/', '\', '.'"), "{err}");
+}

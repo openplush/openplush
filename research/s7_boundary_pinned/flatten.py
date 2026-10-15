@@ -390,6 +390,10 @@ class Stats:
     sd_mean: float  # 4.0 is isometric
     stretch_max: float  # largest singular value (1.0 = no stretch)
     compress_min: float  # smallest singular value (1.0 = no compression)
+    compress_p5: float  # smallest singular value below which 5% of the chart's area lies
+    compress_deficit: float  # area-weighted mean of max(0, 1 - smallest singular value)
+    stretch_excess: float  # area-weighted mean of max(0, largest singular value - 1)
+    outline_simple: bool  # final 2D boundary is counter-clockwise and never meets itself
     boundary_len_err_max: float  # max |l_2D / l_3D - 1| over boundary edges
     perimeter_err: float  # |P_2D / P_3D - 1|
     iterations: int
@@ -401,13 +405,16 @@ def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int
            termination: str = "-", grad_inf: float = float("nan")) -> Stats:
     J = _jacobians(geo, x)
     det = np.linalg.det(J)
-    fro = np.einsum("tij,tij->t", J, J)
-    root_p = np.sqrt(np.maximum(fro + 2 * np.abs(det), 0))
-    root_m = np.sqrt(np.maximum(fro - 2 * np.abs(det), 0))
-    s1, s2 = (root_p + root_m) / 2, (root_p - root_m) / 2
+    # SVD, not sqrt(fro -+ 2|det|): that difference cancels near isometry and leaves 1e-8 noise.
+    sigma = np.linalg.svd(J, compute_uv=False)
+    s1, s2 = sigma[:, 0], sigma[:, 1]
     energy, _ = sd_energy(geo, x)
     lengths_2d = _norm(x[np.roll(geo.loop, -1)] - x[geo.loop])
     n_flips = int(np.sum(det <= 0))
+    w = geo.area / geo.area.sum()
+    # Integrals over the chart converge under refinement; the single worst triangle does not.
+    order = np.argsort(s2, kind="stable")
+    p5 = float(s2[order][np.searchsorted(np.cumsum(w[order]), 0.05)])
     return Stats(
         status=status,
         init=init,
@@ -417,6 +424,10 @@ def _stats(geo: Geometry, x: np.ndarray, status: str, init: str, init_flips: int
         sd_mean=energy,
         stretch_max=float(s1.max()),
         compress_min=float(s2.min()),
+        compress_p5=p5,
+        compress_deficit=float(np.sum(w * np.maximum(0.0, 1 - s2))),
+        stretch_excess=float(np.sum(w * np.maximum(0.0, s1 - 1))),
+        outline_simple=polygon_is_simple(x[geo.loop]),
         boundary_len_err_max=float(np.abs(lengths_2d / geo.boundary_lengths - 1).max()),
         perimeter_err=float(abs(lengths_2d.sum() / geo.boundary_lengths.sum() - 1)),
         iterations=iterations,
@@ -436,6 +447,7 @@ class ChartResult:
     boundary_simple: bool
     reflex_corners: int  # boundary vertices turning inward in the pinned outline
     min_angle_deg: float  # smallest 3D corner angle: triangle quality of the input
+    max_cone_deg: float  # largest |angle defect| at an interior vertex: the sharpest cone inside the chart
     pinned: Stats
     free: Stats
 
@@ -494,8 +506,9 @@ def run_chart(chart) -> ChartResult:
         closure_ok=closure.success,
         closure_max_change_deg=float(np.rad2deg(closure.max_change)),
         boundary_simple=simple,
-        reflex_corners=int(np.sum(closure.kappa < 0)),
+        reflex_corners=int(np.sum(closure.kappa < -1e-9)),  # below 1e-9 rad is a straight corner
         min_angle_deg=float(np.degrees(geo.min_angle)),
+        max_cone_deg=float(np.rad2deg(np.abs(geo.gauss_interior).max())) if len(geo.interior) else 0.0,
         pinned=pinned,
         free=free,
     )

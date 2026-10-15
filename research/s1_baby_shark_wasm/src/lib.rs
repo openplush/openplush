@@ -179,8 +179,13 @@ where
     let mut faces = 0;
     for tri in mesh.faces() {
         for v in tri {
-            // A face referencing a vertex not listed by vertices() is a library bug.
-            h.write(*index.get(&v).unwrap_or(&u64::MAX));
+            // INVARIANT: every face vertex is listed by vertices(); a miss is a library bug.
+            #[allow(clippy::expect_used)]
+            h.write(
+                *index
+                    .get(&v)
+                    .expect("face references a vertex not in vertices()"),
+            );
         }
         faces += 1;
     }

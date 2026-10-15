@@ -105,6 +105,6 @@ Why not the others:
 ## More information
 
 * Evidence: [`research/s1_baby_shark_wasm/README.md`](../../research/s1_baby_shark_wasm/README.md) and [`results.md`](../../research/s1_baby_shark_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, and the size table.
-* Follow-ups for the lead's docs PR: D-007 status; the plan's Technical Context ("flattening runs on a remeshed proxy"); research R6 S1 result; tasks.md T001; data-model §3 last-resort row.
+* Follow-ups for the lead's docs PR: D-007 status; the plan's Technical Context ("flattening runs on a remeshed proxy"); research R6 S1 result; tasks.md T001 and T002 (the remeshed-proxy dial); data-model §3 last-resort row; plan.md Primary dependencies (`baby_shark` pending S1) and Trade-offs ("remeshed flattening proxy"); research.md's `[verify]` note on rayon via baby_shark.
 * Revisit when (a) `baby_shark` publishes opt-out features, (b) S2 reports SLIM wall time on raw-size charts, or (c) fixture runs show T080 convergence failures on poorly shaped input. If (b) or (c) arrives before (a), option 5 is the preferred fallback [speculative].
 * Botsch, Kobbelt, "A Remeshing Approach to Multiresolution Modeling" (SGP 2004), the algorithm `IncrementalRemesher` implements.

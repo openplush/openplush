@@ -8,14 +8,14 @@
 | Field | Value |
 |---|---|
 | Language/Version | Rust stable (MSRV pinned); TypeScript 5.x `strict` |
-| Primary dependencies | Engine: `faer`, `i_overlay`, `gltf`, `tobj`, `jagua-rs` (v0.2), `baby_shark` (preprocess, pending S1). Shell: `three`, `three-mesh-bvh`, Vite |
+| Primary dependencies | Engine: `faer`, `i_overlay`, `gltf`, `tobj`, `jagua-rs` (v0.2), `baby_shark` (not adopted in v0.1, D-024). Shell: `three`, `three-mesh-bvh`, Vite |
 | Storage | None server-side. Project file (JSON + embedded binary mesh) on the user's disk |
 | Testing | `cargo test`, `proptest`, `insta` (golden), `wasm-bindgen-test`; Vitest; Playwright |
 | Target platform | Evergreen desktop browsers (WASM, Web Worker); native CLI on Linux/macOS/Windows |
 | Project type | Rust workspace + pnpm workspace monorepo |
 | Performance goals | SC-005: ≤ 10 s seam-edit → preview at 50k tris in browser |
 | Constraints | Single-threaded WASM in MVP; deterministic output; offline; no telemetry |
-| Scale/scope | Input ≤ ~200k tris; flattening runs on a remeshed proxy ≤ ~30k tris [provisional, S2]. Finished-toy size: keychain to ~1 m longest dimension (spec FR-006); wearable/costume scale excluded |
+| Scale/scope | Input ≤ ~200k tris; flattening runs on the repaired mesh at input resolution, with no remeshed proxy (D-024) [provisional, S2]. Finished-toy size: keychain to ~1 m longest dimension (spec FR-006); wearable/costume scale excluded |
 
 ## Constitution Check
 
@@ -79,9 +79,10 @@ openplush/
 ├── apps/
 │   └── web/                         # Vite + TS + Three.js UI
 │
-├── fixtures/
-│   ├── meshes/                      # CC0/CC-BY models + LICENSES.md
+├── fixtures/                        # + LICENSES.md for every fixture, README.md (seam-set format)
+│   ├── meshes/                      # CC0/CC-BY models
 │   ├── defects/                     # one fixture per defect class (SC-007)
+│   ├── seams/                       # reference seam sets (JSON)
 │   └── golden/                      # expected SVG + metrics JSON per fixture
 ├── research/                        # Python notebooks — non-shipping reference impls
 ├── docs/                            # Diátaxis + adr/ (MADR)
@@ -209,7 +210,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 | 2026-10-12 | D-004 | Seams are non-destructive edge flags; charts are virtual cuts with provenance maps | Proposed |
 | 2026-10-12 | D-005 | Flattening: injective init → SLIM; ARAP as alternative energy | **Superseded by D-013** |
 | 2026-10-12 | D-006 | qew = optional maintainer tooling; not in engine, not required for contributors | Proposed |
-| 2026-10-12 | D-007 | threecrate and ONNX out of MVP; baby_shark for preprocessing pending S1 | Proposed |
+| 2026-10-12 | D-007 | threecrate and ONNX out of MVP; baby_shark for preprocessing pending S1 | Proposed; the baby_shark part resolved by D-024 |
 | 2026-10-12 | D-008 | PDF tiled export in MVP alongside SVG | Proposed |
 | 2026-10-12 | D-009 | Agent rules in `AGENTS.md` (root + `crates/` + `apps/`); `CLAUDE.md` files are one-line imports; `copilot-instructions.md` holds review priorities only; trivial-change lane exempt from task IDs | Proposed |
 | 2026-10-13 | D-010 | Project name **OpenPlush**: repo `openplush`, crate prefix `openplush-`, npm scope `@openplush` | Accepted |
@@ -226,11 +227,16 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 | 2026-10-14 | D-021 | **Polygons are triangulated at import; non-finite input is a located import error, not a repair.** A NaN/∞ coordinate fails import with `EngineError::NonFiniteInput`, naming every non-finite source vertex by its provenance (unused vertices included). Nothing is dropped: silently removing faces would be fixed-up geometry without the maker's confirmation (Constitution III, engine-api §1, FR-004). Resolves a contradiction: data-model §1 guaranteed a finite, triangulated `TriangleSoup`, while §3 step 0 had repair drop non-finite faces from it. Engine API contract to v0.4 | Accepted — review of #39 and #46 |
 | 2026-10-14 | D-022 | **A `Proposal` is a seam-set delta**, and the missing IDs and codes are defined (data-model §13a). Every engine-performable remedy (extra seams, darts, piece splits, crease seams, accepted 002 hints) is a seam edit, so one type covers them and accepting one is always "insert into the `SeamSet`". Proposals live in `openplush-seams` (their producer, per the crate DAG) and are re-exported by the pipeline. `ProposalId` is a u64 hash of the edit alone (no chart IDs), stable for one repaired mesh, sent as hex; applying one no longer offered is `ProposalNotOffered`. `WarningSet` orders by code string, so new codes never reorder a printed summary. `EngineError::Unsewable` is removed (nothing raised it; its reason type never existed). `StaleHandle` is a binding-level code. Engine API contract to v0.3 | Accepted — found while starting T028; revised in review of #47 |
 | 2026-10-14 | D-023 | **001 adopts [ADR 0003](../../docs/adr/0003-as-built-docs.md): once code lands, it and `docs/` are the source of truth.** Built sections of the contract and data model get an "As built" pointer and freeze as the record of intent; the first are contract sections 1 and 5 and data-model 13a's `ProposalId` and warning order. T168 stops writing `docs/reference/` at the end. Engine API contract to v0.5 (editorial) | Accepted — mentor review |
+| 2026-10-14 | D-024 | **No remeshing in v0.1 (S1).** `baby_shark` 0.3.12 runs on wasm32 but fails `cargo deny` and the boundary check, with no features to opt out; native-only would break byte-identity. Both targets flatten the repaired mesh; the voxel last resort is out of v0.1. Resolves D-007's "pending S1" | Proposed — [ADR 0001](../../docs/adr/0001-preprocessing.md) |
+| 2026-10-15 | D-025 | **D-013 holds on the fixture corpus (S7).** 0 closure and 0 injectivity failures in 36 runs; T082's fallback is a rare-path typed error plus a dart proposal, never pre-emptive splitting; the dart signal (T105) thresholds on area-integrated compression, not the worst triangle | Proposed — [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md) |
+| 2026-10-15 | D-026 | **Allowances are one `i_overlay` boolean on the `i64` engine, validated before and after (S3).** No panics and no wrong booleans on valid input across 10k fuzzed outlines; invalid input, sub-grid edges and chained booleans are silently wrong, so T085 validates, merges short edges, makes one call, checks the result into typed errors, and catches panics | Proposed — [ADR 0006](../../docs/adr/0006-allowance-construction.md) |
+| 2026-10-15 | D-027 | **v0.2 nesting is our own deterministic placer on a gate-clean `jagua-rs` core; `sparrow` is not a dependency (S4).** Rotation sets supported; +135 KB gzip; 1.1.0 fails the gates until upstream feature-gates `rayon`/`getrandom`/`web-time`; v0.1 layout unchanged | Proposed — [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) |
+| 2026-10-15 | D-028 | **T091 writes PDF directly with `pdf-writer`, labels in standard-14 Helvetica, embeds no fonts (S5).** `svg2pdf` is 4/3 too large at its default dpi and silently drops text without a font, and no allowlisted font exists | Proposed — [ADR 0008](../../docs/adr/0008-pdf-export.md) |
 
 ### Trade-offs accepted
 - Smaller engine contributor pool (Rust) in exchange for zero-install distribution and one engine everywhere.
 - No free seam-marking UI from Blender; we build seam drawing in Three.js.
-- Single-threaded WASM in MVP; performance budget met by remeshed flattening proxy.
+- Single-threaded WASM in MVP; the performance budget must be met on the repaired mesh, since there is no remeshed proxy (D-024).
 - No Spec Kit agent-context extension: `AGENTS.md` doesn't auto-list the current plan path; `.specify/feature.json` covers that.
 
 ### Open questions
@@ -238,7 +244,7 @@ Q3 closed: v0.1 is manual seams plus suggestions. Auto-seam generation moves to 
 Spec Q1–Q3 closed 2026-10-13 (D-012 … D-015). Remaining:
 
 - **Minor spec defaults still unanswered**, each with a default that applies if nobody decides: STL/PLY import (yes), PDF in v0.1 (yes), default seam allowance (6 mm metric / ¼ in US), pile-length multiple for the small-part warning (3×), stretch-difference threshold for the seam-mismatch warning (20 percentage points). All five are settings, not architecture — none blocks implementation.
-- **S7 (new)**: does boundary-pinned flattening (D-013) stay injective on the fixture corpus, and how often does it fail to close? If failures are common, the fallback is a shortest-dart proposal rather than relaxing parity — parity is now a hard contract.
+- ~~**S7**~~ *closed 2026-10-15 ([ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md)): no closure or injectivity failure on the corpus; the fallback stays a rare typed error.* Was: does boundary-pinned flattening (D-013) stay injective on the fixture corpus, and how often does it fail to close? If failures are common, the fallback is a shortest-dart proposal rather than relaxing parity — parity is now a hard contract.
 - Confirm Spec Kit's `sh` scripts run from Claude Code on Windows (Git Bash). If they don't, switch to `ps` (see CONTRIBUTING.md). *Partially answered 2026-10-13: `create-new-feature-branch.sh` and `check-prerequisites.sh` both run correctly under Git Bash.*
 - ~~`create-new-feature-branch.sh` branched feature 002 from `main` rather than from the current feature branch, which silently produced a working tree without 001's committed work. Decide whether to configure a base branch or document the `git merge --ff-only` fix-up step.~~ **Resolved 2026-10-14**: `main` is the trunk, so branching from it is correct. Spec Kit's `NNN-feature-slug` branch is renamed to the slice name before pushing (AGENTS.md, branch naming).
 - Verify on the first PR whether Copilot code review on github.com reads `AGENTS.md`; if not, the review priorities in `copilot-instructions.md` are the only rules it sees.

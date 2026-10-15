@@ -82,7 +82,7 @@ Order matters; each step records entries in `RepairReport`.
 | 6 | Components | Multiple connected components | Each processed independently. Components with area < 1% of total (or user choice) ⇒ candidate **detail parts** (eyes, noses, buttons) | Detail parts produce placement marks, not pieces (FR-005, FR-042) |
 | 7 | Holes | Boundary loops | Classify: user marks as *opening* (keep; hem allowance) or *accidental* (fill: Liepa 2003 minimal-area triangulation + fairing) | Openings are unsewn edges, not seams |
 | 8 | Self-intersections | BVH triangle-triangle tests | **Warn only.** Disk charts flatten regardless; intersecting limbs in 3D usually need separate pieces anyway | Suggest seams along intersection curves |
-| — | Last resort | Hopeless input | Opt-in voxel remesh via `baby_shark` (pending S1). Destroys UVs and sharp features → explicit warning | All seams/decals must be redrawn |
+| — | Last resort | Hopeless input | Not in v0.1 (D-024: `baby_shark` fails the dependency gates). If it returns: opt-in voxel remesh, which destroys UVs and sharp features → explicit warning | All seams/decals must be redrawn |
 
 ## 4. Seams, Charts, and Sewing Correspondence
 

@@ -79,7 +79,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 - **Option A — chosen (D-013)**: boundary lengths fixed to 3D lengths (BFF prescribes exactly this; Sawhney & Crane 2017) → exact parity, interior absorbs distortion.
 - **Option B — rejected**: SLIM/ARAP with a heavy boundary-length weight → small residual mismatch, reported as ease. Rejected because FR-023 now forbids handing the sewist a residual.
 
-**Risk this introduces** [verify — spike S7]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
+**Risk this introduces** [likely — S7 found no failure, see S7 result]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
 
 **Anisotropic fabric — out of scope (D-014)**: the obvious extension is to replace the identity target metric with a per-fabric tensor `M` (allowed stretch along warp vs. weft), alternating isotropic flatten → grain angle → anisotropic re-flatten. Spec FR-026 excludes it from this feature: per-direction stretch is recorded in the fabric profile and drives warnings (FR-058) only. Recorded here so a future feature does not have to rediscover the approach.
 
@@ -116,6 +116,106 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 | **S7** | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
 | S8 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
 
+### S1 result: baby_shark on wasm32 (2026-10-14) ✅ closed
+
+Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_shark_wasm/README.md). Decision: [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed).
+
+**It builds and runs on `wasm32-unknown-unknown`, byte-identical to native, but it can't be adopted as published** [solid]. `baby_shark` 0.3.12's isotropic remesher, quadric decimator and both voxel meshers ran under Node, and each output hash matched the native release build. Rayon does not panic on wasm32: `rayon-core` 1.13 falls back to the current thread.
+
+- **It fails two gates and has no features to opt out.**
+  - `rayon` is unconditional (direct, and through `faer` default features), so the `cargo deny` bans fail.
+  - On wasm32 it always pulls in `wasm-bindgen` and `getrandom` (`js`), and it compiles its own `#[wasm_bindgen]` exports, so boundary rule 1 fails.
+  - Licenses pass.
+  - Making it native-only fails the same gates (they resolve every target) and would break native/WASM byte-identity (Constitution V).
+- **A small upstream change would fix it** [solid for the harness]: make those three dependencies optional, turn off `faer`'s defaults, and make three call sites sequential. In the harness that passes `cargo deny` and keeps every hash unchanged.
+- **Library defects** [solid]:
+  - dual-contouring output is nondeterministic with more than one thread, and contains `todo!()`;
+  - decimation ignores its face floor;
+  - the decimation threshold is an absolute model-units² value;
+  - voxel output is an unwelded soup;
+  - there is no step or yield API.
+- **Implication**:
+  - both targets flatten the repaired mesh, so T080 cannot assume isotropic triangles;
+  - S2 must size charts at raw-input size;
+  - the §3 voxel last resort is out of v0.1;
+  - re-adopt only from a crates.io release that has opt-out features.
+
+### S3 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
+
+Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Proposed).
+
+- **No panics** [solid for the corpus].
+  - The corpus: 10,000 seeded near-degenerate outlines × 4 methods, plus six invalid inputs. The release and debug-assert builds gave byte-identical output.
+  - Issue 74 is very likely the outline `debug_assert!` that upstream PR #75 removed, which shipped in 9.0.1 [likely].
+- **No wrong booleans on valid input** [solid]. The construction makes one `i_overlay` call over the per-edge strips, miter/bevel wedges and fold guards. Against an independent convex-membership oracle, it never lost or gained area.
+- **Wrong output with no error** [solid] comes from three causes:
+  - a clockwise or bow-tie outline gives islands from the strips, and the built-in `outline` returns an empty result;
+  - edges shorter than the integer grid lose their allowance, by up to 6.9 mm;
+  - chaining two booleans leaves sub-grid slivers along folds.
+- **Precision** [solid]:
+  - `i64`, after merging edges shorter than 1e-6 × the diagonal: worst case 1.3e-10 mm;
+  - `i32`: up to 1.6e-6 mm short at plush scale;
+  - the built-in `outline`: takes only one distance, and its integer mode falls up to 2.6e-4 mm short.
+- **Determinism** [solid]: native and wasm32 are byte-identical. The construction needs only `+ − × ÷ sqrt`.
+- **What T085 must do:**
+  1. Validate the outline and the allowances before the call.
+  2. Merge sub-grid edges.
+  3. Make one `i64` call: `(outline ∪ strips ∪ wedges) − fold guards`.
+  4. Check the result: one simple contour, no holes, and fold guards clear of the outline. Each failure becomes a typed error: `AllowanceSplitsPiece`, `AllowanceEnclosesGap`, `AllowanceNotSimple` or `FoldConflict`.
+  5. Still catch panics at the stage boundary.
+- **Not yet measured** [verify, with fixtures]: how often real pieces hit an allowance conflict.
+- **Corner rule** (ADR 0006 changes data-model §7):
+  - corners are mitered, with a limit;
+  - beside a fold, the miter runs out to the fold line;
+  - corners sharper than about 29° are beveled;
+  - strips stay off the outer side of any zero-allowance edge.
+
+### S4 result: `jagua-rs` on wasm32, bundle size, rotation sets (2026-10-15) ✅ closed
+
+Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md). Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).
+
+- **Discrete rotation sets are first-class** [solid], via `jagua_rs::geometry::AllowedOrientations`:
+  - {0°} maps to `None`;
+  - {0°, 180°} maps to `Discrete([0, π])`;
+  - a nap-parallel mirror is reflect + π.
+  `Layout::place_item` checks neither the orientation nor collisions, so our placer must enforce both. There is no small-range form, so napped ±3° must be a discrete list.
+- **Runs on wasm32, bit-identical to native** [solid].
+- **As published, 1.1.0 fails the gates** [solid]:
+  - `rayon`, `getrandom` and `web-time` are unconditional, so `cargo deny` bans and boundary rule 1 fail;
+  - licenses, sources and advisories pass;
+  - feature-gating those three crates clears both gates with unchanged output (tested on a scratch patch).
+- **Bundle cost** [solid]: +364 KB raw and +135 KB gzip over an empty wasm-bindgen module, measured at opt-level z with LTO. **The v0.1 layout design is unchanged.**
+  - No `wasm-opt` figure yet [verify].
+  - About 16% of the cost is a second `i_overlay` major (4.5), alongside the engine's 9.
+- **Precision**: jagua-rs works in `f32` throughout. Layout must apply and verify the final transforms in `f64`.
+- **sparrow**:
+  - It builds and runs on wasm32, and with a work-counting terminator its output is bit-identical.
+  - It is not adoptable as a dependency: it is git-only, has no license field, pulls `rayon` unconditionally, and its defaults run on wall-clock time, which breaks Constitution V.
+  - v0.2 writes its own deterministic placer over the jagua-rs core.
+
+### S5 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
+
+**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Proposed). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
+
+The spike wrote one A3 pattern page (a 400-vertex outline, the 50.00 mm square, and three labels) two ways: through `svg2pdf` 0.13, and directly with `pdf-writer` 0.15. Both ran natively and on wasm32. An independent pypdf interpreter measured the scale.
+
+- **Both are byte-identical between native and wasm32, and neither writes a date or file ID** [solid].
+- **Scale** [solid]:
+  - both produce exactly 50.0000 mm;
+  - `svg2pdf` does so only at `dpi: 96`; its default prints a `mm` SVG 4/3 too large, with no warning.
+- **Fonts** [solid]:
+  - `svg2pdf` silently drops text when it has no font;
+  - its `text` feature pulls in `fontdb` (filesystem and fontconfig access) and fails `cargo deny` advisories;
+  - no font crate with an allowlisted license exists, and `cargo deny` cannot see font-data licenses.
+- **WASM size over an empty module** [solid]:
+  - direct: +43.6 KB gzip;
+  - `svg2pdf` without its defaults: +256.7 KB;
+  - `svg2pdf` with its defaults: +1.06 MB.
+- **Tiling favours the direct route** [likely]: `svg2pdf::to_pdf` produces a single page.
+- **Text in v0.1**: standard-14 Helvetica, WinAnsi only, nothing embedded or fetched.
+  - T091 returns a typed error for any character outside WinAnsi.
+  - Non-Latin text would need an ADR (OFL) or an allowlisted font.
+
 ### S6 result — licenses (2026-10-14) ✅ closed
 
 **Every candidate dependency, and every crate in their combined dependency graph, passes the Constitution IX allowlist.** No ADR or replacement needed.
@@ -145,15 +245,50 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 
 **Advisories (not part of T006)** [solid — `cargo deny check advisories` on the same graph, 2026-10-14]: four crates are flagged **unmaintained**, and there are no vulnerability advisories. `paste` (RUSTSEC-2024-0436, a proc-macro) via **`faer` 0.24 itself** (→ `gemm` 0.19), and again via `baby_shark` → `faer` 0.22 → `gemm` 0.18. Because `faer` is the v0.1 core solver, the PR that adopts it must carry a reasoned `ignore` for this advisory (a build-time proc-macro, no runtime code) or wait for an upstream fix. `rustybuzz` (RUSTSEC-2026-0206) and `ttf-parser` (RUSTSEC-2026-0192) via `svg2pdf` → `usvg`. `bincode` 1 (RUSTSEC-2025-0141) via `threecrate`. `deny.toml` will fail on each, so the PR that adopts the dependency decides: a replacement, or a targeted `[advisories] ignore = [{ id, reason }]`. The gate stays strict until then.
 
-**Also surfaced (not license issues; for S1/S4)** [verify]: `rayon` arrives via `baby_shark` 0.3.12 (which also brings its own `faer` 0.22 beside 0.24), `jagua-rs` 1.1.0 (default features), `sparrow`, and `threecrate`. `faer` 0.24 itself does not pull `rayon` with these features. Since `deny.toml` bans `rayon` (#26), each of these fails `cargo deny` until `rayon` is feature-gated off or the crate is replaced. That is a hard gate now, not a review item. `crates/AGENTS.md` forbids `rayon` on the WASM path, so S1 and S4 need to check whether those dependencies are optional.
+**Also surfaced (not license issues; for S1/S4)** [verify; the `baby_shark` part is confirmed by S1 above]: `rayon` arrives via `baby_shark` 0.3.12 (which also brings its own `faer` 0.22 beside 0.24), `jagua-rs` 1.1.0 (default features), `sparrow`, and `threecrate`. `faer` 0.24 itself does not pull `rayon` with these features. Since `deny.toml` bans `rayon` (#26), each of these fails `cargo deny` until `rayon` is feature-gated off or the crate is replaced. That is a hard gate now, not a review item. `crates/AGENTS.md` forbids `rayon` on the WASM path, so S1 and S4 need to check whether those dependencies are optional.
 
-### S7 preliminary result — synthetic charts (2026-10-14) ⏳ open until fixtures exist
+### S7 result — boundary-pinned flattening (2026-10-15) ✅ closed
 
-Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). 14 synthetic charts plus 5 stress charts, every one checked for 3D validity first. **Not the fixture corpus**, so T007 stays open.
+Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). Verdict: [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md).
 
-- **Closure is not the failure mode** [likely]. With lengths held exact, closing the BFF outline needed ≤ 0.05° of turning-angle change on every chart at 640–1,536 triangles (≤ 0.10° at 384), and the gap shrinks with mesh refinement. The "fails to close" risk below can be downgraded.
-- **Injectivity held on every valid chart** [likely], up to 6,144 triangles and 55 reflex corners, including caps covering 175° of the sphere. A cotan or uniform harmonic start was always injective. An earlier draft reported failures; they came from folded 3D input, not the method.
-- **Implication for T079–T082**: least-squares *angle* closure (dual-length weighted), never length closure. A cotan → uniform start in T080. Validate the 3D chart for folds upstream of T080 as a typed input error (needs its own task). An untangling rung only if fixture runs need one [speculative].
+**Corpus.** 36 runs of 28–1,728 triangles:
+- every chart of the three reference seam sets in `fixtures/`: 6 sphere gores, 2 capsule caps, a slit capsule tube and a cube net, so 10 charts;
+- the same 10 charts with seeded asymmetric jitter;
+- 16 runs at one and two refinement levels.
+
+The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) is still the stress evidence.
+
+- **Closure never failed** [likely].
+  - The committed charts close by symmetry alone.
+  - On the jittered variants the natural gap was at most 0.04% of the perimeter. Closing it with lengths held exact took at most 0.026° of turning-angle change, and the gap shrinks when the same polyhedron is refined.
+- **Injectivity never failed** [likely].
+  - Every run started from an injective cotan fill; the uniform fallback was never needed.
+  - Every run converged with zero flips.
+  - Every outline was simple, and no all-boundary triangle was inverted.
+- **The penalty follows curvature** [likely].
+
+  | Chart | SD pinned | SD free | Min compression pinned | Min compression free | Free solve's seam-length drift |
+  |---|---|---|---|---|---|
+  | Developable (tube, cube net) | 4.000 | 4.000 | — | — | — |
+  | 60° sphere gore | 4.02–4.03 | 4.00–4.01 | 0.88–0.91 | 0.92–0.96 | 5–8% |
+  | Hemisphere cap | 5.07–5.28 | 4.15–4.23 | 0.60–0.63 | 0.85–0.87 | 41–47% |
+
+  Developable charts have no penalty: they flatten to the exact net [solid].
+- **The dart signal must be area-integrated** [likely].
+  - Mean compression deficit settles under refinement. Unjittered cap: 37.3%, 36.5%, 36.3%. On a jittered polyhedron its steps shrink (cube: 0.53%, 0.44%, 0.40%).
+  - The single worst triangle's compression does not settle. It falls by a near-constant step per level near fixed cones (cube: 0.963, 0.957, 0.951), and from 0.145 to 0.051 on the synthetic stress caps.
+- **Implications**:
+  - T079: least-squares *angle* closure, never length closure.
+  - T080: a cotan start, falling back to uniform.
+  - T174: folded input is rejected upstream.
+  - T082: fires only on an actual failure, as a typed error plus a proposal; no pre-emptive splitting.
+  - T105: thresholds on area-integrated compression; per-triangle σ stays the heatmap's input.
+- **Limits** [solid]:
+  - three coarse procedural shapes with symmetric seams;
+  - no interior cone sharper than 20°;
+  - no scan or sculpt, and no human-drawn seams.
+
+  Re-run S7 when such a fixture lands. Any failure reopens ADR 0005.
 
 ## R7. Fabric Profiles (FR-050, D-018)
 

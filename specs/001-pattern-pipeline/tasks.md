@@ -30,14 +30,14 @@ Small config and scaffolding tasks sharing one concern:
 | `chore/ci-engine` | T013 |
 | `chore/boundary-check` | T016 — alone, see *Isolate these* |
 | `chore/ci-wasm-shell` | T014, T015 |
-| `chore/ci-determinism-golden` | T017, T018, T042 |
+| `chore/ci-determinism-golden` | T017, T018 (T042 landed alone as `chore/determinism-lint`: T017 and T018 have nothing to check until export, the CLI fixture runs and the first `insta` snapshot exist) |
 | `chore/repo-governance` | T019, T020, T021 |
 | `chore/clippy-boundary-lints` | T172 (landed as #33) |
 | `chore/check-script` | T173 (landed as #34) |
 | `001/25-T028-engine-error` (#57) | T028 |
 | `001/26-T029-warning-remedy` (#58), stacked on 25 | T029, T030 |
 | `001/27-T031-staged-result` (#59), stacked on 26 | T031 |
-| `001/NN-T032-testkit` | T032, T033, T034 |
+| `001/NN-T032-testkit` | T032, T033, T034 (landed as `001/33-T032-fixture-loader` and `001/34-T034-oracles`; T033 waits for the first SVG or metrics output to compare) |
 | `001/NN-T050-obj-import` | T050, T053 |
 | `001/NN-T055-validators` | T055, T056, T057 |
 
@@ -66,7 +66,7 @@ Not because they are large, but because their blast radius is:
 
 | Task | Why |
 |---|---|
-| **T079** boundary prescription | D-013. The whole pattern stage rests on it, and S7 has not verified it stays injective |
+| **T079** boundary prescription | D-013. S7 found no failure on the corpus (ADR 0005), but it is still the decision the whole pattern stage rests on |
 | **T067** `into_manifold` typestate gate | The one thing preventing unrepaired geometry from reaching the flattener |
 | **T087** parity assertion | The last line of defence against the failure this project exists to prevent |
 | **T016** boundary check script | Constitution I's only enforcement; if it is wrong, the boundary is decorative |
@@ -88,13 +88,13 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 
 **Purpose**: Eight questions in [research.md R6](./research.md) have load-bearing answers. Each either confirms an architectural choice or forces a change before code depends on it.
 
-- [ ] T001 [P] **S1** — Does `baby_shark` build and run on `wasm32-unknown-unknown`? Record in `docs/adr/0001-preprocessing.md`. If no: isotropic remeshing becomes native-only and WASM flattening runs on the raw mesh, which changes the conditioning the interior solve (T080) can assume. Box: 0.5 day
-- [ ] T002 [P] **S2** — SLIM plus `faer` on a 50k-triangle chart in WASM: wall time per iteration, native vs. browser. Feeds SC-005's 10 s budget. If the budget is missed, the remeshed-proxy size in the plan's Technical Context is the dial. Box: 2 days
-- [ ] T003 [P] **S3** — `i_overlay` offset robustness: fuzz 10k random valid outlines with mixed per-edge allowances; catalogue panics (upstream issue 74). Determines how defensive the allowance construction (T085) must be. Box: 1 day
-- [ ] T004 [P] **S4** — `jagua-rs` WASM bundle size and discrete rotation-set support. A bundle-size surprise changes the v0.1 layout design even though nesting is v0.2. Box: 0.5 day
-- [ ] T005 [P] **S5** — `svg2pdf` under WASM vs. writing PDF directly. Decides the approach for T091. Box: 0.5 day
+- [x] T001 [P] **S1** — Does `baby_shark` build and run on `wasm32-unknown-unknown`? Record in `docs/adr/0001-preprocessing.md`. If no: isotropic remeshing becomes native-only and WASM flattening runs on the raw mesh, which changes the conditioning the interior solve (T080) can assume. Box: 0.5 day *2026-10-14: answered in [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed) and `research/s1_baby_shark_wasm/` (`001/30-T001-s1-baby-shark-wasm`). Builds and runs on wasm32, byte-identical to native, but 0.3.12 fails `cargo deny` (rayon) and the boundary check (wasm-bindgen, getrandom) with no features to opt out, and native-only would fail the same gates. Neither target remeshes; T080 conditions on the repaired mesh, and S2 must size charts at raw input*
+- [ ] T002 [P] **S2** — SLIM plus `faer` on a 50k-triangle chart in WASM: wall time per iteration, native vs. browser. Feeds SC-005's 10 s budget. If the budget is missed, the remeshed-proxy size in the plan's Technical Context is the dial. Box: 2 days. *2026-10-14: there is no remeshed proxy (D-024, S1), so S2 measures charts at input size; a missed budget goes back to the maintainer instead of turning a dial*
+- [x] T003 [P] **S3** — `i_overlay` offset robustness: fuzz 10k random valid outlines with mixed per-edge allowances; catalogue panics (upstream issue 74). Determines how defensive the allowance construction (T085) must be. Box: 1 day *2026-10-15: answered in [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Proposed) and `research/s3_i_overlay_fuzz/` (#81). No panics and no wrong booleans on valid input; invalid input, sub-grid edges and chained booleans are silently wrong, so T085 validates input, merges short edges, makes one `i64` call with fold guards, checks the result into typed errors, and catches panics*
+- [x] T004 [P] **S4** — `jagua-rs` WASM bundle size and discrete rotation-set support. A bundle-size surprise changes the v0.1 layout design even though nesting is v0.2. Box: 0.5 day *2026-10-15: answered in [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed) and `research/s4_jagua_rs_wasm/` (#79). Rotation sets {0°}/{0°,180°} and mirror axes supported; bit-identical native vs wasm32; +364 KB raw / +135 KB gzip, so v0.1 layout design unchanged. 1.1.0 fails `cargo deny` and the boundary check until upstream feature-gates `rayon`/`getrandom`/`web-time`; `sparrow` is not adoptable as a dependency*
+- [x] T005 [P] **S5** — `svg2pdf` under WASM vs. writing PDF directly. Decides the approach for T091. Box: 0.5 day *2026-10-15: answered in [ADR 0008](../../docs/adr/0008-pdf-export.md) (Proposed) and `research/s5_svg2pdf_wasm/` (#80). T091 writes the PDF directly with `pdf-writer` 0.15 and labels in standard-14 Helvetica with no embedded font; `svg2pdf` is not adopted (4/3 scale trap at its default dpi, silent text loss, no allowlisted font, +213 KB gzip). T091 returns a typed error for a label outside WinAnsi*
 - [x] T006 [P] **S6** — Confirm licenses for `faer`, `i_overlay`, `sparrow`, `svg2pdf`, `threecrate`. Any non-allowlist result needs an ADR or a replacement (Constitution IX). Box: 0.5 day. **Done 2026-10-14: all pass; `sparrow` needs git-source + clarify entries before v0.2 — [research S6 result](./research.md#s6-result--licenses-2026-10-14--closed)**
-- [ ] T007 **S7** — **Boundary-pinned flattening (D-013).** On every fixture: how often do prescribed boundary lengths fail to close, and does the result stay injective? Measure the interior-distortion penalty against free-boundary SLIM. Parity is a hard contract, so a bad result changes how aggressive the fallback (T082) must be, never the contract. Highest-risk spike in the list: it tests the decision the whole pattern stage rests on. Box: 2 days. **Preliminary 2026-10-14, still open:** synthetic prototype in `research/s7_boundary_pinned/`; closure and injectivity both held on every valid synthetic chart; folded 3D input is the real hazard — [research S7 preliminary](./research.md#s7-preliminary-result--synthetic-charts-2026-10-14--open-until-fixtures-exist). Remaining: run it on the fixture corpus
+- [x] T007 **S7** — **Boundary-pinned flattening (D-013).** On every fixture: how often do prescribed boundary lengths fail to close, and does the result stay injective? Measure the interior-distortion penalty against free-boundary SLIM. Parity is a hard contract, so a bad result changes how aggressive the fallback (T082) must be, never the contract. Highest-risk spike in the list: it tests the decision the whole pattern stage rests on. Box: 2 days. **Done 2026-10-15:** 36 runs (the 10 fixture charts, the same 10 jittered, 16 refined): 0 closure failures, 0 injectivity failures. Pinning costs nothing on developable charts and moves curvature into interior compression (hemisphere cap: 0.61 pinned vs 0.87 free, while the free solve drifts seam lengths 41–47%). T082 is a rare-path typed error; T105 thresholds on area-integrated compression — [research S7 result](./research.md#s7-result--boundary-pinned-flattening-2026-10-15--closed), [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md). Branches `001/35-T007-s7-fixture-corpus` (#77, loader and cut), `001/38-T007-s7-fixture-run` (#78, run, measures, ADR)
 - [ ] T008 [P] **S8** — Get the seven fabric preset value sets in research R7 reviewed by someone who sews with these fabrics, or replace them from supplier spec sheets. Every number is currently a guess. Box: 0.5 day plus outside review
 
 **Checkpoint**: S7 and S6 must be answered before Phase 3. S1 through S5 and S8 may run alongside Phases 1 and 2.
@@ -141,6 +141,7 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 ### Error and warning channels
 
 - [x] T175 The element IDs and proposal types of data-model §13a, **types only** (no algorithms), each in its owning crate so T028–T031 can name them: `ComponentId` in `openplush-mesh`; `SeamKind`, `ChartId`, `SeamChainId`, `ChartFailure`, `Proposal`, `ProposalKind`, `SeamReason`, `ProposalId` (with its FNV-1a derivation) in `openplush-seams`; `PieceId` in `openplush-pattern`; `Format` in `openplush-io`. One PR per crate: `001/21-T175-seams-types` (#49), `001/22-T175-component-id` (#50), `001/23-T175-piece-id` (#51), `001/24-T175-import-format` (#52). Test first: `ProposalId` is stable under unrelated renumbering and matches independently computed FNV-1a vectors, one per kind byte and per seam-kind byte, plus a multi-byte edge index to pin little-endian. *Added 2026-10-14: T028 referenced Phase 3 types (T069's `SeamKind`, charts, pieces), so Phase 2 could not compile without them* — *merged in #49, #50, #51, #52*
+  - *2026-10-14 review follow-up, no task ID:* `ProposalId::from_hex` returns `SeamsError`, which `openplush-pipeline` did not re-export, so a shell could not name the error. `001/28-T175-seams-error-reexport` (#66) re-exports it and marks it `#[non_exhaustive]`
 - [x] T028 `crates/openplush-pipeline/src/error.rs` — `EngineError` per contracts/engine-api.md section 5, every variant carrying a location — *merged in #57*
 - [x] T029 `crates/openplush-pipeline/src/warning/mod.rs` — `WarningSet`, `Warning`, and `Remedy` as an **enum** of `Actionable` and `Advisory`, never `Option<Proposal>`. FR-065 is enforced by the type: a warning that explains nothing must not be constructible — *merged in #58*
 - [x] T030 `crates/openplush-pipeline/src/warning/tests.rs` — `WarningSet` ordering is total (code string, target, remedy, explanation; data-model §13a) and independent of insertion order (Constitution V). *2026-10-14: a unit test until the first shipped `WarningCode` exists (none ship yet; the test uses `#[cfg(test)]` codes an integration test cannot see); it moves to `tests/warning_determinism.rs` with that code* — *merged in #58*
@@ -148,20 +149,20 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 
 ### Test machinery and fixtures
 
-- [ ] T032 `crates/openplush-testkit/src/fixtures.rs` — fixture loader by name
-- [ ] T033 [P] `crates/openplush-testkit/src/golden.rs` — `insta`-based golden compare for SVG and metrics JSON
-- [ ] T034 [P] `crates/openplush-testkit/src/oracles.rs` — the independent oracles Constitution IV demands: developable surfaces flatten with distortion near zero, injectivity, area conservation, seam-length parity
-- [ ] T035 [P] `fixtures/meshes/` — capsule, cube, sphere, plus `LICENSES.md`. CC0 or CC-BY only
-- [ ] T036 [P] `fixtures/defects/` — one model per defect class in data-model section 3: non-manifold edge, bowtie vertex, flipped normals, zero-area face, duplicate face, hole, unwelded glTF split-vertex export, self-intersection, multi-component. **SC-007 measures against exactly this directory**, so a missing class is a silently unmeasured requirement
-- [ ] T037 [P] `fixtures/seams/` — reference seam sets as JSON so pattern tests need no UI
+- [x] T032 `crates/openplush-testkit/src/fixtures.rs` — fixture loader by name — *merged in #74*
+- [ ] T033 [P] `crates/openplush-testkit/src/golden.rs` — `insta`-based golden compare for SVG and metrics JSON *2026-10-15: deferred until the first SVG or metrics output exists; a golden compare with nothing to compare would snapshot synthetic data*
+- [x] T034 [P] `crates/openplush-testkit/src/oracles.rs` — the independent oracles Constitution IV demands: developable surfaces flatten with distortion near zero, injectivity, area conservation, seam-length parity — *merged in #75 (chart oracles) and #76 (outline and parity oracles)*
+- [x] T035 [P] `fixtures/meshes/` — capsule, cube, sphere, plus `LICENSES.md`. CC0 or CC-BY only. *2026-10-14: `LICENSES.md` sits at `fixtures/LICENSES.md`, covering `defects/` and `seams/` as well; the fixtures are generated by `research/fixtures_gen/` (`001/29-T035-T037-fixtures`)* — *merged in #71*
+- [x] T036 [P] `fixtures/defects/` — one model per defect class in data-model section 3: non-manifold edge, bowtie vertex, flipped normals, zero-area face, duplicate face, hole, unwelded glTF split-vertex export, self-intersection, multi-component. **SC-007 measures against exactly this directory**, so a missing class is a silently unmeasured requirement — *merged in #71*
+- [x] T037 [P] `fixtures/seams/` — reference seam sets as JSON so pattern tests need no UI — *merged in #71*
 
 ### Shell and binding skeletons
 
-- [ ] T038 `bindings/openplush-cli` — `clap` skeleton with the subcommand surface from quickstart.md
-- [ ] T039 [P] `bindings/openplush-wasm` — `wasm-bindgen` facade skeleton
+- [x] T038 `bindings/openplush-cli` — `clap` skeleton with the subcommand surface from quickstart.md — *merged in #68*
+- [x] T039 [P] `bindings/openplush-wasm` — `wasm-bindgen` facade skeleton — *merged in #69 (skeleton: builds as a cdylib, no exports yet)*
 - [ ] T040 [P] `packages/engine-client` — worker host, typed protocol, and a **mock worker** implementing contracts/worker-protocol.md so shell tests need no WASM build
 - [ ] T041 [P] `scripts/gen-ts-types.sh` — generate TypeScript types from the Rust protocol definitions; CI fails on a diff, so protocol drift breaks the build rather than the pattern
-- [ ] T042 CI determinism lint — ban `HashMap` and `HashSet` iteration and unstable sorts on output-affecting paths (Constitution V), via clippy `disallowed_methods` plus a reviewed allowlist
+- [x] T042 CI determinism lint — ban `HashMap` and `HashSet` iteration and unstable sorts on output-affecting paths (Constitution V), via clippy `disallowed_methods` plus a reviewed allowlist — *merged in #70; follow-up #73*
 
 **Checkpoint**: foundation ready. US1 can start immediately; the other stories build on its stages.
 
@@ -232,13 +233,13 @@ This phase is large because US1 *is* the product. Every other story decorates th
 ### Pattern, layout, export (FR-030, FR-031, FR-060, FR-061)
 
 - [ ] T084 [US1] `crates/openplush-pattern/src/fabric.rs` — the `Fabric` entity from data-model section 6a and the seven presets from research R7, shipped as data. Derived values (rotation set, mirrored printing, pile-scaled allowance) are computed, never stored
-- [ ] T085 [US1] `crates/openplush-pattern/src/allowance.rs` — per-edge allowance as a union of per-segment strips via `i_overlay`, not a single-distance offset, because seam, opening, and hem allowances differ along one outline (FR-030). Defensiveness level set by S3 (T003)
+- [ ] T085 [US1] `crates/openplush-pattern/src/allowance.rs` — per-edge allowance as a union of per-segment strips via `i_overlay`, not a single-distance offset, because seam, opening, and hem allowances differ along one outline (FR-030). Defensiveness level set by S3 (T003): [ADR 0006](../../docs/adr/0006-allowance-construction.md)
 - [ ] T086 [US1] `crates/openplush-pattern/src/lines.rs` — sewing line and cut line drawn distinctly (FR-031)
 - [ ] T087 [US1] `crates/openplush-pattern/src/parity.rs` — assert parity within max(1.0 mm, 0.5%) and return `EngineError::SeamParity` otherwise. Should be unreachable; it exists because a silently mismatched seam is the failure Constitution III calls worse than a crash
 - [ ] T088 [US1] `crates/openplush-layout/src/shelf.rs` — simple shelf packing for v0.1 (optimised nesting is v0.2, FR-062)
 - [ ] T089 [US1] `crates/openplush-layout/src/pages.rs` — tile for Letter and A4 with overlap, registration marks, page map, and a scale-check square on every page (FR-061)
 - [ ] T090 [US1] `crates/openplush-export/src/svg.rs` — SVG at true scale, document dimensions in millimetres, 1 user unit = 1 mm (FR-060)
-- [ ] T091 [US1] `crates/openplush-export/src/pdf.rs` — tiled PDF, approach chosen by S5 (T005). Browsers print SVG at unreliable scale, which is why PDF is in v0.1 at all
+- [ ] T091 [US1] `crates/openplush-export/src/pdf.rs` — tiled PDF, approach chosen by S5 (T005): direct `pdf-writer`, [ADR 0008](../../docs/adr/0008-pdf-export.md). Browsers print SVG at unreliable scale, which is why PDF is in v0.1 at all
 - [ ] T092 [US1] `crates/openplush-pipeline/src/stages.rs` — wire every stage; memoise by content hash so a seam edit re-runs chart and flatten only for affected charts (FR-014), and a scale or shrink change re-runs pattern onward only
 - [ ] T093 [US1] `bindings/openplush-cli/src/commands/` — `validate`, `repair`, and `pattern` subcommands exactly as quickstart.md documents (Constitution II)
 

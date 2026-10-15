@@ -424,6 +424,11 @@ dependencies = [
 [[package]]
 name = "openplush-testkit"
 version = "0.0.0"
+dependencies = [
+ "openplush-geom",
+ "openplush-mesh",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-wasm"

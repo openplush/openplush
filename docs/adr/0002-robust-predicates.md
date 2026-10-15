@@ -40,4 +40,4 @@ Chosen option: **`robust`**. It is a direct port of Shewchuk's public-domain ref
 
 ## More information
 
-Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates" (1997). Kettner, Mehlhorn, Pion, Schirra, Yap, "Classroom examples of robustness problems in geometric computations" (2008). ADR 0001 is reserved for the S1 preprocessing decision (T001).
+Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates" (1997). Kettner, Mehlhorn, Pion, Schirra, Yap, "Classroom examples of robustness problems in geometric computations" (2008).

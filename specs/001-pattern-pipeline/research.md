@@ -140,6 +140,29 @@ Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_
   - the §3 voxel last resort is out of v0.1;
   - re-adopt only from a crates.io release that has opt-out features.
 
+### S4 result: `jagua-rs` on wasm32, bundle size, rotation sets (2026-10-15) ✅ closed
+
+Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md). Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).
+
+- **Discrete rotation sets are first-class** [solid], via `jagua_rs::geometry::AllowedOrientations`:
+  - {0°} maps to `None`;
+  - {0°, 180°} maps to `Discrete([0, π])`;
+  - a nap-parallel mirror is reflect + π.
+  `Layout::place_item` checks neither the orientation nor collisions, so our placer must enforce both. There is no small-range form, so napped ±3° must be a discrete list.
+- **Runs on wasm32, bit-identical to native** [solid].
+- **As published, 1.1.0 fails the gates** [solid]:
+  - `rayon`, `getrandom` and `web-time` are unconditional, so `cargo deny` bans and boundary rule 1 fail;
+  - licenses, sources and advisories pass;
+  - feature-gating those three crates clears both gates with unchanged output (tested on a scratch patch).
+- **Bundle cost** [solid]: +364 KB raw and +135 KB gzip over an empty wasm-bindgen module, measured at opt-level z with LTO. **The v0.1 layout design is unchanged.**
+  - No `wasm-opt` figure yet [verify].
+  - About 16% of the cost is a second `i_overlay` major (4.5), alongside the engine's 9.
+- **Precision**: jagua-rs works in `f32` throughout. Layout must apply and verify the final transforms in `f64`.
+- **sparrow**:
+  - It builds and runs on wasm32, and with a work-counting terminator its output is bit-identical.
+  - It is not adoptable as a dependency: it is git-only, has no license field, pulls `rayon` unconditionally, and its defaults run on wall-clock time, which breaks Constitution V.
+  - v0.2 writes its own deterministic placer over the jagua-rs core.
+
 ### S6 result — licenses (2026-10-14) ✅ closed
 
 **Every candidate dependency, and every crate in their combined dependency graph, passes the Constitution IX allowlist.** No ADR or replacement needed.

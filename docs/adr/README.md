@@ -17,3 +17,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0002](0002-robust-predicates.md) | Use the `robust` crate for exact geometric predicates | Accepted |
 | [0003](0003-as-built-docs.md) | Once code lands, the code and `docs/` are the source of truth | Accepted |
 | [0004](0004-cli-argument-parsing.md) | Use `clap` to parse the CLI's arguments | Proposed |
+| [0008](0008-pdf-export.md) | Write the tiled PDF directly with `pdf-writer`; label with standard-14 Helvetica, embed no fonts | Proposed |

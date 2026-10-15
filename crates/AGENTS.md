@@ -6,7 +6,7 @@ Applies in addition to the root `AGENTS.md`.
 | Crate | Owns |
 |---|---|
 | `openplush-geom` | f64 vectors, robust predicates, the tolerance policy (`epsilon`), millimetre units |
-| `openplush-mesh` | `TriangleSoup`, validation, repair, half-edge `ManifoldMesh`, and `id_newtype!`, which generates the `u32` ID newtypes |
+| `openplush-mesh` | `TriangleSoup`, validation, repair, half-edge `ManifoldMesh`, and `id_newtype!`, which defines `u32` ID newtypes |
 | `openplush-io` | bytes → `TriangleSoup` (OBJ, glTF, STL, PLY) |
 | `openplush-seams` | `SeamSet`, cut-graph completion, darts, symmetry |
 | `openplush-fields` | curvature, nap/grain direction fields |

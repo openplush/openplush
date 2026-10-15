@@ -33,4 +33,4 @@ Values checked while parsing:
 | 0 | Success. Today only `--help` and `--version` (prints `openplush-cli <version>`) |
 | 1 | The engine refused, or the stage is not built yet. The reason is on stderr |
 | 2 | Usage error: an unknown flag or value, or a missing required argument. `clap` prints the usage |
-| 101 | The engine panicked. A panic is a bug, never a response to bad input ([ADR 0009](../adr/0009-wasm-panic-is-a-worker-crash.md)); please report it with the message from stderr |
+| 101 | The engine panicked: Rust's default panic exit, which holds while no build profile sets `panic = "abort"`. A panic is a bug, never a response to bad input ([ADR 0009](../adr/0009-wasm-panic-is-a-worker-crash.md)); please report it with the message from stderr |

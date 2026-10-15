@@ -17,7 +17,7 @@ T003 (spike S3) asks how robust that is, and so how defensive T085 (`openplush-p
 * Constitution III: a violated invariant is a typed error, never quietly wrong output. The post-pattern invariant is "cut outline is a simple polygon".
 * Constitution V: byte-identical output, native and WASM.
 * Constitution IX and `deny.toml`: allowlisted licenses; no `rayon`.
-* `crates/AGENTS.md`: no panics on user-derived data, and panics never cross into JS.
+* `crates/AGENTS.md`: no panics on user-derived data; a panic cannot be caught on wasm32 (WASM constraints).
 * Physical tolerance: allowance is measured in mm. A plush maker cuts to about 0.5 mm, so anything below 1e-3 mm is invisible.
 
 ## Considered options
@@ -64,7 +64,7 @@ What S3 found (10,000 seeded cases, near-degenerate by design):
    * a fold guard that reaches into the outline → `FoldConflict`.
 
    This checks the output with the engine's own exact predicates. It is O(n²) on cut-line vertices at most, and a sweep if profiling asks for one.
-7. **Catch panics at the stage boundary** anyway, and convert them to `AllowanceFailed { piece }`. The fuzz found none, but the library has `panic!` and `expect` on internal paths (the cross solver, outline section normalisation) [solid that they exist; speculative that real input reaches them].
+7. **Do not catch panics.** The fuzz found none, but the library has `panic!` and `expect` on internal paths (the cross solver, outline section normalisation) [solid that they exist; speculative that real input reaches them]. Steps 1–6 keep input off those paths. A panic that still happens cannot be caught on wasm32, so catching it natively would make the targets disagree; it is a crash on both ([ADR 0009](0009-wasm-panic-is-a-worker-crash.md)). *Amended 2026-10-15, before acceptance: this step previously said to catch panics and convert them to `AllowanceFailed { piece }`.*
 8. **Keep the fuzz**. Port the oracle and a 1,000-case seeded subset into `openplush-pattern`'s property tests (`crates/AGENTS.md`: fixed seeds; failing seeds become regression cases).
 
 ### Consequences

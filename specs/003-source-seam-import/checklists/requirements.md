@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,7 +31,7 @@
 
 ## Notes
 
-**Status: 15/16 passing.** One open marker: FR-050, re-importing into a project that already has seams or regions.
+**Status: 16/16 passing.** FR-050 closed 2026-10-16: Replace or Merge, chosen per import with the difference shown first (FR-050 to FR-052).
 
 - OBJ and glTF are named because feature 001 already fixes them as the supported formats; the spec does not say how either encodes UVs or materials.
 - "Typed error" in FR-011 is the constitution's term (Principle III), not a technology choice.

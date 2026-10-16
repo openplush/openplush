@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-16
 
-**Status**: Draft
+**Status**: Draft — clarifications closed 2026-10-16
 
 **Input**: User description: "Import seams and fabric regions from the source model. When a maker imports an OBJ or glTF model that was UV-unwrapped and material-assigned in a modelling tool (e.g. Blender), the tool reads the model's UV cuts (edges whose two sides carry different texture coordinates) and material boundaries and offers them as seams and fabric regions. Decisions already made by the maintainer: (1) UV cuts become ordinary seams; an imported UV cut never becomes a dart. (2) A UV cut that dead-ends inside the surface is an error the maker fixes in the source tool — never silently dropped and never converted to a dart. (3) If the imported seams leave a piece that cannot lie flat, the engine computes the minimal extra seams and presents them already highlighted in the import preview with a single 'accept all' action; nothing is applied without the maker's acceptance (Constitution Principle VII). (4) Every material becomes a fabric region; region boundaries become seams. A material whose name matches no fabric profile gets a new profile with default properties, named after the material, listed in the import report and editable. (5) Imported seams and regions are shown as a preview the maker accepts or declines; after acceptance they behave exactly like hand-drawn seams and painted regions. Out of scope: reading Blender's native seam flags or .blend files, the Blender add-on, using the source UV layout as the flat pattern, automatic seam layout."
 
@@ -20,6 +20,7 @@ Builds on feature 001 (`specs/001-pattern-pipeline/`): import, repair, seam draw
 - Q: What happens to a UV cut that ends inside the surface instead of separating it? → A: An error. The maker fixes it in the modelling tool. It is never dropped and never converted to a dart.
 - Q: If the imported seams leave a piece that cannot lie flat, does the engine fix it on its own? → A: The engine computes the minimal extra seams and shows them already highlighted in the import preview, with one "accept all" action. They are still proposals until the maker accepts them (Constitution VII).
 - Q: What happens to a material whose name matches no fabric profile? → A: A new profile with default properties is created, named after the material, listed in the import report, and editable.
+- Q: When a model is imported into a project that already has seams or regions, what happens to them? → A: The maker chooses Replace or Merge in the import preview each time, seeing the difference first. Neither is applied silently.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -153,7 +154,9 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 
 #### Re-import
 
-- **FR-050**: When a model is imported into a project that already has seams or regions, [NEEDS CLARIFICATION: do imported seams replace the existing ones, merge with them, or wait until the maker chooses either per import?]
+- **FR-050**: When a model is imported into a project that already has seams or regions, the import preview asks the maker to choose, for that import, between **Replace** (the imported seams and regions take the place of all existing ones) and **Merge** (imported seams and regions are added to the existing ones; an imported seam on an edge that is already a seam is not duplicated). Neither is preselected.
+- **FR-051**: Before the maker commits either choice, the preview shows the difference against the project: seams and regions that would be added, and, for Replace, those that would be removed. Hand-drawn seams that Replace would remove are called out by count.
+- **FR-052**: Replace and Merge are each a single undoable step, and declining leaves the project unchanged.
 
 #### Platform
 
@@ -167,6 +170,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - **Material Boundary**: An edge between two differently-assigned materials.
 - **Import Proposal**: The set of imported seams, imported regions, new fabric profiles, and extra seams awaiting the maker's decision.
 - **Dead-End Cut**: An imported seam endpoint inside the surface that touches no other seam. It is the reason seam import fails.
+- **Re-import Choice**: The maker's per-import decision to replace or merge with existing seams and regions, with the difference shown before it is applied.
 - **Import Report**: What was found and proposed. It records which UV set was read, how many seams came from each source, regions and their matched or new profiles, extra seams, repair-filled areas and the region each joined, and any errors with their locations.
 
 ## Success Criteria *(mandatory)*

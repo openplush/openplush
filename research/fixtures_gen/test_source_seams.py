@@ -1,0 +1,166 @@
+"""Oracles for the source-seam fixtures: UV-cut models written the way Blender's exporters write them.
+
+Run: python3 -m unittest -v   (from this directory)
+Reads the committed files only and shares no code with generate.py or source_seams.py.
+"""
+
+import json
+import struct
+import unittest
+from pathlib import Path
+
+from test_fixtures import FIXTURES, Face, Vec, array, edges_of, exact_int, field, read_seam_set
+
+UV = tuple[float, float]
+Corner = tuple[int, UV]  # (OBJ vertex index, UV)
+
+SOURCE = FIXTURES / "meshes" / "source-seams"
+UV_TOL = 1e-6  # the OBJ prints 6 decimals; the glTF holds f32, which is finer than that at these magnitudes
+POS_TOL = 1e-4  # mm; f32 spacing near 90 mm is about 8e-6
+
+
+def read_obj_uv(path: Path) -> tuple[list[Vec], list[tuple[Corner, Corner, Corner]]]:
+    """`v`, `vt` and `f v/vt` lines only; anything else is an error, never skipped."""
+    pos: list[Vec] = []
+    uvs: list[UV] = []
+    faces: list[tuple[Corner, Corner, Corner]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        word, *rest = line.split() or [""]
+        if word == "v":
+            x, y, z = (float(s) for s in rest)
+            pos.append((x, y, z))
+        elif word == "vt":
+            u, v = (float(s) for s in rest)
+            uvs.append((u, v))
+        elif word == "f":
+            corners: list[Corner] = []
+            for s in rest:
+                vi, ti = s.split("/")
+                corners.append((int(vi) - 1, uvs[int(ti) - 1]))
+            a, b, c = corners
+            faces.append((a, b, c))
+        elif word not in ("", "#"):
+            raise ValueError(f"{path.name}: unexpected OBJ line {line!r}")
+    return pos, faces
+
+
+def uv_cuts(faces: list[tuple[Corner, Corner, Corner]]) -> tuple[set[tuple[int, int]], int]:
+    """Interior edges whose corner UVs differ across the edge at either endpoint; also counts boundary edges."""
+    sides: dict[tuple[int, int], list[dict[int, UV]]] = {}
+    for face in faces:
+        uv_at = dict(face)
+        f: Face = (face[0][0], face[1][0], face[2][0])
+        for a, b in edges_of(f):
+            sides.setdefault((min(a, b), max(a, b)), []).append(uv_at)
+    cuts: set[tuple[int, int]] = set()
+    boundary = 0
+    for edge, both in sides.items():
+        if len(both) == 1:
+            boundary += 1
+            continue
+        if len(both) != 2:
+            raise ValueError(f"edge {edge} has {len(both)} faces")
+        left, right = both
+        if any(abs(left[v][k] - right[v][k]) > UV_TOL for v in edge for k in (0, 1)):
+            cuts.add(edge)
+    return cuts, boundary
+
+
+def accessor_view(doc: object, index: int, kind: str, component: int) -> tuple[int, int]:
+    """(count, byte offset) of a tightly packed accessor, after checking its type and component type."""
+    acc = array(field(doc, "accessors"), "accessors")[index]
+    if (field(acc, "type"), exact_int(field(acc, "componentType"), "componentType")) != (kind, component):
+        raise ValueError(f"accessor {index}: expected {kind} of component type {component}")
+    view = array(field(doc, "bufferViews"), "bufferViews")[exact_int(field(acc, "bufferView"), "bufferView")]
+    return exact_int(field(acc, "count"), "count"), exact_int(field(view, "byteOffset"), "byteOffset")
+
+
+def accessor_floats(doc: object, blob: bytes, index: int, width: int) -> list[tuple[float, ...]]:
+    count, start = accessor_view(doc, index, f"VEC{width}", 5126)
+    flat = struct.unpack_from(f"<{count * width}f", blob, start)
+    return [tuple(flat[i : i + width]) for i in range(0, len(flat), width)]
+
+
+def accessor_ints(doc: object, blob: bytes, index: int) -> list[int]:
+    count, start = accessor_view(doc, index, "SCALAR", 5125)
+    return list(struct.unpack_from(f"<{count}I", blob, start))
+
+
+def read_glb(path: Path) -> tuple[object, bytes]:
+    """Checks the GLB container (header, two 4-byte-aligned chunks) and returns the JSON and the binary chunk."""
+    data = path.read_bytes()
+    magic, version, length = struct.unpack_from("<4sII", data, 0)
+    if (magic, version, length) != (b"glTF", 2, len(data)):
+        raise ValueError(f"{path.name}: bad GLB header {(magic, version, length)}")
+    js_len, js_type = struct.unpack_from("<I4s", data, 12)
+    bin_at = 20 + js_len
+    bin_len, bin_type = struct.unpack_from("<I4s", data, bin_at)
+    if (js_type, bin_type) != (b"JSON", b"BIN\0") or js_len % 4 or bin_len % 4 or bin_at + 8 + bin_len != len(data):
+        raise ValueError(f"{path.name}: bad GLB chunks")
+    doc: object = json.loads(data[20:bin_at])
+    return doc, data[bin_at + 8 :]
+
+
+def glb_primitive(path: Path) -> tuple[object, int, list[Vec], list[UV], list[int]]:
+    """The document, the POSITION accessor index, and the one primitive's positions, UVs and indices."""
+    doc, blob = read_glb(path)
+    mesh = array(field(doc, "meshes"), "meshes")[0]
+    (prim,) = array(field(mesh, "primitives"), "primitives")
+    attrs = field(prim, "attributes")
+    at = exact_int(field(attrs, "POSITION"), "POSITION")
+    pos = accessor_floats(doc, blob, at, 3)
+    tex = accessor_floats(doc, blob, exact_int(field(attrs, "TEXCOORD_0"), "TEXCOORD_0"), 2)
+    idx = accessor_ints(doc, blob, exact_int(field(prim, "indices"), "indices"))
+    return doc, at, [(p[0], p[1], p[2]) for p in pos], [(t[0], t[1]) for t in tex], idx
+
+
+class CapsuleUv(unittest.TestCase):
+    """The capsule cut along one meridian and one ring, as an OBJ and as a Blender-style glTF."""
+
+    def test_uv_cuts_in_the_obj_are_exactly_the_reference_seam_set(self) -> None:
+        """Prevents a fixture whose UVs and recorded layout disagree, which would make SC-001 unmeasurable."""
+        seam_set = read_seam_set(FIXTURES / "seams" / "capsule-uv.json")
+        self.assertEqual(seam_set.mesh, "meshes/source-seams/capsule-uv.obj")
+        self.assertEqual(seam_set.kinds, {"cut"})
+        _, faces = read_obj_uv(FIXTURES / seam_set.mesh)
+        cuts, boundary = uv_cuts(faces)
+        self.assertEqual(boundary, 0, "closed surface")
+        self.assertEqual(sorted(cuts), seam_set.edges)
+
+    def test_the_cut_rule_sees_a_cut_that_differs_at_one_endpoint_only(self) -> None:
+        """Prevents an oracle that only compares whole edges and misses a cut running into a junction."""
+        same, other = (0.0, 0.0), (0.5, 0.0)
+        left = ((0, same), (1, same), (2, same))
+        right = ((1, other), (0, same), (3, same))
+        self.assertEqual(uv_cuts([left, right])[0], {(0, 1)})
+        self.assertEqual(uv_cuts([left, ((1, same), (0, same), (3, same))])[0], set())
+
+    def test_the_gltf_is_the_obj_split_where_corner_uvs_differ(self) -> None:
+        """Prevents a glTF twin with other geometry, other UVs, or splits that a Blender export would not make."""
+        obj_pos, faces = read_obj_uv(SOURCE / "capsule-uv.obj")
+        _, _, pos, tex, idx = glb_primitive(SOURCE / "capsule-uv.glb")
+        self.assertEqual(len(idx), 3 * len(faces))
+        to_obj: list[int] = []
+        for p in pos:
+            near = [i for i, q in enumerate(obj_pos) if max(abs(p[k] - q[k]) for k in range(3)) < POS_TOL]
+            self.assertEqual(len(near), 1, f"glTF vertex {p} matches one OBJ vertex")
+            to_obj.append(near[0])
+        for n, face in enumerate(faces):
+            for c, (v, (u, w)) in enumerate(face):
+                g = idx[3 * n + c]
+                self.assertEqual(to_obj[g], v, f"face {n} corner {c}")
+                # glTF's UV origin is top-left, OBJ's bottom-left; Blender flips V on export.
+                self.assertLess(max(abs(tex[g][0] - u), abs(tex[g][1] - (1.0 - w))), UV_TOL)
+        distinct = {(v, uv) for face in faces for v, uv in face}
+        self.assertEqual(len(pos), len(distinct), "one glTF vertex per distinct (position, UV), no more")
+
+    def test_position_bounds_match_the_data(self) -> None:
+        """Prevents a glTF that strict loaders reject: POSITION min and max are required and must be exact."""
+        doc, at, pos, _, _ = glb_primitive(SOURCE / "capsule-uv.glb")
+        acc = array(field(doc, "accessors"), "accessors")[at]
+        self.assertEqual(field(acc, "min"), [min(p[k] for p in pos) for k in range(3)])
+        self.assertEqual(field(acc, "max"), [max(p[k] for p in pos) for k in range(3)])
+
+
+if __name__ == "__main__":
+    unittest.main()

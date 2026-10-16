@@ -46,9 +46,9 @@ def read_obj(path: Path) -> tuple[list[Vec], list[Face]]:
             x, y, z = (float(s) for s in rest)
             pos.append((x, y, z))
         elif word == "f":
-            a, b, c = (int(s) - 1 for s in rest)
+            a, b, c = (int(s.split("/")[0]) - 1 for s in rest)
             faces.append((a, b, c))
-        elif word not in ("", "#"):
+        elif word not in ("", "#", "vt"):
             raise ValueError(f"{path.name}: unexpected OBJ line {line!r}")
     return pos, faces
 
@@ -366,7 +366,7 @@ class Reproducible(unittest.TestCase):
                 p.relative_to(FIXTURES)
                 for d in ("meshes", "defects", "seams")
                 for p in (FIXTURES / d).rglob("*")
-                if p.is_file() and p.suffix in (".obj", ".json")
+                if p.is_file() and p.suffix in (".obj", ".json", ".glb")
             )
             self.assertEqual(made, committed)
             for rel in made:

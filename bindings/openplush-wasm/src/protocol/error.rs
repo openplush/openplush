@@ -1,7 +1,8 @@
 use openplush_pipeline::{EngineError, ErrorLocations};
 use serde::Serialize;
 
-use super::{Locations, ProposalDto};
+use super::locations::Locations;
+use super::proposal::ProposalDto;
 
 /// An error as the shell receives it: a stable code, plain text, and where.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

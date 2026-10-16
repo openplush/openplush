@@ -3,7 +3,7 @@ use serde::Serialize;
 
 /// A seam edit the maker can preview and accept.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct ProposalDto {
+pub(crate) struct ProposalDto {
     /// 16 lowercase hex digits; what `applyProposal` takes back.
     id: String,
     /// The edges it makes seams, ascending.

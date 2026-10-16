@@ -4,7 +4,7 @@ use serde::Serialize;
 /// The elements an error names, by category; a category with none is absent.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Locations {
+pub(crate) struct Locations {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     faces: Option<Vec<u32>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -17,8 +17,6 @@ pub struct Locations {
     charts: Option<Vec<u32>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     chains: Option<Vec<u32>>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    components: Option<Vec<u32>>,
     /// Positions in the imported file, before repair.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     source_vertices: Option<Vec<SourceVertex>>,
@@ -29,25 +27,35 @@ pub struct Locations {
 
 /// A vertex of the imported file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-pub struct SourceVertex {
+pub(crate) struct SourceVertex {
     primitive: u32,
     vertex: u32,
 }
 
 impl From<&ErrorLocations> for Locations {
     fn from(l: &ErrorLocations) -> Self {
+        // No `..`: a category added to `ErrorLocations` must fail to compile here, not vanish.
+        let ErrorLocations {
+            faces,
+            edges,
+            vertices,
+            pieces,
+            charts,
+            chains,
+            source_vertices,
+            proposal,
+        } = l;
         Self {
-            faces: ids(&l.faces, |id| id.index()),
-            edges: ids(&l.edges, |id| id.index()),
-            vertices: ids(&l.vertices, |id| id.index()),
-            pieces: ids(&l.pieces, |id| id.index()),
-            charts: ids(&l.charts, |id| id.index()),
-            chains: ids(&l.chains, |id| id.index()),
-            components: ids(&l.components, |id| id.index()),
-            source_vertices: ids(&l.source_vertices, |&SourceCorner { primitive, vertex }| {
+            faces: ids(faces, |id| id.index()),
+            edges: ids(edges, |id| id.index()),
+            vertices: ids(vertices, |id| id.index()),
+            pieces: ids(pieces, |id| id.index()),
+            charts: ids(charts, |id| id.index()),
+            chains: ids(chains, |id| id.index()),
+            source_vertices: ids(source_vertices, |&SourceCorner { primitive, vertex }| {
                 SourceVertex { primitive, vertex }
             }),
-            proposal: l.proposal.map(|id| id.to_hex()),
+            proposal: proposal.map(|id| id.to_hex()),
         }
     }
 }

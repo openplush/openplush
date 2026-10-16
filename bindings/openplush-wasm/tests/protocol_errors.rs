@@ -112,22 +112,28 @@ fn not_manifold_locates_vertices_too() -> Result<(), serde_json::Error> {
 }
 
 #[test]
-fn chart_not_disk_carries_its_proposals() -> Result<(), Box<dyn Error>> {
-    let fix = dart(3, &[11, 7])?;
+fn chart_not_disk_carries_its_proposals_in_order() -> Result<(), Box<dyn Error>> {
     let e = EngineError::ChartNotDisk {
         chart: ChartId::new(3),
         failure: ChartFailure::MultipleBoundaries { count: 2 },
-        proposals: vec![fix.clone()],
+        proposals: vec![dart(3, &[11, 7])?, dart(3, &[1])?],
     };
     let expected = json!({
         "code": "ChartNotDisk",
         "message": "chart 3 is not a topological disk",
         "locations": { "charts": [3] },
-        "proposals": [{
-            "id": fix.id().to_hex(),
-            "edges": [7, 11],
-            "explanation": "a dart at the crown",
-        }],
+        "proposals": [
+            {
+                "id": "306ae82f096222dc",
+                "edges": [7, 11],
+                "explanation": "a dart at the crown",
+            },
+            {
+                "id": "07fd7af1b8fb13b4",
+                "edges": [1],
+                "explanation": "a dart at the crown",
+            },
+        ],
     });
     assert_eq!(wire(&e)?, expected);
     Ok(())

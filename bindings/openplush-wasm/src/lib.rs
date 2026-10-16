@@ -13,6 +13,6 @@ extern "C" {
 
 /// Forwards a panic's message to the worker console; the default hook's stderr goes nowhere here.
 #[wasm_bindgen(start)]
-pub fn start() {
+fn start() {
     std::panic::set_hook(Box::new(|info| console_error(&info.to_string())));
 }

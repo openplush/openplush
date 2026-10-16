@@ -8,5 +8,3 @@ mod proposal;
 
 pub use code::BindingCode;
 pub use error::EngineErrorDto;
-pub use locations::{Locations, SourceVertex};
-pub use proposal::ProposalDto;

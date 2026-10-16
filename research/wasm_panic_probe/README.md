@@ -1,6 +1,6 @@
 # Probe: what a Rust panic looks like from JavaScript on wasm32
 
-**Status (2026-10-15): closed.** Decision: [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md) (Proposed).
+**Status (2026-10-15): closed.** Decision: [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md) (Accepted).
 
 This is non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/` imports it. It is a standalone Cargo project with its own `[workspace]` table, `Cargo.lock` and `rust-toolchain.toml`, so the root workspace and `scripts/check.sh` never see it.
 

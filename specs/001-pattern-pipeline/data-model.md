@@ -50,6 +50,7 @@ pub struct ManifoldMesh {
     // per corner (= per interior half-edge): source attributes
     corner_uv: Vec<Option<DVec2>>,   // original texture coords, preserved through repair
     corner_src: Vec<SourceCorner>,   // provenance: (source primitive, source vertex index)
+                                     // OBJ primitive: a run of `f` lines between `o`/`g`/`usemtl` lines (D-034)
 }
 ```
 

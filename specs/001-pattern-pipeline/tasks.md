@@ -193,7 +193,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 ### Import and model health (FR-001 … FR-006)
 
 - [ ] T050 [US1] `crates/openplush-io/src/obj.rs` — OBJ geometry and per-corner UVs, read by our own reader (plan D-034: `tobj` loses provenance and fabricates UVs). Source primitives split at `o`, `g` and `usemtl`. *2026-10-16: MTL and textures wait for a consumer (FR-043, v0.2); the primitive split keeps that addition out of `TriangleSoup` and repair*
-- [ ] T051 [P] [US1] `crates/openplush-io/src/gltf.rs` — glTF 2.0 and GLB via `gltf`; skinned and animated data ignored with a warning
+- [ ] T051 [P] [US1] `crates/openplush-io/src/gltf.rs` — glTF 2.0 and GLB via `gltf`; skinned and animated data ignored with a warning. *2026-10-16: `.gltf` needs its separate buffers, which `import(bytes, …)` cannot carry; the import input shape is decided, with a contract change, before this task starts (D-034)*
 - [ ] T052 [P] [US1] `crates/openplush-io/src/stl_ply.rs` — STL and PLY (the minor default was yes)
 - [ ] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002). A NaN/∞ coordinate anywhere fails the import with `EngineError::NonFiniteInput` naming every non-finite source vertex (D-021); nothing is dropped
 - [ ] T054 [US1] `crates/openplush-mesh/src/validate/nonmanifold.rs` — non-manifold edges and bowtie vertices, each located

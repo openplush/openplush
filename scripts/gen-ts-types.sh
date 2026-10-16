@@ -5,8 +5,9 @@
 # Both modes fail, before anything is written, on:
 #   - any `bigint`: a JSON number decodes to a JS number, so a 64-bit integer's type
 #     and value would disagree;
-#   - EngineErrorDto not declaring `locations?:` without `| null`: without
-#     #[ts(optional)], ts-rs types a skipped Option as `T | null` and only warns.
+#   - an optional field typed `?: T | null`, in any file, or EngineErrorDto not
+#     declaring `locations?:` at all: without #[ts(optional)], ts-rs types a skipped
+#     Option as `T | null` and only warns.
 # --check exports into a temporary directory and fails on any difference, in either
 # direction, from the committed files, so a changed, missing or stale file fails.
 #
@@ -50,10 +51,14 @@ if hits=$(grep -rnw bigint "$fresh"); then
   die "64-bit integers are banned from the protocol; bigint in:"$'\n'"${hits//$fresh\//}"
 fi
 
+if hits=$(grep -rn '?: [^,]*| null' "$fresh"); then
+  die "an optional field is also typed | null (is #[ts(optional)] missing?):"$'\n'"${hits//$fresh\//}"
+fi
+
 error_dto="$fresh/EngineErrorDto.ts"
 [[ -f $error_dto ]] || die "EngineErrorDto.ts was not exported"
-grep -q 'locations?:' "$error_dto" && ! grep -q 'locations?: [^,]*| null' "$error_dto" ||
-  die "EngineErrorDto.ts must declare locations?: without | null (is #[ts(optional)] missing?):"$'\n'"$(cat "$error_dto")"
+grep -q 'locations?:' "$error_dto" ||
+  die "EngineErrorDto.ts must declare locations?: (is #[ts(optional)] missing?):"$'\n'"$(cat "$error_dto")"
 
 if ((check)); then
   [[ -d $out ]] || die "$out is missing; run scripts/gen-ts-types.sh"

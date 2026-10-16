@@ -155,7 +155,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 #### Re-import
 
 - **FR-050**: When a model is imported into a project that already has seams or regions, the import preview asks the maker to choose, for that import, between **Replace** (the imported seams and regions take the place of all existing ones) and **Merge** (imported seams and regions are added to the existing ones; an imported seam on an edge that is already a seam is not duplicated). Neither is preselected.
-- **FR-051**: Before the maker commits either choice, the preview shows the difference against the project: seams and regions that would be added, and, for Replace, those that would be removed. Hand-drawn seams that Replace would remove are called out by count.
+- **FR-051**: Before the maker commits either choice, the preview shows the difference against the project: seams and regions that would be added, and, for Replace, those that would be removed. Hand-drawn seams that Replace would remove are called out by count. Under Merge, existing seams and regions that cannot be placed on the newly imported model are listed and located on the previous model; none is dropped silently or moved to a nearby edge.
 - **FR-052**: Replace and Merge are each a single undoable step, and declining leaves the project unchanged.
 
 #### Platform

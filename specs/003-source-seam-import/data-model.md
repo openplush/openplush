@@ -1,0 +1,105 @@
+# Data Model: Import Seams and Fabric Regions from the Source Model
+
+**Feature**: `003-source-seam-import` | **Date**: 2026-10-16
+
+Extends 001's data model (`specs/001-pattern-pipeline/data-model.md`); section references below (§n) are to that file. Field lists are design intent; names may change in implementation, invariants may not.
+
+## 1. Source materials on the soup (extends §2)
+
+```rust
+pub struct TriangleSoup {
+    // existing: positions, triangles, corner_src, corner_uv
+    materials: SourceMaterials,
+    extra_uv_sets: u32,              // UV sets the importer saw but did not read (FR-004)
+}
+
+pub struct SourceMaterials {
+    names: Vec<String>,              // MaterialIndex -> name as written in the file
+    by_primitive: Vec<Option<MaterialIndex>>,   // SourceCorner::primitive -> material; None = no material
+}
+```
+
+- **Invariant (new)**: every source primitive has at most one material. The importer owns primitive numbering (`SourceCorner` docs), so it splits primitives at each material change. glTF already does this; OBJ needs spike Q3.
+- **Validation**: `TriangleSoup::new` refuses a `by_primitive` shorter than the highest primitive index used, with a typed `MeshError`. A material is a function of provenance, so it survives repair with no new per-face array: a face's material is its first corner's primitive's material.
+- **Faces added by repair** (hole fill, T066) have no source primitive, so they have no material. Spec FR-024 assigns them to a region (§3).
+- `MaterialIndex` is a `u32` newtype from `id_newtype!` in `openplush-mesh`.
+
+## 2. Reading the surface
+
+| Concept | Defined as | Computed by |
+|---|---|---|
+| UV cut | Interior edge, UVs on both sides, endpoint UVs differ by more than `UV_CUT` at either end (research R2) | `openplush-seams::source` |
+| Material boundary | Interior edge whose two faces have different `Option<MaterialIndex>` | `openplush-seams::source` |
+| Dead-end tip | Interior vertex of seam-valence 1 in the graph over UV cuts ∪ material boundaries ∪ mandatory seams (research R3) | 001's seam graph (T070) |
+
+`UV_CUT = 1e-5` lives in `openplush_geom::epsilon` beside the other tolerances, as the first tolerance that is neither model-relative nor physical. Its doc comment says why it is absolute.
+
+## 3. The import proposal
+
+Who owns what, following the crate DAG: edge detection and the dead-end check are in `openplush-seams` (`source.rs`), because they read the mesh and the seam graph. Regions and name matching are in `openplush-pattern` (`regions.rs`, 001 T137's module), because `Fabric` lives there. `openplush-pipeline` composes them into the types below, which are part of the public API.
+
+```rust
+pub struct SourceImport {
+    seams: Option<Proposal>,          // ProposalKind::Seam { reason: SeamReason::SourceModel }; Cut and FabricBoundary edges
+    closing: Vec<Proposal>,           // CloseChart proposals from propose_cuts over (existing ∪ seams)
+    regions: Vec<SourceRegion>,       // one per material, plus "No material" if any face lacks one
+    new_fabrics: Vec<Fabric>,         // profiles created for unmatched names (FR-023)
+    report: SourceReport,
+}
+
+pub struct SourceRegion {
+    material: Option<MaterialIndex>,  // None = "No material"
+    fabric: FabricId,                 // matched or newly created
+    faces: Vec<FaceId>,               // ascending; repair-filled faces included per FR-024
+}
+
+pub struct SourceReport {
+    uv_set_read: Option<u32>,         // None = model had no UVs
+    extra_uv_sets: u32,
+    uv_cut_edges: u32,
+    material_boundary_edges: u32,
+    shared_edges: u32,                // edges that are both, counted once (FR-021)
+    faces_without_uv: u32,
+    filled_areas: Vec<(ComponentId, FabricId)>,  // FR-024: which region each repair-filled area joined
+    matched: Vec<(MaterialIndex, FabricId)>,
+    created: Vec<(MaterialIndex, FabricId)>,
+}
+```
+
+**Invariants**
+- `seams` holds no edge already in the project's `SeamSet` (`Proposal::new` already refuses that). An edge that is both a UV cut and a material boundary is added once, as `FabricBoundary`: that kind is the more specific one, and both kinds are ordinary seams to the flattener.
+- No `Dart` or `Opening` kind ever appears in `seams` (FR-010). Checked by a debug assertion and a property test.
+- Every face belongs to exactly one `SourceRegion` (SC-005).
+- `closing` is empty exactly when every chart under existing ∪ `seams` is a disk (US2 scenario 4).
+- `seams` is `None` when nothing would be added (a model with no UVs and one material), because `Proposal::new` refuses an empty edit.
+
+**FR-024 tie-break**: a repair-filled area (all faces with no material that came from one filled loop) joins the region sharing the most boundary length with it. Ties go to the lowest `MaterialIndex`, with "No material" last.
+
+## 4. Errors (extends engine-api §5)
+
+```rust
+EngineError::DeadEndCut { tips: Vec<VertexId>, chains: Vec<Vec<EdgeId>> }
+```
+
+`tips` ascending; `chains[i]` is the chain ending at `tips[i]`, walked from the tip, so the UI can highlight the whole slit. When this error is returned, no `SourceImport` exists at all (FR-012). The repaired mesh is unaffected, because import and repair already succeeded.
+
+## 5. Re-import (FR-050 to FR-052)
+
+```rust
+pub enum OnExisting { Replace, Merge }
+
+pub struct ReimportDiff {
+    added_seams: u32,
+    removed_seams: u32,               // Replace only
+    removed_hand_drawn: u32,          // FR-051's callout; seams not from a prior import
+    unplaceable_seams: Vec<ProvenanceEdge>,  // Merge only; located on the OLD mesh (research R5)
+    unplaceable_faces: Vec<ProvenanceFace>,
+}
+```
+
+- Old seams and faces are re-placed by **position** against the new mesh within the weld tolerance (research R5), never by provenance key and never by nearest-edge snapping.
+- "Hand-drawn" needs the project to know where a seam came from. **Schema addition**: an optional `origin: "drawn" | "imported" | "proposed"` on each `seams[]` item in `project.schema.json`, defaulting to `drawn`. It is additive, so v1 files stay valid with no migration.
+
+## 6. Persistence
+
+Accepted imports are ordinary `seams[]`, `fabrics[]` and `fabricRegions[]` entries (FR-043): nothing marks them as imported except the optional `origin` above. The import proposal itself is never stored. It is recomputed from the stored source mesh on demand, like every other derived value (§12).

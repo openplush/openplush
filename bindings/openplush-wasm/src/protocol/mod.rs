@@ -5,8 +5,14 @@
 
 mod code;
 mod error;
+mod handle;
 mod locations;
+mod progress;
 mod proposal;
+mod protocol_error;
 
 pub use code::BindingCode;
 pub use error::EngineErrorDto;
+pub use handle::{MeshHandle, PipelineHandle};
+pub use progress::{Progress, Working};
+pub use protocol_error::ProtocolError;

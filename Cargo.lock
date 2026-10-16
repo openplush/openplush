@@ -440,6 +440,7 @@ dependencies = [
  "openplush-pipeline",
  "serde",
  "serde_json",
+ "thiserror",
  "wasm-bindgen",
 ]
 

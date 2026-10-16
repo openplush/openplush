@@ -10,7 +10,7 @@
 
 > Spec Kit rule: this file states **what** and **why** only. Technology choices live in `research.md` and `plan.md`. Data structures live in `data-model.md`.
 
-Builds on feature 001 (`specs/001-pattern-pipeline/`): import, repair, seam drawing, flattenability validation (FR-013), painted fabric regions (FR-041), and fabric profiles (FR-050) already exist. Feature 001 keeps each triangle corner's texture coordinates and material through import and repair (FR-002) but never acts on them. This feature acts on them, so a maker who already cut and organised the model in a modelling tool doesn't have to do that work again.
+Builds on feature 001 (`specs/001-pattern-pipeline/`): import, repair, seam drawing, flattenability validation (FR-013), painted fabric regions (FR-041), and fabric profiles (FR-050) already exist. Feature 001 keeps each triangle corner's texture coordinates through import and repair but never acts on them, and its FR-002 promise to keep material assignment is not yet carried by its design. This feature adds the material names and acts on both, so a maker who already cut and organised the model in a modelling tool doesn't have to do that work again.
 
 ## Clarifications
 
@@ -129,7 +129,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - **FR-011**: A **dead end** is an endpoint of an imported seam that lies inside the surface and touches no other seam: no other imported seam, material boundary, mandatory repair seam, or surface boundary. Any dead end fails seam import with a typed error that lists every dead end and its location on the model, and states the remedy: close or remove the cut in the modelling tool and re-import.
 - **FR-012**: When seam import fails, nothing from it is proposed: no seams, no regions, no new profiles. The model itself still imports, and the maker may proceed by hand.
 - **FR-013**: Dead ends are judged on the combined set of imported seams, material-boundary seams, and mandatory repair seams, so a cut that runs into another seam is never reported. Seams already in the project are not part of that set: the source file must be consistent on its own, because a Replace would discard them.
-- **FR-014**: Imported seams get the same piece checks as drawn ones. A closed cut that separates a piece below the minimum sewable size triggers feature 001's existing warning for that, not a new one.
+- **FR-014**: A closed cut that separates a piece below the minimum sewable size is still proposed, and the preview marks that piece as below the minimum before acceptance, which stays the maker's call (as feature 002 FR-036 does for hints). The minimum is the one feature 001 uses for its own proposals.
 
 #### Fabric regions from materials
 

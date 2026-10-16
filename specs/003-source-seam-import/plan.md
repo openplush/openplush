@@ -132,6 +132,7 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | Release | Scope |
 |---|---|
 | v0.2 | The whole feature. It needs 001's flatten and propose_cuts, so it can't precede them |
+| Later (stretch goal) | **A Blender add-on** that exports OpenPlush seams and fabric assignments directly: Mark Seam flags, darts and openings marked as such, and each material mapped to a fabric preset by the maker in Blender. It would replace this feature's inferences (UV cuts as seams, the `UV_CUT` tolerance, name matching, default profiles, the `tobj` question) with explicit data, and could express darts, which a UV export cannot. It builds on 001's v0.3 `openplush-py` plus add-on plan and needs its own feature spec; this feature stays useful for models from other tools |
 
 ## Decision Ledger
 
@@ -143,7 +144,7 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` | Accepted, research R3, spec FR-011 and FR-013 |
 | 2026-10-16 | S-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
 | 2026-10-16 | S-006 | **Name match = Unicode-lowercase, trimmed, first in project order.** No fuzzy matching | Accepted, research R4 |
-| 2026-10-16 | S-007 | **New profiles default to quilting-cotton values** under the material's name, via one `Fabric::with_defaults(name)` that 001's "add fabric" also uses | **Proposed. Maintainer to confirm** (research R4) |
+| 2026-10-16 | S-007 | **New profiles copy the minky preset** under the material's name, via one `Fabric::with_defaults(name)` that 001's "add fabric" can also use, and carry an `UnreviewedFabric` advisory warning until edited (spec FR-025) | Accepted. Maintainer, 2026-10-16 (research R4) |
 | 2026-10-16 | S-008 | **Re-import re-places old seams and regions by position, not provenance key.** Unplaceable ones are listed and located; spec FR-051 amended to say so | Accepted, research R5; spike Q4 measures it |
 | 2026-10-16 | S-009 | **Optional `seams[].origin`** (`drawn`/`imported`/`proposed`, default `drawn`), so FR-051 can count hand-drawn seams. Additive; v1 files unchanged | Accepted |
 | 2026-10-16 | S-010 | **Headless never accepts a proposal implicitly.** `--accept-closing` names the act | Accepted, Constitution II and VII |
@@ -158,6 +159,5 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 
 ### Open questions
 
-- S-007's default values (maintainer).
 - Spikes Q1–Q4 ([research R6](./research.md)).
 - 001's own "add a fabric profile by hand" has no default defined either. S-007 fills that gap for both features; 001's plan should record it when T084 lands.

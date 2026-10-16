@@ -46,7 +46,11 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 
 **Decision**: compare `trim(name)` with Unicode lowercasing (`str::to_lowercase`, which doesn't depend on locale) against each profile's name the same way. The first match in profile order wins; profile order is the project's stored order, so it is deterministic.
 
-**New profiles**: 001 has no "new fabric" default. Its presets are the only fabric values (research R7 of 001). This feature needs one, and so will 001's own "add fabric" UI. **Proposed**: the quilting-cotton preset values under the material's name. Woven with near-zero stretch is the conservative assumption: distortion warnings fire earliest, and `frays = true` keeps the allowance non-zero (FR-057). [likely] that this is the safest default; **maintainer to confirm**.
+**New profiles** (decided by the maintainer 2026-10-16): the **minky preset's values** under the material's name, plus an advisory warning until the profile is edited (spec FR-025). 001 has no "new fabric" default; its presets are the only fabric values (001 research R7), all still `[verify]`.
+
+- Minky is the most common plush fabric, so the guess is right most often [likely].
+- Its failure modes when wrong (a felt or cotton part): nap arrows and a restricted rotation set (only costs layout efficiency), a 10 mm allowance (too wide is trimmable; too narrow is not), and **mirrored printing**, because minky is a pile fabric (001 FR-054). Mirrored printing is the costly one, which is why the warning is printed on the pattern and not only shown in the report.
+- Alternatives considered: quilting-cotton values (conservative for warnings, but nap and mirrored printing are silently off for fur); no default, so accept-all is blocked until a preset is picked (reverses the maintainer's earlier decision).
 
 **Alternatives rejected**:
 - *Fuzzy matching* ("minky_fabric" → Minky): it guesses, and a wrong guess silently assigns the wrong fabric.

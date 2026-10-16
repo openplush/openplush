@@ -34,7 +34,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
 
 4. **Materials to fabrics** (US3, SC-005)
    `openplush-cli import-seams three-materials.glb --json out.json`
-   Expect: three regions; "Minky" and "fleece " matched to presets; one created profile "Felt Nose" with the new-profile defaults (research R4; values pending S-007); a seam on every material boundary.
+   Expect: three regions; "Minky" and "fleece " matched to presets; one created profile "Felt Nose" with the minky preset's values and an `UnreviewedFabric` warning that disappears once the profile is edited (FR-025); a seam on every material boundary.
 
 5. **Dead ends** (US4, SC-004)
    `openplush-cli import-seams dead-end.glb --json out.json`

@@ -22,7 +22,7 @@ pub struct SourceMaterials {
 - **Invariant (new)**: every source primitive has at most one material. The importer owns primitive numbering (`SourceCorner` docs), so it splits primitives at each material change. glTF already does this; OBJ needs spike Q3.
 - **Validation**: `TriangleSoup::new` refuses a `by_primitive` shorter than the highest primitive index used, with a typed `MeshError`. A material is a function of provenance, so no per-face array is needed: a face's material is its first corner's primitive's material.
 - **Carried through repair**: `SourceMaterials` and `extra_uv_sets` are file-level, not per-element, so repair moves them unchanged from the soup onto `ManifoldMesh`. `ManifoldMesh` gains the same two fields and read accessors, and repair's output type is unchanged. This changes 001's `ManifoldMesh` (decision S-011).
-- **Faces added by repair** (hole fill, T066) have no source primitive. That is distinct from a source face whose primitive has no material, so a face's material state has three values: a material, no material in the file, or repair-filled. Spec FR-024 assigns repair-filled faces to a region (§3).
+- **Faces added by repair** (hole fill, T066) have no source primitive: their `corner_src` entries are `None` in the merged `ManifoldMesh` (`Vec<Option<SourceCorner>>`). That is distinct from a source face whose primitive has no material, so a face's material state has three values: a material, no material in the file, or repair-filled. Spec FR-024 assigns repair-filled faces to a region (§3).
 - `MaterialIndex` is a `u32` newtype from `id_newtype!` in `openplush-mesh`.
 
 ## 2. Reading the surface
@@ -44,7 +44,7 @@ pub struct SourceImport {
     seams: Option<Proposal>,          // ProposalKind::Seam { reason: SeamReason::SourceModel }; Cut and FabricBoundary edges
     closing: Vec<Proposal>,           // CloseChart proposals from propose_cuts over (existing ∪ seams)
     regions: Vec<SourceRegion>,       // empty if no face has a material (FR-005); else one per material, plus "No material" if any source face lacks one
-    new_fabrics: Vec<Fabric>,         // profiles created for unmatched names (FR-023)
+    new_fabrics: Vec<Fabric>,         // profiles created for unmatched names: minky preset values (FR-023, S-007)
     report: SourceReport,
 }
 
@@ -75,6 +75,10 @@ pub struct SourceReport {
 - `seams` is `None` when nothing would be added (a model with no UVs and one material), because `Proposal::new` refuses an empty edit.
 
 **FR-024 tie-break**: a repair-filled area (the faces that filled one loop) joins the region bordering the largest share of its perimeter, measured by length. Ties go to the lowest `MaterialIndex`, with "No material" last.
+
+## 3a. Unreviewed fabric warning (FR-025)
+
+A new `WarningCode::UnreviewedFabric` (001 data-model §13), target `Project`, `Remedy::Advisory` ("Pick a preset for, or edit, the fabric '<name>'"). Raised for every fabric whose `fromMaterial` flag is set. **Schema addition**: optional `fabrics[].fromMaterial: boolean` (default `false`), set on profiles created by import and cleared by the first edit. Additive, so v1 files stay valid.
 
 ## 4. Errors (extends engine-api §5)
 

@@ -20,6 +20,7 @@ Builds on feature 001 (`specs/001-pattern-pipeline/`): import, repair, seam draw
 - Q: What happens to a UV cut that ends inside the surface instead of separating it? → A: An error. The maker fixes it in the modelling tool. It is never dropped and never converted to a dart.
 - Q: If the imported seams leave a piece that cannot lie flat, does the engine fix it on its own? → A: The engine computes the minimal extra seams and shows them already highlighted in the import preview, with one "accept all" action. They are still proposals until the maker accepts them (Constitution VII).
 - Q: What happens to a material whose name matches no fabric profile? → A: A new profile with default properties is created, named after the material, listed in the import report, and editable.
+- Q: What settings does a profile created for an unmatched material start with? → A: The minky preset's values, plus an advisory warning printed on the pattern until the maker edits the profile (FR-025). Minky is the most common plush fabric; the warning covers the cases where it is wrong.
 - Q: When a model is imported into a project that already has seams or regions, what happens to them? → A: The maker chooses Replace or Merge in the import preview each time, seeing the difference first. Neither is applied silently.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -136,7 +137,8 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - **FR-020**: When at least one face has a material, every material becomes one proposed fabric region, and faces from the source file with no material form one region named "No material", matched to a profile under FR-022 and FR-023 like any other name.
 - **FR-021**: Every material boundary becomes a proposed seam of the fabric-boundary type. Where a material boundary and a UV cut share an edge, one seam is proposed.
 - **FR-022**: A region is matched to a fabric profile whose name equals the material's name, ignoring letter case and leading or trailing spaces.
-- **FR-023**: A material that matches no profile gets a new profile named after the material, with the same default properties as a fabric profile the maker creates by hand in feature 001. Each new profile is listed in the import report as newly created and is editable like any other.
+- **FR-023**: A material that matches no profile gets a new profile named after the material, with a documented set of default properties. Each new profile is listed in the import report as newly created and is editable like any other.
+- **FR-025**: Until the maker edits it, each profile created under FR-023 carries an advisory warning that names it and says its settings are guesses. Like every unresolved warning, it is printed on the pattern, so an unreviewed guess can't reach the cutting table unnoticed. Editing the profile clears it.
 - **FR-024**: Faces added by repair, which have no material, join the region that borders the largest share of their perimeter, with a deterministic tie-break. They never create a seam of their own, and the import report says which region each filled area joined.
 
 #### Making every piece flat
@@ -191,7 +193,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 ## Out of scope
 
 - Reading the modelling tool's own seam flags or native project files (such as `.blend`); only what an OBJ or glTF export carries.
-- The Blender add-on (feature 001's post-MVP plan).
+- The Blender add-on (feature 001's post-MVP plan). It is the longer-term answer to most of this feature's guesswork; see the plan's Phasing.
 - Using the source UV layout as the flat pattern. Pieces are flattened by feature 001 under its seam-length parity rule.
 - Turning any imported cut into a dart, an opening, or an inserted-piece seam.
 - Automatic seam layout (001 FR-015).

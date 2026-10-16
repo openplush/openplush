@@ -13,7 +13,7 @@ from generate import HEADER, Edge, Mesh, capsule, num, seam_text
 UV = tuple[float, float]
 FaceUV = tuple[UV, UV, UV]  # the UV at each corner of one face, in the face's corner order
 
-CUT_RING = 3  # the capsule ring cut all the way round: the top rim of the tube, z = +10 mm
+CUT_RING = 2  # the capsule ring cut all the way round: the tube's upper rim, where it meets the hemisphere (z = +30 mm)
 SPLIT_V = (0.45, 0.55)  # the bottom island fills v up to the first, the top island from the second
 
 
@@ -108,7 +108,7 @@ def glb_bytes(name: str, note: str, m: Mesh, face_uvs: list[FaceUV]) -> bytes:
 
 def source_seam_files() -> dict[str, bytes]:
     """Every source-seam fixture, keyed by its path under fixtures/."""
-    note = "capsule-uv: UV cuts along meridian 0 and the tube's top rim, so two islands"
+    note = "capsule-uv: UV cuts along meridian 0 and the tube's upper rim, so two islands"
     m, face_uvs, cuts = capsule_uv()
     mesh = "meshes/source-seams/capsule-uv.obj"
     return {

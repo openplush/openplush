@@ -8,9 +8,9 @@ The committed files were generated with Python 3.13.16. The tests, including the
 
 | Interpreter | `python3 -m unittest -v` |
 |---|---|
-| CPython 3.11.17 | 14 tests, OK |
-| CPython 3.12.3 | 14 tests, OK |
-| CPython 3.13.16 | 14 tests, OK |
+| CPython 3.11.17 | 17 tests, OK |
+| CPython 3.12.3 | 17 tests, OK |
+| CPython 3.13.16 | 17 tests, OK |
 
 ## Commands
 
@@ -26,4 +26,4 @@ mypy --strict --python-version 3.11 generate.py source_seams.py test_fixtures.py
 
 ## glTF validity
 
-`fixtures/meshes/source-seams/capsule-uv.glb` passes the Khronos glTF Validator (`gltf-validator` 2.0.0-dev.3.10, npm, run from a scratch directory) with 0 errors and 0 warnings. Its one info, `UNUSED_OBJECT`, is `TEXCOORD_0`: no material samples a texture, as in any untextured export.
+`fixtures/meshes/source-seams/capsule-uv.glb` and `capsule-hardshade.glb` pass the Khronos glTF Validator (`gltf-validator` 2.0.0-dev.3.10, npm, run from a scratch directory) with 0 errors and 0 warnings each. The one info, `UNUSED_OBJECT`, is `TEXCOORD_0`: no material samples a texture, as in any untextured export.

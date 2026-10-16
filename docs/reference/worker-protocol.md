@@ -27,7 +27,7 @@ What the shell ↔ worker protocol is **today**. The wire types are generated fr
 
 ## Worker crash
 
-A crash is a `{ crashed: true }` message or the worker's `error` event, whichever comes first. On a crash the client, in order:
+A crash is a `{ crashed: true }` message or the port's `onError` (under `fromWorker`, the worker's `error` or `messageerror` event), whichever comes first. On a crash the client, in order:
 
 1. detaches from the worker and terminates it, so nothing it sends later (a second crash signal, progress, a late terminal message) reaches the client;
 2. settles every pending request with `EngineCrashed` (a request the worker had already answered keeps that answer);
@@ -39,7 +39,7 @@ The next request spawns a new worker. A `cancel()` after the crash does nothing.
 
 | Code | Raised by | Message |
 |---|---|---|
-| `EngineCrashed` | the client, on a crash | The engine stopped unexpectedly, so this action did not finish. |
+| `EngineCrashed` | the worker script, for the request whose exception crashed it; the client, for every other request pending at a crash | The engine stopped unexpectedly, so this action did not finish. |
 | `StaleHandle` | the client, for an earlier generation's handle | This model was loaded before the engine restarted. Load it again. |
 
 `StaleHandle` is also the binding's code for a released handle; no op releases a handle today.

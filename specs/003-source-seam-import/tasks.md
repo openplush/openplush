@@ -86,7 +86,7 @@ Each needs a spec-only PR (specs and implementation never share a PR):
 - [ ] U001 [P] `fixtures/meshes/source-seams/capsule-uv.glb`, `capsule-uv.obj` and `capsule-uv.layout.json`: one capsule with a known seam layout, in both formats; the layout record lists every marked seam edge by endpoint positions (SC-001). Generator script `fixtures/meshes/source-seams/make_fixtures.py`, plus a `fixtures/LICENSES.md` entry
 - [ ] U002 [P] `fixtures/meshes/source-seams/capsule-hardshade.glb`: U001's layout plus hard-shaded edges that are not seams, so vertices split for normals alone (SC-002). Reuses `capsule-uv.layout.json` as its oracle
 - [ ] U003 [P] `fixtures/meshes/source-seams/sphere-one-cut.glb`: one UV cut that leaves a cap that can't be flattened (US2)
-- [ ] U004 [P] `fixtures/meshes/source-seams/three-materials.glb` and `three-materials.obj`: materials "Minky", "fleece " (lower case, trailing space) and "Felt Nose" (US3). The OBJ switches `usemtl` twice inside one `o` group, so it doubles as Q3's input
+- [ ] U004 [P] `fixtures/meshes/source-seams/three-materials.glb` and `three-materials.obj`: materials "minky / cuddle" (lower case), "Polar fleece " (trailing space) and "Felt Nose" (US3). After trimming and lowercasing, the first two equal 001 research R7's preset names "Minky / cuddle" and "Polar fleece"; "Felt Nose" equals none ("Craft felt" is not a match). The OBJ switches `usemtl` twice inside one `o` group, so it doubles as Q3's input
 - [ ] U005 [P] `fixtures/meshes/source-seams/dead-end.glb` and `dead-end.tips.json`: two deliberate dead-ended cuts, plus one cut that ends on a material boundary and one that ends on an opening (US4, FR-013, US4 scenario 3). The tips record lists exactly the two tips
 - [ ] U006 [P] `fixtures/meshes/source-seams/no-uv.obj`: no `vt` lines, one material (FR-005)
 - [ ] U007 [P] `fixtures/meshes/source-seams/quadruped-v1.glb`, `quadruped-v2.glb` and `quadruped-v1.layout.json`: one model with seams and materials, before and after reshaping one leg (FR-050, Q4)
@@ -111,7 +111,7 @@ None. No new crate and no new dependency (S-001).
 
 ### Mesh (`openplush-mesh`)
 
-- [ ] U012 [P] `crates/openplush-mesh/tests/soup.rs`: failing tests for `SourceMaterials` (data-model §1). `TriangleSoup::new` refuses, with a new typed `MeshError` variant naming the lowest offending primitive, (a) a `by_primitive` "shorter than the highest primitive index used" and (b) a `MaterialIndex` ≥ `names.len()`. (b) is not in data-model §1; a dangling index is the same broken invariant, so the PR records it there. A valid soup returns its materials and `extra_uv_sets` unchanged. Building a `ManifoldMesh` from it (`from_oriented_triangles`, until T067 exists) carries both fields unchanged, and a face's material is its first corner's primitive's material
+- [ ] U012 [P] `crates/openplush-mesh/tests/soup.rs` and `crates/openplush-mesh/src/halfedge/tests.rs`: failing tests for `SourceMaterials` (data-model §1). In `tests/soup.rs`: `TriangleSoup::new` refuses, with a new typed `MeshError` variant naming the lowest offending primitive, (a) a `by_primitive` "shorter than the highest primitive index used" and (b) a `MaterialIndex` ≥ `names.len()`. (b) is not in data-model §1; a dangling index is the same broken invariant, so the PR records it there. A valid soup returns its materials and `extra_uv_sets` unchanged. In `src/halfedge/tests.rs`, because `from_oriented_triangles` is `pub(crate)` and stays so: building a `ManifoldMesh` from such a soup carries both fields unchanged, and a face's material is its first corner's primitive's material
 - [ ] U013 `crates/openplush-mesh/src/soup.rs`, `src/ids.rs`, `src/halfedge/mod.rs`, `src/halfedge/build.rs`: `MaterialIndex` via `id_newtype!`; `SourceMaterials { names, by_primitive }` and `extra_uv_sets: u32` on `TriangleSoup` and `ManifoldMesh`, with read accessors only. Doc comments state the invariant "every source primitive has at most one material". In the same PR, add "moves `SourceMaterials` and `extra_uv_sets` unchanged (003 S-011)" to 001 T067's line in `specs/001-pattern-pipeline/tasks.md`, so repair inherits the duty. Makes U012 pass
 
 ### Importers (`openplush-io`, alongside 001 T053)
@@ -179,7 +179,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 **Goal**: each material becomes a fabric region, material boundaries become seams, and an unmatched name gets a minky-valued profile flagged until edited.
 
-**Independent test**: import `three-materials.glb`. There are three regions. "Minky" and "fleece " match presets, and "Felt Nose" is created with minky's values and an `UnreviewedFabric` warning. Every material boundary is a seam.
+**Independent test**: import `three-materials.glb`. There are three regions. "minky / cuddle" and "Polar fleece " match the "Minky / cuddle" and "Polar fleece" presets, and "Felt Nose" is created with minky's values and an `UnreviewedFabric` warning. Every material boundary is a seam.
 
 ### Seams (`openplush-seams`)
 
@@ -193,7 +193,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 ### Stage (`openplush-pipeline`)
 
-- [ ] U043 [US3] `crates/openplush-pipeline/tests/source_import.rs`: failing tests on `three-materials.glb` (quickstart scenario 4). Three regions; `matched` lists Minky and fleece, `created` lists Felt Nose; `new_fabrics` holds one profile; `material_boundary_edges`, `shared_edges` and `filled_areas` are reported. Snapshot the report with `insta`
+- [ ] U043 [US3] `crates/openplush-pipeline/tests/source_import.rs`: failing tests on `three-materials.glb` (quickstart scenario 4). Three regions; `matched` lists the "Minky / cuddle" and "Polar fleece" presets, `created` lists Felt Nose; `new_fabrics` holds one profile; `material_boundary_edges`, `shared_edges` and `filled_areas` are reported. Snapshot the report with `insta`
 - [ ] U044 [US3] `crates/openplush-pipeline/src/source.rs`: adds `regions`, `new_fabrics`, and the report's material fields, with rustdoc. "Accept all" now also applies `set_fabrics` inside U034's single undo step (FR-041). Makes U043 pass
 
 ### Unreviewed-fabric warning (FR-025)
@@ -282,7 +282,7 @@ Polish after US4
 
 ## Implementation strategy
 
-- **MVP**: Phase 0, Phase 2, US1, and US4's engine tasks (U051 to U054). US1 alone proposes dead-ended cuts as seams, which FR-011 forbids, so US1 isn't shipped to makers without U054.
+- **MVP**: Phase 0, Phase 2, US1, US3's material boundaries (U039, U040), and US4's engine tasks (U051 to U054). The boundaries come along because FR-013 judges dead ends on cuts ∪ boundaries. US1 alone proposes dead-ended cuts as seams, which FR-011 forbids, so US1 isn't shipped to makers without U054.
 - **Then** US2 (most real UV layouts need closing seams), US3, the rest of US4's shell, and re-import.
 - **Release** (v0.2, plan Phasing) needs every phase, and the U064 timing within SC-009.
 

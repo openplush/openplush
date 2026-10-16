@@ -14,7 +14,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
 | `capsule-uv.glb`, `capsule-uv.obj` | UV cuts along a known layout, same model in both formats (SC-001) |
 | `capsule-hardshade.glb` | Same layout, plus hard-shaded edges that are not cuts (SC-002) |
 | `sphere-one-cut.glb` | One cut that leaves a cap unflattenable (US2) |
-| `three-materials.glb` | "Minky", "fleece " (case and trailing space) and "Felt Nose" (US3) |
+| `three-materials.glb` | "minky / cuddle" (case), "Polar fleece " (trailing space) and "Felt Nose" (US3) |
 | `dead-end.glb` | Two deliberate dead-ended cuts, one cut ending on a material boundary (US4, FR-013) |
 | `no-uv.obj` | No texture coordinates, one material (FR-005) |
 | `quadruped-v1.glb`, `quadruped-v2.glb` | Same model before and after editing one leg (FR-050, spike Q4) |
@@ -34,7 +34,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
 
 4. **Materials to fabrics** (US3, SC-005)
    `openplush-cli import-seams three-materials.glb --json out.json`
-   Expect: three regions; "Minky" and "fleece " matched to presets; one created profile "Felt Nose" with the minky preset's values and an `UnreviewedFabric` warning that disappears once the profile is edited (FR-025); a seam on every material boundary.
+   Expect: three regions; "minky / cuddle" and "Polar fleece " matched to the "Minky / cuddle" and "Polar fleece" presets; one created profile "Felt Nose" with the minky preset's values and an `UnreviewedFabric` warning that disappears once the profile is edited (FR-025); a seam on every material boundary.
 
 5. **Dead ends** (US4, SC-004)
    `openplush-cli import-seams dead-end.glb --json out.json`

@@ -15,7 +15,7 @@ TypeScript types are **generated from the Rust definitions**, not hand-written. 
 3. **Geometry for rendering crosses as transferables.** `Float32Array` / `Uint32Array`, zero-copy. Positions are `f32` at this boundary only — `f64` everywhere inside the engine (Constitution "Numerics").
 4. **Every request is cancellable.** The UI may cancel by `id`; the worker honours it at the next `step()` boundary.
 5. **Errors cross as typed codes with locations**, never as strings the UI has to parse.
-6. **Numbers are 32-bit integers or finite floats.** A JSON number is a JS `number`, exact only to 2^53, and JSON has no NaN or infinity. A 64-bit ID crosses as a hex string (`ProposalId`: 16 lowercase hex digits).
+6. **Numbers are 32-bit integers or finite floats.** A JSON number is a JS `number`, exact only to 2^53, and JSON has no NaN or infinity. Request `id`s, handle numbers and element IDs are `u32`. A 64-bit ID crosses as a hex string (`ProposalId`: 16 lowercase hex digits).
 
 ## 2. Envelope
 

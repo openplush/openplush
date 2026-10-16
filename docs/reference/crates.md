@@ -25,4 +25,4 @@ Shells in `bindings/` may depend on `openplush-pipeline` and nothing else from `
 | Binding | What it is today | Depends on |
 |---|---|---|
 | `openplush-cli` | The argument-parsing skeleton; no stage is wired yet. See [cli.md](cli.md) | `clap` ([ADR 0004](../adr/0004-cli-argument-parsing.md)) |
-| `openplush-wasm` | The `wasm-bindgen` facade skeleton: it builds as a `cdylib` for `wasm32-unknown-unknown` and exports nothing yet | `openplush-pipeline`, `wasm-bindgen` |
+| `openplush-wasm` | The `wasm-bindgen` facade, a `cdylib` for `wasm32-unknown-unknown`. Its start function installs a panic hook that forwards the panic message to `console.error` ([ADR 0009](../adr/0009-wasm-panic-is-a-worker-crash.md)); it exports only that start function. `protocol`: the worker protocol's `serde` DTOs ([ADR 0010](../adr/0010-protocol-types.md)): `EngineErrorDto` (`code`, `message`, optional `locations` and `proposals`), built from an `EngineError`, whose location categories are absent when empty and whose proposal IDs are 16 lowercase hex digits; and `BindingCode` (`StaleHandle`, `EngineCrashed`) | `openplush-pipeline`, `serde`, `wasm-bindgen`; dev: `serde_json` |

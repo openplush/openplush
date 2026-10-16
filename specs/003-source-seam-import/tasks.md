@@ -89,13 +89,13 @@ Each needs a spec-only PR (specs and implementation never share a PR):
 - [ ] U001 [P] `research/fixtures_gen/source_seams.py` (new, called from `generate.py`): `fixtures/meshes/source-seams/capsule-uv.glb` and `capsule-uv.obj`, plus the oracle `fixtures/seams/capsule-uv.json`. The capsule has a known seam layout: one meridian from pole to pole plus the tube's upper rim (the capsule has no equator ring), so two UV islands. Pole corners in each island share one UV, so a pole fan carries no false cut. The glTF splits vertices where corner UVs differ, as Blender does. `fixtures/LICENSES.md` gets a `meshes/source-seams/` row. `research/fixtures_gen/test_source_seams.py` checks, sharing no code with the generator: the cut edges recomputed from the OBJ's `vt` by the per-endpoint rule equal the seam set (SC-001); the glTF, once welded by position, has the same triangles and corner UVs as the OBJ; every chart under the seam set is a disk; and the files regenerate byte for byte
 - [ ] U002 [P] `fixtures/meshes/source-seams/capsule-hardshade.glb`: U001's layout plus hard-shaded edges, so vertices also split for normals alone (SC-002). Its oracle is `fixtures/seams/capsule-uv.json`, and the test checks that its normal splits add no UV cut
 - [ ] U003 [P] `fixtures/meshes/source-seams/sphere-band.glb` and `.obj`: two latitude-ring UV cuts, like a neck and a waist, so the band between them is an annulus. Its UV island is a ring, which can't lie flat without one more cut (US2). The two caps are disks. The test checks that under the seam set exactly one chart, the band, is not a disk, with two boundary loops
-- [ ] U004 [P] `fixtures/meshes/source-seams/three-materials.glb` and `three-materials.obj`: materials "minky / cuddle" (lower case), "Polar fleece " (trailing space) and "Felt Nose" (US3). After trimming and lowercasing, the first two equal 001 research R7's preset names "Minky / cuddle" and "Polar fleece"; "Felt Nose" equals none ("Craft felt" is not a match). The glTF has one primitive per material. The OBJ switches `usemtl` twice inside one `o` group, so it doubles as Q3's input
+- [ ] U004 [P] `fixtures/meshes/source-seams/three-materials.glb` and `three-materials.obj`: materials "minky / cuddle" (lower case), "Polar fleece " (trailing space) and "Felt Nose" (US3). After trimming and lowercasing, the first two equal 001 research R7's preset names "Minky / cuddle" and "Polar fleece"; "Felt Nose" equals none ("Craft felt" is not a match). The glTF has one primitive per material. The OBJ switches `usemtl` twice inside one `o` group, which must still give one primitive per run (001 D-034)
 - [ ] U005 [P] `fixtures/meshes/source-seams/dead-end.glb`, `.obj` and the oracle `fixtures/seams/dead-end.tips.json`: two deliberate dead-ended cuts, plus one cut that ends on a material boundary and one that ends on an opening (US4, FR-013, US4 scenario 3). The tips oracle lists exactly the two tips as OBJ vertex indices
 - [ ] U006 [P] `fixtures/meshes/source-seams/no-uv.obj`: no `vt` lines, one material (FR-005)
 - [ ] U007 [P] `fixtures/meshes/source-seams/reshaped-v1.glb` and `reshaped-v2.glb`: U001's capsule with seams and two materials, before and after stretching one end cap. Every vertex outside that cap is bit-identical between the two, so R5's positional re-placement has a known answer (FR-050)
 - [ ] U008 **Q1** `research/q1_blender_uv_cuts/`: in Blender (U069), mark a known seam layout on a capsule and on a quadruped, add one dead-ended seam, unwrap, and export glTF and OBJ. Measure whether every marked seam and only those read as a UV cut at `UV_CUT = 1e-5`, and whether the dead end reads as a slit. Also measure whether a pole fan's corners share one UV under Blender's usual unwraps, or would read as false cuts under the per-endpoint rule [verify], and whether the exports follow the conventions the generator imitates. Record the measured UV differences (largest across an uncut edge, smallest across a cut) and the chosen value in research.md R2 and R6, and change the R1 dead-end row from `[likely]` to `[solid]` or `[verify]`. Depends on U069. Box: 0.5 day
 - [ ] U009 [P] **Q2** `research/q2_blender_texcoord/`: which Blender UV map becomes `TEXCOORD_0`, the active one or the first listed? Record it in research.md R1; it sets the FR-004 report wording in U021. Depends on U069. Box: 1 h
-- [ ] U010 [P] **Q3**: does `tobj` start a new model at a `usemtl` change inside one group (U004's OBJ)? Answer it with a throwaway Rust test against the pinned `tobj`, and record the result in research.md R1. If not, U015 splits primitives itself (S-002). Depends on U004. Box: 1 h
+- [x] U010 **Q3**: answered without a spike by 001 D-034. 001 reads OBJ with its own reader, not `tobj`, and starts a new source primitive at every `o`, `g` and `usemtl` line, so each primitive has at most one material (S-002) with no 003 work
 - [ ] U011 [P] **Q4** `research/q4_blender_reshape/`: in Blender (U069), reshape one leg of Q1's quadruped and re-export. Measure the share of seam edges away from the edited leg whose endpoints match within the weld tolerance, and update research.md R5's tag. Depends on U008. Box: 0.5 day
 
 **Checkpoint**: `UV_CUT` has a measured value; the S-002 OBJ question is answered.
@@ -121,8 +121,8 @@ None. No new crate and no new dependency (S-001).
 
 Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 so triangulation keeps one primitive's corners under that primitive's number.
 
-- [ ] U014 [P] `crates/openplush-io/tests/source_materials.rs`: failing tests on U004 and U006. glTF: names in file order, one material per primitive, a primitive with no material (glTF's default material) maps to `None`, and `extra_uv_sets` counts `TEXCOORD_1` and up. OBJ: names from `usemtl` exactly as written (no trimming; matching trims later), faces before any `usemtl` map to `None`, and each `usemtl` change starts a new primitive even inside one group. `no-uv.obj` imports with no UVs and one material. Depends on U010
-- [ ] U015 `crates/openplush-io/src/obj.rs`, `src/gltf.rs`: fill `SourceMaterials` and `extra_uv_sets`. OBJ splits primitives at each `usemtl` change if Q3 found that `tobj` doesn't. Makes U014 pass
+- [ ] U014 [P] `crates/openplush-io/tests/source_materials.rs`: failing tests on U004 and U006. glTF: names in file order, one material per primitive, a primitive with no material (glTF's default material) maps to `None`, and `extra_uv_sets` counts `TEXCOORD_1` and up. OBJ: names from `usemtl` exactly as written (no trimming; matching trims later), faces before any `usemtl` map to `None`, and each `usemtl` change starts a new primitive even inside one group. `no-uv.obj` imports with no UVs and one material. The OBJ half can land now that T050 has merged; the glTF half waits for T051
+- [ ] U015 `crates/openplush-io/src/obj.rs`, `src/gltf.rs`: fill `SourceMaterials` and `extra_uv_sets`. OBJ: name each primitive after the `usemtl` line that opened it (the reader already splits there, 001 D-034); no MTL file is read, because only the name is used. glTF: one material per primitive, after T051. Makes U014 pass
 
 **Checkpoint**: an imported fixture's `ManifoldMesh` names each face's material.
 
@@ -259,10 +259,10 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 ## Dependencies and execution order
 
 ```text
-Phase 0 fixtures U001–U007; ADR U069 ─▶ spikes U008, U009, U011; U004 ─▶ U010
-                                   │ Q1            │ Q3
-Phase 2  U012→U013 (mesh)          │               ▼
-         U014→U015 (io, after T050/T051, alongside T053)
+Phase 0 fixtures U001–U007; ADR U069 ─▶ spikes U008, U009, U011 (U010 answered by 001 D-034)
+                                   │ Q1
+Phase 2  U012→U013 (mesh)          │
+         U014→U015 (io: OBJ now, glTF after T051)
                                    ▼
 US1  U016,U017 → U018 (after U008) → U019 → U020→U021 (after U009) → U022→U023, U025→U026 → U027→U028 → U029→U030 → U024 (after spec gap 1)
 US2  (after U021) U031→U032 → U033→U034 → U035→U036, U037, U038
@@ -278,7 +278,7 @@ Polish after US4; U068 after U021 merges
 
 ### Parallel examples
 
-- **Phase 0**: U001 first (it adds the glTF writer), then U002 to U007 and U069 together; U009 and U010 beside U008.
+- **Phase 0**: U001 first (it adds the glTF writer), then U002 to U007 and U069 together; U009 beside U008.
 - **Phase 2**: U012 and U014 (different crates) together.
 - **US1**: U016 and U017 together; U022, U025 and U027 together once U021 merges.
 - **US3**: U039 (seams), U041 (pattern) and U045 (project) together; they share no file.

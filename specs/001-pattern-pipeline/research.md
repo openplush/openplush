@@ -51,7 +51,7 @@ Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inf
 | `faer` | Pure-Rust dense + sparse linear algebra: sparse Cholesky (supernodal/simplicial), sparse QR. | MIT [solid — S6] | Mature, active | Yes (no `rayon`) | **Core solver.** Symbolic factorization reused across iterations. |
 | `i_overlay` | Pure-Rust polygon booleans, slicing, polygon outline offset; powers `geo`'s booleans. | MIT OR Apache-2.0 [solid — S6] | Active (v9.0.1 audited; `jagua-rs` → `geo` also brings v4.5.2) | Pure Rust [likely] | **Seam allowance offset + union.** Offset requires valid input polygons (simplify first); an outline-offset panic is open as iOverlay #74 → fuzz our inputs and validate them first (ADR 0006); a remaining panic is a crash, not caught (ADR 0009). |
 | [JeroenGar/jagua-rs](https://github.com/JeroenGar/jagua-rs) | Collision-detection engine for 2D irregular nesting: bin + strip packing, continuous rotation, reflections about chosen axes, container holes/quality zones, minimum separation; WASM target. Paper in INFORMS JoC. | MPL-2.0 | 205 stars, v1.0 | **Yes** | **Layout engine.** Strip packing = fabric roll; quality zones = fabric flaws; min separation = cutting gap; reflection axes = mirrored pieces. Optimizer: `sparrow` (same author) — MIT, but **not on crates.io**; see S6 result. MPL-2.0 is file-level copyleft — fine as a dependency of an MIT/Apache project [solid]. |
-| `gltf`, `tobj` | glTF 2.0 and OBJ parsers. | `gltf` MIT OR Apache-2.0, `tobj` MIT [solid — S6] | Mature | Yes | Import. |
+| `gltf`, `tobj` | glTF 2.0 and OBJ parsers. | `gltf` MIT OR Apache-2.0, `tobj` MIT [solid — S6] | Mature | Yes | Import. *2026-10-16: `tobj` not adopted; OBJ uses our own reader (plan D-034).* |
 | `three`, `three-mesh-bvh` | Rendering; BVH raycasting for edge picking while drawing seams. | MIT [likely] | Mature | n/a (TS) | Shell. |
 | `svg2pdf` (typst) | SVG → PDF conversion in Rust. | MIT OR Apache-2.0 [solid — S6] | Mature | [verify] | Tiled PDF export. |
 | `insta`, `proptest` | Snapshot and property testing. | MIT/Apache [solid] | Mature | Native tests | Golden + property tests. |
@@ -232,7 +232,7 @@ Method: a throwaway crate depending on each candidate at its current version, wi
 | `sparrow` (JeroenGar) | git `1fe3e31` | MIT (LICENSE file only) | **See below** |
 | `baby_shark` | 0.3.12 | MIT | |
 | `gltf` | 1.4.1 | MIT OR Apache-2.0 | |
-| `tobj` | 4.0.5 | MIT | |
+| `tobj` | 4.0.5 | MIT | Not adopted (plan D-034) |
 
 Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense, 0BSD, `Apache-2.0 WITH LLVM-exception`) **all offer it as one alternative of an `OR` expression that also contains an allowlisted license**. For example, `priority-queue` (via `threecrate`) is `LGPL-3.0-or-later OR MPL-2.0`, and `r-efi` is `MIT OR Apache-2.0 OR LGPL-2.1-or-later`. cargo-deny takes the allowlisted branch, so nothing is waived.
 

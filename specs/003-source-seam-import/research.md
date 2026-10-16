@@ -15,7 +15,7 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 | Blender's glTF exporter writes one primitive per material slot used by a mesh. A primitive has at most one material; one with none uses glTF's default material | [solid] |
 | OBJ stores `vt` per face corner (`f v/vt`), so UV discontinuities survive without vertex splitting. `usemtl` switches the material for the faces that follow; faces before any `usemtl` have none | [solid] |
 | glTF can carry several UV sets (`TEXCOORD_0`, `TEXCOORD_1`, …). Whether Blender writes the *active* UV map as `TEXCOORD_0` or the first in the list is unconfirmed | [verify] spike Q2 |
-| `tobj` (001's OBJ reader, T050) starts a new model at each `o`/`g` and gives each model one `material_id`; whether it also splits on a `usemtl` change inside one group is unconfirmed | [verify] spike Q3 |
+| 001's OBJ reader (its own, not `tobj`: 001 D-034) starts a new source primitive at each `o`, `g` and `usemtl` line, so a primitive has at most one material | [solid] 001 D-034, T050 |
 | A dead-ended Blender seam (one that doesn't separate the UV island) still gives its edges different UVs on each side: it shows up in the UV editor as a slit. So a dead end is detectable from the export alone | [likely] spike Q1 |
 
 **Decision**: read only what the file carries. UV cuts come from per-corner texture coordinates, and materials from the primitive a face came from. No `.blend` reading (out of scope).
@@ -75,5 +75,5 @@ This needs one sentence in spec FR-051 (made in the same change as this plan). [
 |---|---|---|---|
 | Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? | `UV_CUT` value; FR-011 detection | 0.5 day |
 | Q2 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? | FR-004 wording in the import report | 1 h |
-| Q3 | Does `tobj` split a model on `usemtl` inside one group? If not, the OBJ importer must split primitives itself (S-002) | T050-side work | 1 h |
+| Q3 | ~~Does `tobj` split a model on `usemtl` inside one group?~~ Answered by 001 D-034: 001 reads OBJ with its own reader, which splits at `usemtl` | — | none |
 | Q4 | Edit one limb of a fixture in Blender, re-export, re-import: what share of untouched seams re-place by position? | R5 confidence | 0.5 day |

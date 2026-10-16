@@ -139,7 +139,7 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | Date | ID | Decision | Status |
 |---|---|---|---|
 | 2026-10-16 | S-001 | **No new crate.** Detection in `openplush-seams`, regions in `openplush-pattern`, composition in `openplush-pipeline`. No new dependency edge | Accepted |
-| 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside T053 |
+| 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside T053. 2026-10-16: 001 D-034 replaced `tobj` with a reader that already splits at `usemtl`, so Q3 needs no spike |
 | 2026-10-16 | S-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** Provisional `1e-5`; spike Q1 confirms | Accepted, research R2 |
 | 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` | Accepted, research R3, spec FR-011 and FR-013 |
 | 2026-10-16 | S-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
@@ -161,4 +161,4 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 ### Open questions
 
 - Spikes Q1–Q4 ([research R6](./research.md)).
-- 001's own "add a fabric profile by hand" has no default defined either. S-007 fills that gap for both features; 001 records it as D-034.
+- 001's own "add a fabric profile by hand" has no default defined either. S-007 fills that gap for both features; 001 records it as D-035.

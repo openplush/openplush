@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 openplush-pipeline = { path = "../../crates/openplush-pipeline" }
+serde = { version = "1.0.229", features = ["derive"] }
 wasm-bindgen = "0.2.129"
 
 [dev-dependencies]

@@ -17,7 +17,7 @@ When a maker imports a model they already cut and organised in a modelling tool,
 |---|---|
 | Language/Version | Rust stable (same MSRV as 001); TypeScript 5.x `strict` |
 | Primary dependencies | **None new.** `openplush-mesh`, `openplush-io`, `openplush-seams`, `openplush-pattern`, `openplush-pipeline` from 001; `three` for the preview overlay |
-| Storage | Accepted results are ordinary `seams[]`, `fabrics[]` and `fabricRegions[]` entries. One additive, optional field (`seams[].origin`), so no schema version bump |
+| Storage | Accepted results are ordinary `seams[]`, `fabrics[]` and `fabricRegions[]` entries. Two additive, optional fields (`seams[].origin`, `fabrics[].fromMaterial`), so no schema version bump |
 | Testing | `cargo test`, `proptest` (no imported dart; every face in one region), `insta` (import-report goldens), Vitest, Playwright |
 | Target platform | Same as 001: evergreen desktop browsers (WASM, Web Worker) and the native CLI |
 | Project type | Additive feature in the existing Rust + pnpm monorepo |
@@ -88,7 +88,7 @@ crates/openplush-pattern/src/regions.rs     # + regions from materials, name mat
 crates/openplush-pattern/src/fabric.rs      # + Fabric::with_defaults(name) (research R4)
 crates/openplush-pipeline/src/source.rs     # NEW: source_import and reimport_diff stages
 crates/openplush-pipeline/src/error.rs      # + EngineError::DeadEndCut
-crates/openplush-project/                   # + seams[].origin (optional)
+crates/openplush-project/                   # + seams[].origin, fabrics[].fromMaterial (optional)
 bindings/openplush-cli/src/commands/        # + import-seams; pattern --seams-from-model --accept-closing
 bindings/openplush-wasm/                    # + sourceImport, reimportDiff DTOs
 apps/web/src/import/                        # NEW: import preview, accept all / partial / decline

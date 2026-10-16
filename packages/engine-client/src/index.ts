@@ -1,9 +1,11 @@
 export type { BindingCode } from "./generated/BindingCode";
 export type { EngineErrorDto } from "./generated/EngineErrorDto";
+export type { MeshHandle } from "./generated/MeshHandle";
 export type { Op } from "./generated/Op";
+export type { PipelineHandle } from "./generated/PipelineHandle";
 export type { Progress } from "./generated/Progress";
 export type { RequestId } from "./generated/RequestId";
 export type { WarningDto } from "./generated/WarningDto";
-export type { WorkerMessage, WorkerPort } from "./port";
+export type { Crashed, WorkerMessage, WorkerPort } from "./port";
 export { EngineClient } from "./client";
-export type { Call, Outcome } from "./client";
+export type { Call, Issued, Outcome, RequestOptions } from "./client";

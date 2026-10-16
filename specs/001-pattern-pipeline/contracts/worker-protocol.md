@@ -2,16 +2,16 @@
 
 **Feature**: `001-pattern-pipeline` | **Date**: 2026-10-13 | **Status**: Draft contract
 
-*Changes*: 2026-10-14 (D-022): binding-level error codes alongside `EngineError` names, `ProposalId` as a hex string, and chart, chain and component locations.
+*Changes*: 2026-10-14 (D-022): binding-level error codes alongside `EngineError` names, `ProposalId` as a hex string, and chart, chain and component locations. 2026-10-15 ([ADR 0009](../../../docs/adr/0009-wasm-panic-is-a-worker-crash.md)): a panic is a worker crash: the `EngineCrashed` code, worker generations, and what happens to in-flight requests and handles (§4, §6, §7).
 
 The engine runs in a Web Worker so the UI thread never blocks on geometry (Constitution "Technical Constraints"). This file defines the messages between `apps/web` and the worker hosting `bindings/openplush-wasm`, mediated by `packages/engine-client`.
 
-TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern.
+TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern. The one exception is `{ crashed: true }` (§2), which the worker script (`worker.ts`, not the WASM instance) sends and no Rust code produces; T040's mock-worker crash tests pin it.
 
 ## 1. Rules
 
 1. **Mesh state never crosses.** The worker owns the mesh and all intermediates. The UI holds opaque handles (`MeshHandle`, `PipelineHandle`). A 50k-triangle mesh is not a message payload.
-2. **Control messages are small JSON.** Request/response, correlated by `id`.
+2. **Control messages are small JSON.** Request/response, correlated by `id`; the one message without an `id` is the worker's `{ crashed: true }` (§4).
 3. **Geometry for rendering crosses as transferables.** `Float32Array` / `Uint32Array`, zero-copy. Positions are `f32` at this boundary only — `f64` everywhere inside the engine (Constitution "Numerics").
 4. **Every request is cancellable.** The UI may cancel by `id`; the worker honours it at the next `step()` boundary.
 5. **Errors cross as typed codes with locations**, never as strings the UI has to parse.
@@ -23,10 +23,11 @@ type Request  = { id: number; op: string; payload: unknown };
 type Response =
   | { id: number; ok: true;  result: unknown; warnings: Warning[]; transfer?: ArrayBuffer[] }
   | { id: number; ok: false; error: EngineErrorDto }
-  | { id: number; progress: Progress };          // zero or more, before the terminal message
+  | { id: number; progress: Progress }           // zero or more, before the terminal message
+  | { crashed: true };                           // the worker script's own message; see §4, Worker crash
 ```
 
-Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `progress` messages are advisory and may be dropped under load.
+Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `{ crashed: true }` is the one message with no `id` and no Rust counterpart: the worker script (`worker.ts`, not the WASM instance) sends it after a trap, so `packages/engine-client` types it by hand next to the generated types. `progress` messages are advisory and may be dropped under load.
 
 `warnings` rides on every success. The UI is responsible for showing them and for FR-064's one-time acknowledgement; the worker only reports.
 
@@ -61,7 +62,16 @@ type PipelineHandle = { readonly __brand: 'pipeline'; readonly n: number };
 
 - Handles are opaque integers, branded in TS so they cannot be swapped or arithmetic'd.
 - The worker owns the objects. `release(handle)` frees; using a released handle returns an error with code `StaleHandle` rather than undefined behaviour. That code belongs to the binding, not to `EngineError`: the engine has no handles, so the WASM binding raises it before calling the engine (D-022).
-- Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state.
+- Handles do **not** survive a worker restart. On restart the client replays from the project document, which is the only durable state; replay arrives with the project document API (US7), and until then the shell reports the crash and the maker re-imports. The client commits a change to that document only after the operation's success response, so replay never repeats an operation that crashed.
+
+### Worker crash
+
+A panic in the engine traps the WASM instance; it cannot be caught on `wasm32-unknown-unknown`, and a trapped instance is never called again ([ADR 0009](../../../docs/adr/0009-wasm-panic-is-a-worker-crash.md)).
+
+- The worker treats **any** exception from an export as a crash. It sends `EngineCrashed` as the terminal message for the request in flight, then `crashed`, then handles nothing more.
+- On `crashed`, or on the `Worker`'s `error` event, the client answers every pending request not already answered with `EngineCrashed`. The `error` event can arrive without `crashed` when the worker script itself dies, and then the request in flight is among them. It detaches its listeners before terminating the worker, so no request gets a second terminal message. It then increments the worker generation, emits one `restarted` event, and starts a new worker on the next request. `restarted` is an event of `packages/engine-client`'s own API, carrying `{ generation }` (the new generation); it is not a wire message.
+- The client never gives the app a bare wire handle. It wraps each one with the worker generation it was issued in (`{ generation, handle }`, a type of `packages/engine-client`'s own), so the wire types above stay as they are. A handle from an earlier generation gets `StaleHandle` from the client without reaching the worker, even if the new worker has reused its number.
+- Cancelling a request that already has its terminal message does nothing. Progress from an earlier generation is dropped.
 
 ## 5. Progress and cancellation
 
@@ -77,8 +87,9 @@ Cancellation is cooperative: the worker checks between `step()` calls. A cancell
 
 ```ts
 type EngineErrorDto = {
-  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle),
-                                    // defined in openplush-wasm's own error type so the TS generator sees it
+  code: string;                     // stable: an EngineError variant name, or a binding-level code (StaleHandle,
+                                    // EngineCrashed), defined in openplush-wasm's own error type so the TS
+                                    // generator sees it. EngineCrashed is listed there for the generator only: the host raises it, never Rust
   message: string;                  // plain language, shown to the maker
   locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[];
                 charts?: number[]; chains?: number[]; components?: number[] };
@@ -90,6 +101,6 @@ The UI highlights `locations` in the 3D view. A code the UI does not recognise m
 
 ## 7. Testing
 
-- `packages/engine-client` is tested against a **mock worker** implementing this contract, so shell tests need no WASM build.
+- `packages/engine-client` is tested against a **mock worker** implementing this contract, so shell tests need no WASM build. The mock can crash on demand, so the crash rules in §4 are tested without a real panic.
 - The real worker is exercised by Playwright smoke tests on three fixtures (plan "CI").
 - Generated TS types are checked into the repo and regenerated in CI; a diff fails the build, which is how drift is caught rather than discovered.

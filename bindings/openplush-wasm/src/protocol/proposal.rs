@@ -3,6 +3,7 @@ use serde::Serialize;
 
 /// A seam edit the maker can preview and accept.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 pub(crate) struct ProposalDto {
     /// 16 lowercase hex digits; what `applyProposal` takes back.
     id: String,

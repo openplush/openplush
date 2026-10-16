@@ -6,8 +6,8 @@
 #   scripts/check.sh --setup          install the pinned tools (cargo-deny, the
 #                                     wasm-bindgen-cli matching Cargo.lock, the toolchain)
 #   scripts/check.sh                  run every gate
-#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test deny wasm shell,
-#                                     or engine (= boundary hygiene fmt clippy test), or all
+#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types deny wasm shell,
+#                                     or engine (= boundary hygiene fmt clippy test types), or all
 #   --dry-run                         print the commands instead of running them
 #
 # Needs: rustup, Node 22+ with pnpm, bash >= 4.3, jq, python3 >= 3.11.
@@ -27,16 +27,16 @@ for arg in "$@"; do
   case $arg in
     --dry-run) dry=1 ;;
     --setup) setup=1 ;;
-    engine) steps+=(boundary hygiene fmt clippy test) ;;
-    all) steps+=(boundary hygiene fmt clippy test deny wasm shell) ;;
-    boundary | hygiene | fmt | clippy | test | deny | wasm | shell) steps+=("$arg") ;;
+    engine) steps+=(boundary hygiene fmt clippy test types) ;;
+    all) steps+=(boundary hygiene fmt clippy test types deny wasm shell) ;;
+    boundary | hygiene | fmt | clippy | test | types | deny | wasm | shell) steps+=("$arg") ;;
     *)
-      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test deny wasm shell; groups: engine all)" >&2
+      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types deny wasm shell; groups: engine all)" >&2
       exit 2
       ;;
   esac
 done
-((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test deny wasm shell)
+((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test types deny wasm shell)
 
 # run <command...>: print it; run it unless --dry-run.
 run() {
@@ -101,6 +101,7 @@ for step in "${steps[@]}"; do
     fmt) run cargo fmt --check ;;
     clippy) run cargo clippy --workspace --all-targets --locked -- -D warnings ;;
     test) run cargo test --workspace --locked ;;
+    types) run scripts/gen-ts-types.sh --check ;;
     deny)
       ((dry)) || command -v cargo-deny >/dev/null || die "cargo-deny not installed; run scripts/check.sh --setup"
       run cargo deny --locked check

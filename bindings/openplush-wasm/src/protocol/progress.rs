@@ -5,6 +5,7 @@ use super::ProtocolError;
 
 /// How far a step-wise operation has got.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[serde(tag = "kind", rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum Progress {
@@ -16,6 +17,7 @@ pub enum Progress {
 
 /// One flattening iteration's state. `max_distortion` is always finite.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct Working {
     chart: u32,

@@ -6,7 +6,7 @@ mod error;
 mod stage;
 mod warning;
 
-pub use error::EngineError;
+pub use error::{EngineError, ErrorLocations};
 pub use openplush_io::Format;
 pub use openplush_mesh::{ComponentId, EdgeId, FaceId, SourceCorner, VertexId};
 pub use openplush_pattern::PieceId;

@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use openplush_io::Format;
 use openplush_mesh::{EdgeId, FaceId, SourceCorner, VertexId};
 use openplush_pattern::PieceId;
@@ -98,4 +100,111 @@ pub enum EngineError {
     /// The caller cancelled a session; no partial output exists.
     #[error("cancelled")]
     Cancelled,
+}
+
+impl EngineError {
+    /// The variant name, e.g. `"ChartNotDisk"`; stable on the wire.
+    #[must_use]
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Parse { .. } => "Parse",
+            Self::NonFiniteInput { .. } => "NonFiniteInput",
+            Self::NotManifold { .. } => "NotManifold",
+            Self::ChartNotDisk { .. } => "ChartNotDisk",
+            Self::Flip { .. } => "Flip",
+            Self::BoundaryNotRealizable { .. } => "BoundaryNotRealizable",
+            Self::SeamParity { .. } => "SeamParity",
+            Self::OffsetFailed { .. } => "OffsetFailed",
+            Self::ProposalNotOffered { .. } => "ProposalNotOffered",
+            Self::Cancelled => "Cancelled",
+        }
+    }
+
+    /// Where the problem is; empty for `Parse` and `Cancelled`.
+    #[must_use]
+    pub fn locations(&self) -> ErrorLocations {
+        let none = ErrorLocations::default();
+        match self {
+            Self::Parse { .. } | Self::Cancelled => none,
+            Self::NonFiniteInput { vertices } => ErrorLocations {
+                source_vertices: sorted(vertices),
+                ..none
+            },
+            Self::NotManifold { edges, vertices } => ErrorLocations {
+                edges: sorted(edges),
+                vertices: sorted(vertices),
+                ..none
+            },
+            // Proposal edges are not locations: proposals travel separately, as fixes.
+            Self::ChartNotDisk { chart, .. } | Self::BoundaryNotRealizable { chart, .. } => {
+                ErrorLocations {
+                    charts: vec![*chart],
+                    ..none
+                }
+            }
+            Self::Flip { chart, faces } => ErrorLocations {
+                faces: sorted(faces),
+                charts: vec![*chart],
+                ..none
+            },
+            Self::SeamParity { chain, .. } => ErrorLocations {
+                chains: vec![*chain],
+                ..none
+            },
+            Self::OffsetFailed { piece, .. } => ErrorLocations {
+                pieces: vec![*piece],
+                ..none
+            },
+            Self::ProposalNotOffered { id } => ErrorLocations {
+                proposal: Some(*id),
+                ..none
+            },
+        }
+    }
+
+    /// The seams that would fix the problem; empty for variants that offer none.
+    #[must_use]
+    pub fn proposals(&self) -> &[Proposal] {
+        match self {
+            Self::ChartNotDisk { proposals, .. }
+            | Self::BoundaryNotRealizable { proposals, .. } => proposals,
+            Self::Parse { .. }
+            | Self::NonFiniteInput { .. }
+            | Self::NotManifold { .. }
+            | Self::Flip { .. }
+            | Self::SeamParity { .. }
+            | Self::OffsetFailed { .. }
+            | Self::ProposalNotOffered { .. }
+            | Self::Cancelled => &[],
+        }
+    }
+}
+
+/// The elements an [`EngineError`] names, by category; each list is sorted and without duplicates.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ErrorLocations {
+    /// Faces of the repaired mesh.
+    pub faces: Vec<FaceId>,
+    /// Edges of the repaired mesh.
+    pub edges: Vec<EdgeId>,
+    /// Vertices of the repaired mesh.
+    pub vertices: Vec<VertexId>,
+    /// Pattern pieces.
+    pub pieces: Vec<PieceId>,
+    /// Charts.
+    pub charts: Vec<ChartId>,
+    /// Seam chains.
+    pub chains: Vec<SeamChainId>,
+    /// Vertices of the imported file, before repair.
+    pub source_vertices: Vec<SourceCorner>,
+    /// The proposal asked for.
+    pub proposal: Option<ProposalId>,
+}
+
+fn sorted<T: Ord + Copy>(ids: &[T]) -> Vec<T> {
+    ids.iter()
+        .copied()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }

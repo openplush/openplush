@@ -6,6 +6,7 @@ use super::proposal::ProposalDto;
 
 /// An error as the shell receives it: a stable code, plain text, and where.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 pub struct EngineErrorDto {
     /// An `EngineError` variant name or a [`super::BindingCode`].
     code: String,
@@ -13,9 +14,11 @@ pub struct EngineErrorDto {
     message: String,
     /// Absent when the error names no element.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(test, ts(optional))]
     locations: Option<Locations>,
     /// Absent when the error offers no fix.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(test, ts(optional))]
     proposals: Option<Vec<ProposalDto>>,
 }
 

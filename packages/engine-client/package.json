@@ -1,0 +1,19 @@
+{
+  "name": "@openplush/engine-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mock": "./src/mock-worker.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

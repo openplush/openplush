@@ -15,7 +15,7 @@ TypeScript types are **generated from the Rust definitions**, not hand-written. 
 3. **Geometry for rendering crosses as transferables.** `Float32Array` / `Uint32Array`, zero-copy. Positions are `f32` at this boundary only — `f64` everywhere inside the engine (Constitution "Numerics").
 4. **Every request is cancellable.** The UI may cancel by `id`; the worker honours it at the next `step()` boundary.
 5. **Errors cross as typed codes with locations**, never as strings the UI has to parse.
-6. **Numbers are 32-bit integers or finite floats.** A JSON number is a JS `number`, exact only to 2^53, and JSON has no NaN or infinity. A 64-bit ID crosses as a hex string (`ProposalId`: 16 hex digits).
+6. **Numbers are 32-bit integers or finite floats.** A JSON number is a JS `number`, exact only to 2^53, and JSON has no NaN or infinity. A 64-bit ID crosses as a hex string (`ProposalId`: 16 lowercase hex digits).
 
 ## 2. Envelope
 
@@ -45,7 +45,7 @@ Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `{ crashed: t
 | `flattenStep` | `PipelineHandle` | `Progress` | UI-driven pumping; keeps the worker responsive to cancels |
 | `metrics` | `PipelineHandle` | per-chart distortion + heatmap buffer (transferred) | FR-021 |
 | `proposals` | `PipelineHandle`, kind | `Proposal[]` | Darts, extra seams, splits — all preview-then-accept |
-| `applyProposal` | `PipelineHandle`, `ProposalId` (16-char hex string) | affected chart IDs | Only after explicit user acceptance. An ID no longer offered is `ProposalNotOffered` |
+| `applyProposal` | `PipelineHandle`, `ProposalId` (16 lowercase hex digits) | affected chart IDs | Only after explicit user acceptance. An ID no longer offered is `ProposalNotOffered` |
 | `pieces` | `PipelineHandle`, `PatternOptions` | `PatternPiece[]` (outlines transferred) | FR-030 … FR-035 |
 | `layout` | `PipelineHandle`, `LayoutOptions` | `Sheet[]` | |
 | `export` | `PipelineHandle`, `ExportOptions` | bytes (transferred) | SVG or PDF; includes the warning summary page (FR-064) |
@@ -95,7 +95,7 @@ type EngineErrorDto = {
   locations?: { faces?: number[]; edges?: number[]; vertices?: number[]; pieces?: number[];
                 charts?: number[]; chains?: number[]; components?: number[];
                 sourceVertices?: { primitive: number; vertex: number }[];  // NonFiniteInput: positions in the imported file
-                proposal?: string };        // ProposalNotOffered: the ProposalId, 16 hex digits
+                proposal?: string };        // ProposalNotOffered: the ProposalId, 16 lowercase hex digits
   proposals?: Proposal[];           // e.g. ChartNotDisk carries its own fix (FR-013)
 };
 ```

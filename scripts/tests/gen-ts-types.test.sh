@@ -118,6 +118,11 @@ for mode in "" "--check"; do
   cp "$root/fresh/EngineErrorDto.ts" "$root/$out_dir/"
   expect fail "$label fails when optional locations is also nullable" "$root" "$mode" "locations?:"
 
+  root=$(new_case "other-optional-null-$label")
+  echo 'export type Locations = { faces?: Array<number> | null, };' >"$root/fresh/Locations.ts"
+  cp "$root/fresh/Locations.ts" "$root/$out_dir/"
+  expect fail "$label fails when any optional field is also nullable" "$root" "$mode" "Locations.ts"
+
   root=$(new_case "no-error-dto-$label")
   rm "$root/fresh/EngineErrorDto.ts" "$root/$out_dir/EngineErrorDto.ts"
   expect fail "$label fails when EngineErrorDto is not exported" "$root" "$mode" "EngineErrorDto.ts"

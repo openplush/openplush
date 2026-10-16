@@ -73,7 +73,7 @@ specs/003-source-seam-import/
 ├── quickstart.md
 ├── contracts/source-import.md # stage signatures, error, CLI, worker op
 ├── checklists/requirements.md
-└── tasks.md                   # /speckit-tasks, not yet written
+└── tasks.md                   # task list (U001–U067)
 ```
 
 ### Source code

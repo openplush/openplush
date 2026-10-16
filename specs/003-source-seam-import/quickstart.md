@@ -13,11 +13,11 @@ How to prove the feature works end to end once it is built. Commands follow [con
 |---|---|
 | `capsule-uv.glb`, `capsule-uv.obj` | UV cuts along a known layout, same model in both formats (SC-001) |
 | `capsule-hardshade.glb` | Same layout, plus hard-shaded edges that are not cuts (SC-002) |
-| `sphere-one-cut.glb` | One cut that leaves a cap unflattenable (US2) |
+| `sphere-band.glb` | Two ring cuts that leave a band that can't lie flat (US2) |
 | `three-materials.glb` | "minky / cuddle" (case), "Polar fleece " (trailing space) and "Felt Nose" (US3) |
 | `dead-end.glb` | Two deliberate dead-ended cuts, one cut ending on a material boundary (US4, FR-013) |
 | `no-uv.obj` | No texture coordinates, one material (FR-005) |
-| `quadruped-v1.glb`, `quadruped-v2.glb` | Same model before and after editing one leg (FR-050, spike Q4) |
+| `reshaped-v1.glb`, `reshaped-v2.glb` | Same model before and after stretching one end cap (FR-050); spike Q4 measures the same on a real Blender edit |
 
 ## Scenarios
 
@@ -29,7 +29,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
    Same command on `capsule-hardshade.glb`. Expect the same edge set as scenario 1.
 
 3. **Closing seams** (US2, SC-003)
-   `openplush-cli import-seams sphere-one-cut.glb --json out.json`
+   `openplush-cli import-seams sphere-band.glb --json out.json`
    Expect: a non-empty `closing`. Then `pattern … --seams-from-model --accept-closing` produces pieces, and without `--accept-closing` it exits with `ChartNotDisk`.
 
 4. **Materials to fabrics** (US3, SC-005)
@@ -44,11 +44,11 @@ How to prove the feature works end to end once it is built. Commands follow [con
    Expect: report `uv_set_read: null`, no UV seams, and one region, because the fixture has one material (with none, FR-005 proposes no regions).
 
 7. **Re-import** (FR-050 to FR-052)
-   `openplush-cli import-seams quadruped-v2.glb --project quadruped-v1.plush --on-existing merge --json diff.json`
-   Expect: seams away from the edited leg re-placed; any that aren't are listed as unplaceable, never silently gone.
+   `openplush-cli import-seams reshaped-v2.glb --project reshaped-v1.plush --on-existing merge --json diff.json`
+   Expect: seams away from the stretched cap re-placed; any that aren't are listed as unplaceable, never silently gone.
 
 8. **Determinism and privacy** (SC-007, SC-008)
    Run scenario 4 twice, natively and under WASM: byte-identical JSON. The web smoke test records zero network requests during import and accept.
 
 9. **In the app** (FR-040 to FR-044)
-   Import `sphere-one-cut.glb`. Imported and extra seams are visually distinct; "accept all" is one undo step; keyboard alone can accept, partially accept, and decline.
+   Import `sphere-band.glb`. Imported and extra seams are visually distinct; "accept all" is one undo step; keyboard alone can accept, partially accept, and decline.

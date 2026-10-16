@@ -73,7 +73,7 @@ This needs one sentence in spec FR-051 (made in the same change as this plan). [
 
 | ID | Question | Blocks | Effort |
 |---|---|---|---|
-| Q1 | On Blender 4.x exports (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? | `UV_CUT` value; FR-011 detection | 0.5 day |
+| Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? | `UV_CUT` value; FR-011 detection | 0.5 day |
 | Q2 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? | FR-004 wording in the import report | 1 h |
 | Q3 | Does `tobj` split a model on `usemtl` inside one group? If not, the OBJ importer must split primitives itself (S-002) | T050-side work | 1 h |
 | Q4 | Edit one limb of a fixture in Blender, re-export, re-import: what share of untouched seams re-place by position? | R5 confidence | 0.5 day |

@@ -48,7 +48,7 @@ Each CLI, WASM, engine-client and web pair (a test task and its implementation) 
 
 ### Fixtures go alone
 
-U001 to U007 are each their own PR with their `fixtures/LICENSES.md` entry, in the fixture lane, as in 002.
+U001 to U007 are each their own PR in the fixture lane, as in 002. U001 adds the generator module and the license row; the rest stack on it, because they extend the same module.
 
 ---
 
@@ -81,19 +81,22 @@ Each needs a spec-only PR (specs and implementation never share a PR):
 
 ## Phase 0: Fixtures and spikes
 
-**Purpose**: Q1 sets `UV_CUT`, which decides every UV cut, so detection (U018 onward) waits for it. Every fixture is exported from Blender 4.x by a committed script that also writes its oracle record (cut edges as endpoint-position pairs, dead-end tips as positions). The oracle then comes from the modelling tool, not from OpenPlush (Constitution IV).
+**Purpose**: Q1 sets `UV_CUT`, which decides every UV cut, so detection (U018 onward) waits for it.
 
-- [ ] U001 [P] `fixtures/meshes/source-seams/capsule-uv.glb`, `capsule-uv.obj` and `capsule-uv.layout.json`: one capsule with a known seam layout, in both formats; the layout record lists every marked seam edge by endpoint positions (SC-001). Generator script `fixtures/meshes/source-seams/make_fixtures.py`, plus a `fixtures/LICENSES.md` entry
-- [ ] U002 [P] `fixtures/meshes/source-seams/capsule-hardshade.glb`: U001's layout plus hard-shaded edges that are not seams, so vertices split for normals alone (SC-002). Reuses `capsule-uv.layout.json` as its oracle
-- [ ] U003 [P] `fixtures/meshes/source-seams/sphere-one-cut.glb`: one UV cut that leaves a cap that can't be flattened (US2)
-- [ ] U004 [P] `fixtures/meshes/source-seams/three-materials.glb` and `three-materials.obj`: materials "minky / cuddle" (lower case), "Polar fleece " (trailing space) and "Felt Nose" (US3). After trimming and lowercasing, the first two equal 001 research R7's preset names "Minky / cuddle" and "Polar fleece"; "Felt Nose" equals none ("Craft felt" is not a match). The OBJ switches `usemtl` twice inside one `o` group, so it doubles as Q3's input
-- [ ] U005 [P] `fixtures/meshes/source-seams/dead-end.glb` and `dead-end.tips.json`: two deliberate dead-ended cuts, plus one cut that ends on a material boundary and one that ends on an opening (US4, FR-013, US4 scenario 3). The tips record lists exactly the two tips
+**How fixtures are made**: `research/fixtures_gen/` writes them, using the standard library only, under CC0, byte-reproducible, like the rest of `fixtures/`. It imitates what Blender's exporters write: glTF splits a vertex wherever its corner UVs or normals differ and writes one primitive per material; OBJ writes per-corner `vt` and switches materials with `usemtl`. The generator places every cut itself, so its seam set in `fixtures/seams/` (the existing seam-set format, indexed by the OBJ twin's `v` lines) is the oracle. It comes from the generator, never from OpenPlush (Constitution IV). Whether real Blender exports follow those conventions is for spikes Q1 to Q4, which run Blender as an outside tool under U069's ADR. A spike that finds a difference fixes the generator.
+
+- [ ] U069 `docs/adr/0011-blender-research-tool.md`: Blender's Python module (`bpy`, GPL-3.0) is allowed as a research-only tool. Scripts that import it are GPL-3.0-or-later, live only in their spike's directory under `research/` with that spike's own `LICENSE`, and are never imported by `crates/`, `bindings/`, `apps/` or `packages/`. Their exports are not committed as fixtures. Constitution IX is unaffected, because nothing GPL reaches the shipped artifact. Blocks U008, U009, U011
+- [ ] U001 [P] `research/fixtures_gen/source_seams.py` (new, called from `generate.py`): `fixtures/meshes/source-seams/capsule-uv.glb` and `capsule-uv.obj`, plus the oracle `fixtures/seams/capsule-uv.json`. The capsule has a known seam layout: one meridian from pole to pole plus the equator, so two UV islands. Pole corners in each island share one UV, so a pole fan carries no false cut. The glTF splits vertices where corner UVs differ, as Blender does. `fixtures/LICENSES.md` gets a `meshes/source-seams/` row. `research/fixtures_gen/test_source_seams.py` checks, sharing no code with the generator: the cut edges recomputed from the OBJ's `vt` by the per-endpoint rule equal the seam set (SC-001); the glTF, once welded by position, has the same triangles and corner UVs as the OBJ; every chart under the seam set is a disk; and the files regenerate byte for byte
+- [ ] U002 [P] `fixtures/meshes/source-seams/capsule-hardshade.glb`: U001's layout plus hard-shaded edges, so vertices also split for normals alone (SC-002). Its oracle is `fixtures/seams/capsule-uv.json`, and the test checks that its normal splits add no UV cut
+- [ ] U003 [P] `fixtures/meshes/source-seams/sphere-band.glb` and `.obj`: two latitude-ring UV cuts, like a neck and a waist, so the band between them is an annulus. Its UV island is a ring, which can't lie flat without one more cut (US2). The two caps are disks. The test checks that under the seam set exactly one chart, the band, is not a disk, with two boundary loops
+- [ ] U004 [P] `fixtures/meshes/source-seams/three-materials.glb` and `three-materials.obj`: materials "minky / cuddle" (lower case), "Polar fleece " (trailing space) and "Felt Nose" (US3). After trimming and lowercasing, the first two equal 001 research R7's preset names "Minky / cuddle" and "Polar fleece"; "Felt Nose" equals none ("Craft felt" is not a match). The glTF has one primitive per material. The OBJ switches `usemtl` twice inside one `o` group, so it doubles as Q3's input
+- [ ] U005 [P] `fixtures/meshes/source-seams/dead-end.glb`, `.obj` and the oracle `fixtures/seams/dead-end.tips.json`: two deliberate dead-ended cuts, plus one cut that ends on a material boundary and one that ends on an opening (US4, FR-013, US4 scenario 3). The tips oracle lists exactly the two tips as OBJ vertex indices
 - [ ] U006 [P] `fixtures/meshes/source-seams/no-uv.obj`: no `vt` lines, one material (FR-005)
-- [ ] U007 [P] `fixtures/meshes/source-seams/quadruped-v1.glb`, `quadruped-v2.glb` and `quadruped-v1.layout.json`: one model with seams and materials, before and after reshaping one leg (FR-050, Q4)
-- [ ] U008 **Q1**: on U001 (glTF and OBJ) and on U005 and U007 (glTF), does every marked seam and only those read as a UV cut at `UV_CUT = 1e-5`, and does a dead-ended seam read as a slit? Record the measured UV differences (largest across an uncut edge, smallest across a cut) and the chosen value in research.md R2 and R6, and change the R1 dead-end row from `[likely]` to `[solid]` or `[verify]`. Depends on U001, U005, U007. Box: 0.5 day
-- [ ] U009 [P] **Q2**: which Blender UV map becomes `TEXCOORD_0`, the active one or the first listed? Record it in research.md R1; it sets the FR-004 report wording in U021. Box: 1 h
-- [ ] U010 [P] **Q3**: does `tobj` start a new model at a `usemtl` change inside one group (U004's OBJ)? Record it in research.md R1. If not, U015 splits primitives itself (S-002). Depends on U004. Box: 1 h
-- [ ] U011 [P] **Q4**: import U007 v1, accept its seams, re-import v2. Measure the share of seams away from the edited leg that re-place by position within the weld tolerance, and update research.md R5's tag. Depends on U007. Box: 0.5 day
+- [ ] U007 [P] `fixtures/meshes/source-seams/reshaped-v1.glb` and `reshaped-v2.glb`: U001's capsule with seams and two materials, before and after stretching one end cap. Every vertex outside that cap is bit-identical between the two, so R5's positional re-placement has a known answer (FR-050)
+- [ ] U008 **Q1** `research/q1_blender_uv_cuts/`: in Blender (U069), mark a known seam layout on a capsule and on a quadruped, add one dead-ended seam, unwrap, and export glTF and OBJ. Measure whether every marked seam and only those read as a UV cut at `UV_CUT = 1e-5`, and whether the dead end reads as a slit. Also measure whether a pole fan's corners share one UV under Blender's usual unwraps, or would read as false cuts under the per-endpoint rule [verify], and whether the exports follow the conventions the generator imitates. Record the measured UV differences (largest across an uncut edge, smallest across a cut) and the chosen value in research.md R2 and R6, and change the R1 dead-end row from `[likely]` to `[solid]` or `[verify]`. Depends on U069. Box: 0.5 day
+- [ ] U009 [P] **Q2** `research/q2_blender_texcoord/`: which Blender UV map becomes `TEXCOORD_0`, the active one or the first listed? Record it in research.md R1; it sets the FR-004 report wording in U021. Depends on U069. Box: 1 h
+- [ ] U010 [P] **Q3**: does `tobj` start a new model at a `usemtl` change inside one group (U004's OBJ)? Answer it with a throwaway Rust test against the pinned `tobj`, and record the result in research.md R1. If not, U015 splits primitives itself (S-002). Depends on U004. Box: 1 h
+- [ ] U011 [P] **Q4** `research/q4_blender_reshape/`: in Blender (U069), reshape one leg of Q1's quadruped and re-export. Measure the share of seam edges away from the edited leg whose endpoints match within the weld tolerance, and update research.md R5's tag. Depends on U008. Box: 0.5 day
 
 **Checkpoint**: `UV_CUT` has a measured value; the S-002 OBJ question is answered.
 
@@ -160,16 +163,16 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 **Goal**: the preview already contains the fewest extra seams that make every chart a disk, highlighted differently, with one "accept all" action.
 
-**Independent test**: import `sphere-one-cut.glb`; the preview holds the cut plus extra seams; after "accept all", every piece flattens.
+**Independent test**: import `sphere-band.glb`; the preview holds the cut plus extra seams; after "accept all", every piece flattens.
 
-- [ ] U031 [US2] `crates/openplush-pipeline/tests/source_closing.rs`: failing tests on `sphere-one-cut.glb` and testkit meshes. `closing` is non-empty and holds only `CloseChart` proposals, each with a non-empty plain-language explanation (FR-031). After applying `seams` and all of `closing`, every chart passes T075's Euler check (SC-003); that check is the oracle, independent of `propose_cuts`. A closed surface with no cuts still gets at least one closing cut. When every chart is already a disk, `closing` is empty and the report says so (US2 scenario 4). `closing` is computed against `existing` ∪ `seams`
+- [ ] U031 [US2] `crates/openplush-pipeline/tests/source_closing.rs`: failing tests on `sphere-band.glb` and testkit meshes. `closing` is non-empty and holds only `CloseChart` proposals, each with a non-empty plain-language explanation (FR-031). After applying `seams` and all of `closing`, every chart passes T075's Euler check (SC-003); that check is the oracle, independent of `propose_cuts`. A closed surface with no cuts still gets at least one closing cut. When every chart is already a disk, `closing` is empty and the report says so (US2 scenario 4). `closing` is computed against `existing` ∪ `seams`
 - [ ] U032 [US2] `crates/openplush-pipeline/src/source.rs`: adds `closing: Vec<Proposal>` to `SourceImport`, built from T076's `propose_cuts` over the charts under `existing` ∪ `seams`, in chart order, with rustdoc. Makes U031 pass
 - [ ] U033 [US2] `crates/openplush-pipeline/tests/source_accept.rs`: failing tests. "Accept all" (seams, then each closing proposal) is one T128 undo entry, and undoing restores the prior `SeamSet` exactly (FR-041). Accepting `seams` without `closing` leaves 001's validation raising `ChartNotDisk` for the unflattenable chart (US2 scenario 3)
 - [ ] U034 [US2] `crates/openplush-pipeline/src/proposals.rs`: apply several offered proposals as one undo step, through T107 and T128 and adding no other apply path. Makes U033 pass
 - [ ] U035 [P] [US2] `bindings/openplush-cli/tests/pattern_seams_from_model.rs`: failing tests for quickstart scenario 3. `pattern --seams-from-model --accept-closing` produces pieces. Without `--accept-closing`, it exits with the `EngineError` code and the `ChartNotDisk` JSON with proposals (S-010)
 - [ ] U036 [US2] `bindings/openplush-cli/src/commands/pattern.rs`: the `--seams-from-model` and `--accept-closing` flags, plus `docs/reference/cli.md`. Makes U035 pass
 - [ ] U037 [P] [US2] `bindings/openplush-wasm/tests/source_import.rs` and `packages/engine-client/src/source-import.test.ts`: extend the DTO and client tests to `closing`. Implementation: `bindings/openplush-wasm/src/` DTO field, regenerated types, `docs/reference/worker-protocol.md`. One PR per package: the WASM test and implementation, then the client
-- [ ] U038 [P] [US2] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `sphere-one-cut.glb`. Extra seams look different from imported ones, and each shows its explanation. "Accept all" is one undo step. "Accept without extra seams" applies only the imported seams. Both work from the keyboard. Implementation in `apps/web/src/import/` follows in the same PR as a second commit
+- [ ] U038 [P] [US2] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `sphere-band.glb`. Extra seams look different from imported ones, and each shows its explanation. "Accept all" is one undo step. "Accept without extra seams" applies only the imported seams. Both work from the keyboard. Implementation in `apps/web/src/import/` follows in the same PR as a second commit
 
 **Checkpoint**: an imperfect UV layout reaches a valid pattern in three actions (SC-006).
 
@@ -256,7 +259,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 ## Dependencies and execution order
 
 ```text
-Phase 0 fixtures U001–U007 ─▶ spikes U008–U011
+Phase 0 fixtures U001–U007; ADR U069 ─▶ spikes U008, U009, U011; U004 ─▶ U010
                                    │ Q1            │ Q3
 Phase 2  U012→U013 (mesh)          │               ▼
          U014→U015 (io, after T050/T051, alongside T053)
@@ -275,7 +278,7 @@ Polish after US4; U068 after U021 merges
 
 ### Parallel examples
 
-- **Phase 0**: U001 to U007 all at once; then U009, U010 and U011 beside U008.
+- **Phase 0**: U001 first (it adds the glTF writer), then U002 to U007 and U069 together; U009 and U010 beside U008.
 - **Phase 2**: U012 and U014 (different crates) together.
 - **US1**: U016 and U017 together; U022, U025 and U027 together once U021 merges.
 - **US3**: U039 (seams), U041 (pattern) and U045 (project) together; they share no file.

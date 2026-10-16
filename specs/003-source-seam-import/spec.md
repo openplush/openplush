@@ -44,11 +44,11 @@ A maker unwraps a model in their modelling tool, marking the seams where the fab
 
 ### User Story 2 - Pieces that can't lie flat are fixed in the same step (Priority: P1)
 
-The maker's UV cuts leave a region, such as the top of a head, that can't lie flat as one piece. Instead of a dead end, the import preview already shows the fewest extra seams that fix it, highlighted differently from the maker's own cuts. One action accepts everything.
+The maker's UV cuts leave a region, such as a body tube between a neck cut and a waist cut, that can't lie flat as one piece. Instead of a dead end, the import preview already shows the fewest extra seams that fix it, highlighted differently from the maker's own cuts. One action accepts everything.
 
 **Why this priority**: UV unwrapping tolerates stretch that fabric can't. Without this, a typical import fails flattenability and leaves the maker to find the fix alone. With it, import reaches a valid pattern in one step.
 
-**Independent Test**: Import a sphere fixture whose single UV cut leaves a cap that can't lie flat. Confirm the preview contains the imported cut plus highlighted extra seams. After "accept all", every piece flattens.
+**Independent Test**: Import a sphere fixture whose two ring-shaped UV cuts leave a band between them that can't lie flat. Confirm the preview contains the imported cut plus highlighted extra seams. After "accept all", every piece flattens.
 
 **Acceptance Scenarios**:
 

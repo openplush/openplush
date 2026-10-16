@@ -380,6 +380,12 @@ dependencies = [
 [[package]]
 name = "openplush-io"
 version = "0.0.0"
+dependencies = [
+ "openplush-geom",
+ "openplush-mesh",
+ "openplush-testkit",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-layout"

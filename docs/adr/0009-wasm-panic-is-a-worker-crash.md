@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-15
-deciders: maintainer (accepted 2026-10-15); proposed by the implementing agent
+deciders: maintainer (accepted 2026-10-15, in review of #84); proposed by the implementing agent
 ---
 
 # A panic in the WASM engine is a worker crash, not a typed error

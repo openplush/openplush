@@ -212,11 +212,16 @@ class CapsuleHardshade(unittest.TestCase):
             a, b, c = ((to_obj[g], (round(tex[g][0], 6), round(1.0 - tex[g][1], 6))) for g in idx[n : n + 3])
             faces.append((a, b, c))
             face_normals.append((normals[idx[n]], normals[idx[n + 1]], normals[idx[n + 2]]))
-        self.assertEqual([tuple(v for v, _ in f) for f in faces], [tuple(v for v, _ in f) for f in obj_faces])
+        for n, (mine, theirs) in enumerate(zip(faces, obj_faces, strict=True)):
+            for (v, uv), (w, obj_uv) in zip(mine, theirs):
+                self.assertEqual(v, w, f"face {n}: same triangle as capsule-uv")
+                self.assertLess(max(abs(uv[0] - obj_uv[0]), abs(uv[1] - obj_uv[1])), UV_TOL, f"face {n}: same UVs")
+        distinct = {(v, uv, nrm) for f, ns in zip(faces, face_normals) for (v, uv), nrm in zip(f, ns)}
+        self.assertEqual(len(normals), len(distinct), "one glTF vertex per distinct (position, UV, normal), no more")
         return faces, face_normals
 
     def test_normal_splits_add_no_uv_cut(self) -> None:
-        """Prevents a hard-shading fixture whose UVs differ from capsule-uv, which would not isolate shading splits."""
+        """Prevents a hard-shading fixture whose UV cuts differ from capsule-uv, which would not isolate shading splits."""
         faces, _ = self.corners()
         cuts, _ = uv_cuts(faces)
         self.assertEqual(sorted(cuts), read_seam_set(FIXTURES / "seams" / "capsule-uv.json").edges)

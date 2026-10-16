@@ -6,7 +6,7 @@
 
 The engine runs in a Web Worker so the UI thread never blocks on geometry (Constitution "Technical Constraints"). This file defines the messages between `apps/web` and the worker hosting `bindings/openplush-wasm`, mediated by `packages/engine-client`.
 
-TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern.
+TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern. The one exception is `{ crashed: true }` (§2), which the worker host sends and no Rust code produces; T040's mock-worker crash tests pin it.
 
 ## 1. Rules
 

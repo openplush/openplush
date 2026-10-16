@@ -3,7 +3,7 @@
 Non-shipping research code that writes the procedural part of [`fixtures/`](../../fixtures/README.md): the clean base meshes, one model per defect class, and reference seam sets. Every file it writes is committed, and the tests prove the committed files are exactly what it produces.
 
 ```sh
-python3 generate.py            # rewrite fixtures/meshes, fixtures/defects, fixtures/seams
+python3 generate.py            # rewrite fixtures/meshes (including meshes/source-seams), fixtures/defects, fixtures/seams
 python3 -m unittest -v         # oracles over the committed files, plus a byte-for-byte regeneration check
 ```
 
@@ -20,6 +20,7 @@ All coordinates are millimetres, faces are triangles wound counter-clockwise see
 | `meshes/capsule.obj` | Radius 30 mm, 120 mm long: two hemispheres and a cylinder (192 triangles) |
 | `defects/*.obj` | The cube plus exactly one defect each; the second header line says what and where |
 | `seams/*.json` | One reference seam set per mesh: sphere in six gores, capsule as two caps and a slit tube, cube as a cross-shaped net, in the [seam-set format](../../fixtures/README.md#seam-set-format) |
+| `meshes/source-seams/capsule-uv.obj`, `.glb` | The capsule with UV coordinates cut along meridian 0 (pole to pole) and around the tube's top rim, so two UV islands. Written by `source_seams.py` the way Blender's exporters write a UV-unwrapped model: the glTF has one vertex per distinct (position, UV), so it splits at every cut, and flips V; the OBJ indexes a `vt` per corner. Pole corners in an island share one UV, so a pole fan carries no cut. `seams/capsule-uv.json` lists the cuts by the OBJ's vertex indices |
 
 ### Defect fixtures
 
@@ -51,8 +52,9 @@ The repair pipeline handles these, but the corpus has no fixture for them yet:
 
 ## The oracles
 
-`test_fixtures.py` reads the committed files and shares no code with `generate.py`, except the one test that regenerates into a temporary directory and compares bytes:
+`test_fixtures.py` and `test_source_seams.py` read the committed files and share no code with `generate.py` or `source_seams.py`, except the one test that regenerates into a temporary directory and compares bytes:
 
 - **Clean meshes**: every detector reads zero, Euler characteristic 2, no unused vertex, positive signed volume.
 - **Defects**: one file per class and no others; each file trips exactly its own detector. Detectors: coincident positions (weld), repeated vertex sets, faces per edge (> 2 non-manifold, 1 boundary), repeated directed edges across 2-face edges plus closed components with signed volume ≤ 0 (winding), face fans per vertex joined through shared edges (bowtie), vertex-connected components, area below `1e-12 × bbox diagonal²`, and Moller–Trumbore edge-through-triangle tests between faces that share no vertex (self-intersection).
 - **Seams**: the JSON is type-checked field by field (an index of `1.0` or `false` is rejected, not compared equal); every listed pair is a mesh edge; cutting virtually (faces flood-filled across uncut edges, corners joined across uncut edges) leaves every chart with Euler characteristic 1 and one boundary loop. The same oracle must reject an uncut closed mesh and an annulus, so it cannot pass vacuously.
+- **Source seams**: the UV cuts recomputed from the OBJ's `vt` (an interior edge whose corner UVs differ across it at either endpoint) are exactly the reference seam set, and the rule is checked on a cut that differs at one endpoint only. The glTF is a GLB with valid chunks; matched to the OBJ by position, it has the same triangles and the same corner UVs (V flipped), with one vertex per distinct (position, UV) and no more. Its POSITION bounds equal the data.

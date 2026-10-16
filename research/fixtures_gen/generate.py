@@ -1,4 +1,4 @@
-"""Generate the fixture corpus: clean meshes, one model per defect class, and reference seam sets.
+"""Generate the fixture corpus: clean meshes, one model per defect class, reference seam sets, and source-seam models.
 
 Run: python3 generate.py [output-root]   (default: the repository's fixtures/ directory)
 Output is byte-for-byte reproducible; test_fixtures.py checks the committed files against it.
@@ -184,19 +184,21 @@ def seams() -> dict[str, tuple[str, list[Edge]]]:
     }
 
 
-def obj_text(note: str, m: Mesh) -> str:
-    def num(x: float) -> str:
-        return f"{round(x, 6) + 0.0:.6f}"  # + 0.0 turns -0.0 into 0.0
+def num(x: float) -> str:
+    return f"{round(x, 6) + 0.0:.6f}"  # + 0.0 turns -0.0 into 0.0
 
+
+def obj_text(note: str, m: Mesh) -> str:
     lines = [HEADER, f"# {note}\n"]
     lines += [f"v {num(p[0])} {num(p[1])} {num(p[2])}\n" for p in m.pos]
     lines += [f"f {f[0] + 1} {f[1] + 1} {f[2] + 1}\n" for f in m.faces]
     return "".join(lines)
 
 
-def seam_text(name: str, note: str, edges: list[Edge]) -> str:
+def seam_text(mesh: str, note: str, edges: list[Edge]) -> str:
+    """`mesh` is the OBJ the edge indices refer to, relative to fixtures/."""
     entries = sorted({(min(e), max(e)) for e in edges})
-    head = {"format": "openplush-seam-set", "version": 1, "mesh": f"meshes/{name}.obj", "vertexIndexBase": 0, "note": note}
+    head = {"format": "openplush-seam-set", "version": 1, "mesh": mesh, "vertexIndexBase": 0, "note": note}
     body = ",\n".join(f'    {{"edge": [{a}, {b}], "kind": "cut"}}' for a, b in entries)
     return json.dumps(head, indent=2)[:-2] + ',\n  "seams": [\n' + body + "\n  ]\n}\n"
 
@@ -205,10 +207,14 @@ def write_all(root: Path) -> None:
     bases = {"capsule": capsule()[0], "cube": cube()[0], "sphere": sphere()[0]}
     files = {f"meshes/{n}.obj": obj_text(f"{n}: closed, manifold, outward", m) for n, m in bases.items()}
     files |= {f"defects/{n}.obj": obj_text(note, m) for n, (note, m) in defects().items()}
-    files |= {f"seams/{n}.json": seam_text(n, note, e) for n, (note, e) in seams().items()}
-    for rel, text in sorted(files.items()):
+    files |= {f"seams/{n}.json": seam_text(f"meshes/{n}.obj", note, e) for n, (note, e) in seams().items()}
+    data = {rel: text.encode("utf-8") for rel, text in files.items()}
+    from source_seams import source_seam_files  # imported here: that module builds on this one's shapes
+
+    data |= source_seam_files()
+    for rel, blob in sorted(data.items()):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
-        (root / rel).write_bytes(text.encode("utf-8"))
+        (root / rel).write_bytes(blob)
 
 
 if __name__ == "__main__":

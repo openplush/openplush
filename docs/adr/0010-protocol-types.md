@@ -78,5 +78,5 @@ T179's tests serialize each DTO and compare it with the contract's JSON shape, a
 ## More information
 
 * Contract: [worker-protocol.md](../../specs/001-pattern-pipeline/contracts/worker-protocol.md), §1 (numbers rule) and §6 (locations), amended 2026-10-15 with this ADR.
-* Tasks: T179 (the DTOs), T041 (the generator and its checks), T040 (`packages/engine-client`, the consumer). Ledger: D-032.
+* Tasks: T179 (the DTOs), T041 (the generator and its checks), T040 (`packages/engine-client`, the consumer). Ledger: D-033.
 * Revisit if a protocol type genuinely needs a 64-bit integer, if `ts-rs` gains a hard error for unsupported `serde` attributes (the text test could then go), or if message volume makes JSON measurable.

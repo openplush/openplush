@@ -1,3 +1,4 @@
+import { engineCrashed, staleHandle } from "./errors";
 import type { EngineErrorDto } from "./generated/EngineErrorDto";
 import type { MeshHandle } from "./generated/MeshHandle";
 import type { Op } from "./generated/Op";
@@ -46,16 +47,6 @@ type Connection = { port: WorkerPort; detach: () => void };
 // Request ids are u32 on the wire.
 const MAX_ID = 0xffff_ffff;
 
-const crashed: EngineErrorDto = {
-  code: "EngineCrashed",
-  message: "The engine stopped unexpectedly, so this action did not finish.",
-};
-
-const stale: EngineErrorDto = {
-  code: "StaleHandle",
-  message: "This model was loaded before the engine restarted. Load it again.",
-};
-
 /**
  * Sends requests to an engine worker, spawned on first use, and settles each one once.
  * A crashed worker is dropped; the next request spawns a new one in a new generation.
@@ -89,7 +80,7 @@ export class EngineClient {
       this.#port().post({ id: this.#allocate(), op: "cancel", payload: { target: id } });
     };
     if (options.uses?.some((h) => h.generation !== this.#generation)) {
-      return { id, outcome: Promise.resolve({ ok: false, error: stale }), cancel };
+      return { id, outcome: Promise.resolve({ ok: false, error: staleHandle }), cancel };
     }
     // Posted before it is pending, so a post that throws leaves nothing to settle;
     // no reply can arrive before this method returns.
@@ -153,7 +144,7 @@ export class EngineClient {
     this.#connection = undefined;
     const pending = [...this.#pending.values()];
     this.#pending.clear();
-    for (const p of pending) p.settle({ ok: false, error: crashed });
+    for (const p of pending) p.settle({ ok: false, error: engineCrashed });
     this.#generation += 1;
     this.#emitRestarted({ generation: this.#generation });
   }

@@ -9,3 +9,5 @@ export type { WarningDto } from "./generated/WarningDto";
 export type { Crashed, WorkerMessage, WorkerPort } from "./port";
 export { EngineClient } from "./client";
 export type { Call, Issued, Outcome, RequestOptions } from "./client";
+export { fromWorker } from "./worker";
+export type { WorkerLike } from "./worker";

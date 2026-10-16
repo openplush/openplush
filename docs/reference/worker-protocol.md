@@ -12,6 +12,7 @@ What the shell ↔ worker protocol is **today**. The wire types are generated fr
 | `RequestOptions` | type | `onProgress`, and `uses`: the handles a request refers to |
 | `Issued<H>` | type | `{ generation, handle }`: a `MeshHandle` or `PipelineHandle` with the worker generation that issued it. Build it from the success that returned the handle, with that outcome's `generation`, never the current one: a crash may have moved past it |
 | `WorkerPort` | interface | `post`, `listen(onMessage, onError)` (returns a detach function) and `terminate`: what the client needs of a worker |
+| `fromWorker(worker)` | function | Wraps a `Worker` (any `WorkerLike`: `postMessage`, `addEventListener`, `removeEventListener`, `terminate`) as a `WorkerPort`. Its `error` and `messageerror` events both reach `onError`, so both are crashes: a message that failed to deserialize may have been a request's only terminal message |
 | `WorkerMessage`, `Crashed` | types | Anything a worker sends; `Crashed` (`{ crashed: true }`) is the worker script's own message and the one hand-written message type |
 | `Op`, `RequestId`, `Progress`, `EngineErrorDto`, `BindingCode`, `WarningDto`, `MeshHandle`, `PipelineHandle` | generated types | Re-exported from `src/generated/` |
 | `MockWorker` | class, from `@openplush/engine-client/mock` | A `WorkerPort` for tests: records what it `received`; `send` delivers a reply asynchronously, in order; what a listener throws lands in `errors` and later deliveries still run; `fail()` fires the `error` event; `terminated` and `listening` show what the client did to it |
@@ -26,7 +27,7 @@ What the shell ↔ worker protocol is **today**. The wire types are generated fr
 
 ## Worker crash
 
-A crash is a `{ crashed: true }` message or the worker's `error` event, whichever comes first. On a crash the client, in order:
+A crash is a `{ crashed: true }` message or the port's `onError` (under `fromWorker`, the worker's `error` or `messageerror` event), whichever comes first. On a crash the client, in order:
 
 1. detaches from the worker and terminates it, so nothing it sends later (a second crash signal, progress, a late terminal message) reaches the client;
 2. settles every pending request with `EngineCrashed` (a request the worker had already answered keeps that answer);
@@ -38,10 +39,17 @@ The next request spawns a new worker. A `cancel()` after the crash does nothing.
 
 | Code | Raised by | Message |
 |---|---|---|
-| `EngineCrashed` | the client, on a crash | The engine stopped unexpectedly, so this action did not finish. |
+| `EngineCrashed` | the worker script, for the request whose exception crashed it; the client, for every other request pending at a crash | The engine stopped unexpectedly, so this action did not finish. |
 | `StaleHandle` | the client, for an earlier generation's handle | This model was loaded before the engine restarted. Load it again. |
 
 `StaleHandle` is also the binding's code for a released handle; no op releases a handle today.
+
+## Worker script
+
+`serve(scope, dispatch)` in `src/worker-script.ts` answers requests inside the worker.
+
+- Each `message` event's data is handed to `dispatch(request, reply)`, which answers through `reply`; replies are posted in the order given.
+- **Any** exception from `dispatch` is a crash, a WASM trap included, and so is a `reply` whose `postMessage` throws (an uncloneable result), whether `dispatch` has returned or not. `dispatch` returns `undefined`, so an `async` one does not type-check: its rejection would reach no crash path. The script logs the exception to the worker console, posts `EngineCrashed` for that request, then `{ crashed: true }`, and from then on handles no request and posts nothing, not even a `reply` captured earlier. If `dispatch` had already posted the request's terminal message, the client keeps that one.
 
 ## Ops
 

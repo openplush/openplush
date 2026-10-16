@@ -53,7 +53,7 @@ Every non-draft pull request gets one adversarial review from the agents in [`.c
 - `spec-reviewer` when `specs/` changes: contradictions between documents, missing ledger entries.
 - `mutation-auditor` on request (it is the expensive one): breaks each new check in turn and reports the ones no test catches.
 
-It runs once per PR, not on every push. Add the `rereview` label to run it again after fixing findings, and `mutation-audit` to include the mutation auditor. Both labels are removed when the run starts.
+It runs once per PR, not on every push. Add the `rereview` label to run it again after fixing findings, and `mutation-audit` to include the mutation auditor. Both labels are removed when the run starts. A rerun reviews only what changed since the last summary, and skips findings already answered on the PR.
 
 Findings arrive as review comments marked 🔴 blocking, 🟡 optional, or 🟣 pre-existing. Answer every 🔴: fix it or reply with why not. The review is advisory; it never approves, and a maintainer still merges. To run the same agents before you push, ask Claude Code in this repository to use them by name, for example "run the mutation-auditor agent on my branch against main".
 

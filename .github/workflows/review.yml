@@ -8,6 +8,8 @@
 # opened (or marked ready for review), not on every push. To run it again, add
 # the `rereview` label; for the mutation auditor too, add `mutation-audit`. The
 # labels are removed when the run starts, so they can be added again later.
+# A rerun reviews only what changed since the last summary's head, and drops
+# findings the author already answered, so it does not repeat the first run.
 #
 # A green check means a review summary was posted, not merely that the agent
 # ran: a run that adds no summary for the PR's head commit fails. Its transcript
@@ -107,6 +109,22 @@ jobs:
             jq --arg head "$SUMMARY_HEAD" '[.comments[] | select((.author.login | startswith("github-actions"))
               and (.body | startswith($head)))] | length')
           echo "SUMMARIES_BEFORE=$before" >> "$GITHUB_ENV"
+      # A rerun starts from the newest summary's head, if that commit is still in
+      # the PR's history (a force-push or a fresh PR falls back to a full review).
+      - name: find the last reviewed head
+        if: env.HAS_CREDENTIAL == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          last=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json comments |
+            jq -r --arg pr "**Review summary (PR $PR, head " '[.comments[]
+              | select((.author.login | startswith("github-actions")) and (.body | startswith($pr)))
+              | .body | capture("head (?<sha>[0-9a-f]{40})").sha] | last // ""')
+          if [[ -n $last && $last != "$HEAD_SHA" ]] && git merge-base --is-ancestor "$last" "$HEAD_SHA"; then
+            echo "REVIEW_SINCE=$last" >> "$GITHUB_ENV"
+          fi
       - uses: anthropics/claude-code-action@12dd8d74c712f5f3669365b2369b558c495b1104 # v1.0.238
         if: env.HAS_CREDENTIAL == 'true'
         with:
@@ -120,6 +138,7 @@ jobs:
             BASE BRANCH: ${{ github.event.pull_request.base.ref }}
             HEAD SHA: ${{ github.event.pull_request.head.sha }}
             MUTATION AUDIT REQUESTED: ${{ env.MUTATION_AUDIT }}
+            LAST REVIEWED HEAD: ${{ env.REVIEW_SINCE }}
 
             You coordinate an adversarial review of this pull request using the
             project's agents in .claude/agents/. Diff against the base branch
@@ -141,7 +160,15 @@ jobs:
                  with the `mutation-audit` label.
                Tell them this is CI: skip `scripts/check.sh wasm` (the wasm workflow
                covers it) and leave the working tree exactly as they found it.
+               If LAST REVIEWED HEAD is set, this is a rerun: tell each agent to review
+               only the hunks of `git diff <LAST REVIEWED HEAD>..HEAD` that are also in
+               the PR diff (changes merged in from the base branch are not this PR's),
+               using the rest of the PR diff as context only. Pick agents by the paths
+               in that narrower diff. If it is empty, review the whole PR diff.
             2. Merge their findings. Drop duplicates and anything without evidence.
+               Read the PR's earlier comments (`gh pr view <PR> --comments`) and drop
+               any finding the author already fixed or answered, unless the new
+               changes reopen it.
                Keep the severity marks: 🔴 blocking, 🟡 nit (optional), 🟣 pre-existing.
             3. Post each finding that points at a line of the diff as an inline
                comment with mcp__github_inline_comment__create_inline_comment and

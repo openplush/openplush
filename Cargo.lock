@@ -438,6 +438,7 @@ name = "openplush-wasm"
 version = "0.0.0"
 dependencies = [
  "openplush-pipeline",
+ "serde_json",
  "wasm-bindgen",
 ]
 

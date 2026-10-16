@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use openplush_io::Format;
-use openplush_mesh::{ComponentId, EdgeId, FaceId, SourceCorner, VertexId};
+use openplush_mesh::{EdgeId, FaceId, SourceCorner, VertexId};
 use openplush_pattern::PieceId;
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId};
 use thiserror::Error;
@@ -195,8 +195,6 @@ pub struct ErrorLocations {
     pub charts: Vec<ChartId>,
     /// Seam chains.
     pub chains: Vec<SeamChainId>,
-    /// Connected components of the repaired mesh.
-    pub components: Vec<ComponentId>,
     /// Vertices of the imported file, before repair.
     pub source_vertices: Vec<SourceCorner>,
     /// The proposal asked for.

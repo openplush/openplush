@@ -15,7 +15,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `StageResult<T>` | type alias | `Result<Staged<T>, EngineError>`: what every stage will return |
 | `Staged<T>` | struct | `value: T` plus `warnings: WarningSet`; warnings never turn `Ok` into `Err` |
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
-| `ErrorLocations` | struct | What `EngineError::locations()` returns: every element an error names, by category, sorted |
+| `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
 | `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what `ProposalId::from_hex` and `Proposal::new` return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
@@ -44,7 +44,7 @@ Format names: `OBJ`, `glTF`, `GLB`, `STL`, `PLY`.
 Three methods read an error the way the shell needs it. Each matches every variant explicitly, so a new variant does not compile until it has a code, locations and proposals.
 
 - **`code() -> &'static str`**: the variant name (`"Parse"`, `"ChartNotDisk"`, …, `"Cancelled"`). It is stable on the wire: a released code never changes.
-- **`locations() -> ErrorLocations`**: the elements in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
+- **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
 - **`proposals() -> &[Proposal]`**: the fixes `ChartNotDisk` and `BoundaryNotRealizable` carry; empty for every other variant.
 
 `SeamsError` is the error of building a proposal or parsing its ID, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:

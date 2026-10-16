@@ -1,7 +1,6 @@
-# Web shell gates. Steps that need a package no-op until it exists
-# (root scripts use --if-present), so CI passes on the empty workspace.
-# Drop --if-present from package.json in the PR that adds the first package:
-# after that, a package without a typecheck/test script should fail, not pass.
+# Web shell gates. `pnpm -r <script>` skips a package that lacks the script, with or
+# without --if-present, so a package without typecheck or test passes unchecked:
+# each package defines both, and review keeps it so.
 name: shell
 
 on:

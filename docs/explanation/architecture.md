@@ -7,7 +7,7 @@ How the engine is put together **as built today**, and why. Planned parts are ma
 OpenPlush turns a 3D model into a sewing pattern on the user's device. The work splits in two:
 
 - **The engine** (`crates/`): pure Rust geometry. It never touches the filesystem, the clock, threads, the network, or a browser API, so it runs identically as a native CLI and as WebAssembly in a browser worker.
-- **The shells** (`bindings/`, `apps/`, `packages/`): the CLI, the WASM facade, and the web app. They own all I/O and talk to the engine through one crate, `openplush-pipeline`. The CLI ([reference/cli.md](../reference/cli.md)) and the WASM facade exist as skeletons that call no stage yet; the web app is *planned*.
+- **The shells** (`bindings/`, `apps/`, `packages/`): the CLI, the WASM facade, and the web app. They own all I/O and talk to the engine through one crate, `openplush-pipeline`. The CLI ([reference/cli.md](../reference/cli.md)) and the WASM facade exist as skeletons that call no stage yet; the web app is *planned*. Between the web app and the worker sits `packages/engine-client` ([reference/worker-protocol.md](../reference/worker-protocol.md)): it owns the worker and the request lifecycle, speaks only the protocol types generated from the facade's DTOs, and is the only package `apps/` may import for engine work.
 
 The boundary is enforced, not just intended: `scripts/check-boundary.sh` reads `cargo metadata` and the source, and fails CI if an engine crate reaches a browser or OS API or if a binding depends on any workspace crate but the pipeline. `crates/clippy.toml` bans the listed std filesystem, clock, thread, network and process items at compile time, so an aliased `use std::time;` cannot sneak past the text scan.
 

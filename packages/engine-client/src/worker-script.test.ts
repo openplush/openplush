@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { EngineClient } from "./client";
 import type { Request } from "./generated/Request";
@@ -9,11 +9,10 @@ import { type Dispatch, serve } from "./worker-script";
 
 class FakeScope extends EventTarget {
   readonly posted: unknown[] = [];
-  reject = false;
 
+  // Clones as a real postMessage does, so an uncloneable message throws DataCloneError.
   postMessage(message: unknown): void {
-    if (this.reject) throw new DOMException("could not be cloned", "DataCloneError");
-    this.posted.push(message);
+    this.posted.push(structuredClone(message));
   }
 
   receive(request: Request): void {
@@ -81,15 +80,43 @@ describe("serve", () => {
   it("treats a reply that cannot be posted as a crash", () => {
     const scope = new FakeScope();
     serve(scope, (req, reply) => {
-      scope.reject = true;
-      try {
-        reply({ id: req.id, ok: true, result: () => {}, warnings: [] });
-      } finally {
-        scope.reject = false;
-      }
+      reply({ id: req.id, ok: true, result: () => {}, warnings: [] });
     });
     scope.receive(request(5));
     expect(scope.posted).toEqual([crashedFor(5), { crashed: true }]);
+  });
+
+  it("treats a reply that cannot be posted after dispatch returned as a crash", () => {
+    const scope = new FakeScope();
+    let late: ((message: Response<unknown>) => void) | undefined;
+    let calls = 0;
+    serve(scope, (req, reply) => {
+      calls += 1;
+      if (req.id === 2) late = reply;
+    });
+    scope.receive(request(2));
+    late?.({ id: 2, ok: true, result: () => {}, warnings: [] });
+    scope.receive(request(3));
+    expect(scope.posted).toEqual([crashedFor(2), { crashed: true }]);
+    expect(calls).toBe(1);
+  });
+
+  it("logs the exception to the worker console", () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const trap = new WebAssembly.RuntimeError("unreachable");
+    const scope = new FakeScope();
+    serve(scope, () => {
+      throw trap;
+    });
+    scope.receive(request(1));
+    expect(log).toHaveBeenCalledWith(trap);
+    log.mockRestore();
+  });
+
+  it("does not accept an async dispatch, whose rejection no crash path would see", () => {
+    // @ts-expect-error a promise-returning dispatch
+    const dispatch: Dispatch = async () => {};
+    expect(dispatch).toBeTypeOf("function");
   });
 });
 

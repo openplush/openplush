@@ -5,11 +5,12 @@ Reads the committed files only and shares no code with generate.py or source_sea
 """
 
 import json
+import math
 import struct
 import unittest
 from pathlib import Path
 
-from test_fixtures import FIXTURES, Face, Vec, array, edges_of, exact_int, field, read_seam_set
+from test_fixtures import FIXTURES, Face, Vec, array, chart_topology, edges_of, exact_int, field, read_seam_set
 
 UV = tuple[float, float]
 Corner = tuple[int, UV]  # (OBJ vertex index, UV)
@@ -35,8 +36,10 @@ def read_obj_uv(path: Path) -> tuple[list[Vec], list[tuple[Corner, Corner, Corne
         elif word == "f":
             corners: list[Corner] = []
             for s in rest:
-                vi, ti = s.split("/")
-                corners.append((int(vi) - 1, uvs[int(ti) - 1]))
+                vi, ti = (int(n) for n in s.split("/"))
+                if not (1 <= vi <= len(pos) and 1 <= ti <= len(uvs)):
+                    raise ValueError(f"{path.name}: corner {s!r} indexes outside the v or vt lines before it")
+                corners.append((vi - 1, uvs[ti - 1]))
             a, b, c = corners
             faces.append((a, b, c))
         elif word not in ("", "#"):
@@ -118,7 +121,7 @@ class CapsuleUv(unittest.TestCase):
     """The capsule cut along one meridian and one ring, as an OBJ and as a Blender-style glTF."""
 
     def test_uv_cuts_in_the_obj_are_exactly_the_reference_seam_set(self) -> None:
-        """Prevents a fixture whose UVs and recorded layout disagree, which would make SC-001 unmeasurable."""
+        """Prevents a fixture whose UVs and recorded layout disagree, which would leave seam-import accuracy unmeasurable."""
         seam_set = read_seam_set(FIXTURES / "seams" / "capsule-uv.json")
         self.assertEqual(seam_set.mesh, "meshes/source-seams/capsule-uv.obj")
         self.assertEqual(seam_set.kinds, {"cut"})
@@ -126,6 +129,22 @@ class CapsuleUv(unittest.TestCase):
         cuts, boundary = uv_cuts(faces)
         self.assertEqual(boundary, 0, "closed surface")
         self.assertEqual(sorted(cuts), seam_set.edges)
+
+    def test_the_layout_is_one_meridian_and_the_upper_tube_rim(self) -> None:
+        """Prevents the generator changing the cut layout and its seam set together, unnoticed."""
+        pos, faces = read_obj_uv(SOURCE / "capsule-uv.obj")
+        cuts, _ = uv_cuts(faces)
+
+        def on_meridian(v: int) -> bool:  # meridian 0 lies in the half-plane y = 0, x >= 0
+            return pos[v][1] == 0.0 and pos[v][0] >= 0.0
+
+        rim_z = max(p[2] for p in pos if abs(math.hypot(p[0], p[1]) - 30.0) < POS_TOL)  # highest full-radius ring
+        meridian = {e for e in cuts if on_meridian(e[0]) and on_meridian(e[1])}
+        rim = {e for e in cuts if pos[e[0]][2] == rim_z == pos[e[1]][2]}
+        self.assertEqual(rim_z, 30.0, "the tube's upper rim, where it meets the hemisphere")
+        self.assertEqual((len(meridian), len(rim), meridian | rim), (9, 12, cuts), "pole to pole, plus one full ring")
+        tris: list[Face] = [(f[0][0], f[1][0], f[2][0]) for f in faces]
+        self.assertEqual(chart_topology(tris, cuts), [(1, 1), (1, 1)], "two disk-shaped islands")
 
     def test_the_cut_rule_sees_a_cut_that_differs_at_one_endpoint_only(self) -> None:
         """Prevents an oracle that only compares whole edges and misses a cut running into a junction."""
@@ -153,6 +172,8 @@ class CapsuleUv(unittest.TestCase):
                 self.assertLess(max(abs(tex[g][0] - u), abs(tex[g][1] - (1.0 - w))), UV_TOL)
         distinct = {(v, uv) for face in faces for v, uv in face}
         self.assertEqual(len(pos), len(distinct), "one glTF vertex per distinct (position, UV), no more")
+        self.assertEqual(set(idx), set(range(len(pos))), "every glTF vertex is used")
+        self.assertEqual(len({(to_obj[g], tex[g]) for g in range(len(pos))}), len(pos), "no two share a pair")
 
     def test_position_bounds_match_the_data(self) -> None:
         """Prevents a glTF that strict loaders reject: POSITION min and max are required and must be exact."""

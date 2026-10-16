@@ -11,6 +11,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 - `.github/workflows/review.yml` runs when a PR opens or is marked ready, and again only when the `rereview` label is added. A push alone starts no review.
 - Add `rereview` only after a run failed (a usage-limit stop, a crash) or after pushing a fix to a 🔴 finding. Never add it just to get a summary on a newer commit.
+- Add `mutation-audit` (with `rereview`, or before the PR opens) when a PR adds checks to Rust code and no local mutation run covered them.
 - A PR is ready to merge when CI is green on its head, a review on a recent commit found no 🔴, no 🔴 thread is open, and every 🟡 has been fixed or answered.
 - Push only to fix a 🔴, a failing check, or a defect you have confirmed. Answer the other 🟡 findings in one short PR comment, and resolve their threads.
 - If a finding repeats an earlier one, link to the earlier answer rather than writing the answer again.
@@ -18,7 +19,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 ## Local review
 
 - Code PRs: run `pr-reviewer`, plus `mutation-auditor` for Rust under `crates/` or `bindings/`, once before opening the PR. The review the PR gets on opening is the gate.
-- Docs and spec PRs: no local reviewers. The review on opening covers them.
+- Docs and spec PRs: don't run `docs-reviewer` or `spec-reviewer` locally. The review on opening already runs them on those paths, so a local run would only duplicate it.
 - At most two subagents at a time.
 
 ## Stacks

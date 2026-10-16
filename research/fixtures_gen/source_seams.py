@@ -1,7 +1,8 @@
-"""Source-seam fixtures: models whose UV cuts are the seam layout, written the way Blender's exporters write them.
+"""Source-seam fixtures: models whose UV cuts are the seam layout, with Blender's exporters' UV conventions.
 
 glTF stores one vertex per distinct (position, UV), so the exporter splits a vertex wherever its corner UVs
-differ, and it flips V because glTF's UV origin is top-left. OBJ keeps one `v` per position and indexes a
+differ, and it flips V because glTF's UV origin is top-left. Positions stay Z-up in millimetres, like the other
+fixtures; Blender would also turn them Y-up, which changes no cut. OBJ keeps one `v` per position and indexes a
 `vt` per corner. Both carry the same cuts; the seam set in fixtures/seams/ names them by the OBJ's indices.
 """
 

@@ -46,10 +46,10 @@ The next request spawns a new worker. A `cancel()` after the crash does nothing.
 
 ## Worker script
 
-`serve(scope, dispatch)` in `src/worker-script.ts` answers requests inside the worker. Nothing calls it yet: it waits for the binding's first exported op.
+`serve(scope, dispatch)` in `src/worker-script.ts` answers requests inside the worker.
 
 - Each `message` event's data is handed to `dispatch(request, reply)`, which answers through `reply`; replies are posted in the order given.
-- **Any** exception from `dispatch` is a crash, a WASM trap included, and so is a `reply` whose `postMessage` throws (an uncloneable result). The script logs the exception to the worker console, posts `EngineCrashed` for that request, then `{ crashed: true }`, and from then on handles no request and posts nothing, not even a `reply` captured earlier. If `dispatch` had already posted the request's terminal message, the client keeps that one.
+- **Any** exception from `dispatch` is a crash, a WASM trap included, and so is a `reply` whose `postMessage` throws (an uncloneable result), whether `dispatch` has returned or not. `dispatch` returns `undefined`, so an `async` one does not type-check: its rejection would reach no crash path. The script logs the exception to the worker console, posts `EngineCrashed` for that request, then `{ crashed: true }`, and from then on handles no request and posts nothing, not even a `reply` captured earlier. If `dispatch` had already posted the request's terminal message, the client keeps that one.
 
 ## Ops
 

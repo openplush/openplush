@@ -14,7 +14,7 @@ export type WorkerMessage = Response<unknown> | Crashed;
 export interface WorkerPort {
   post(request: Request): void;
   /**
-   * Starts delivering messages, and `onError` for the worker's `error` event;
+   * Starts delivering messages, and `onError` for an event that may have lost a message (`fromWorker` names them);
    * the returned function stops both.
    */
   listen(onMessage: (message: WorkerMessage) => void, onError: () => void): () => void;

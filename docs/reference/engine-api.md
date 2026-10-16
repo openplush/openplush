@@ -44,7 +44,7 @@ Format names: `OBJ`, `glTF`, `GLB`, `STL`, `PLY`.
 Three methods read an error the way the shell needs it. Each matches every variant explicitly, so a new variant does not compile until it has a code, locations and proposals.
 
 - **`code() -> &'static str`**: the variant name (`"Parse"`, `"ChartNotDisk"`, …, `"Cancelled"`). It is stable on the wire: a released code never changes.
-- **`locations() -> ErrorLocations`**: the elements in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `components`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations; no current variant names a component. A proposal's own edges are not locations: they arrive with the proposal.
+- **`locations() -> ErrorLocations`**: the elements in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
 - **`proposals() -> &[Proposal]`**: the fixes `ChartNotDisk` and `BoundaryNotRealizable` carry; empty for every other variant.
 
 `SeamsError` is the error of building a proposal or parsing its ID, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:

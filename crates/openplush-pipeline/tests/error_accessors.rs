@@ -143,10 +143,15 @@ fn not_manifold_locates_its_edges_and_vertices_sorted_without_duplicates() {
 }
 
 #[test]
-fn flip_locates_its_chart_and_faces() {
+fn flip_locates_its_chart_and_faces_sorted_without_duplicates() {
     let e = EngineError::Flip {
         chart: ChartId::new(1),
-        faces: vec![FaceId::new(40), FaceId::new(20), FaceId::new(21)],
+        faces: vec![
+            FaceId::new(40),
+            FaceId::new(20),
+            FaceId::new(21),
+            FaceId::new(20),
+        ],
     };
     let expected = ErrorLocations {
         faces: vec![FaceId::new(20), FaceId::new(21), FaceId::new(40)],
@@ -157,7 +162,7 @@ fn flip_locates_its_chart_and_faces() {
 }
 
 #[test]
-fn non_finite_input_locates_source_vertices_sorted() {
+fn non_finite_input_locates_source_vertices_sorted_without_duplicates() {
     let late = SourceCorner {
         primitive: 2,
         vertex: 0,
@@ -167,7 +172,7 @@ fn non_finite_input_locates_source_vertices_sorted() {
         vertex: 9,
     };
     let e = EngineError::NonFiniteInput {
-        vertices: vec![late, early],
+        vertices: vec![late, early, late],
     };
     let expected = ErrorLocations {
         source_vertices: vec![early, late],

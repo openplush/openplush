@@ -2,6 +2,7 @@ use serde::Serialize;
 
 /// Error codes the binding and its host raise, beside `EngineError`'s variant names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[non_exhaustive]
 pub enum BindingCode {
     /// The handle was released, or belongs to an earlier worker.

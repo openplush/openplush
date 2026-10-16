@@ -28,7 +28,7 @@ expect_plan() {
 
 expect_plan "default runs every gate" "" \
   "cargo fmt --check" "cargo clippy --workspace --all-targets --locked -- -D warnings" \
-  "cargo test --workspace --locked" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "cargo deny --locked check" \
+  "cargo test --workspace --locked" "scripts/gen-ts-types.sh --check" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "cargo deny --locked check" \
   "cargo build --workspace --target wasm32-unknown-unknown --locked" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
@@ -48,8 +48,9 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "hygiene step checks every lint opt-out against the allowlist" "hygiene" \
   "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh"
-expect_plan "engine group is boundary, hygiene, fmt, clippy, test" "engine" \
-  "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked"
+expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types" "engine" \
+  "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
+  "scripts/gen-ts-types.sh --check"
 expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
 # The runner must match Cargo.lock exactly; with no wasm-bindgen locked, say so.
 locked=$(cd "$here/../.." && cargo metadata --format-version 1 --locked |

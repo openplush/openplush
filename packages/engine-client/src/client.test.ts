@@ -1,28 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { EngineClient } from "./client";
 import type { EngineErrorDto, Op, Progress } from "./index";
-import { MockWorker } from "./mock-worker";
+import { only, setup } from "./test-setup";
 
 const op: Op = { op: "cancel", payload: { target: 99 } };
 const cancelled: EngineErrorDto = { code: "Cancelled", message: "cancelled" };
-
-function setup(): { client: EngineClient; workers: MockWorker[] } {
-  const workers: MockWorker[] = [];
-  const client = new EngineClient(() => {
-    const worker = new MockWorker();
-    workers.push(worker);
-    return worker;
-  });
-  return { client, workers };
-}
-
-function only(workers: readonly MockWorker[]): MockWorker {
-  expect(workers).toHaveLength(1);
-  const [worker] = workers;
-  if (worker === undefined) throw new Error("no worker spawned");
-  return worker;
-}
 
 describe("EngineClient requests", () => {
   it("posts the op with a fresh id and resolves with the result", async () => {
@@ -36,6 +18,7 @@ describe("EngineClient requests", () => {
       ok: true,
       result: { charts: [1, 2] },
       warnings: [],
+      generation: 0,
     });
   });
 
@@ -56,7 +39,7 @@ describe("EngineClient requests", () => {
   it("reports progress only before the terminal message", async () => {
     const { client, workers } = setup();
     const seen: Progress[] = [];
-    const call = client.request(op, (p) => seen.push(p));
+    const call = client.request(op, { onProgress: (p) => seen.push(p) });
     const worker = only(workers);
     const working: Progress = { kind: "working", chart: 1, iteration: 2, maxDistortion: 0.5 };
 
@@ -83,21 +66,34 @@ describe("EngineClient requests", () => {
     const worker = only(workers);
     worker.send({ id: call.id } as never);
     worker.send({ id: call.id, ok: true, result: "later", warnings: [] });
-    await expect(call.outcome).resolves.toEqual({ ok: true, result: "later", warnings: [] });
+    await expect(call.outcome).resolves.toEqual({ ok: true, result: "later", warnings: [], generation: 0 });
     expect(worker.errors).toEqual([expect.any(TypeError)]);
   });
 
   it("keeps delivering after a progress listener throws", async () => {
     const { client, workers } = setup();
-    const first = client.request(op, () => {
-      throw new Error("listener");
+    const first = client.request(op, {
+      onProgress: () => {
+        throw new Error("listener");
+      },
     });
     const second = client.request(op);
     const worker = only(workers);
     worker.send({ id: first.id, progress: { kind: "done" } });
     worker.send({ id: second.id, ok: true, result: null, warnings: [] });
-    await expect(second.outcome).resolves.toEqual({ ok: true, result: null, warnings: [] });
+    await expect(second.outcome).resolves.toEqual({ ok: true, result: null, warnings: [], generation: 0 });
     expect(worker.errors).toEqual([new Error("listener")]);
+  });
+
+  it("leaves nothing pending when post throws", async () => {
+    const { client, workers } = setup();
+    client.request(op);
+    const worker = only(workers);
+    worker.terminate();
+    expect(() => client.request(op)).toThrow("post after terminate");
+    worker.send({ id: 1, ok: true, result: "orphan", warnings: [] });
+    await worker.drained();
+    expect(worker.errors).toEqual([]);
   });
 
   it("ignores a message for an id it never sent", async () => {
@@ -106,7 +102,7 @@ describe("EngineClient requests", () => {
     const worker = only(workers);
     worker.send({ id: call.id + 1000, ok: true, result: "stray", warnings: [] });
     worker.send({ id: call.id, ok: true, result: "mine", warnings: [] });
-    await expect(call.outcome).resolves.toEqual({ ok: true, result: "mine", warnings: [] });
+    await expect(call.outcome).resolves.toEqual({ ok: true, result: "mine", warnings: [], generation: 0 });
   });
 });
 

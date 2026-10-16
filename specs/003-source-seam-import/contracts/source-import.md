@@ -2,7 +2,7 @@
 
 **Feature**: `003-source-seam-import` | **Date**: 2026-10-16 | **Status**: Draft contract
 
-Additions to the single engine surface (`specs/001-pattern-pipeline/contracts/engine-api.md`). This file is their home until the code lands. The implementation slice that adds the stage also bumps 001's engine-api version and records the change in 001's Decision Ledger, as that contract requires. After that, rustdoc and `docs/reference/` are the source of truth (ADR 0003), and 001's contract gains a one-line pointer here, as it has for 002's `hints` stage.
+Additions to the single engine surface (`specs/001-pattern-pipeline/contracts/engine-api.md`). This file is their home until the code lands. Once the implementation slice that adds the stage merges, a spec-only PR bumps 001's engine-api version and records the change in 001's Decision Ledger, as that contract requires (a spec change never shares a PR with code). After that, rustdoc and `docs/reference/` are the source of truth (ADR 0003), and 001's contract gains a one-line pointer here, as it has for 002's `hints` stage.
 
 ## 1. Stages
 

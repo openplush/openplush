@@ -73,7 +73,7 @@ specs/003-source-seam-import/
 ├── quickstart.md
 ├── contracts/source-import.md # stage signatures, error, CLI, worker op
 ├── checklists/requirements.md
-└── tasks.md                   # task list (U001–U067)
+└── tasks.md                   # task list (U001–U068)
 ```
 
 ### Source code
@@ -161,4 +161,4 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 ### Open questions
 
 - Spikes Q1–Q4 ([research R6](./research.md)).
-- 001's own "add a fabric profile by hand" has no default defined either. S-007 fills that gap for both features; 001's plan should record it when T084 lands.
+- 001's own "add a fabric profile by hand" has no default defined either. S-007 fills that gap for both features; 001 records it as D-034.

@@ -20,7 +20,7 @@ pub struct SourceMaterials {
 ```
 
 - **Invariant (new)**: every source primitive has at most one material. The importer owns primitive numbering (`SourceCorner` docs), so it splits primitives at each material change. glTF already does this; OBJ needs spike Q3.
-- **Validation**: `TriangleSoup::new` refuses a `by_primitive` shorter than the highest primitive index used, with a typed `MeshError`. A material is a function of provenance, so no per-face array is needed: a face's material is its first corner's primitive's material.
+- **Validation**: `TriangleSoup::new` refuses, with a typed `MeshError`, a `by_primitive` shorter than the highest primitive index used, and a `MaterialIndex` not below `names.len()`. A material is a function of provenance, so no per-face array is needed: a face's material is its first corner's primitive's material.
 - **Carried through repair**: `SourceMaterials` and `extra_uv_sets` are file-level, not per-element, so repair moves them unchanged from the soup onto `ManifoldMesh`. `ManifoldMesh` gains the same two fields and read accessors, and repair's output type is unchanged. This changes 001's `ManifoldMesh` (decision S-011).
 - **Faces added by repair** (hole fill, T066) have no source primitive: their `corner_src` entries are `None` in the merged `ManifoldMesh` (`Vec<Option<SourceCorner>>`). That is distinct from a source face whose primitive has no material, so a face's material state has three values: a material, no material in the file, or repair-filled. Spec FR-024 assigns repair-filled faces to a region (§3).
 - `MaterialIndex` is a `u32` newtype from `id_newtype!` in `openplush-mesh`.

@@ -63,8 +63,8 @@ U001 to U007 are each their own PR with their `fixtures/LICENSES.md` entry, in t
 | T069, T070, T073, T075, T076 | U019 (`SeamSet`), U051 (seam graph), U031 and U032 (charts, topology, `propose_cuts`) |
 | T084 | U042: `Fabric` and the minky preset |
 | T093 | U022 onward: the CLI |
-| T099 | U027: the real worker host |
-| T107, T128 | U033, U034: accepting proposals, and "accept all" as one undo step |
+| T099 | U029, U030 and every later web task: the real worker host (U027 runs against the mock worker) |
+| T107, T128 | U020, U029, U030 (accepting proposals), U033, U034 ("accept all" as one undo step) |
 | T124, T125, T126 | U046, U057, U059: the project document, provenance keys, and the stored mesh chunk |
 | T137 | U042: painted regions |
 
@@ -90,7 +90,7 @@ Each needs a spec-only PR (specs and implementation never share a PR):
 - [ ] U005 [P] `fixtures/meshes/source-seams/dead-end.glb` and `dead-end.tips.json`: two deliberate dead-ended cuts, plus one cut that ends on a material boundary and one that ends on an opening (US4, FR-013, US4 scenario 3). The tips record lists exactly the two tips
 - [ ] U006 [P] `fixtures/meshes/source-seams/no-uv.obj`: no `vt` lines, one material (FR-005)
 - [ ] U007 [P] `fixtures/meshes/source-seams/quadruped-v1.glb`, `quadruped-v2.glb` and `quadruped-v1.layout.json`: one model with seams and materials, before and after reshaping one leg (FR-050, Q4)
-- [ ] U008 **Q1**: on U001, U005 and U007 (glTF and OBJ), does every marked seam and only those read as a UV cut at `UV_CUT = 1e-5`, and does a dead-ended seam read as a slit? Record the measured UV differences (largest across an uncut edge, smallest across a cut) and the chosen value in research.md R2 and R6, and change the R1 dead-end row from `[likely]` to `[solid]` or `[verify]`. Depends on U001, U005, U007. Box: 0.5 day
+- [ ] U008 **Q1**: on U001 (glTF and OBJ) and on U005 and U007 (glTF), does every marked seam and only those read as a UV cut at `UV_CUT = 1e-5`, and does a dead-ended seam read as a slit? Record the measured UV differences (largest across an uncut edge, smallest across a cut) and the chosen value in research.md R2 and R6, and change the R1 dead-end row from `[likely]` to `[solid]` or `[verify]`. Depends on U001, U005, U007. Box: 0.5 day
 - [ ] U009 [P] **Q2**: which Blender UV map becomes `TEXCOORD_0`, the active one or the first listed? Record it in research.md R1; it sets the FR-004 report wording in U021. Box: 1 h
 - [ ] U010 [P] **Q3**: does `tobj` start a new model at a `usemtl` change inside one group (U004's OBJ)? Record it in research.md R1. If not, U015 splits primitives itself (S-002). Depends on U004. Box: 1 h
 - [ ] U011 [P] **Q4**: import U007 v1, accept its seams, re-import v2. Measure the share of seams away from the edited leg that re-place by position within the weld tolerance, and update research.md R5's tag. Depends on U007. Box: 0.5 day
@@ -111,8 +111,8 @@ None. No new crate and no new dependency (S-001).
 
 ### Mesh (`openplush-mesh`)
 
-- [ ] U012 [P] `crates/openplush-mesh/tests/soup.rs` and `crates/openplush-mesh/src/halfedge/tests.rs`: failing tests for `SourceMaterials` (data-model §1). In `tests/soup.rs`: `TriangleSoup::new` refuses, with a new typed `MeshError` variant naming the lowest offending primitive, (a) a `by_primitive` "shorter than the highest primitive index used" and (b) a `MaterialIndex` ≥ `names.len()`. (b) is not in data-model §1; a dangling index is the same broken invariant, so the PR records it there. A valid soup returns its materials and `extra_uv_sets` unchanged. In `src/halfedge/tests.rs`, because `from_oriented_triangles` is `pub(crate)` and stays so: building a `ManifoldMesh` from such a soup carries both fields unchanged, and a face's material is its first corner's primitive's material
-- [ ] U013 `crates/openplush-mesh/src/soup.rs`, `src/ids.rs`, `src/halfedge/mod.rs`, `src/halfedge/build.rs`: `MaterialIndex` via `id_newtype!`; `SourceMaterials { names, by_primitive }` and `extra_uv_sets: u32` on `TriangleSoup` and `ManifoldMesh`, with read accessors only. Doc comments state the invariant "every source primitive has at most one material". In the same PR, add "moves `SourceMaterials` and `extra_uv_sets` unchanged (003 S-011)" to 001 T067's line in `specs/001-pattern-pipeline/tasks.md`, so repair inherits the duty. Makes U012 pass
+- [ ] U012 [P] `crates/openplush-mesh/tests/soup.rs` and `crates/openplush-mesh/src/halfedge/tests.rs`: failing tests for `SourceMaterials` (data-model §1). In `tests/soup.rs`: `TriangleSoup::new` refuses, with a new typed `MeshError` variant naming the lowest offending primitive, (a) a `by_primitive` "shorter than the highest primitive index used" and (b) a `MaterialIndex` ≥ `names.len()`. A valid soup returns its materials and `extra_uv_sets` unchanged. In `src/halfedge/tests.rs`, because `from_oriented_triangles` is `pub(crate)` and stays so: building a `ManifoldMesh` from such a soup carries both fields unchanged, and a face's material is its first corner's primitive's material
+- [ ] U013 `crates/openplush-mesh/src/soup.rs`, `src/ids.rs`, `src/halfedge/mod.rs`, `src/halfedge/build.rs`: `MaterialIndex` via `id_newtype!`; `SourceMaterials { names, by_primitive }` and `extra_uv_sets: u32` on `TriangleSoup` and `ManifoldMesh`, with read accessors only. Doc comments state the invariant "every source primitive has at most one material". Makes U012 pass
 
 ### Importers (`openplush-io`, alongside 001 T053)
 
@@ -138,10 +138,10 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 ### Implementation
 
-- [ ] U018 [US1] `crates/openplush-geom/src/epsilon.rs`: `UV_CUT` with Q1's value. Its doc comment says why it is absolute and dimensionless (research R2). One-constant slice, stacked under U019. Depends on U008
+- [ ] U018 [US1] `crates/openplush-geom/src/epsilon.rs`: `UV_CUT` with Q1's value. Its doc comment says why it is absolute and dimensionless, without citing a spec section (AGENTS.md). One-constant slice, stacked under U019. Depends on U008
 - [ ] U019 [US1] `crates/openplush-seams/src/source.rs` (new) and `src/proposal.rs`: UV-cut detection over `&ManifoldMesh` and `&SeamSet`, returning the cut edges and the count of faces without UVs. Adds `SeamReason::SourceModel`, with a doc comment, and builds the seam `Proposal` (`ProposalKind::Seam { reason: SeamReason::SourceModel }`, `SeamKind::Cut`) through `Proposal::new`, or nothing when there are no edges. A `debug_assert!` checks that no `Dart` or `Opening` kind is produced. Makes U016 and U017 pass
 - [ ] U020 [US1] `crates/openplush-pipeline/tests/source_import.rs`: failing tests for `source_import(mesh, existing, fabrics)` (contract §1). On a UV-cut mesh, `seams` is `Some`, with the cuts. With no UVs, `seams` is `None`, the report's `uv_set_read` is `None`, and the report says no UV cuts were found (US1 scenario 4). Edges already in `existing` are excluded. Applying `seams` through T107's path gives the same `SeamSet` as drawing those edges by hand (US1 scenario 2). Report counts (`uv_set_read`, `extra_uv_sets`, `uv_cut_edges`, `faces_without_uv`) as an `insta` snapshot. Repeated runs give byte-identical serialised output (SC-007)
-- [ ] U021 [US1] `crates/openplush-pipeline/src/source.rs` (new) and `src/lib.rs`: the `source_import` stage and the public `SourceImport { seams, report }` / `SourceReport` with only US1's fields; later stories add theirs. The FR-004 report text follows Q2 (U009). Includes rustdoc for every public item and the `source_import` entry in `docs/reference/engine-api.md`. As the contract's preamble requires, it also bumps 001's engine-api version, adds a 001 Decision Ledger entry, and adds a one-line pointer in `specs/001-pattern-pipeline/contracts/engine-api.md` to this feature's contract. Makes U020 pass
+- [ ] U021 [US1] `crates/openplush-pipeline/src/source.rs` (new) and `src/lib.rs`: the `source_import` stage and the public `SourceImport { seams, report }` / `SourceReport` with only US1's fields; later stories add theirs. The FR-004 report text follows Q2 (U009). Includes rustdoc for every public item and the `source_import` entry in `docs/reference/engine-api.md`. Makes U020 pass. Its spec follow-up is U068
 - [ ] U022 [P] [US1] `bindings/openplush-cli/tests/import_seams.rs`: failing tests for quickstart scenarios 1, 2 and 6. `import-seams <model> --json <out>` writes the proposal and report; the OBJ twin gives the same edge set by position; two runs give byte-identical files
 - [ ] U023 [US1] `bindings/openplush-cli/src/commands/import_seams.rs`: the `import-seams` subcommand (contract §3) and its entry in `docs/reference/cli.md`. Makes U022 pass
 - [ ] U024 [US1] FR-014 (S-013): a closed cut that cuts off a piece below 001's minimum piece size is still proposed, and the preview marks that piece before acceptance by running 001's piece-size check on the flattened, scaled proposal. Playwright test in `apps/web/tests/import-preview.spec.ts`, then the implementation in `apps/web/src/import/`. No engine change. **Blocked** on spec gap 1
@@ -189,7 +189,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 ### Regions (`openplush-pattern`)
 
 - [ ] U041 [P] [US3] `crates/openplush-pattern/tests/source_regions.rs`: failing tests. Matching is `trim` plus `str::to_lowercase` against each profile name treated the same way, first match in project order wins, and nothing fuzzy ("minky_fabric" matches nothing) (S-006). Case folding doesn't depend on the locale (a name with "İ" folds the same everywhere). An unmatched name gives `Fabric::with_defaults(name)`, equal to the minky preset except for the name (S-007). Source faces with no material form one "No material" region, matched like any other name (FR-020). With no material on any face there are no regions (FR-005). With one material there is one region. A `proptest` checks that every face is in exactly one region, regions are ordered by `MaterialIndex` with "No material" last, and faces in each region ascend (SC-005). A repair-filled area joins the region bordering the largest share of its perimeter by length; ties go to the lowest `MaterialIndex`, then "No material" (data-model §3)
-- [ ] U042 [US3] `crates/openplush-pattern/src/regions.rs` and `src/fabric.rs`: regions from materials beside T137's painted regions, name matching, and `Fabric::with_defaults(name)`. In the same PR, record S-007 in 001's Decision Ledger as 001's "add fabric" default (plan, Open questions). Makes U041 pass
+- [ ] U042 [US3] `crates/openplush-pattern/src/regions.rs` and `src/fabric.rs`: regions from materials beside T137's painted regions, name matching, and `Fabric::with_defaults(name)`. Makes U041 pass
 
 ### Stage (`openplush-pipeline`)
 
@@ -199,13 +199,13 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 ### Unreviewed-fabric warning (FR-025)
 
 - [ ] U045 [P] [US3] `crates/openplush-project/tests/from_material.rs`: failing tests. Optional `fabrics[].fromMaterial` defaults to `false`; a v1 file without it loads unchanged; a profile created by import has it set; the first edit to that profile clears it
-- [ ] U046 [US3] `crates/openplush-project/src/document.rs`, `specs/001-pattern-pipeline/contracts/project.schema.json` and the project schema page in `docs/reference/`: the field and the clear-on-edit rule. Makes U045 pass. Depends on T124
+- [ ] U046 [US3] `crates/openplush-project/src/document.rs` and the project schema page in `docs/reference/`: the field (already in `specs/001-pattern-pipeline/contracts/project.schema.json`) and the clear-on-edit rule. Makes U045 pass. Depends on T124
 - [ ] U047 [US3] `crates/openplush-pipeline/src/warning/tests.rs`: failing tests. `WarningCode::UnreviewedFabric` (target `Project`, `Remedy::Advisory`, text "Pick a preset for, or edit, the fabric '<name>'") is raised once per fabric with `fromMaterial`, gone after an edit, and present in the warnings printed on the pattern (FR-025)
 - [ ] U048 [US3] `crates/openplush-pipeline/src/warning/mod.rs`: the warning code and its string in `docs/reference/engine-api.md`. Makes U047 pass
 
 ### Shell
 
-- [ ] U049 [P] [US3] CLI, WASM and client: extend `bindings/openplush-cli/tests/import_seams.rs` (scenario 4 JSON), `bindings/openplush-wasm/tests/source_import.rs` and `packages/engine-client/src/source-import.test.ts` to regions, new fabrics and the material report. Then the DTO fields, regenerated types and `docs/reference/worker-protocol.md`. One PR per package, each test first
+- [ ] U049 [P] [US3] `bindings/openplush-cli/src/commands/import_seams.rs`, `bindings/openplush-wasm/src/` and `packages/engine-client/src/client.ts`: extend `bindings/openplush-cli/tests/import_seams.rs` (scenario 4 JSON), `bindings/openplush-wasm/tests/source_import.rs` and `packages/engine-client/src/source-import.test.ts` to regions, new fabrics and the material report. Then the DTO fields, regenerated types and `docs/reference/worker-protocol.md`. One PR per package, each test first
 - [ ] U050 [P] [US3] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `three-materials.glb`. A region overlay distinct from both seam layers (FR-040). Created profiles are listed with an edit action. Repainting an accepted region behaves like hand painting (US3 scenario 5). Implementation in `apps/web/src/import/` as the PR's second commit
 
 **Checkpoint**: one import gives seams, regions and fabrics; an unreviewed guess is printed on the pattern.
@@ -222,7 +222,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 - [ ] U052 [US4] `crates/openplush-seams/src/source.rs`: the dead-end check, reusing T070's free-endpoint classification with no second definition of an endpoint. Makes U051 pass
 - [ ] U053 [US4] `crates/openplush-pipeline/tests/source_import.rs`: failing tests. `source_import` returns `EngineError::DeadEndCut { tips, chains }` before building any proposal, so no seams, regions or profiles exist (FR-012). The mesh passed in is unchanged. The remedy text is the contract §2 string
 - [ ] U054 [US4] `crates/openplush-pipeline/src/error.rs` and `src/source.rs`: the `DeadEndCut` variant, run first in the stage; rustdoc; the final error string in `docs/reference/engine-api.md`. Makes U053 pass
-- [ ] U055 [P] [US4] CLI, WASM and client: `bindings/openplush-cli/tests/import_seams.rs` (scenario 5: the `EngineError` exit code, and JSON listing both tips), then the error DTO in `bindings/openplush-wasm/` and `packages/engine-client/`. One PR per package, each test first
+- [ ] U055 [P] [US4] `bindings/openplush-cli/tests/import_seams.rs`, `bindings/openplush-wasm/src/` and `packages/engine-client/src/errors.ts`: the CLI test (scenario 5: the `EngineError` exit code, and JSON listing both tips), then the error DTO in `bindings/openplush-wasm/` and `packages/engine-client/`. One PR per package, each test first
 - [ ] U056 [P] [US4] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `dead-end.glb`. The error lists each dead end; selecting one highlights its chain in 3D; the remedy is shown; the model stays loaded, and hand drawing works (US4 scenario 2). Implementation in `apps/web/src/import/` as the second commit
 
 **Checkpoint**: the feature's engine half is releasable.
@@ -234,11 +234,11 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 **Goal**: importing into a project that already has seams or regions asks Replace or Merge, shows the difference first, and never drops a seam silently. No story label: see spec gap 2.
 
 - [ ] U057 [P] `crates/openplush-project/tests/seam_origin.rs`: failing tests. Optional `seams[].origin` (`"drawn" | "imported" | "proposed"`) defaults to `"drawn"`; v1 files load unchanged; any other value is a typed parse error (S-009)
-- [ ] U058 `crates/openplush-project/src/document.rs`, `project.schema.json` and the schema page in `docs/reference/`: the field. Accepting a source import marks its seams `imported`, and closing seams `proposed`. Makes U057 pass
+- [ ] U058 `crates/openplush-project/src/document.rs` and the schema page in `docs/reference/`: the field (already in `project.schema.json`). Accepting a source import marks its seams `imported`, and closing seams `proposed`. Makes U057 pass
 - [ ] U059 `crates/openplush-pipeline/tests/reimport.rs`: failing tests for `reimport_diff(old, new_mesh, import, on_existing)`. Old seams and region faces re-place by position within the weld tolerance, never by provenance key or nearest edge (S-008). Under Merge, an unplaceable seam or face is listed in `unplaceable_*` and located on the old mesh, and an imported seam on an existing seam isn't counted twice. Under Replace, `removed_seams` counts all existing seams and `removed_hand_drawn` only `origin = drawn`. The stage is pure. U007's v1 and v2 match Q4's measured share
 - [ ] U060 `crates/openplush-pipeline/src/source.rs` (split into `src/source/` if it exceeds 400 lines): `OnExisting`, `ReimportDiff`, and `reimport_diff`, with rustdoc and `docs/reference/engine-api.md`. Makes U059 pass
 - [ ] U061 `crates/openplush-pipeline/tests/source_accept.rs`: failing tests. Replace and Merge each apply as one undo step; declining leaves the project byte-identical (FR-052). Implementation in `src/proposals.rs` as the second commit
-- [ ] U062 [P] CLI, WASM and client: `import-seams --project <old> --on-existing <replace|merge>` (quickstart scenario 7), then the `reimportDiff` operation. Test first in each package, one PR per package, with `docs/reference/cli.md` and `worker-protocol.md`
+- [ ] U062 [P] `bindings/openplush-cli/tests/import_seams.rs` and `src/commands/import_seams.rs`, `bindings/openplush-wasm/src/` and `packages/engine-client/src/client.ts`: `import-seams --project <old> --on-existing <replace|merge>` (quickstart scenario 7), then the `reimportDiff` operation. Test first in each package, one PR per package, with `docs/reference/cli.md` and `worker-protocol.md`
 - [ ] U063 [P] `apps/web/tests/reimport.spec.ts`: failing Playwright tests. Replace and Merge are offered, neither preselected. The diff shows before commit, with hand-drawn removals counted. Unplaceable seams are located on the previous model. Keyboard-operable. Implementation in `apps/web/src/import/` as the second commit
 
 ---
@@ -246,9 +246,10 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 ## Phase 8: Polish and cross-cutting
 
 - [ ] U064 [P] `crates/openplush-pipeline/benches/source_import.rs`: UV-cut and boundary reading on a 50,000-triangle testkit mesh with UVs and three materials. Record the time in the PR against SC-009's 1 s budget; a miss is a finding, not a tuning knob
-- [ ] U065 [P] Add quickstart scenario 8's native-vs-WASM byte comparison for `three-materials.glb` to T017 and T018's determinism CI job (SC-007)
+- [ ] U065 [P] `.github/workflows/determinism.yml` (T017): add quickstart scenario 8's native-vs-WASM byte comparison for `three-materials.glb` (SC-007)
 - [ ] U066 [P] `docs/how-to/import-seams-from-a-model.md`: what counts as a cut, why a texture-only cut becomes a seam (keep texture cuts on a separate UV map), dead ends and how to fix them, and how names match fabrics
 - [ ] U067 Run quickstart.md scenarios 1 to 9 end to end, and point each implemented spec section to its as-built docs (ADR 0003)
+- [ ] U068 `specs/001-pattern-pipeline/contracts/engine-api.md` and `specs/001-pattern-pipeline/plan.md`: spec-only PR once U021 merges. Bump 001's engine-api version, add the Decision Ledger entry, and add the one-line pointer to this feature's contract (contract preamble). Separate from U021 because spec and implementation never share a PR
 
 ---
 
@@ -260,12 +261,12 @@ Phase 0 fixtures U001–U007 ─▶ spikes U008–U011
 Phase 2  U012→U013 (mesh)          │               ▼
          U014→U015 (io, after T050/T051, alongside T053)
                                    ▼
-US1  U016,U017 → U018 → U019 → U020→U021 → U022→U023, U025→U026 → U027→U028 → U029→U030
+US1  U016,U017 → U018 (after U008) → U019 → U020→U021 (after U009) → U022→U023, U025→U026 → U027→U028 → U029→U030 → U024 (after spec gap 1)
 US2  (after U021) U031→U032 → U033→U034 → U035→U036, U037, U038
 US3  (after U013, U015, U019) U039→U040, U041→U042 → U043→U044; U045→U046 → U047→U048; U049, U050
 US4  (after U019, U040) U051→U052 → U053→U054 → U055, U056
 Re-import (after U044, T124–T126) U057→U058 → U059→U060 → U061 → U062, U063
-Polish after US4
+Polish after US4; U068 after U021 merges
 ```
 
 - Within a story: test task, then implementation, then the next layer up (seams, then pattern, then pipeline, CLI, WASM, client, web).

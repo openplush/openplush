@@ -6,12 +6,12 @@
 
 The engine runs in a Web Worker so the UI thread never blocks on geometry (Constitution "Technical Constraints"). This file defines the messages between `apps/web` and the worker hosting `bindings/openplush-wasm`, mediated by `packages/engine-client`.
 
-TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern. The one exception is `{ crashed: true }` (§2), which the worker host sends and no Rust code produces; T040's mock-worker crash tests pin it.
+TypeScript types are **generated from the Rust definitions**, not hand-written. Two hand-maintained copies of a protocol drift, and the drift shows up as a wrong pattern. The one exception is `{ crashed: true }` (§2), which the worker script (`worker.ts`, not the WASM instance) sends and no Rust code produces; T040's mock-worker crash tests pin it.
 
 ## 1. Rules
 
 1. **Mesh state never crosses.** The worker owns the mesh and all intermediates. The UI holds opaque handles (`MeshHandle`, `PipelineHandle`). A 50k-triangle mesh is not a message payload.
-2. **Control messages are small JSON.** Request/response, correlated by `id`.
+2. **Control messages are small JSON.** Request/response, correlated by `id`; the one message without an `id` is the worker's `{ crashed: true }` (§4).
 3. **Geometry for rendering crosses as transferables.** `Float32Array` / `Uint32Array`, zero-copy. Positions are `f32` at this boundary only — `f64` everywhere inside the engine (Constitution "Numerics").
 4. **Every request is cancellable.** The UI may cancel by `id`; the worker honours it at the next `step()` boundary.
 5. **Errors cross as typed codes with locations**, never as strings the UI has to parse.
@@ -24,10 +24,10 @@ type Response =
   | { id: number; ok: true;  result: unknown; warnings: Warning[]; transfer?: ArrayBuffer[] }
   | { id: number; ok: false; error: EngineErrorDto }
   | { id: number; progress: Progress }           // zero or more, before the terminal message
-  | { crashed: true };                           // the worker host's own message; see §4, Worker crash
+  | { crashed: true };                           // the worker script's own message; see §4, Worker crash
 ```
 
-Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `{ crashed: true }` is the one message with no `id` and no Rust counterpart: the worker host sends it after a trap, so `packages/engine-client` types it by hand next to the generated types. `progress` messages are advisory and may be dropped under load.
+Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `{ crashed: true }` is the one message with no `id` and no Rust counterpart: the worker script (`worker.ts`, not the WASM instance) sends it after a trap, so `packages/engine-client` types it by hand next to the generated types. `progress` messages are advisory and may be dropped under load.
 
 `warnings` rides on every success. The UI is responsible for showing them and for FR-064's one-time acknowledgement; the worker only reports.
 

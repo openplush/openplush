@@ -11,7 +11,7 @@ pub use error::IoError;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum Format {
-    /// Wavefront OBJ, with MTL and textures.
+    /// Wavefront OBJ: geometry and texture coordinates.
     Obj,
     /// glTF 2.0, JSON with separate buffers.
     Gltf,

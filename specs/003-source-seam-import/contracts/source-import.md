@@ -2,7 +2,7 @@
 
 **Feature**: `003-source-seam-import` | **Date**: 2026-10-16 | **Status**: Draft contract
 
-Additions to the single engine surface (`specs/001-pattern-pipeline/contracts/engine-api.md`). This file is their home until the code lands. After that, rustdoc and `docs/reference/` are the source of truth (ADR 0003), and 001's contract gains a one-line pointer here, as it has for 002's `hints` stage.
+Additions to the single engine surface (`specs/001-pattern-pipeline/contracts/engine-api.md`). This file is their home until the code lands. The implementation slice that adds the stage also bumps 001's engine-api version and records the change in 001's Decision Ledger, as that contract requires. After that, rustdoc and `docs/reference/` are the source of truth (ADR 0003), and 001's contract gains a one-line pointer here, as it has for 002's `hints` stage.
 
 ## 1. Stages
 
@@ -49,4 +49,4 @@ openplush-cli pattern model.glb --seams-from-model --accept-closing --size-mm 30
 
 ## 4. Worker protocol
 
-One new request, `sourceImport`, and one new response carrying `SourceImport` as a protocol DTO (ADR 0010 rules: no 64-bit integers, finite floats only). `reimportDiff` likewise. Both are additions, so the protocol version gets a minor bump.
+One new request, `sourceImport`, and one new response carrying `SourceImport` as a protocol DTO, under ADR 0010's rules: finite floats only, and no 64-bit integers, so each proposal's `ProposalId` crosses as its 16-hex-digit string, as 001's proposals already do. `reimportDiff` likewise. Both are additive; the protocol document carries no version number to bump.

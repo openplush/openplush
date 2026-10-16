@@ -4,7 +4,7 @@
 
 Extends 001's data model (`specs/001-pattern-pipeline/data-model.md`); section references below (§n) are to that file. Field lists are design intent; names may change in implementation, invariants may not.
 
-## 1. Source materials on the soup (extends §2)
+## 1. Source materials on the soup and the mesh (extends 001 data-model §2)
 
 ```rust
 pub struct TriangleSoup {
@@ -20,8 +20,9 @@ pub struct SourceMaterials {
 ```
 
 - **Invariant (new)**: every source primitive has at most one material. The importer owns primitive numbering (`SourceCorner` docs), so it splits primitives at each material change. glTF already does this; OBJ needs spike Q3.
-- **Validation**: `TriangleSoup::new` refuses a `by_primitive` shorter than the highest primitive index used, with a typed `MeshError`. A material is a function of provenance, so it survives repair with no new per-face array: a face's material is its first corner's primitive's material.
-- **Faces added by repair** (hole fill, T066) have no source primitive, so they have no material. Spec FR-024 assigns them to a region (§3).
+- **Validation**: `TriangleSoup::new` refuses a `by_primitive` shorter than the highest primitive index used, with a typed `MeshError`. A material is a function of provenance, so no per-face array is needed: a face's material is its first corner's primitive's material.
+- **Carried through repair**: `SourceMaterials` and `extra_uv_sets` are file-level, not per-element, so repair moves them unchanged from the soup onto `ManifoldMesh`. `ManifoldMesh` gains the same two fields and read accessors, and repair's output type is unchanged. This changes 001's `ManifoldMesh` (decision S-011).
+- **Faces added by repair** (hole fill, T066) have no source primitive. That is distinct from a source face whose primitive has no material, so a face's material state has three values: a material, no material in the file, or repair-filled. Spec FR-024 assigns repair-filled faces to a region (§3).
 - `MaterialIndex` is a `u32` newtype from `id_newtype!` in `openplush-mesh`.
 
 ## 2. Reading the surface
@@ -29,8 +30,8 @@ pub struct SourceMaterials {
 | Concept | Defined as | Computed by |
 |---|---|---|
 | UV cut | Interior edge, UVs on both sides, endpoint UVs differ by more than `UV_CUT` at either end (research R2) | `openplush-seams::source` |
-| Material boundary | Interior edge whose two faces have different `Option<MaterialIndex>` | `openplush-seams::source` |
-| Dead-end tip | Interior vertex of seam-valence 1 in the graph over UV cuts ∪ material boundaries ∪ mandatory seams (research R3) | 001's seam graph (T070) |
+| Material boundary | Interior edge whose two faces both come from the source file (neither is repair-filled) and differ in `Option<MaterialIndex>`. A source face with no material next to one with a material is a boundary; a repair-filled face never is (spec FR-024) | `openplush-seams::source` |
+| Dead-end tip | Interior vertex of seam-valence 1 in the graph over UV cuts ∪ material boundaries ∪ mandatory seams, excluding seams already in the project (research R3, spec FR-013) | 001's seam graph (T070) |
 
 `UV_CUT = 1e-5` lives in `openplush_geom::epsilon` beside the other tolerances, as the first tolerance that is neither model-relative nor physical. Its doc comment says why it is absolute.
 
@@ -42,7 +43,7 @@ Who owns what, following the crate DAG: edge detection and the dead-end check ar
 pub struct SourceImport {
     seams: Option<Proposal>,          // ProposalKind::Seam { reason: SeamReason::SourceModel }; Cut and FabricBoundary edges
     closing: Vec<Proposal>,           // CloseChart proposals from propose_cuts over (existing ∪ seams)
-    regions: Vec<SourceRegion>,       // one per material, plus "No material" if any face lacks one
+    regions: Vec<SourceRegion>,       // empty if no face has a material (FR-005); else one per material, plus "No material" if any source face lacks one
     new_fabrics: Vec<Fabric>,         // profiles created for unmatched names (FR-023)
     report: SourceReport,
 }
@@ -73,7 +74,7 @@ pub struct SourceReport {
 - `closing` is empty exactly when every chart under existing ∪ `seams` is a disk (US2 scenario 4).
 - `seams` is `None` when nothing would be added (a model with no UVs and one material), because `Proposal::new` refuses an empty edit.
 
-**FR-024 tie-break**: a repair-filled area (all faces with no material that came from one filled loop) joins the region sharing the most boundary length with it. Ties go to the lowest `MaterialIndex`, with "No material" last.
+**FR-024 tie-break**: a repair-filled area (the faces that filled one loop) joins the region bordering the largest share of its perimeter, measured by length. Ties go to the lowest `MaterialIndex`, with "No material" last.
 
 ## 4. Errors (extends engine-api §5)
 

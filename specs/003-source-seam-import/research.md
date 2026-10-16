@@ -36,7 +36,7 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 
 ## R3. Dead ends
 
-**Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, walk each back to its chain, and fail with one error listing every tip and chain.
+**Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Seams already in the project are left out: the file must be consistent on its own, because Replace would discard them. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, walk each back to its chain, and fail with one error listing every tip and chain.
 
 **Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4). Here the same class is an error, because FR-010 rules out imported darts. Reusing the classifier means no second definition of "endpoint" to drift. Reporting all tips at once is the spec's edge case ("not one per attempt").
 

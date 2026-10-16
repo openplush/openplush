@@ -34,14 +34,14 @@ How to prove the feature works end to end once it is built. Commands follow [con
 
 4. **Materials to fabrics** (US3, SC-005)
    `openplush-cli import-seams three-materials.glb --json out.json`
-   Expect: three regions; "Minky" and "fleece " matched to presets; one created profile "Felt Nose" with the default values (research R4); a seam on every material boundary.
+   Expect: three regions; "Minky" and "fleece " matched to presets; one created profile "Felt Nose" with the new-profile defaults (research R4; values pending S-007); a seam on every material boundary.
 
 5. **Dead ends** (US4, SC-004)
    `openplush-cli import-seams dead-end.glb --json out.json`
    Expect: `DeadEndCut` with exactly two tips. The cut that ends on a material boundary is not reported.
 
 6. **No UVs** (FR-005)
-   Expect: report `uv_set_read: null`, no UV seams, one region.
+   Expect: report `uv_set_read: null`, no UV seams, and one region, because the fixture has one material (with none, FR-005 proposes no regions).
 
 7. **Re-import** (FR-050 to FR-052)
    `openplush-cli import-seams quadruped-v2.glb --project quadruped-v1.plush --on-existing merge --json diff.json`

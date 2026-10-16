@@ -121,18 +121,19 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - **FR-002**: An edge is a **material boundary** when its two sides belong to different materials.
 - **FR-003**: Edges on the surface's boundary (holes kept as openings) are never imported seams; they are already unsewn edges.
 - **FR-004**: Only the first set of texture coordinates is read. When a model has more than one set, the import report says which set was used and that the others were ignored.
-- **FR-005**: A model with no texture coordinates or no materials imports normally. The import report states which of the two sources was absent, and the corresponding seams or regions are simply not proposed.
+- **FR-005**: A model with no texture coordinates or no materials imports normally. The import report states which of the two sources was absent. With no texture coordinates, no UV-cut seams are proposed. With no material on any face, no regions or material-boundary seams are proposed.
 
 #### Seams from UV cuts
 
 - **FR-010**: Every UV cut becomes a proposed seam of the ordinary seam type. An imported UV cut is never a dart and never an opening.
 - **FR-011**: A **dead end** is an endpoint of an imported seam that lies inside the surface and touches no other seam: no other imported seam, material boundary, mandatory repair seam, or surface boundary. Any dead end fails seam import with a typed error that lists every dead end and its location on the model, and states the remedy: close or remove the cut in the modelling tool and re-import.
 - **FR-012**: When seam import fails, nothing from it is proposed: no seams, no regions, no new profiles. The model itself still imports, and the maker may proceed by hand.
-- **FR-013**: Dead ends are judged on the combined set of imported seams, material-boundary seams, and mandatory repair seams, so a cut that runs into another seam is never reported.
+- **FR-013**: Dead ends are judged on the combined set of imported seams, material-boundary seams, and mandatory repair seams, so a cut that runs into another seam is never reported. Seams already in the project are not part of that set: the source file must be consistent on its own, because a Replace would discard them.
+- **FR-014**: Imported seams get the same piece checks as drawn ones. A closed cut that separates a piece below the minimum sewable size triggers feature 001's existing warning for that, not a new one.
 
 #### Fabric regions from materials
 
-- **FR-020**: Every material becomes one proposed fabric region. Faces with no material form one region named "No material".
+- **FR-020**: When at least one face has a material, every material becomes one proposed fabric region, and faces from the source file with no material form one region named "No material", matched to a profile under FR-022 and FR-023 like any other name.
 - **FR-021**: Every material boundary becomes a proposed seam of the fabric-boundary type. Where a material boundary and a UV cut share an edge, one seam is proposed.
 - **FR-022**: A region is matched to a fabric profile whose name equals the material's name, ignoring letter case and leading or trailing spaces.
 - **FR-023**: A material that matches no profile gets a new profile named after the material, with the same default properties as a fabric profile the maker creates by hand in feature 001. Each new profile is listed in the import report as newly created and is editable like any other.
@@ -199,7 +200,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 ## Assumptions
 
 - Feature 001 provides import, repair, seam drawing, flattenability validation with minimal extra-seam proposals, fabric regions and profiles, the project file, and undo/redo. This feature adds a new source of seams and regions to those rather than reimplementing them.
-- Per-corner texture coordinates and material assignment survive feature 001's import and repair unchanged (001 FR-002, data model §2), so a UV cut is recoverable after welding.
+- Per-corner texture coordinates survive feature 001's import and repair unchanged, so a UV cut is recoverable after welding. 001 FR-002 also promises to keep material assignment, but 001's design does not yet carry material names; this feature's data model adds that.
 - Both supported formats record which material each face uses; how each one encodes that is a planning matter.
 - Failing seam import as a whole on any dead end, rather than importing the rest, is deliberate: a partial import would hand the maker a seam layout that differs from their design without a clear sign of where.
 - The texture-coordinate tolerance in FR-001 is documented with the engine's other tolerances and is tuned so exporter rounding never reads as a cut.

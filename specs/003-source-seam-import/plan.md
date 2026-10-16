@@ -9,7 +9,7 @@
 
 When a maker imports a model they already cut and organised in a modelling tool, read its UV cuts as seams and its materials as fabric regions. Offer both as one proposal, with any extra seams needed to make every piece lie flat already highlighted and one "accept all" action.
 
-**Technically this is two new modules, one new stage, and one small extension to 001's soup.** No new crate and no new dependency. The signals are already in 001's data: per-corner UVs survive the weld, and source provenance names the primitive each face came from. 001 just never read them. The one gap is that 001's `TriangleSoup` has nowhere to put material names, even though 001 FR-002 promises to keep material assignment (data-model §1).
+**Technically this is two new modules, one new stage, and one small extension to 001's soup.** No new crate and no new dependency. The signals are already in 001's data: per-corner UVs survive the weld, and source provenance names the primitive each face came from. 001 just never read them. The one gap is that 001's `TriangleSoup` and `ManifoldMesh` have nowhere to put material names, even though 001 FR-002 promises to keep material assignment (this feature's data-model §1).
 
 ## Technical Context
 
@@ -37,7 +37,7 @@ From 001's `tasks.md`:
 - **T128**: undo.
 - **T137**: regions.
 
-Work can start partway through 001's Phase 3, like 002. The soup extension (data-model §1) is best folded into T053, which is still open, rather than added after it.
+Work can start partway through 001's Phase 3, like 002. The material extension (data-model §1) is two tasks in two crates, because one PR never spans two: first `openplush-mesh` (`SourceMaterials` on the soup and `ManifoldMesh`, carried by repair), then `openplush-io` (importers fill it, alongside T053).
 
 ## Constitution Check
 
@@ -138,7 +138,7 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | Date | ID | Decision | Status |
 |---|---|---|---|
 | 2026-10-16 | S-001 | **No new crate.** Detection in `openplush-seams`, regions in `openplush-pattern`, composition in `openplush-pipeline`. No new dependency edge | Accepted |
-| 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. Survives repair with no per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2, to be folded into T053 |
+| 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside T053 |
 | 2026-10-16 | S-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** Provisional `1e-5`; spike Q1 confirms | Accepted, research R2 |
 | 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` | Accepted, research R3, spec FR-011 and FR-013 |
 | 2026-10-16 | S-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
@@ -147,6 +147,8 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | 2026-10-16 | S-008 | **Re-import re-places old seams and regions by position, not provenance key.** Unplaceable ones are listed and located; spec FR-051 amended to say so | Accepted, research R5; spike Q4 measures it |
 | 2026-10-16 | S-009 | **Optional `seams[].origin`** (`drawn`/`imported`/`proposed`, default `drawn`), so FR-051 can count hand-drawn seams. Additive; v1 files unchanged | Accepted |
 | 2026-10-16 | S-010 | **Headless never accepts a proposal implicitly.** `--accept-closing` names the act | Accepted, Constitution II and VII |
+| 2026-10-16 | S-011 | **`ManifoldMesh` carries `SourceMaterials` and `extra_uv_sets`**, moved unchanged from the soup by repair, so stages that take the mesh can read them. A repair-filled face is distinguishable from a source face with no material, so filled holes never make material-boundary seams | Accepted. Changes 001's `ManifoldMesh`; review of #99 |
+| 2026-10-16 | S-012 | **Dead ends ignore seams already in the project.** The file must be consistent on its own, because Replace would discard those seams | Accepted, spec FR-013; review of #99 |
 
 ### Trade-offs accepted
 

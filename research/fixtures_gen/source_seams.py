@@ -8,12 +8,15 @@ differ, and it flips V because glTF's UV origin is top-left. OBJ keeps one `v` p
 import json
 import math
 import struct
+from dataclasses import dataclass, field
+from typing import TypeVar
 
 from generate import HEADER, Edge, Face, Mesh, Vec, capsule, num, seam_text, sphere
 
 UV = tuple[float, float]
 FaceUV = tuple[UV, UV, UV]  # the UV at each corner of one face, in the face's corner order
 FaceNormals = tuple[Vec, Vec, Vec]
+T = TypeVar("T")
 
 CUT_RING = 2  # the capsule ring cut all the way round: the tube's upper rim, where it meets the hemisphere (z = +30 mm)
 SPLIT_V = (0.45, 0.55)  # the bottom island fills v up to the first, the top island from the second
@@ -92,6 +95,36 @@ def sphere_band() -> tuple[Mesh, list[FaceUV], list[Edge]]:
     return m, face_uvs, cuts
 
 
+MATERIALS = ("minky / cuddle", "Polar fleece ", "Felt Nose")  # case, a trailing space, and a name no preset has
+
+
+def three_materials() -> tuple[Mesh, list[list[Face]], list[Edge]]:
+    """The capsule in three materials: upper hemisphere, tube, lower hemisphere. Faces are regrouped by material.
+
+    Returns the mesh, each material's faces in MATERIALS order, and the material boundaries (both tube rims).
+    """
+    m, rings = capsule()
+    upper, lower = CUT_RING, len(rings) - CUT_RING - 1  # the tube's rims
+    ring_of = {v: i for i, r in enumerate(rings) for v in r} | {0: -1, len(m.pos) - 1: len(rings)}
+    runs: list[list[Face]] = [[], [], []]
+    for f in m.faces:
+        ringed = [ring_of[v] for v in f]
+        runs[0 if max(ringed) <= upper else 2 if min(ringed) >= lower else 1].append(f)
+    m.faces = [f for run in runs for f in run]
+    boundaries = [e for ring in (upper, lower) for e in zip(rings[ring], rings[ring][1:] + rings[ring][:1])]
+    return m, runs, boundaries
+
+
+def obj_material_text(note: str, m: Mesh, runs: list[list[Face]]) -> str:
+    """OBJ with one `o` and a `usemtl` before each run, so materials switch inside one object; no UVs."""
+    lines = [HEADER, f"# {note}\n", "o three-materials\n"]
+    lines += [f"v {num(p[0])} {num(p[1])} {num(p[2])}\n" for p in m.pos]
+    for name, run in zip(MATERIALS, runs, strict=True):
+        lines.append(f"usemtl {name}\n")
+        lines += [f"f {a + 1} {b + 1} {c + 1}\n" for a, b, c in run]
+    return "".join(lines)
+
+
 def obj_uv_text(note: str, m: Mesh, face_uvs: list[FaceUV]) -> str:
     """OBJ with one `vt` per distinct UV, in order of first use."""
     index: dict[UV, int] = {}
@@ -111,53 +144,85 @@ def f32(x: float) -> float:
     return float(struct.unpack("<f", struct.pack("<f", x))[0])
 
 
-def glb_bytes(name: str, note: str, m: Mesh, face_uvs: list[FaceUV], face_normals: list[FaceNormals] | None = None) -> bytes:
-    """One-primitive GLB: f32 POSITION, TEXCOORD_0 and optional NORMAL, u32 indices.
+@dataclass(frozen=True)
+class Primitive:
+    """One glTF primitive: faces of the mesh, with optional per-corner UVs and normals and a material index."""
 
-    One vertex per distinct (position, UV, normal), so the glTF splits wherever any corner attribute differs.
-    """
-    per_face: list[FaceNormals | None] = list(face_normals) if face_normals is not None else [None] * len(m.faces)
-    vertex: dict[tuple[int, UV, Vec | None], int] = {}
+    faces: list[Face]
+    uvs: list[FaceUV] | None = None
+    normals: list[FaceNormals] | None = None
+    material: int | None = None
+
+
+@dataclass
+class Buffer:
+    """The binary chunk being built, with its buffer views and accessors."""
+
+    blob: bytes = b""
+    views: list[dict[str, int]] = field(default_factory=list)
+    accessors: list[dict[str, object]] = field(default_factory=list)
+
+    def add(self, kind: str, component: int, data: bytes, count: int, target: int) -> int:
+        self.accessors.append({"bufferView": len(self.views), "componentType": component, "count": count, "type": kind})
+        self.views.append({"buffer": 0, "byteOffset": len(self.blob), "byteLength": len(data), "target": target})
+        self.blob += data
+        return len(self.accessors) - 1
+
+    def floats(self, kind: str, rows: list[tuple[float, ...]]) -> int:
+        return self.add(kind, 5126, b"".join(struct.pack(f"<{len(r)}f", *r) for r in rows), len(rows), 34962)
+
+
+def present(values: list[T | None], what: str) -> list[T]:
+    """`values` with None ruled out; raises naming `what` instead of dropping one."""
+    out: list[T] = []
+    for x in values:
+        if x is None:
+            raise ValueError(what)
+        out.append(x)
+    return out
+
+
+def primitive_json(buf: Buffer, name: str, m: Mesh, prim: Primitive) -> dict[str, object]:
+    """Writes one primitive's attributes and indices; one vertex per distinct (position, UV, normal) in it."""
+    uvs: list[FaceUV | None] = list(prim.uvs) if prim.uvs is not None else [None] * len(prim.faces)
+    nrm: list[FaceNormals | None] = list(prim.normals) if prim.normals is not None else [None] * len(prim.faces)
+    vertex: dict[tuple[int, UV | None, Vec | None], int] = {}
     indices = [
         vertex.setdefault((v, uv, n), len(vertex))
-        for f, cs, ns in zip(m.faces, face_uvs, per_face)
-        for v, uv, n in zip(f, cs, ns if ns is not None else (None, None, None))
+        for f, cs, ns in zip(prim.faces, uvs, nrm, strict=True)
+        for v, uv, n in zip(f, cs if cs is not None else (None,) * 3, ns if ns is not None else (None,) * 3)
     ]
-    columns: list[tuple[str, str, list[tuple[float, ...]]]] = [
-        ("POSITION", "VEC3", [tuple(f32(round(c, 6) + 0.0) for c in m.pos[v]) for v, _, _ in vertex]),
-        ("TEXCOORD_0", "VEC2", [(f32(u), f32(1.0 - w)) for _, (u, w), _ in vertex]),
-    ]
-    if face_normals is not None:
-        normals: list[tuple[float, ...]] = []
-        for _, _, n in vertex:
-            if n is None:
-                raise ValueError(f"{name}: face_normals leaves a corner without a normal")
-            normals.append(tuple(f32(c) for c in n))
-        columns.append(("NORMAL", "VEC3", normals))
-    blob = b""
-    views: list[dict[str, int]] = []
-    accessors: list[dict[str, object]] = []
-    for _, kind, rows in columns:
-        accessors.append({"bufferView": len(views), "componentType": 5126, "count": len(rows), "type": kind})
-        views.append({"buffer": 0, "byteOffset": len(blob), "byteLength": 4 * len(rows) * len(rows[0]), "target": 34962})
-        blob += b"".join(struct.pack(f"<{len(r)}f", *r) for r in rows)
-    pos = columns[0][2]
-    accessors[0] |= {"min": [min(p[k] for p in pos) for k in range(3)], "max": [max(p[k] for p in pos) for k in range(3)]}
-    accessors.append({"bufferView": len(views), "componentType": 5125, "count": len(indices), "type": "SCALAR"})
-    views.append({"buffer": 0, "byteOffset": len(blob), "byteLength": 4 * len(indices), "target": 34963})
-    blob += struct.pack(f"<{len(indices)}I", *indices)
-    attributes = {attr: k for k, (attr, _, _) in enumerate(columns)}
-    doc = {
+    pos = [tuple(f32(round(c, 6) + 0.0) for c in m.pos[v]) for v, _, _ in vertex]
+    attributes = {"POSITION": buf.floats("VEC3", pos)}
+    buf.accessors[-1] |= {"min": [min(p[k] for p in pos) for k in range(3)], "max": [max(p[k] for p in pos) for k in range(3)]}
+    if prim.uvs is not None:
+        tex = present([uv for _, uv, _ in vertex], f"{name}: a corner without a UV")
+        attributes["TEXCOORD_0"] = buf.floats("VEC2", [(f32(u), f32(1.0 - w)) for u, w in tex])
+    if prim.normals is not None:
+        normals = present([n for _, _, n in vertex], f"{name}: a corner without a normal")
+        attributes["NORMAL"] = buf.floats("VEC3", [tuple(f32(c) for c in n) for n in normals])
+    out: dict[str, object] = {"attributes": attributes}
+    out["indices"] = buf.add("SCALAR", 5125, struct.pack(f"<{len(indices)}I", *indices), len(indices), 34963)
+    if prim.material is not None:
+        out["material"] = prim.material
+    return out
+
+
+def glb_bytes(name: str, note: str, m: Mesh, prims: list[Primitive], materials: list[str] | None = None) -> bytes:
+    """GLB with one mesh of `prims`, f32 attributes and u32 indices, and named materials if given."""
+    buf = Buffer()
+    primitives = [primitive_json(buf, name, m, p) for p in prims]
+    doc: dict[str, object] = {
         "asset": {"version": "2.0", "generator": "OpenPlush research/fixtures_gen", "extras": {"note": note, "units": "mm"}},
         "scene": 0,
         "scenes": [{"nodes": [0]}],
         "nodes": [{"mesh": 0, "name": name}],
-        "meshes": [{"name": name, "primitives": [{"attributes": attributes, "indices": len(columns)}]}],
-        "accessors": accessors,
-        "bufferViews": views,
-        "buffers": [{"byteLength": len(blob)}],
+        "meshes": [{"name": name, "primitives": primitives}],
     }
-    return glb_container(doc, blob)
+    if materials is not None:
+        doc["materials"] = [{"name": n} for n in materials]
+    doc |= {"accessors": buf.accessors, "bufferViews": buf.views, "buffers": [{"byteLength": len(buf.blob)}]}
+    return glb_container(doc, buf.blob)
 
 
 def glb_container(doc: dict[str, object], blob: bytes) -> bytes:
@@ -210,16 +275,27 @@ def source_seam_files() -> dict[str, bytes]:
     mesh = "meshes/source-seams/capsule-uv.obj"
     return {
         mesh: obj_uv_text(note, m, face_uvs).encode("utf-8"),
-        "meshes/source-seams/capsule-uv.glb": glb_bytes("capsule-uv", note, m, face_uvs),
+        "meshes/source-seams/capsule-uv.glb": glb_bytes("capsule-uv", note, m, [Primitive(m.faces, face_uvs)]),
         "seams/capsule-uv.json": seam_text(mesh, note, cuts).encode("utf-8"),
         "meshes/source-seams/capsule-hardshade.glb": glb_bytes(
             "capsule-hardshade",
             "capsule-hardshade: capsule-uv's UVs, with the lower hemisphere flat-shaded, so normals split vertices too",
             m,
-            face_uvs,
-            capsule_hardshade_normals(m),
+            [Primitive(m.faces, face_uvs, capsule_hardshade_normals(m))],
         ),
-    } | sphere_band_files()
+    } | sphere_band_files() | three_materials_files()
+
+
+def three_materials_files() -> dict[str, bytes]:
+    note = "three-materials: the capsule's upper hemisphere, tube and lower hemisphere in three materials, no UVs"
+    m, runs, boundaries = three_materials()
+    mesh = "meshes/source-seams/three-materials.obj"
+    prims = [Primitive(run, material=k) for k, run in enumerate(runs)]
+    return {
+        mesh: obj_material_text(note, m, runs).encode("utf-8"),
+        "meshes/source-seams/three-materials.glb": glb_bytes("three-materials", note, m, prims, list(MATERIALS)),
+        "seams/non-disk/three-materials.json": seam_text(mesh, note, boundaries, "fabricBoundary").encode("utf-8"),
+    }
 
 
 def sphere_band_files() -> dict[str, bytes]:
@@ -228,6 +304,6 @@ def sphere_band_files() -> dict[str, bytes]:
     mesh = "meshes/source-seams/sphere-band.obj"
     return {
         mesh: obj_uv_text(note, m, face_uvs).encode("utf-8"),
-        "meshes/source-seams/sphere-band.glb": glb_bytes("sphere-band", note, m, face_uvs),
+        "meshes/source-seams/sphere-band.glb": glb_bytes("sphere-band", note, m, [Primitive(m.faces, face_uvs)]),
         "seams/non-disk/sphere-band.json": seam_text(mesh, note, cuts).encode("utf-8"),
     }

@@ -195,11 +195,11 @@ def obj_text(note: str, m: Mesh) -> str:
     return "".join(lines)
 
 
-def seam_text(mesh: str, note: str, edges: list[Edge]) -> str:
-    """`mesh` is the OBJ the edge indices refer to, relative to fixtures/."""
+def seam_text(mesh: str, note: str, edges: list[Edge], kind: str = "cut") -> str:
+    """`mesh` is the OBJ the edge indices refer to, relative to fixtures/; every seam gets `kind`."""
     entries = sorted({(min(e), max(e)) for e in edges})
     head = {"format": "openplush-seam-set", "version": 1, "mesh": mesh, "vertexIndexBase": 0, "note": note}
-    body = ",\n".join(f'    {{"edge": [{a}, {b}], "kind": "cut"}}' for a, b in entries)
+    body = ",\n".join(f'    {{"edge": [{a}, {b}], "kind": "{kind}"}}' for a, b in entries)
     return json.dumps(head, indent=2)[:-2] + ',\n  "seams": [\n' + body + "\n  ]\n}\n"
 
 

@@ -69,7 +69,7 @@ fn area(s: &TriangleSoup) -> f64 {
         .sum()
 }
 
-/// The independent checks every stitched soup passes: area kept, no zero-area
+/// The checks every stitched fixture here passes: area kept, no zero-area
 /// face left, and every edge on the line ab paired with its reverse.
 fn assert_stitched(before: &TriangleSoup, after: &TriangleSoup) {
     let t = tol(before);

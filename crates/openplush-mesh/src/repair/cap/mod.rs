@@ -37,7 +37,9 @@ type OnEdge = BTreeMap<[u32; 2], Vec<(u32, SourceCorner)>>;
 /// Drops every cap (three distinct vertices, area within the area tolerance).
 /// Each other face is re-triangulated with every vertex the caps put on its
 /// edges, so no crack opens, no vertex moves and no vertex is added. Faces that
-/// repeat a vertex pass through; `degenerate::remove` drops them first.
+/// repeat a vertex pass through; `degenerate::remove` drops them first. Within a
+/// few weld distances of a face's corner, a vertex can land on two of its edges
+/// or leave a zero-area triangle; the half-edge build refuses either, naming it.
 #[cfg_attr(
     not(test),
     expect(dead_code, reason = "called by into_manifold, not yet written")
@@ -162,13 +164,21 @@ fn points_on(
             stack.push(key(m, edge[1]));
         }
     }
+    // Ordered from the edge's smaller vertex, then reversed for the face walking it
+    // the other way, so both faces on an edge get the same order even where two
+    // vertices tie.
     let p = |w: u32| positions[w as usize];
-    let edge = p(v) - p(u);
+    let [lo, hi] = key(u, v);
+    let edge = p(hi) - p(lo);
     let mut points: Vec<_> = found
         .into_iter()
-        .map(|(w, src)| (w, src, (p(w) - p(u)).dot(edge) / edge.length_squared()))
+        .map(|(w, src)| (w, src, (p(w) - p(lo)).dot(edge) / edge.length_squared()))
         .collect();
     points.sort_by(|a, b| a.2.total_cmp(&b.2).then(a.0.cmp(&b.0)));
+    if u != lo {
+        points.reverse();
+        points.iter_mut().for_each(|point| point.2 = 1.0 - point.2);
+    }
     points
 }
 

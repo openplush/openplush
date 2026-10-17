@@ -58,7 +58,7 @@ pub struct SourceRegion {
 
 pub struct SourceReport {
     uv_set_read: Option<u32>,         // None = model had no UVs
-    extra_uv_sets: u32,               // > 0 raises FR-004's warning in the report (S-016)
+    extra_uv_sets: u32,               // > 0: the report presents FR-004's warning, derived from this count (S-016)
     uv_cut_edges: u32,
     material_boundary_edges: u32,
     shared_edges: u32,                // edges that are both, counted once (FR-021)

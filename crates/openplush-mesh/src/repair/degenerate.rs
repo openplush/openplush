@@ -24,13 +24,23 @@ pub(crate) struct DroppedCopy {
 /// Drops faces that repeat a vertex and every copy of an earlier face wound the
 /// same way, keeping the lowest face ID. Two copies wound opposite ways are both
 /// kept, as a sheet.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "called by into_manifold, not yet written")
+)]
 pub(crate) fn remove(soup: &TriangleSoup) -> (TriangleSoup, Removed) {
+    let removed = classify(soup.triangle_indices());
+    let kept: Vec<u32> = removed.origin.iter().map(|f| f.index()).collect();
+    (soup.retaining(&kept), removed)
+}
+
+/// What [`remove`] drops and keeps from these faces, without building the soup.
+pub(crate) fn classify(triangles: &[[u32; 3]]) -> Removed {
     let mut removed = Removed::default();
-    let mut kept = Vec::new();
     // Rotated to start at the smallest vertex, so copies wound the same way share
     // a key and copies wound opposite ways do not.
     let mut first: BTreeMap<[u32; 3], u32> = BTreeMap::new();
-    for (i, &tri) in soup.triangle_indices().iter().enumerate() {
+    for (i, &tri) in triangles.iter().enumerate() {
         // Lossless: the face count fits in u32 (`TriangleSoup::new`).
         let face = i as u32;
         let [a, b, c] = tri;
@@ -50,11 +60,10 @@ pub(crate) fn remove(soup: &TriangleSoup) -> (TriangleSoup, Removed) {
             removed.sheets.push([FaceId::new(layer), FaceId::new(face)]);
         }
         first.insert(key, face);
-        kept.push(face);
+        removed.origin.push(FaceId::new(face));
     }
     removed.sheets.sort_by_key(|&[layer, _]| layer);
-    removed.origin = kept.iter().map(|&f| FaceId::new(f)).collect();
-    (soup.retaining(&kept), removed)
+    removed
 }
 
 fn rotated([a, b, c]: [u32; 3]) -> [u32; 3] {

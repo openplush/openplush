@@ -7,7 +7,7 @@ mod report;
 mod selfintersect;
 mod topology;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use openplush_geom::epsilon::ModelTolerances;
 
@@ -15,7 +15,7 @@ pub use report::{
     Duplicate, DuplicateOrientation, NonManifoldEdge, Unmeasurable, ValidationReport,
 };
 
-use crate::TriangleSoup;
+use crate::{FaceId, TriangleSoup};
 
 /// One face's use of an edge: `forward` when it walks the edge from the smaller vertex.
 #[derive(Debug, Clone, Copy)]
@@ -38,12 +38,19 @@ pub fn validate(soup: &TriangleSoup) -> ValidationReport {
         return ValidationReport::unmeasured(Unmeasurable::Extent { diagonal });
     };
     let weld = crate::repair::weld::weld(soup, tol.weld());
-    let welded = soup.reindexed(&weld.rep);
-    let (_, removed) = crate::repair::degenerate::remove(&welded);
-    let tris = welded.triangle_indices();
+    // INVARIANT: `rep` has one entry per soup vertex, and soup indices are in range.
+    let welded: Vec<[u32; 3]> = soup
+        .triangle_indices()
+        .iter()
+        .map(|t| t.map(|v| weld.rep[v as usize]))
+        .collect();
+    let tris = welded.as_slice();
+    let removed = crate::repair::degenerate::classify(tris);
     let kept: Vec<u32> = removed.origin.iter().map(|f| f.index()).collect();
     let edges = edges(tris, &kept);
     let components = topology::components(soup.vertex_count(), tris, &kept);
+    // Repair leaves a sheet's winding as it is: closed and flat, it has no inside.
+    let layers: BTreeSet<FaceId> = removed.sheets.iter().flatten().copied().collect();
     ValidationReport {
         unmeasurable: None,
         unwelded: weld.groups,
@@ -51,7 +58,10 @@ pub fn validate(soup: &TriangleSoup) -> ValidationReport {
         non_manifold_vertices: nonmanifold::vertices(&edges, tris, &kept),
         winding_conflicts: orientation::conflicts(&edges),
         non_orientable: orientation::non_orientable(&edges, tris, &kept),
-        inside_out: orientation::inside_out(&edges, tris, &kept, soup.positions(), diagonal),
+        inside_out: orientation::inside_out(&edges, tris, &kept, soup.positions(), diagonal)
+            .into_iter()
+            .filter(|shell| !shell.iter().all(|face| layers.contains(face)))
+            .collect(),
         boundary_loops: topology::boundary_loops(&edges),
         self_intersections: selfintersect::crossings(tris, &kept, soup.positions(), &tol),
         components,

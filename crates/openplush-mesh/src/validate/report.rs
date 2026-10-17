@@ -2,8 +2,8 @@ use crate::{FaceId, VertexId};
 
 /// Every defect `validate` found, each located by soup IDs. Topology is judged as
 /// repair will see it: coincident vertices welded, repeated-index faces and later
-/// same-wound copies left out, both layers of a double-sided sheet kept. A vertex there is named by its weld group's
-/// smallest ID. Every list is sorted.
+/// same-wound copies left out, both layers of a double-sided sheet kept. A vertex
+/// there is named by its weld group's smallest ID. Every list is sorted.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ValidationReport {
     pub(super) unmeasurable: Option<Unmeasurable>,

@@ -117,6 +117,24 @@ def glb_primitive(path: Path) -> tuple[object, int, list[Vec], list[UV], list[in
     return doc, at, [(p[0], p[1], p[2]) for p in pos], [(t[0], t[1]) for t in tex], idx
 
 
+def glb_normals(path: Path) -> list[Vec]:
+    doc, blob = read_glb(path)
+    (prim,) = array(field(array(field(doc, "meshes"), "meshes")[0], "primitives"), "primitives")
+    normals = accessor_floats(doc, blob, exact_int(field(field(prim, "attributes"), "NORMAL"), "NORMAL"), 3)
+    return [(n[0], n[1], n[2]) for n in normals]
+
+
+def match_positions(pos: list[Vec], obj_pos: list[Vec]) -> list[int]:
+    """For each glTF vertex, the one OBJ vertex at the same position; raises unless there is exactly one."""
+    out: list[int] = []
+    for p in pos:
+        near = [i for i, q in enumerate(obj_pos) if max(abs(p[k] - q[k]) for k in range(3)) < POS_TOL]
+        if len(near) != 1:
+            raise ValueError(f"glTF vertex {p} matches {len(near)} OBJ vertices")
+        out.append(near[0])
+    return out
+
+
 class CapsuleUv(unittest.TestCase):
     """The capsule cut along one meridian and one ring, as an OBJ and as a Blender-style glTF."""
 
@@ -159,11 +177,7 @@ class CapsuleUv(unittest.TestCase):
         obj_pos, faces = read_obj_uv(SOURCE / "capsule-uv.obj")
         _, _, pos, tex, idx = glb_primitive(SOURCE / "capsule-uv.glb")
         self.assertEqual(len(idx), 3 * len(faces))
-        to_obj: list[int] = []
-        for p in pos:
-            near = [i for i, q in enumerate(obj_pos) if max(abs(p[k] - q[k]) for k in range(3)) < POS_TOL]
-            self.assertEqual(len(near), 1, f"glTF vertex {p} matches one OBJ vertex")
-            to_obj.append(near[0])
+        to_obj = match_positions(pos, obj_pos)
         for n, face in enumerate(faces):
             for c, (v, (u, w)) in enumerate(face):
                 g = idx[3 * n + c]
@@ -181,6 +195,54 @@ class CapsuleUv(unittest.TestCase):
         acc = array(field(doc, "accessors"), "accessors")[at]
         self.assertEqual(field(acc, "min"), [min(p[k] for p in pos) for k in range(3)])
         self.assertEqual(field(acc, "max"), [max(p[k] for p in pos) for k in range(3)])
+
+
+class CapsuleHardshade(unittest.TestCase):
+    """The capsule-uv layout exported with a flat-shaded lower hemisphere, so vertices also split for normals."""
+
+    def corners(self) -> tuple[list[tuple[Corner, Corner, Corner]], list[tuple[Vec, Vec, Vec]]]:
+        """Each glTF face as OBJ-indexed corners with OBJ-oriented UVs, and the face's corner normals."""
+        obj_pos, obj_faces = read_obj_uv(SOURCE / "capsule-uv.obj")
+        _, _, pos, tex, idx = glb_primitive(SOURCE / "capsule-hardshade.glb")
+        normals = glb_normals(SOURCE / "capsule-hardshade.glb")
+        to_obj = match_positions(pos, obj_pos)
+        faces: list[tuple[Corner, Corner, Corner]] = []
+        face_normals: list[tuple[Vec, Vec, Vec]] = []
+        for n in range(0, len(idx), 3):
+            a, b, c = ((to_obj[g], (round(tex[g][0], 6), round(1.0 - tex[g][1], 6))) for g in idx[n : n + 3])
+            faces.append((a, b, c))
+            face_normals.append((normals[idx[n]], normals[idx[n + 1]], normals[idx[n + 2]]))
+        for n, (mine, theirs) in enumerate(zip(faces, obj_faces, strict=True)):
+            for (v, uv), (w, obj_uv) in zip(mine, theirs):
+                self.assertEqual(v, w, f"face {n}: same triangle as capsule-uv")
+                self.assertLess(max(abs(uv[0] - obj_uv[0]), abs(uv[1] - obj_uv[1])), UV_TOL, f"face {n}: same UVs")
+        distinct = {(v, uv, nrm) for f, ns in zip(faces, face_normals) for (v, uv), nrm in zip(f, ns)}
+        self.assertEqual(len(normals), len(distinct), "one glTF vertex per distinct (position, UV, normal), no more")
+        return faces, face_normals
+
+    def test_normal_splits_add_no_uv_cut(self) -> None:
+        """Prevents a hard-shading fixture whose UV cuts differ from capsule-uv, which would not isolate shading splits."""
+        faces, _ = self.corners()
+        cuts, _ = uv_cuts(faces)
+        self.assertEqual(sorted(cuts), read_seam_set(FIXTURES / "seams" / "capsule-uv.json").edges)
+
+    def test_it_has_hard_edges_that_are_not_uv_cuts(self) -> None:
+        """Prevents a fixture with no normal-only splits, which would let a cut detector that reads normals pass."""
+        faces, face_normals = self.corners()
+        cuts, _ = uv_cuts(faces)
+        normal_at: dict[tuple[int, int], list[dict[int, Vec]]] = {}
+        for f, ns in zip(faces, face_normals):
+            at = {v: nrm for (v, _), nrm in zip(f, ns)}
+            for e in edges_of((f[0][0], f[1][0], f[2][0])):
+                normal_at.setdefault((min(e), max(e)), []).append(at)
+        hard = {e for e, (l, r) in normal_at.items() if any(max(abs(l[v][k] - r[v][k]) for k in range(3)) > 1e-3 for v in e)}
+        self.assertGreater(len(hard - cuts), 50, "many shading-only splits")
+        self.assertGreater(len(glb_normals(SOURCE / "capsule-hardshade.glb")), len(glb_primitive(SOURCE / "capsule-uv.glb")[2]))
+
+    def test_normals_are_unit_length(self) -> None:
+        """Prevents a glTF that validators reject: NORMAL must be unit length."""
+        for n in glb_normals(SOURCE / "capsule-hardshade.glb"):
+            self.assertAlmostEqual(math.sqrt(sum(c * c for c in n)), 1.0, places=5)
 
 
 if __name__ == "__main__":

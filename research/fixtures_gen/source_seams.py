@@ -7,12 +7,14 @@ fixtures; Blender would also turn them Y-up, which changes no cut. OBJ keeps one
 """
 
 import json
+import math
 import struct
 
-from generate import HEADER, Edge, Mesh, capsule, num, seam_text
+from generate import HEADER, Edge, Face, Mesh, Vec, capsule, num, seam_text
 
 UV = tuple[float, float]
 FaceUV = tuple[UV, UV, UV]  # the UV at each corner of one face, in the face's corner order
+FaceNormals = tuple[Vec, Vec, Vec]
 
 CUT_RING = 2  # the capsule ring cut all the way round: the tube's upper rim, where it meets the hemisphere (z = +30 mm)
 SPLIT_V = (0.45, 0.55)  # the bottom island fills v up to the first, the top island from the second
@@ -73,38 +75,91 @@ def f32(x: float) -> float:
     return float(struct.unpack("<f", struct.pack("<f", x))[0])
 
 
-def glb_bytes(name: str, note: str, m: Mesh, face_uvs: list[FaceUV]) -> bytes:
-    """One-primitive GLB: f32 POSITION and TEXCOORD_0, u32 indices, one vertex per distinct (position, UV)."""
-    vertex: dict[tuple[int, UV], int] = {}
-    indices = [vertex.setdefault((v, uv), len(vertex)) for f, cs in zip(m.faces, face_uvs) for v, uv in zip(f, cs)]
-    pos = [tuple(f32(round(c, 6) + 0.0) for c in m.pos[v]) for v, _ in vertex]
-    tex = [(f32(u), f32(1.0 - v)) for _, (u, v) in vertex]
-    blob = b"".join(struct.pack("<3f", *p) for p in pos)
-    tex_at = len(blob)
-    blob += b"".join(struct.pack("<2f", *t) for t in tex)
-    idx_at = len(blob)
+def glb_bytes(name: str, note: str, m: Mesh, face_uvs: list[FaceUV], face_normals: list[FaceNormals] | None = None) -> bytes:
+    """One-primitive GLB: f32 POSITION, TEXCOORD_0 and optional NORMAL, u32 indices.
+
+    One vertex per distinct (position, UV, normal), so the glTF splits wherever any corner attribute differs.
+    """
+    per_face: list[FaceNormals | None] = list(face_normals) if face_normals is not None else [None] * len(m.faces)
+    vertex: dict[tuple[int, UV, Vec | None], int] = {}
+    indices = [
+        vertex.setdefault((v, uv, n), len(vertex))
+        for f, cs, ns in zip(m.faces, face_uvs, per_face)
+        for v, uv, n in zip(f, cs, ns if ns is not None else (None, None, None))
+    ]
+    columns: list[tuple[str, str, list[tuple[float, ...]]]] = [
+        ("POSITION", "VEC3", [tuple(f32(round(c, 6) + 0.0) for c in m.pos[v]) for v, _, _ in vertex]),
+        ("TEXCOORD_0", "VEC2", [(f32(u), f32(1.0 - w)) for _, (u, w), _ in vertex]),
+    ]
+    if face_normals is not None:
+        columns.append(("NORMAL", "VEC3", [tuple(f32(c) for c in n) for _, _, n in vertex if n is not None]))
+    blob = b""
+    views: list[dict[str, int]] = []
+    accessors: list[dict[str, object]] = []
+    for _, kind, rows in columns:
+        accessors.append({"bufferView": len(views), "componentType": 5126, "count": len(rows), "type": kind})
+        views.append({"buffer": 0, "byteOffset": len(blob), "byteLength": 4 * len(rows) * len(rows[0]), "target": 34962})
+        blob += b"".join(struct.pack(f"<{len(r)}f", *r) for r in rows)
+    pos = columns[0][2]
+    accessors[0] |= {"min": [min(p[k] for p in pos) for k in range(3)], "max": [max(p[k] for p in pos) for k in range(3)]}
+    accessors.append({"bufferView": len(views), "componentType": 5125, "count": len(indices), "type": "SCALAR"})
+    views.append({"buffer": 0, "byteOffset": len(blob), "byteLength": 4 * len(indices), "target": 34963})
     blob += struct.pack(f"<{len(indices)}I", *indices)
-    views = [(0, tex_at, 34962), (tex_at, idx_at - tex_at, 34962), (idx_at, len(blob) - idx_at, 34963)]
+    attributes = {attr: k for k, (attr, _, _) in enumerate(columns)}
     doc = {
         "asset": {"version": "2.0", "generator": "OpenPlush research/fixtures_gen", "extras": {"note": note, "units": "mm"}},
         "scene": 0,
         "scenes": [{"nodes": [0]}],
         "nodes": [{"mesh": 0, "name": name}],
-        "meshes": [{"name": name, "primitives": [{"attributes": {"POSITION": 0, "TEXCOORD_0": 1}, "indices": 2}]}],
-        "accessors": [
-            {"bufferView": 0, "componentType": 5126, "count": len(pos), "type": "VEC3",
-             "min": [min(p[k] for p in pos) for k in range(3)], "max": [max(p[k] for p in pos) for k in range(3)]},
-            {"bufferView": 1, "componentType": 5126, "count": len(tex), "type": "VEC2"},
-            {"bufferView": 2, "componentType": 5125, "count": len(indices), "type": "SCALAR"},
-        ],
-        "bufferViews": [{"buffer": 0, "byteOffset": o, "byteLength": n, "target": t} for o, n, t in views],
+        "meshes": [{"name": name, "primitives": [{"attributes": attributes, "indices": len(columns)}]}],
+        "accessors": accessors,
+        "bufferViews": views,
         "buffers": [{"byteLength": len(blob)}],
     }
+    return glb_container(doc, blob)
+
+
+def glb_container(doc: dict[str, object], blob: bytes) -> bytes:
+    """The GLB header, the JSON chunk padded with spaces and the binary chunk padded with zeros."""
     js = json.dumps(doc, separators=(",", ":")).encode("utf-8")
     js += b" " * (-len(js) % 4)
     blob += b"\0" * (-len(blob) % 4)
     chunks = struct.pack("<I4s", len(js), b"JSON") + js + struct.pack("<I4s", len(blob), b"BIN\0") + blob
     return struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks
+
+
+def capsule_hardshade_normals(m: Mesh) -> list[FaceNormals]:
+    """Smooth normals everywhere except the lower hemisphere, which is flat-shaded (each corner takes its face normal).
+
+    Smooth vertex normals are the normalised sum of the unnormalised face normals around the vertex, so area-weighted.
+    """
+    _, rings = capsule()
+    flat_from = len(rings) - CUT_RING - 1  # mirrors CUT_RING: the lower rim, where the tube meets the lower hemisphere
+    lower = {v for r in rings[flat_from:] for v in r} | {len(m.pos) - 1}
+
+    def face_normal(f: Face) -> Vec:
+        a, b, c = (m.pos[v] for v in f)
+        e1, e2 = [b[k] - a[k] for k in range(3)], [c[k] - a[k] for k in range(3)]
+        return (e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0])
+
+    def unit(n: Vec) -> Vec:
+        length = math.sqrt(sum(c * c for c in n))
+        return (round(n[0] / length, 6) + 0.0, round(n[1] / length, 6) + 0.0, round(n[2] / length, 6) + 0.0)
+
+    summed: dict[int, Vec] = {}
+    for f in m.faces:
+        fn = face_normal(f)
+        for v in f:
+            s = summed.get(v, (0.0, 0.0, 0.0))
+            summed[v] = (s[0] + fn[0], s[1] + fn[1], s[2] + fn[2])
+    out: list[FaceNormals] = []
+    for f in m.faces:
+        if all(v in lower for v in f):
+            n = unit(face_normal(f))
+            out.append((n, n, n))
+        else:
+            out.append((unit(summed[f[0]]), unit(summed[f[1]]), unit(summed[f[2]])))
+    return out
 
 
 def source_seam_files() -> dict[str, bytes]:
@@ -116,4 +171,11 @@ def source_seam_files() -> dict[str, bytes]:
         mesh: obj_uv_text(note, m, face_uvs).encode("utf-8"),
         "meshes/source-seams/capsule-uv.glb": glb_bytes("capsule-uv", note, m, face_uvs),
         "seams/capsule-uv.json": seam_text(mesh, note, cuts).encode("utf-8"),
+        "meshes/source-seams/capsule-hardshade.glb": glb_bytes(
+            "capsule-hardshade",
+            "capsule-hardshade: capsule-uv's UVs, with the lower hemisphere flat-shaded, so normals split vertices too",
+            m,
+            face_uvs,
+            capsule_hardshade_normals(m),
+        ),
     }

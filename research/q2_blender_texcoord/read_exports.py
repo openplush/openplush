@@ -10,7 +10,7 @@ import struct
 import sys
 from pathlib import Path
 
-MAP_U = {"First": 0.125, "Second": 0.875}  # exact in f32 and in OBJ's 6 decimals, so matching is exact
+MAP_U = {"Zeta": 0.125, "Alpha": 0.875}  # exact in f32 and in OBJ's 6 decimals, so matching is exact
 FLOAT, VEC2_BYTES = 5126, 8
 
 

@@ -3,8 +3,9 @@
 
 GPL-3.0-or-later, because it imports Blender's `bpy` (ADR 0011). Run with the pinned `bpy` on the path:
     python3 export_texcoord.py <output-dir>
-Every corner of map "First" gets u = 0.125 and of "Second" u = 0.875, so each exported UV set names its map.
-Writes <case>.glb, <case>.obj and cases.json (each case's active, render and texture map, read back from Blender).
+Map "Zeta" is created first and "Alpha" second, so list order and name order disagree. Every corner of Zeta gets
+u = 0.125 and of Alpha u = 0.875, so each exported UV set names its map. Writes <case>.glb, <case>.obj and
+cases.json (each case's map list, active, render and texture map, all read back from Blender).
 """
 
 import json
@@ -13,15 +14,15 @@ from pathlib import Path
 
 import bpy
 
-MAP_U = {"First": 0.125, "Second": 0.875}
+MAP_U = {"Zeta": 0.125, "Alpha": 0.875}
 # (case, active map, render map, map the base colour texture samples or None)
 CASES = [
-    ("active-first-render-first", "First", "First", None),
-    ("active-first-render-second", "First", "Second", None),
-    ("active-second-render-first", "Second", "First", None),
-    ("active-second-render-second", "Second", "Second", None),
-    ("texture-second-active-first", "First", "First", "Second"),
-    ("texture-second-active-second", "Second", "Second", "Second"),
+    ("active-zeta-render-zeta", "Zeta", "Zeta", None),
+    ("active-zeta-render-alpha", "Zeta", "Alpha", None),
+    ("active-alpha-render-zeta", "Alpha", "Zeta", None),
+    ("active-alpha-render-alpha", "Alpha", "Alpha", None),
+    ("texture-alpha-active-zeta", "Zeta", "Zeta", "Alpha"),
+    ("texture-alpha-active-alpha", "Alpha", "Alpha", "Alpha"),
 ]
 
 
@@ -32,8 +33,8 @@ def plane(active: str, render: str, texture: str | None) -> bpy.types.Mesh:
     if obj is None:
         raise RuntimeError("Blender made no plane")
     mesh = obj.data
-    mesh.uv_layers[0].name = "First"
-    mesh.uv_layers.new(name="Second")
+    mesh.uv_layers[0].name = "Zeta"
+    mesh.uv_layers.new(name="Alpha")
     for layer in mesh.uv_layers:
         for corner in layer.data:
             corner.uv = (MAP_U[layer.name], 0.5)
@@ -57,6 +58,16 @@ def textured_material(uv_map: str) -> bpy.types.Material:
     return mat
 
 
+def texture_map(mesh: bpy.types.Mesh) -> str | None:
+    """The UV map the material's UV Map node names; raises if it names no map, which Blender accepts silently."""
+    if not mesh.materials:
+        return None
+    names = [node.uv_map for node in mesh.materials[0].node_tree.nodes if node.bl_idname == "ShaderNodeUVMap"]
+    if len(names) != 1 or names[0] not in mesh.uv_layers:
+        raise RuntimeError(f"UV Map node names {names}, not one of the mesh's maps")
+    return names[0]
+
+
 def main(out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     cases = []
@@ -69,7 +80,7 @@ def main(out: Path) -> None:
             "maps": [layer.name for layer in mesh.uv_layers],
             "active": mesh.uv_layers.active.name,
             "render": [layer.name for layer in mesh.uv_layers if layer.active_render],
-            "texture": texture,
+            "texture": texture_map(mesh),
         })
     (out / "cases.json").write_text(json.dumps(cases, indent=1))
     print(f"Blender {bpy.app.version_string}")

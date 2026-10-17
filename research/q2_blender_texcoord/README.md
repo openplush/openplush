@@ -4,7 +4,7 @@
 
 Non-shipping research code for feature 003, task U009 (research R1, R6 Q2).
 
-**Status (2026-10-17): answered.** glTF's `TEXCOORD_0` is the first UV map in Blender's list, whichever map is active or set to render. OBJ carries only the active map. So the two formats read different maps when the active one isn't first. Details are in [`results.md`](results.md).
+**Status (2026-10-17): answered.** glTF's `TEXCOORD_0` is the first UV map in Blender's list, whichever map is active or set to render. OBJ carries only the active map. So the two formats read different maps when the active one isn't first. Details are in [`results.md`](results.md). Recording the answer in 003 research.md R1 is a separate spec change.
 
 ## The question
 
@@ -12,11 +12,11 @@ Non-shipping research code for feature 003, task U009 (research R1, R6 Q2).
 
 ## Method
 
-- `export_texcoord.py` (needs `bpy`) builds a plane with two UV maps, `First` and `Second`. Every corner of `First` has u = 0.125 and every corner of `Second` u = 0.875, so the u value names the map. It covers six cases:
+- `export_texcoord.py` (needs `bpy`) builds a plane with two UV maps, `Zeta` created first and `Alpha` second, so list order and name order disagree. Every corner of `Zeta` has u = 0.125 and every corner of `Alpha` u = 0.875, so the u value names the map. It covers six cases:
   - active and render each set to either map (four cases);
-  - a base colour texture that samples `Second` through a UV Map node, with `First` or `Second` active.
+  - a base colour texture that samples `Alpha` through a UV Map node, with `Zeta` or `Alpha` active.
 
-  Each case is exported as GLB and OBJ with the exporters' defaults. `cases.json` records each case's state, read back from Blender.
+  Each case is exported as GLB and OBJ with the exporters' defaults. `cases.json` records each case's map list, active, render and texture map, read back from Blender; the script raises if the UV Map node names no map of the mesh, which Blender itself accepts silently.
 - `read_exports.py` (no `bpy`) names the map behind each `TEXCOORD_n` in order, the set the texture samples (`texCoord`), and the map in the OBJ. It raises on any u it can't name exactly.
 - `test_read_exports.py` checks the reader on hand-built GLB bytes and OBJ text.
 

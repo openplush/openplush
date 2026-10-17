@@ -135,6 +135,13 @@ def match_positions(pos: list[Vec], obj_pos: list[Vec]) -> list[int]:
     return out
 
 
+def uv_winding(face: tuple[Corner, Corner, Corner]) -> int:
+    """+1 if the face's corners run counter-clockwise in UV space, -1 if clockwise, 0 if degenerate."""
+    (_, a), (_, b), (_, c) = face
+    area = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])
+    return (area > 0) - (area < 0)
+
+
 def check_gltf_twin(tc: unittest.TestCase, obj: Path, glb: Path) -> None:
     """The glTF has the OBJ's triangles and corner UVs (V flipped), with one vertex per distinct (position, UV)."""
     obj_pos, faces = read_obj_uv(obj)
@@ -254,7 +261,6 @@ class CapsuleHardshade(unittest.TestCase):
             self.assertAlmostEqual(math.sqrt(sum(c * c for c in n)), 1.0, places=5)
 
 
-
 class SphereBand(unittest.TestCase):
     """A sphere cut around two rings, so the band between them is an annulus that cannot lie flat in one piece."""
 
@@ -273,13 +279,20 @@ class SphereBand(unittest.TestCase):
         pos, faces = read_obj_uv(SOURCE / "sphere-band.obj")
         cuts, _ = uv_cuts(faces)
         heights = sorted({pos[v][2] for e in cuts for v in e})
+        ring_z = 50.0 * math.cos(math.pi / 4)  # rings 1 and 5 of a radius-50 sphere in 8 bands
         self.assertEqual(len(heights), 2, "every cut vertex lies on one of two rings")
-        self.assertAlmostEqual(heights[0], -heights[1], places=5)
+        self.assertLess(max(abs(heights[0] + ring_z), abs(heights[1] - ring_z)), POS_TOL, "the neck and waist rings")
         for z in heights:
             self.assertEqual(len([e for e in cuts if pos[e[0]][2] == z == pos[e[1]][2]]), 12, f"full ring at z = {z}")
         self.assertEqual(len(cuts), 24)
         tris: list[Face] = [(f[0][0], f[1][0], f[2][0]) for f in faces]
         self.assertEqual(sorted(chart_topology(tris, cuts)), [(0, 2), (1, 1), (1, 1)], "an annulus and two disks")
+
+    def test_every_island_keeps_the_surface_winding(self) -> None:
+        """Prevents a mirrored UV island, which an unwrap never makes and which would mislead orientation tests."""
+        _, faces = read_obj_uv(SOURCE / "sphere-band.obj")
+        signs = {uv_winding(f) for f in faces}
+        self.assertEqual(signs, {1}, "every face counter-clockwise in UV, as it is seen from outside")
 
     def test_the_gltf_is_the_obj_split_where_corner_uvs_differ(self) -> None:
         """Prevents a glTF twin with other geometry, other UVs, or splits that a Blender export would not make."""

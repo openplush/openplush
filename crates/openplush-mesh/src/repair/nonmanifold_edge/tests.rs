@@ -180,3 +180,44 @@ fn an_offset_that_overflows_is_refused() {
         MeshError::ZeroAreaTriangle { triangle: f(1) }
     );
 }
+
+#[test]
+fn a_face_a_quarter_turn_before_the_lowest_orders_after_the_others() {
+    let s = book(&[0.0, 100.0, 200.0, 300.0], &[true, false, true, false]);
+    assert_eq!(pairs(&s), [[f(0), f(3)], [f(1), f(2)]]);
+}
+
+#[test]
+fn faces_at_one_angle_walking_the_same_way_order_by_face_id() {
+    let s = book(&[0.0, 90.0, 0.0, 180.0], &[true, false, true, false]);
+    assert_eq!(pairs(&s), [[f(0), f(3)], [f(1), f(2)]]);
+}
+
+#[test]
+fn at_one_angle_the_face_walking_forward_comes_first() {
+    // Faces 0 and 1 are coincident and wound opposite ways.
+    let s = book(&[0.0, 0.0, 10.0, 200.0], &[true, false, true, false]);
+    assert_eq!(pairs(&s), [[f(0), f(3)], [f(1), f(2)]]);
+}
+
+#[test]
+fn an_edge_whose_ends_coincide_is_refused() {
+    let s = book(&[0.0, 120.0, 240.0], &[true, false, true]);
+    let mut positions = s.positions().to_vec();
+    positions[1] = positions[0];
+    let s = soup_of(positions, s.triangle_indices());
+    assert_eq!(
+        pair_edges(&s, &[]).unwrap_err(),
+        MeshError::NonManifoldEdge { a: v(0), b: v(1) }
+    );
+}
+
+#[test]
+fn a_face_that_repeats_a_vertex_on_the_edge_is_refused() {
+    let s = book(&[0.0, 120.0, 240.0], &[true, false, true]);
+    let s = soup_of(s.positions().to_vec(), &[[0, 1, 2], [1, 0, 3], [0, 1, 1]]);
+    assert_eq!(
+        pair_edges(&s, &[]).unwrap_err(),
+        MeshError::DegenerateTriangle { triangle: f(2) }
+    );
+}

@@ -135,6 +135,31 @@ def match_positions(pos: list[Vec], obj_pos: list[Vec]) -> list[int]:
     return out
 
 
+def check_gltf_twin(tc: unittest.TestCase, obj: Path, glb: Path) -> None:
+    """The glTF has the OBJ's triangles and corner UVs (V flipped), with one vertex per distinct (position, UV)."""
+    obj_pos, faces = read_obj_uv(obj)
+    _, _, pos, tex, idx = glb_primitive(glb)
+    tc.assertEqual(len(idx), 3 * len(faces))
+    to_obj = match_positions(pos, obj_pos)
+    for n, face in enumerate(faces):
+        for c, (v, (u, w)) in enumerate(face):
+            g = idx[3 * n + c]
+            tc.assertEqual(to_obj[g], v, f"face {n} corner {c}")
+            # glTF's UV origin is top-left, OBJ's bottom-left; Blender flips V on export.
+            tc.assertLess(max(abs(tex[g][0] - u), abs(tex[g][1] - (1.0 - w))), UV_TOL)
+    distinct = {(v, uv) for face in faces for v, uv in face}
+    tc.assertEqual(len(pos), len(distinct), "one glTF vertex per distinct (position, UV), no more")
+    tc.assertEqual(set(idx), set(range(len(pos))), "every glTF vertex is used")
+    tc.assertEqual(len({(to_obj[g], tex[g]) for g in range(len(pos))}), len(pos), "no two share a pair")
+
+
+def check_position_bounds(tc: unittest.TestCase, glb: Path) -> None:
+    doc, at, pos, _, _ = glb_primitive(glb)
+    acc = array(field(doc, "accessors"), "accessors")[at]
+    tc.assertEqual(field(acc, "min"), [min(p[k] for p in pos) for k in range(3)])
+    tc.assertEqual(field(acc, "max"), [max(p[k] for p in pos) for k in range(3)])
+
+
 class CapsuleUv(unittest.TestCase):
     """The capsule cut along one meridian and one ring, as an OBJ and as a Blender-style glTF."""
 
@@ -174,27 +199,11 @@ class CapsuleUv(unittest.TestCase):
 
     def test_the_gltf_is_the_obj_split_where_corner_uvs_differ(self) -> None:
         """Prevents a glTF twin with other geometry, other UVs, or splits that a Blender export would not make."""
-        obj_pos, faces = read_obj_uv(SOURCE / "capsule-uv.obj")
-        _, _, pos, tex, idx = glb_primitive(SOURCE / "capsule-uv.glb")
-        self.assertEqual(len(idx), 3 * len(faces))
-        to_obj = match_positions(pos, obj_pos)
-        for n, face in enumerate(faces):
-            for c, (v, (u, w)) in enumerate(face):
-                g = idx[3 * n + c]
-                self.assertEqual(to_obj[g], v, f"face {n} corner {c}")
-                # glTF's UV origin is top-left, OBJ's bottom-left; Blender flips V on export.
-                self.assertLess(max(abs(tex[g][0] - u), abs(tex[g][1] - (1.0 - w))), UV_TOL)
-        distinct = {(v, uv) for face in faces for v, uv in face}
-        self.assertEqual(len(pos), len(distinct), "one glTF vertex per distinct (position, UV), no more")
-        self.assertEqual(set(idx), set(range(len(pos))), "every glTF vertex is used")
-        self.assertEqual(len({(to_obj[g], tex[g]) for g in range(len(pos))}), len(pos), "no two share a pair")
+        check_gltf_twin(self, SOURCE / "capsule-uv.obj", SOURCE / "capsule-uv.glb")
 
     def test_position_bounds_match_the_data(self) -> None:
         """Prevents a glTF that strict loaders reject: POSITION min and max are required and must be exact."""
-        doc, at, pos, _, _ = glb_primitive(SOURCE / "capsule-uv.glb")
-        acc = array(field(doc, "accessors"), "accessors")[at]
-        self.assertEqual(field(acc, "min"), [min(p[k] for p in pos) for k in range(3)])
-        self.assertEqual(field(acc, "max"), [max(p[k] for p in pos) for k in range(3)])
+        check_position_bounds(self, SOURCE / "capsule-uv.glb")
 
 
 class CapsuleHardshade(unittest.TestCase):

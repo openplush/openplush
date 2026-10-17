@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::disjoint::DisjointSet;
-use crate::{Counted, MeshError, TriangleSoup, VertexId};
+use crate::{Counted, FaceId, MeshError, TriangleSoup, VertexId};
 
 /// The vertices a split added, by the IDs of the soup it was given.
 #[derive(Debug, Default)]
@@ -26,14 +26,23 @@ pub(crate) struct VertexCopy {
 /// Gives every fan of faces at a vertex after the first (the one holding the lowest
 /// corner) a copy of the vertex. Faces are fans when they share an edge at the
 /// vertex, however many faces the edge has. Faces, their order and their corners
-/// are unchanged and no vertex moves. Requires repeated-index faces gone
-/// (`degenerate::remove`).
+/// are unchanged and no vertex moves. A face that repeats a vertex is refused
+/// (`degenerate::remove` drops them first).
 #[cfg_attr(
     not(test),
     expect(dead_code, reason = "called by into_manifold, not yet written")
 )]
 pub(crate) fn split(soup: &TriangleSoup) -> Result<(TriangleSoup, Split), MeshError> {
     let tris = soup.triangle_indices();
+    if let Some(f) = tris
+        .iter()
+        .position(|&[a, b, c]| a == b || b == c || c == a)
+    {
+        return Err(MeshError::DegenerateTriangle {
+            // Lossless: the face count fits in u32 (`TriangleSoup::new`).
+            triangle: FaceId::new(f as u32),
+        });
+    }
     // Lossless: the face count fits in u32 (`TriangleSoup::new`).
     let faces: Vec<u32> = (0..tris.len() as u32).collect();
     let mut fans = DisjointSet::new(tris.len() * 3);

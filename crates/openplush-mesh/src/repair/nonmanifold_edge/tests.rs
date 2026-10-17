@@ -92,7 +92,18 @@ fn the_smaller_total_angle_between_pairs_decides_when_both_pairings_walk_opposit
 
 #[test]
 fn a_tie_keeps_the_first_pairing() {
-    let s = book(&[0.0, 90.0, 180.0, 270.0], &[true, false, true, false]);
+    // Exact quarter turns, so the two pairings tie exactly.
+    let s = soup_of(
+        vec![
+            DVec3::new(0.0, 0.0, 0.0),
+            DVec3::new(1.0, 0.0, 0.0),
+            DVec3::new(0.5, 1.0, 0.0),
+            DVec3::new(0.5, 0.0, 1.0),
+            DVec3::new(0.5, -1.0, 0.0),
+            DVec3::new(0.5, 0.0, -1.0),
+        ],
+        &[[0, 1, 2], [1, 0, 3], [0, 1, 4], [1, 0, 5]],
+    );
     assert_eq!(pairs(&s), [[f(0), f(1)], [f(2), f(3)]]);
 }
 

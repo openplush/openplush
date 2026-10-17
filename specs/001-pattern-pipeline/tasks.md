@@ -205,7 +205,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003)
 - [ ] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
 - [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag (D-035: caps are stitched by splitting the faces across their longest edge; both sheet layers are kept)
-- [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams
+- [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams. A double-sided sheet's interior edges pair within each layer (D-035)
 - [ ] T063 [US1] `crates/openplush-mesh/src/repair/bowtie.rs` — step 4, split one vertex per fan
 - [ ] T064 [US1] `crates/openplush-mesh/src/repair/orientation.rs` — step 5, BFS per component from the largest face; signed volume positive when closed
 - [ ] T065 [US1] `crates/openplush-mesh/src/repair/components.rs` — step 6; components under 1% of total area become candidate detail parts (FR-005)

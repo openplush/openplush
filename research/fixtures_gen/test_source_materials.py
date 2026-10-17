@@ -48,6 +48,8 @@ class ThreeMaterials(unittest.TestCase):
     def test_obj_switches_material_twice_inside_one_object(self) -> None:
         """Prevents an OBJ that never puts two materials in one object, which is the case a reader must split."""
         _, runs, objects = read_obj_materials(SOURCE / "three-materials.obj")
+        _, source_runs, _ = read_obj_source(SOURCE / "three-materials.obj")
+        self.assertEqual({uv for _, fs in source_runs for f in fs for _, uv in f}, {None}, "no UVs")
         self.assertEqual(objects, 1)
         self.assertEqual([name for name, _ in runs], NAMES)
         self.assertTrue(all(faces for _, faces in runs), "every run has faces")

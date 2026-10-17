@@ -81,8 +81,10 @@ def with_uvs(faces: list[tuple[MaybeCorner, MaybeCorner, MaybeCorner]]) -> list[
 
 
 def read_obj_uv(path: Path) -> tuple[list[Vec], list[tuple[Corner, Corner, Corner]]]:
-    """Positions and every face with its corner UVs, in file order, whatever the material runs."""
-    pos, runs, _ = read_obj_source(path)
+    """Positions and every face with its corner UVs; an `o` or `usemtl` line is an error, as these files have none."""
+    pos, runs, objects = read_obj_source(path)
+    if objects or any(name is not None for name, _ in runs):
+        raise ValueError(f"{path.name}: unexpected object or material line")
     return pos, with_uvs([f for _, faces in runs for f in faces])
 
 

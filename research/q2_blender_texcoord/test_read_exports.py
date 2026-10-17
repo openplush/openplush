@@ -4,6 +4,8 @@
 import json
 import struct
 import unittest
+from collections.abc import Callable
+from typing import Any
 
 from read_exports import glb_maps, obj_map
 
@@ -51,6 +53,17 @@ def glb(
     return struct.pack("<4sII", b"glTF", 2, 12 + len(body)) + body
 
 
+def with_doc(data: bytes, edit: Callable[[dict[str, Any]], None]) -> bytes:
+    """`data` with its glTF JSON edited and re-packed, so chunk lengths stay right."""
+    json_len = struct.unpack_from("<I", data, 12)[0]
+    doc = json.loads(data[20 : 20 + json_len])
+    edit(doc)
+    text = json.dumps(doc).encode()
+    text += b" " * (-len(text) % 4)
+    body = struct.pack("<I4s", len(text), b"JSON") + text + data[20 + json_len :]
+    return struct.pack("<4sII", b"glTF", 2, 12 + len(body)) + body
+
+
 class GlbMaps(unittest.TestCase):
     def test_order_comes_from_the_attribute_index(self) -> None:
         """Prevents reporting the maps in name order instead of TEXCOORD order, which would hide the answer to Q2."""
@@ -64,6 +77,15 @@ class GlbMaps(unittest.TestCase):
         self.assertEqual(glb_maps(glb(both, texture=0))["texture_texcoord"], 0)
         self.assertIsNone(glb_maps(glb(both))["texture_texcoord"])
         self.assertIsNone(glb_maps(glb(both, material=False))["texture_texcoord"])
+
+    def test_boolean_texcoord_raises(self) -> None:
+        """Prevents JSON `true` passing as texCoord 1, since Python's bool is an int."""
+        def boolean_texcoord(doc: dict[str, Any]) -> None:
+            doc["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"]["texCoord"] = True
+
+        data = with_doc(glb({"TEXCOORD_0": ZETA, "TEXCOORD_1": ALPHA}, texture=1), boolean_texcoord)
+        with self.assertRaises(ValueError):
+            glb_maps(data)
 
     def test_unknown_u_raises(self) -> None:
         """Prevents naming a map by the nearest value: a u that matches no map exactly is an export the spike didn't make."""
@@ -104,15 +126,12 @@ class GlbMaps(unittest.TestCase):
     def test_non_vec2_float_accessor_raises(self) -> None:
         """Prevents reading integer or 3-component data as UVs."""
         for key, value in (("componentType", 5123), ("type", "VEC3")):
-            data = glb({"TEXCOORD_0": ZETA})
-            json_len = struct.unpack_from("<I", data, 12)[0]
-            doc = json.loads(data[20 : 20 + json_len])
-            doc["accessors"][0][key] = value
-            text = json.dumps(doc).encode()
-            text += b" " * (-len(text) % 4)
-            rebuilt = struct.pack("<I4s", len(text), b"JSON") + text + data[20 + json_len :]
+            def corrupt(doc: dict[str, Any], key: str = key, value: object = value) -> None:
+                doc["accessors"][0][key] = value
+
+            data = with_doc(glb({"TEXCOORD_0": ZETA}), corrupt)
             with self.subTest(**{key: value}), self.assertRaises(ValueError):
-                glb_maps(struct.pack("<4sII", b"glTF", 2, 12 + len(rebuilt)) + rebuilt)
+                glb_maps(data)
 
     def test_accessor_byte_offset_is_honoured(self) -> None:
         """Prevents reading from the view's start when the accessor begins later in it."""
@@ -120,16 +139,13 @@ class GlbMaps(unittest.TestCase):
 
     def test_two_primitives_raise(self) -> None:
         """Prevents reporting one primitive's sets as the whole mesh's."""
-        data = glb({"TEXCOORD_0": ZETA})
-        json_len = struct.unpack_from("<I", data, 12)[0]
-        doc = json.loads(data[20 : 20 + json_len])
-        prims = doc["meshes"][0]["primitives"]
-        prims.append(dict(prims[0]))
-        text = json.dumps(doc).encode()
-        text += b" " * (-len(text) % 4)
-        rebuilt = struct.pack("<I4s", len(text), b"JSON") + text + data[20 + json_len :]
+        def duplicate_primitive(doc: dict[str, Any]) -> None:
+            prims = doc["meshes"][0]["primitives"]
+            prims.append(dict(prims[0]))
+
+        data = with_doc(glb({"TEXCOORD_0": ZETA}), duplicate_primitive)
         with self.assertRaises(ValueError):
-            glb_maps(struct.pack("<4sII", b"glTF", 2, 12 + len(rebuilt)) + rebuilt)
+            glb_maps(data)
 
 
 class ObjMap(unittest.TestCase):

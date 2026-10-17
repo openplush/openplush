@@ -26,3 +26,11 @@ Contributed models (CC0 or CC-BY only) go in `meshes/` with an entry in `LICENSE
 ```
 
 `mesh` is relative to `fixtures/`. An edge is a pair of **0-based OBJ vertex indices** (the order of `v` lines), smaller first, and the list is sorted. This names an edge without depending on the engine's half-edge numbering. `version`, `vertexIndexBase`, and edge indices are JSON integers: `1.0` or `false` is invalid. `kind` takes the project schema's seam kinds. Every chart left by the cut is a topological disk, except for sets under `seams/non-disk/`.
+
+## Dead-end format
+
+```json
+{"format": "openplush-dead-ends", "version": 1, "mesh": "meshes/source-seams/dead-end.obj", "vertexIndexBase": 0, "note": "…", "tips": [55, 66]}
+```
+
+`tips` are the 0-based OBJ vertex indices, ascending, where a UV cut stops inside the surface: a vertex on exactly one edge of the graph over UV cuts and material boundaries, and not on the surface boundary.

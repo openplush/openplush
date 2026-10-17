@@ -9,7 +9,7 @@ use openplush_geom::epsilon::ModelTolerances;
 use openplush_geom::{DVec2, DVec3};
 
 use super::{HalfEdgeId, ManifoldMesh};
-use crate::{MeshError, SourceCorner, TriangleSoup, VertexId};
+use crate::{MaterialIndex, MeshError, SourceCorner, SourceMaterials, TriangleSoup, VertexId};
 
 pub(super) fn soup(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> TriangleSoup {
     let corners = (0..triangles.len() * 3)
@@ -869,4 +869,36 @@ fn a_bowtie_is_reported_before_two_closed_fans_at_a_lower_vertex() {
             vertex: VertexId::new(7)
         })
     );
+}
+
+#[test]
+fn materials_and_extra_uv_sets_move_onto_the_mesh_unchanged() {
+    let (v, t) = square();
+    // Face 0 comes from primitive 0 (material 1), face 1 from primitive 1 (none).
+    let corners = (0..6)
+        .map(|i| SourceCorner {
+            primitive: u32::from(i >= 3),
+            vertex: i,
+        })
+        .collect();
+    let materials = SourceMaterials::new(
+        vec!["red".to_owned(), "blue".to_owned()],
+        vec![Some(MaterialIndex::new(1)), None],
+    );
+    let s = TriangleSoup::new(v, t, corners, None)
+        .unwrap()
+        .with_materials(materials.clone(), 2)
+        .unwrap();
+    let m = ManifoldMesh::from_oriented_triangles(&s, &tol(&s)).unwrap();
+    assert_eq!(m.materials(), &materials);
+    assert_eq!(m.extra_uv_sets(), 2);
+
+    let material_of = |f: u32| {
+        let first = m
+            .corner_source(m.face_half_edge(crate::FaceId::new(f)))
+            .unwrap();
+        m.materials().by_primitive()[first.primitive as usize]
+    };
+    assert_eq!(material_of(0), Some(MaterialIndex::new(1)));
+    assert_eq!(material_of(1), None);
 }

@@ -34,6 +34,29 @@ Edges are interior edges of each export (the GLB has more because it is triangul
 - Below the threshold sit f32 spacing near 1.0 (1.19e-7) and OBJ's 6-decimal rounding (5e-7). So `1e-5` has about 18× margin to the slit and 20× to OBJ rounding [solid for these exports].
 - Recommendation: **keep `UV_CUT = 1e-5`** [likely; one shape family, one unwrap method]. A slit that opens less than 1e-5 would read as no cut at all: an undetected dead end, not a false one. That is the safer failure, but it is a gap in FR-011. A slit's opening grows with its length and with how hard the unwrap relaxes it, so short slits are the risk.
 
+## The bigger problem: an ordinary meridian seam is a "dead end" under FR-011
+
+`dead_end_tips` in the report counts the vertices on exactly one cut edge, on these closed surfaces:
+
+| Model | Dead-end tips | Where |
+|---|---|---|
+| sphere-marked, sphere-materials | 2 | the two poles |
+| sphere-dead-end | 4 | the slit's 2 tips, plus the 2 poles |
+| sphere-default | 22 | the ring-0 vertices of the pole fans (next section) |
+
+A meridian marked from pole to pole ends at the poles, where nothing else meets it. FR-011 defines a dead end as an endpoint inside the surface that touches no other seam, so both poles are dead ends, and import would fail. Yet marking a meridian is the standard way to unwrap a sphere, and with the equator it gives each hemisphere a slit from its rim to its pole. In sewing terms that slit, sewn shut, is a **dart**: a seam ending inside a piece (001 FR-011). 003 FR-010 says an imported cut is never a dart, and FR-011 makes its tip an error. [solid: measured]
+
+Consequences:
+- **Fixtures**: `capsule-uv` (U001) and `reshaped-v1/v2` (U007) use exactly this layout, so the engine would reject them with `DeadEndCut`, while US1's independent test expects them to import. `dead-end` (U005) is unaffected; its cut A ends on a material boundary and an opening.
+- **Makers**: a sphere or a capsule unwrapped the usual way in Blender would fail import.
+
+Options for the spec, not decided here:
+1. **Keep FR-011, change the fixtures.** Give capsule-uv a layout with no free ends, such as both rims plus a meridian on the tube only, like `seams/capsule.json`, and say in the docs that seams must end on another seam or an opening.
+2. **Import a free end as a dart.** Reverse FR-010 for cuts that end in the interior. This is close to what the maker drew, but it is the case the maintainer ruled out.
+3. **Keep the error, but make it teach.** Report the poles as a distinct, located case, with a remedy naming the fix in Blender: run the seam into another seam.
+
+This needs the maintainer before U016–U019 (UV-cut detection) and U051 (dead ends) are built, and before #109 and #119 merge as US1's oracle.
+
 ## The open problem: pole fans in projection UVs
 
 Blender's default UV sphere map gives each pole triangle its own pole UV, so the u-coordinate varies around the pole while v is 0 or 1. Under R2's per-endpoint rule every pole edge then reads as a cut. Each ring-0 vertex (one UV on both sides) would become a dead-end tip: 22 on this sphere, measured (`dead_end_tips` in the report), against the 2 that `sphere-dead-end`'s slit really has. Import would fail with `DeadEndCut` on a model whose maker never marked a seam.

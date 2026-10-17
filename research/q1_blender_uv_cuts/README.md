@@ -4,7 +4,7 @@
 
 Non-shipping research code for feature 003, task U008 (research R2, R6 Q1).
 
-**Status (2026-10-17): answered for marked-and-unwrapped seams; it found one open problem, pole fans in projection UVs.** Numbers are in [`results.md`](results.md).
+**Status (2026-10-17): `UV_CUT = 1e-5` holds for marked seams, but the spike found two spec problems.** First, a meridian seam's ends at the poles are dead ends under FR-011, which rejects the usual sphere unwrap and two of the committed fixtures. Second, Blender's default projection UVs put false cuts on pole fans. Numbers are in [`results.md`](results.md).
 
 ## The question
 

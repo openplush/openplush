@@ -4,7 +4,7 @@ Test models and reference data. Licenses for every file are in [`LICENSES.md`](L
 
 | Directory | Holds | Used by |
 |---|---|---|
-| `meshes/` | Clean, closed, outward-wound triangle meshes in millimetres: capsule, cube, sphere | Pipeline tests and the web app's end-to-end smoke test |
+| `meshes/` | Clean, closed, outward-wound triangle meshes in millimetres: capsule, cube, sphere. `meshes/source-seams/` holds models whose UV cuts are their seam layout, as glTF and OBJ twins | Pipeline tests and the web app's end-to-end smoke test; source seam import |
 | `defects/` | Exactly one model per repair defect class, each with only that defect | The defect-detection corpus: every file here must be detected and reported |
 | `seams/` | Reference seam sets (JSON) for the models in `meshes/`, so pattern tests need no UI | Seam, chart, and pattern tests |
 

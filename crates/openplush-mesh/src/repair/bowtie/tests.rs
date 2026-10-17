@@ -3,7 +3,7 @@
 use openplush_geom::{DVec2, DVec3};
 
 use super::{VertexCopy, split};
-use crate::{SourceCorner, TriangleSoup, VertexId};
+use crate::{FaceId, MeshError, SourceCorner, TriangleSoup, VertexId};
 
 fn v(i: u32) -> VertexId {
     VertexId::new(i)
@@ -122,4 +122,15 @@ fn a_soup_with_no_faces_comes_back_unchanged() {
     let (out, split) = split(&s).unwrap();
     assert_eq!(out, s);
     assert!(split.copies.is_empty());
+}
+
+#[test]
+fn a_face_that_repeats_a_vertex_is_refused() {
+    let s = soup(4, &[[0, 2, 3], [0, 0, 1]]);
+    assert_eq!(
+        split(&s).unwrap_err(),
+        MeshError::DegenerateTriangle {
+            triangle: FaceId::new(1)
+        }
+    );
 }

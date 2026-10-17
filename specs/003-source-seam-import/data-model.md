@@ -100,7 +100,7 @@ pub enum OnExisting { Replace, Merge }
 
 pub struct ReimportDiff {
     added_seams: u32,
-    placed_seams: u32,                // Merge only; old seams re-placed; 0 with old seams present raises FR-051's hint (S-018)
+    placed_seams: u32,                // both modes; old seam edges re-placed, one per old edge however many pieces; 0 with old seams present raises FR-051's hint (S-018)
     removed_seams: u32,               // Replace only
     removed_hand_drawn: u32,          // FR-051's callout; seams not from a prior import
     unplaceable_seams: Vec<ProvenanceEdge>,  // Merge only; located on the OLD mesh (research R5)
@@ -108,7 +108,7 @@ pub struct ReimportDiff {
 }
 ```
 
-- Old seams and faces are re-placed by **position** against the new mesh within the weld tolerance (research R5), never by provenance key and never by nearest-edge snapping. An old seam edge also re-places as a path of new edges whose interior vertices lie on it within the tolerance (S-017); a split face does not.
+- Old seams and faces are re-placed by **position** against the new mesh within the weld tolerance (research R5), never by provenance key and never by nearest-edge snapping. An old seam edge also re-places as a path of new edges whose interior vertices lie on it within the tolerance (S-017); a split face does not. The path is walked from the old edge's first endpoint: each step takes the neighbour on the segment that is strictly closer to the far endpoint and nearest the current vertex, ties to the lower `VertexId`, so the result is deterministic. The difference is computed before the maker chooses, so `placed_seams` and the hint are the same under Replace and Merge.
 - "Hand-drawn" needs the project to know where a seam came from. **Schema addition**: an optional `origin: "drawn" | "imported" | "proposed"` on each `seams[]` item in `project.schema.json`, defaulting to `drawn`. It is additive, so v1 files stay valid with no migration.
 
 ## 6. Persistence

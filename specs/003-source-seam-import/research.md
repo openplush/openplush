@@ -88,7 +88,7 @@ This needs one sentence in spec FR-051 (made in the same change as this plan).
 - Smoothing or moving the whole model moves most or all vertices, and no seam re-places.
 
 **Decisions after Q4** (plan S-017, S-018):
-- *Split edges re-place as their pieces.* An old seam edge (p, q) re-places as a path p = v0, …, vk = q in the new mesh when every vi lies on segment pq within the weld tolerance and the path moves monotonically from p to q. That is not snapping: the endpoints still match exactly and nothing moves. Faces are not split this way; a split face stays not placeable [likely enough, since regions usually come back from materials].
+- *Split edges re-place as their pieces.* An old seam edge (p, q) re-places as a path p = v0, …, vk = q in the new mesh when every vi lies on segment pq within the weld tolerance and the path moves monotonically from p to q. That is not snapping: the endpoints still match exactly and nothing moves. Q4's split edges were axis-aligned, so their new vertices lay exactly on them; for a general edge, the new vertex's `f32` rounding is far below the weld tolerance [likely]. Faces are not split this way, and a split face stays not placeable, because regions usually come back from materials [likely].
 - *No whole-model move detection.* Fitting a rigid transform would guess. When no old seam re-places at all, the difference carries a plain-language hint instead, and every old seam stays listed as not placeable.
 - *No special case for proportional-edit losses.* They are listed and located like any other unplaceable seam.
 

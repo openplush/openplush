@@ -204,7 +204,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T058 [US1] `crates/openplush-mesh/src/validate/selfintersect.rs` — BVH triangle-triangle tests. **Warn only** (data-model section 3 step 8)
 - [ ] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003)
 - [ ] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
-- [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag (D-035: caps are stitched by splitting the faces across their longest edge; both sheet layers are kept)
+- [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag (D-035: caps are stitched by re-triangulating the faces across their longest edges with the caps' vertices; both sheet layers are kept)
 - [ ] T180 [US1] `crates/openplush-mesh/src/validate/` — topology is judged with both layers of a double-sided sheet, as repair keeps them, reusing repair's degenerate step as validation reuses its weld (D-035). *Added 2026-10-17; ID out of phase order*
 - [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams. A double-sided sheet's interior edges pair within each layer (D-035)
 - [ ] T063 [US1] `crates/openplush-mesh/src/repair/bowtie.rs` — step 4, split one vertex per fan

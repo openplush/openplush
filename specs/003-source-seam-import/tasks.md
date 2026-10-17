@@ -33,7 +33,7 @@ Same policy as 001 and 002: at most 400 lines of hand-written source, one test t
 | `003/NN-U040-material-boundaries` | U039, U040 |
 | `003/NN-U044-source-regions-stage` | U043, U044 |
 | `003/NN-U052-dead-ends` | U051, U052 |
-| `003/NN-U054-dead-end-error` | U053, U054 |
+| `003/NN-U054-source-darts` | U053, U054 |
 | `003/NN-U060-reimport-diff` | U059, U060 |
 
 Each CLI, WASM, engine-client and web pair (a test task and its implementation) is one PR.
@@ -155,7 +155,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 - [ ] U029 [P] [US1] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `capsule-uv.glb`. Proposed seams show on the model with a count. Accepting makes them seams that can be edited, erased, and undone like drawn seams (FR-043). Declining leaves the project equal to a plain import (FR-042). Accept and decline work from the keyboard alone (FR-044). No network request is made (SC-008)
 - [ ] U030 [US1] `apps/web/src/import/`: the import preview panel and 3D overlay for imported seams, using a colour-blind-safe palette with room for the extra-seam and region layers (FR-040); accept and decline go through T107. Makes U029 pass
 
-**Checkpoint**: a cut capsule goes from import to pattern without drawing a seam. Dead-ended cuts are not yet caught (US4), so this state isn't releasable on its own.
+**Checkpoint**: a cut capsule goes from import to pattern without drawing a seam. Dead-ended cuts still import as plain cuts until US4 makes them dart proposals, so this state isn't releasable on its own.
 
 ---
 
@@ -215,18 +215,39 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 ---
 
-## Phase 6: User Story 4: a broken cut is caught, not guessed at (P2)
+## Phase 6: User Story 4: a cut that stops partway is shown as a dart, not guessed at (P2)
 
-**Goal**: any dead-ended cut fails seam import with every tip located; nothing is proposed, and the model still imports.
+**Goal**: each dead-ended cut becomes its own located, explained dart proposal, apart from the imported seams; accepting adds a dart, and declining leaves that chain uncut (S-014).
 
-**Independent test**: import `dead-end.glb`. `DeadEndCut` lists exactly the two tips in `dead-end.tips.json`, the model loads, and nothing is proposed.
+**Independent test**: import `dead-end.glb`. Exactly two dart proposals, one per tip in `dead-end.tips.json`; none for cut A; the imported seams don't contain the dart chains.
 
-- [ ] U051 [P] [US4] `crates/openplush-seams/tests/source_dead_ends.rs`: failing tests. Tips are interior vertices of seam-valence 1 in T070's graph over UV cuts ∪ material boundaries ∪ mandatory seams, with surface-boundary vertices as endpoints (research R3). A cut ending on a material boundary, an opening or a mandatory seam is not a tip (FR-013, US4 scenario 3). A seam already in the project doesn't rescue a tip (S-012). Every tip is reported at once, tips ascend, and `chains[i]` is walked from `tips[i]`. Once T060 and T067 land, also `dead-end.glb` against `dead-end.tips.json`
-- [ ] U052 [US4] `crates/openplush-seams/src/source.rs`: the dead-end check, reusing T070's free-endpoint classification with no second definition of an endpoint. Makes U051 pass
-- [ ] U053 [US4] `crates/openplush-pipeline/tests/source_import.rs`: failing tests. `source_import` returns `EngineError::DeadEndCut { tips, chains }` before building any proposal, so no seams, regions or profiles exist (FR-012). The mesh passed in is unchanged. The remedy text is the contract §2 string
-- [ ] U054 [US4] `crates/openplush-pipeline/src/error.rs` and `src/source.rs`: the `DeadEndCut` variant, run first in the stage; rustdoc; the final error string in `docs/reference/engine-api.md`. Makes U053 pass
-- [ ] U055 [P] [US4] `bindings/openplush-cli/tests/import_seams.rs`, `bindings/openplush-wasm/src/` and `packages/engine-client/src/errors.ts`: the CLI test (scenario 5: the `EngineError` exit code, and JSON listing both tips), then the error DTO in `bindings/openplush-wasm/` and `packages/engine-client/`. One PR per package, each test first
-- [ ] U056 [P] [US4] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `dead-end.glb`. The error lists each dead end; selecting one highlights its chain in 3D; the remedy is shown; the model stays loaded, and hand drawing works (US4 scenario 2). Implementation in `apps/web/src/import/` as the second commit
+- [ ] U051 [P] [US4] `crates/openplush-seams/tests/source_dead_ends.rs`: failing tests.
+  - Tips are interior vertices of seam-valence 1 in T070's graph over UV cuts ∪ material boundaries ∪ mandatory seams, with surface-boundary vertices as endpoints (research R3). A cut ending on another seam, a material boundary, an opening or a mandatory seam is not a tip (FR-013, US4 scenario 3). A seam already in the project doesn't rescue a tip (S-012).
+  - Each tip's chain runs from the tip to the first vertex of seam-valence 3 or more, or to the surface boundary. There is one chain per tip, tips ascend, and a slit with two free ends is one chain, owned by its lower tip.
+  - A pole-to-pole meridian on a closed sphere gives two tips, one per pole. Its chains meet at the equator junction if there is one; otherwise it is a single two-tip chain.
+  - Once T060 and T067 land, also `dead-end.glb` against `dead-end.tips.json`.
+- [ ] U052 [US4] `crates/openplush-seams/src/source.rs` and `src/proposal.rs`:
+  - The dead-end chains, reusing T070's free-endpoint classification with no second definition of an endpoint.
+  - `SeamReason::SourceDart` and one `Proposal` per chain, every edge `SeamKind::Dart`. Its explanation names the tip and says the cut stops partway, so it will be sewn as a dart, and if not meant the maker can decline it and fix the cut in the modelling tool.
+  - The chains are removed from the UV-cut seam proposal (FR-012).
+  - Makes U051 pass.
+- [ ] U053 [US4] `crates/openplush-pipeline/tests/source_import.rs`: failing tests.
+  - `SourceImport::darts` holds one proposal per tip, in tip order. `seams` and `darts` share no edge.
+  - Accepting `seams` without a dart leaves its chain uncut (FR-012), and "accept all" applies the darts in the same undo step (FR-041).
+  - `closing` is computed against existing ∪ `seams` ∪ `darts`.
+  - The explanation is the documented string.
+- [ ] U054 [US4] `crates/openplush-pipeline/src/source.rs`: the `darts` field, with rustdoc; the explanation string in `docs/reference/engine-api.md`; U034's accept-all extended to darts. Makes U053 pass
+- [ ] U055 [P] [US4] `bindings/openplush-cli/tests/import_seams.rs`, `bindings/openplush-wasm/src/` and `packages/engine-client/src/client.ts`:
+  - The CLI test, quickstart scenario 5: two dart proposals in the JSON.
+  - `pattern --seams-from-model` declines darts unless `--accept-darts` is given, and the report lists them as declined.
+  - Then the `darts` DTO field in WASM and the client.
+  - One PR per package, each test first, with `docs/reference/cli.md` and `worker-protocol.md`.
+- [ ] U056 [P] [US4] `apps/web/tests/import-preview.spec.ts`: failing Playwright tests on `dead-end.glb`.
+  - Dart proposals are drawn distinctly from imported and extra seams, with their count (FR-015).
+  - Selecting one highlights its chain and shows its explanation.
+  - "Accept all" includes the darts. Declining one leaves its chain uncut and the rest of the import intact (US4 scenario 2).
+  - Everything is keyboard-operable.
+  - Implementation in `apps/web/src/import/` as the second commit.
 
 **Checkpoint**: the feature's engine half is releasable.
 
@@ -286,7 +307,7 @@ Polish after US4; U068 after U021 merges
 
 ## Implementation strategy
 
-- **MVP**: Phase 0, Phase 2, US1, US3's material boundaries (U039, U040), and US4's engine tasks (U051 to U054). The boundaries come along because FR-013 judges dead ends on cuts ∪ boundaries. US1 alone proposes dead-ended cuts as seams, which FR-011 forbids, so US1 isn't shipped to makers without U054.
+- **MVP**: Phase 0, Phase 2, US1, US3's material boundaries (U039, U040), and US4's engine tasks (U051 to U054). The boundaries come along because FR-013 judges dead ends on cuts ∪ boundaries. US1 alone would import dead-ended cuts as plain seams instead of dart proposals (FR-011), so US1 isn't shipped to makers without U054.
 - **Then** US2 (most real UV layouts need closing seams), US3, the rest of US4's shell, and re-import.
 - **Release** (v0.2, plan Phasing) needs every phase, and the U064 timing within SC-009.
 

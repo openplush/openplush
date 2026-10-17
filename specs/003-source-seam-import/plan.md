@@ -47,7 +47,7 @@ Work can start partway through 001's Phase 3, like 002. The material extension (
 |---|---|
 | I Engine/Shell separation | ✅ Detection and matching are in `crates/`; the preview is `apps/web` only. The shell reaches the stage through `openplush-pipeline` |
 | II CLI parity | ✅ `import-seams` subcommand, plus `--seams-from-model` and `--accept-closing` on `pattern` (contract §3). Headless never accepts a proposal without a flag naming it |
-| III Invariants as contracts | ✅ A dead-ended cut is a typed error (`DeadEndCut`), never dropped or turned into a dart. Imported seams then pass 001's chart validation like any other |
+| III Invariants as contracts | ✅ A dead-ended cut is never dropped and never silently turned into anything: it becomes a located, explained dart proposal the maker accepts or declines (S-014). Imported seams then pass 001's chart validation like any other |
 | IV Test-first oracles | ✅ Independent oracles: fixtures with a recorded cut layout (SC-001); a hard-shaded twin that must give the identical edge set (SC-002); a property test that no `Dart` or `Opening` kind is ever produced |
 | V Determinism | ✅ Edges and faces in index order, regions by `MaterialIndex`, name matching locale-free, ties broken by index (data-model §3) |
 | VI Units | ✅ No physical quantity is introduced. `UV_CUT` is dimensionless and documented as such beside the other tolerances |
@@ -69,7 +69,7 @@ specs/003-source-seam-import/
 ├── spec.md
 ├── plan.md                    # this file
 ├── research.md                # what the files carry, UV-cut test, dead ends, name matching, re-import
-├── data-model.md              # soup extension, SourceImport, DeadEndCut, ReimportDiff
+├── data-model.md              # soup extension, SourceImport and its dart proposals, ReimportDiff
 ├── quickstart.md
 ├── contracts/source-import.md # stage signatures, error, CLI, worker op
 ├── checklists/requirements.md
@@ -82,12 +82,11 @@ specs/003-source-seam-import/
 crates/openplush-geom/src/epsilon.rs        # + UV_CUT
 crates/openplush-mesh/src/soup.rs           # + SourceMaterials, extra_uv_sets, MaterialIndex
 crates/openplush-io/src/{obj,gltf}.rs       # fill them; OBJ splits primitives per material (spike Q3)
-crates/openplush-seams/src/source.rs        # NEW: UV cuts, material boundaries, dead-end check
-crates/openplush-seams/src/proposal.rs      # + SeamReason::SourceModel
+crates/openplush-seams/src/source.rs        # NEW: UV cuts, material boundaries, dead-end chains as dart proposals
+crates/openplush-seams/src/proposal.rs      # + SeamReason::SourceModel, SeamReason::SourceDart
 crates/openplush-pattern/src/regions.rs     # + regions from materials, name matching, default profile
 crates/openplush-pattern/src/fabric.rs      # + Fabric::with_defaults(name) (research R4)
 crates/openplush-pipeline/src/source.rs     # NEW: source_import and reimport_diff stages
-crates/openplush-pipeline/src/error.rs      # + EngineError::DeadEndCut
 crates/openplush-project/                   # + seams[].origin, fabrics[].fromMaterial (optional)
 bindings/openplush-cli/src/commands/        # + import-seams; pattern --seams-from-model --accept-closing
 bindings/openplush-wasm/                    # + sourceImport, reimportDiff DTOs
@@ -108,16 +107,16 @@ A new crate would need to depend on both `seams` and `pattern` only to glue them
 ### The stage
 
 ```text
-ManifoldMesh ─┬─▶ seams::source ─▶ UV cuts, material boundaries ─▶ seam graph ─▶ dead end? ─▶ Err(DeadEndCut)
-              │                                                                       │ no
+ManifoldMesh ─┬─▶ seams::source ─▶ UV cuts, material boundaries ─▶ seam graph ─▶ dead-end chains ─▶ darts
+              │                                                                       │ the rest
               │                                                                       ▼
               │                                              Proposal (SourceModel), propose_cuts ─▶ closing
               └─▶ pattern::regions ─▶ regions by material, name match / Fabric::with_defaults
                                                      │
-                                         pipeline::source_import ─▶ SourceImport { seams, closing, regions, new_fabrics, report }
+                                         pipeline::source_import ─▶ SourceImport { seams, darts, closing, regions, new_fabrics, report }
 ```
 
-The dead-end check runs before anything is proposed, so FR-012's "nothing from it is proposed" is structural: no `SourceImport` exists when the error fires.
+The dead-end chains are split off before the seam proposal is built, so a chain is in exactly one dart proposal and never also in `seams` (FR-012): declining the dart leaves it uncut.
 
 ### Accepting
 
@@ -141,7 +140,7 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | 2026-10-16 | S-001 | **No new crate.** Detection in `openplush-seams`, regions in `openplush-pattern`, composition in `openplush-pipeline`. No new dependency edge | Accepted |
 | 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside T053. 2026-10-16: 001 D-034 replaced `tobj` with a reader that already splits at `usemtl`, so Q3 needs no spike |
 | 2026-10-16 | S-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** Provisional `1e-5`; spike Q1 confirms | Accepted, research R2 |
-| 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` | Accepted, research R3, spec FR-011 and FR-013 |
+| 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` (error replaced by dart proposals, S-014) | Accepted, research R3, spec FR-011 and FR-013 |
 | 2026-10-16 | S-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
 | 2026-10-16 | S-006 | **Name match = Unicode-lowercase, trimmed, first in project order.** No fuzzy matching | Accepted, research R4 |
 | 2026-10-16 | S-007 | **New profiles copy the minky preset** under the material's name, via one `Fabric::with_defaults(name)` that 001's "add fabric" can also use, and carry an `UnreviewedFabric` advisory warning until edited (spec FR-025) | Accepted. Maintainer, 2026-10-16 (research R4) |
@@ -151,6 +150,7 @@ The dead-end check runs before anything is proposed, so FR-012's "nothing from i
 | 2026-10-16 | S-011 | **`ManifoldMesh` carries `SourceMaterials` and `extra_uv_sets`**, moved unchanged from the soup by repair, so stages that take the mesh can read them. A repair-filled face is distinguishable from a source face with no material, so filled holes never make material-boundary seams | Accepted. Changes 001's `ManifoldMesh`; review of #99 |
 | 2026-10-16 | S-012 | **Dead ends ignore seams already in the project.** The file must be consistent on its own, because Replace would discard those seams | Accepted, spec FR-013; review of #99 |
 | 2026-10-16 | S-013 | **FR-014's undersized-piece mark comes from 001's piece-size check, applied to the flattened, scaled proposal and reached by the preview through `@openplush/engine-client`, not from `SourceImport`.** The minimum (001 data-model §5: provisional 20 mm in each principal direction at target scale) is measured on flat pieces in mm, and `source_import` runs before flattening and takes no scale. Same route as 002 FR-036 (H049). 001 has no task for that check or its worker operation yet; both features need them | Proposed, found while writing tasks.md (#107) |
+| 2026-10-17 | S-014 | **A dead-ended UV cut is a dart proposal, not an error.** Spike Q1 found the usual sphere unwrap (a meridian to the pole) ends inside the surface at each pole, and the unwrap opens it into the wedge a dart closes, so the error would refuse correct models. Each dead-end chain is one `SourceDart` proposal, located and explained, shown apart from imported seams, included in "accept all", declinable on its own (spec FR-010–FR-012, FR-015). The CLI declines darts unless `--accept-darts` is given. Replaces S-004's error (its graph and tip definition stand) and the 2026-10-16 "never a dart" answer | Accepted. Maintainer, 2026-10-17 |
 
 ### Trade-offs accepted
 

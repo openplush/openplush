@@ -36,9 +36,11 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 
 ## R3. Dead ends
 
-**Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Seams already in the project are left out: the file must be consistent on its own, because Replace would discard them. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, walk each back to its chain, and fail with one error listing every tip and chain.
+**Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Seams already in the project are left out: the file must be consistent on its own, because Replace would discard them. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, and walk each back to its chain: the cut edges from the tip to the first vertex of seam-valence 3 or more, or to the surface boundary. Each chain becomes one dart proposal (spec FR-011, 2026-10-17).
 
-**Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4). Here the same class is an error, because FR-010 rules out imported darts. Reusing the classifier means no second definition of "endpoint" to drift. Reporting all tips at once is the spec's edge case ("not one per attempt").
+**Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4), and that is what these are. Spike Q1 (`research/q1_blender_uv_cuts/`) found that Blender's usual sphere unwrap, a meridian to the pole, makes one at each pole, and that the unwrap opens it into the wedge a dart closes [solid on UV spheres]. So the 2026-10-16 choice to make them an error would have refused correct models. Reusing the classifier means no second definition of "endpoint" to drift.
+
+**Superseded**: on 2026-10-16 a dead end failed the import with one error listing every tip. Replaced on 2026-10-17 by the maintainer's choice of dart proposals (spec Clarifications).
 
 **Alternative rejected**: *drop dead-ended chains and import the rest*. That gives a layout that differs from the maker's design with no clear sign of where, which is Constitution III's worst case (spec Assumptions).
 

@@ -38,7 +38,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
 
 5. **Dead ends** (US4, SC-004)
    `openplush-cli import-seams dead-end.glb --json out.json`
-   Expect: `DeadEndCut` with exactly two tips. The cut that ends on a material boundary is not reported.
+   Expect: exactly two dart proposals, one per dead-end tip, and none for the cut that ends on a material boundary and an opening. `pattern … --seams-from-model --accept-darts --accept-closing` produces pieces with those darts; without `--accept-darts` the report lists them as declined and their chains stay uncut.
 
 6. **No UVs** (FR-005)
    Expect: report `uv_set_read: null`, no UV seams, and one region, because the fixture has one material (with none, FR-005 proposes no regions).

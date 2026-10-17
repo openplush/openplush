@@ -25,27 +25,23 @@ pub fn reimport_diff(
 
 - `source_import` is a pure read (Constitution VII). It takes `&ManifoldMesh` and `&SeamSet`, and its only output is the proposal. Accepting goes through 001's existing proposal application (T107) plus `set_fabrics`, as one undo step (T128).
 - `existing` is there so the proposal never contains an edge that is already a seam (`Proposal::new`'s invariant), and so `closing` is computed against what the project will actually hold.
-- Errors: `DeadEndCut` (data-model §4). Everything else this stage can hit is already a `ChartNotDisk` *proposal* rather than an error: the stage asks `propose_cuts` for remedies and does not fail on them.
+- Errors: none of its own. A dead-ended cut is a dart proposal (data-model §4), and an unflattenable chart is a `ChartNotDisk` *proposal*: the stage asks `propose_cuts` for remedies and does not fail on them.
 - Warnings: none. Missing UVs, missing materials, extra UV sets and created profiles are facts for the report, not problems (spec FR-005).
 
 ## 2. Errors
 
-| Variant | Carries | Remedy text (plain language, engine-supplied) |
-|---|---|---|
-| `DeadEndCut` | `tips: Vec<VertexId>`, `chains: Vec<Vec<EdgeId>>` | "This cut stops partway across the surface, so it separates nothing. In your modelling tool, extend it until it meets another seam or an edge of the model, or remove it, then import again." |
-
-The string's final wording belongs in `docs/reference/` when the variant lands.
+None new. The `DeadEndCut` error planned on 2026-10-16 was replaced on 2026-10-17 by dart proposals (data-model §4). The dart proposals' explanation text belongs in `docs/reference/` when they land.
 
 ## 3. CLI (Constitution II)
 
 ```sh
 openplush-cli import-seams model.glb --json import.json                         # the proposal and report
 openplush-cli import-seams model.glb --project old.plush --on-existing merge --json diff.json
-openplush-cli pattern model.glb --seams-from-model --accept-closing --size-mm 300 -o out/
+openplush-cli pattern model.glb --seams-from-model --accept-darts --accept-closing --size-mm 300 -o out/
 ```
 
 - `--seams-from-model` without `--accept-closing` refuses with the `ChartNotDisk` error (proposals included) when the imported seams don't close every chart. Headless mode never accepts a proposal without a flag naming it.
-- Exit code for `DeadEndCut`: the CLI's existing error code for `EngineError`. The JSON body lists every tip.
+- `--seams-from-model` without `--accept-darts` declines every dart proposal: those chains are left uncut, and the JSON report lists them as declined. Declining applies nothing, so it is the safe default, and accepting needs the flag that names it.
 
 ## 4. Worker protocol
 

@@ -16,12 +16,16 @@ Builds on feature 001 (`specs/001-pattern-pipeline/`): import, repair, seam draw
 
 ### Session 2026-10-16
 
-- Q: Does an imported UV cut ever become a dart? → A: No. Every imported UV cut is an ordinary seam.
-- Q: What happens to a UV cut that ends inside the surface instead of separating it? → A: An error. The maker fixes it in the modelling tool. It is never dropped and never converted to a dart.
+- Q: Does an imported UV cut ever become a dart? → A: No. Every imported UV cut is an ordinary seam. *(Superseded 2026-10-17, below.)*
+- Q: What happens to a UV cut that ends inside the surface instead of separating it? → A: An error. The maker fixes it in the modelling tool. It is never dropped and never converted to a dart. *(Superseded 2026-10-17, below.)*
 - Q: If the imported seams leave a piece that cannot lie flat, does the engine fix it on its own? → A: The engine computes the minimal extra seams and shows them already highlighted in the import preview, with one "accept all" action. They are still proposals until the maker accepts them (Constitution VII).
 - Q: What happens to a material whose name matches no fabric profile? → A: A new profile with default properties is created, named after the material, listed in the import report, and editable.
 - Q: What settings does a profile created for an unmatched material start with? → A: The minky preset's values, plus an advisory warning printed on the pattern until the maker edits the profile (FR-025). Minky is the most common plush fabric; the warning covers the cases where it is wrong.
 - Q: When a model is imported into a project that already has seams or regions, what happens to them? → A: The maker chooses Replace or Merge in the import preview each time, seeing the difference first. Neither is applied silently.
+
+### Session 2026-10-17
+
+- Q: Spike Q1 found that the usual way to unwrap a sphere in Blender, a seam from pole to equator, ends inside the surface: under the earlier answer it would fail import, yet Blender's unwrap opens it into exactly the wedge a dart closes. What happens to a UV cut that ends inside the surface? → A: It is offered as a **dart proposal**, highlighted in the preview and explained, never applied without the maker's acceptance. It replaces the 2026-10-16 answers that imported cuts never become darts and that a dead end is an error. Other UV cuts stay ordinary seams.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -77,19 +81,19 @@ The maker assigned materials named "Minky", "Fleece" and "Felt Nose" to parts of
 
 ---
 
-### User Story 4 - A broken cut is caught, not guessed at (Priority: P2)
+### User Story 4 - A cut that stops partway is shown as a dart, not guessed at (Priority: P2)
 
-The maker left a UV cut that stops partway across the surface, a slit that separates nothing. Import names it as an error, shows exactly where it is on the model, and tells the maker to close it or remove it in the modelling tool. Nothing is half-imported.
+The maker left a UV cut that stops partway across the surface. Often that is deliberate: a seam from a sphere's pole to its equator lets the unwrap open a wedge, and sewn shut that wedge is a dart. Sometimes it is a slip. Import shows each such cut, highlighted as a dart it would make, explains why, and lets the maker accept it or decline it and fix the model.
 
-**Why this priority**: A dead-ended cut is almost always a slip in the source model. Treating it as a dart or quietly dropping it would give a pattern the maker didn't design, discovered after cutting fabric (Constitution III). It ranks below P1 because it guards the main flow rather than delivering it.
+**Why this priority**: The commonest way to unwrap a round shape makes cuts like this, so refusing them would turn away correct models. Applying them silently would turn a slip into a dart the maker didn't design, discovered after cutting fabric (Constitution III). It ranks below P1 because it refines the main flow rather than delivering it.
 
-**Independent Test**: Import a fixture with one deliberate dead-ended UV cut. Confirm the error names it, the 3D view locates it, no imported seams or regions are proposed, and the model itself still imports.
+**Independent Test**: Import a fixture with deliberate dead-ended UV cuts. Confirm each is proposed as a dart, located and explained, separately from the imported seams; that accepting it adds a dart; and that declining it leaves that cut out while the rest of the import stands.
 
 **Acceptance Scenarios**:
 
-1. **Given** a model with a UV cut that ends inside the surface, **When** it is imported, **Then** seam import fails with an error that locates every such cut and names the remedy: close it or remove it in the modelling tool, then re-import.
-2. **Given** that error, **When** the maker looks at the model, **Then** the model itself is imported, with no proposed seams or regions, and the maker may draw seams by hand.
-3. **Given** a UV cut that ends exactly where it meets a material boundary or the edge of an opening, **When** it is imported, **Then** it is not a dead end and no error is raised.
+1. **Given** a model with a UV cut that ends inside the surface, **When** it is imported, **Then** the preview shows that cut as a dart proposal, located on the model, with a plain-language explanation that the cut stops partway and will be sewn as a dart.
+2. **Given** that proposal, **When** the maker declines it, **Then** that cut is not imported at all, the rest of the import is unaffected, and the maker may fix the cut in the modelling tool and re-import.
+3. **Given** a UV cut that ends exactly where it meets another seam, a material boundary or the edge of an opening, **When** it is imported, **Then** it is not a dead end and no dart is proposed for it.
 
 ---
 
@@ -99,7 +103,8 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - Texture coordinates that differ by floating-point noise across an edge the maker never cut.
 - A UV cut and a material boundary that run along the same edge: one seam, not two.
 - A UV cut that ends on an opening or hole boundary, or on a material boundary (not a dead end), versus one that ends in the open surface (a dead end).
-- Several dead-ended cuts in one model: all of them are reported at once, not one per attempt.
+- Several dead-ended cuts in one model: each becomes its own dart proposal, all shown at once.
+- A cut that stops partway by mistake: it is shown as a dart proposal the maker can decline, never applied silently.
 - A closed UV cut loop that separates a small island below feature 001's minimum sewable size.
 - Faces with no material, mixed into a model where other faces have one.
 - Two materials whose names differ only in letter case or surrounding spaces.
@@ -126,11 +131,12 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 
 #### Seams from UV cuts
 
-- **FR-010**: Every UV cut becomes a proposed seam of the ordinary seam type. An imported UV cut is never a dart and never an opening.
-- **FR-011**: A **dead end** is an endpoint of an imported seam that lies inside the surface and touches no other seam: no other imported seam, material boundary, mandatory repair seam, or surface boundary. Any dead end fails seam import with a typed error that lists every dead end and its location on the model, and states the remedy: close or remove the cut in the modelling tool and re-import.
-- **FR-012**: When seam import fails, nothing from it is proposed: no seams, no regions, no new profiles. The model itself still imports, and the maker may proceed by hand.
+- **FR-010**: Every UV cut that does not end inside the surface becomes a proposed seam of the ordinary seam type. An imported UV cut is never an opening.
+- **FR-011**: A **dead end** is an endpoint of an imported seam that lies inside the surface and touches no other seam: no other imported seam, material boundary, mandatory repair seam, or surface boundary. The chain of cut edges that runs from a dead end to the nearest seam junction or surface boundary is proposed as a **dart**, one proposal per chain, located on the model and explained in plain language: the cut stops partway, so it will be sewn as a dart, and if that was not intended the maker can decline it and close or remove the cut in the modelling tool.
+- **FR-012**: A dart proposal's chain is not part of the imported seams. Accepting the proposal adds that chain as a dart; declining it leaves that chain uncut. Either way the rest of the import is unaffected.
 - **FR-013**: Dead ends are judged on the combined set of imported seams, material-boundary seams, and mandatory repair seams, so a cut that runs into another seam is never reported. Seams already in the project are not part of that set: the source file must be consistent on its own, because a Replace would discard them.
 - **FR-014**: A closed cut that separates a piece below the minimum sewable size is still proposed, and the preview marks that piece as below the minimum before acceptance, which stays the maker's call (as feature 002 FR-036 does for hints). The minimum is the one feature 001 uses for its own proposals.
+- **FR-015**: Dart proposals are shown distinctly from imported seams and extra seams, with their count, and "accept all" includes them. Partial acceptance (FR-042) can leave them out.
 
 #### Fabric regions from materials
 
@@ -149,8 +155,8 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 
 #### Preview and acceptance
 
-- **FR-040**: The import preview shows imported seams, imported regions, and extra seams on the model, each distinguishable from the others with colour-blind-safe palettes, and lists their counts.
-- **FR-041**: One "accept all" action applies the imported seams, regions, new profiles, and extra seams together as a single undoable step.
+- **FR-040**: The import preview shows imported seams, dart proposals, imported regions, and extra seams on the model, each distinguishable from the others with colour-blind-safe palettes, and lists their counts.
+- **FR-041**: One "accept all" action applies the imported seams, dart proposals, regions, new profiles, and extra seams together as a single undoable step.
 - **FR-042**: The maker can instead accept the imported seams and regions without the extra seams, or decline everything. Declining leaves the project exactly as a plain import would.
 - **FR-043**: Once accepted, imported seams and regions are indistinguishable in behaviour from hand-drawn seams and painted regions: editable, erasable, saved, and undoable the same way.
 - **FR-044**: The preview is keyboard-operable, including "accept all", partial acceptance, and declining.
@@ -172,7 +178,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - **UV Cut**: An edge whose two sides carry different texture coordinates in the source file. It is the import's reading of where the maker cut the model.
 - **Material Boundary**: An edge between two differently-assigned materials.
 - **Import Proposal**: The set of imported seams, imported regions, new fabric profiles, and extra seams awaiting the maker's decision.
-- **Dead-End Cut**: An imported seam endpoint inside the surface that touches no other seam. It is the reason seam import fails.
+- **Dead-End Cut**: An imported seam endpoint inside the surface that touches no other seam. The chain ending there is proposed as a dart.
 - **Re-import Choice**: The maker's per-import decision to replace or merge with existing seams and regions, with the difference shown before it is applied.
 - **Import Report**: What was found and proposed. It records which UV set was read, how many seams came from each source, regions and their matched or new profiles, extra seams, repair-filled areas and the region each joined, and any errors with their locations.
 
@@ -183,7 +189,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - **SC-001**: On every fixture with a known UV cut layout, the proposed seams match that layout exactly: no edge missing and no edge extra.
 - **SC-002**: On every fixture whose model was exported with vertices split for hard shading, zero proposed seams come from shading splits alone.
 - **SC-003**: On every fixture, "accept all" yields seams under which every piece lies flat, 100% of the time.
-- **SC-004**: On every fixture with deliberately dead-ended cuts, every dead end is reported, with zero reported on fixtures that have none.
+- **SC-004**: On every fixture with deliberately dead-ended cuts, every dead end gets exactly one dart proposal, and fixtures with none get no dart proposals.
 - **SC-005**: On every fixture with materials, every face belongs to exactly one region, and every material boundary is a seam.
 - **SC-006**: A maker whose model is already cut and material-assigned reaches a valid flat pattern from import in at most 3 actions (import, accept all, generate).
 - **SC-007**: The same file and settings produce a byte-identical import report across repeated runs and across platforms.
@@ -195,7 +201,7 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - Reading the modelling tool's own seam flags or native project files (such as `.blend`); only what an OBJ or glTF export carries.
 - The Blender add-on (feature 001's post-MVP plan). It is the longer-term answer to most of this feature's guesswork; see the plan's Phasing.
 - Using the source UV layout as the flat pattern. Pieces are flattened by feature 001 under its seam-length parity rule.
-- Turning any imported cut into a dart, an opening, or an inserted-piece seam.
+- Turning any imported cut into an opening or an inserted-piece seam, or into a dart other than by FR-011's proposal.
 - Automatic seam layout (001 FR-015).
 - Reading fabric properties (stretch, pile, thickness) from material settings; only the name is used.
 
@@ -204,6 +210,6 @@ The maker left a UV cut that stops partway across the surface, a slit that separ
 - Feature 001 provides import, repair, seam drawing, flattenability validation with minimal extra-seam proposals, fabric regions and profiles, the project file, and undo/redo. This feature adds a new source of seams and regions to those rather than reimplementing them.
 - Per-corner texture coordinates survive feature 001's import and repair unchanged, so a UV cut is recoverable after welding. 001 FR-002 also promises to keep material assignment, but 001's design does not yet carry material names; this feature's data model adds that.
 - Both supported formats record which material each face uses; how each one encodes that is a planning matter.
-- Failing seam import as a whole on any dead end, rather than importing the rest, is deliberate: a partial import would hand the maker a seam layout that differs from their design without a clear sign of where.
+- A cut that ends inside the surface is far more often a deliberate dart than a slip in round shapes (spike Q1: the usual sphere unwrap makes one at each pole). Proposing it as a dart, visibly and with the maker's acceptance, serves both cases; failing the import would turn away correct models, and applying it silently would hide a slip.
 - The texture-coordinate tolerance in FR-001 is documented with the engine's other tolerances and is tuned so exporter rounding never reads as a cut.
 - Single maker working locally.

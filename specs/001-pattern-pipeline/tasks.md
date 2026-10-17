@@ -209,7 +209,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T064 [US1] `crates/openplush-mesh/src/repair/orientation.rs` — step 5, BFS per component from the largest face; signed volume positive when closed
 - [ ] T065 [US1] `crates/openplush-mesh/src/repair/components.rs` — step 6; components under 1% of total area become candidate detail parts (FR-005)
 - [ ] T066 [US1] `crates/openplush-mesh/src/repair/holes.rs` — step 7, classify opening vs. accidental; fill with Liepa 2003 minimal-area triangulation and fairing
-- [ ] T067 [US1] `crates/openplush-mesh/src/repair/mod.rs` — `into_manifold()` returning `(ManifoldMesh, RepairReport)`. **Typestate gate**: `ManifoldMesh` gets no public constructor, so unrepaired data cannot reach the flattener by construction (FR-004, Constitution VII)
+- [ ] T067 [US1] `crates/openplush-mesh/src/repair/mod.rs` — `into_manifold()` returning `(ManifoldMesh, RepairReport)`. **Typestate gate**: `ManifoldMesh` gets no public constructor, so unrepaired data cannot reach the flattener by construction (FR-004, Constitution VII). Moves the soup's `SourceMaterials` and `extra_uv_sets` onto the mesh unchanged (003 S-011)
 - [ ] T068 [US1] `crates/openplush-pattern/src/scale.rs` — real-world size from a dimension or measured reference distance; warn outside the keychain-to-1 m range (FR-006, D-015)
 
 ### Seams and charts (FR-010 … FR-014)

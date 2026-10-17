@@ -13,3 +13,7 @@ indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
+
+# Generated fixtures are byte-exact; three-materials.obj has a material name with a trailing space on purpose.
+[fixtures/**]
+trim_trailing_whitespace = false

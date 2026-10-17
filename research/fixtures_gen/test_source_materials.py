@@ -2,6 +2,7 @@
 
 Run: python3 -m unittest -v   (from this directory)
 Reads the committed files only and shares no code with generate.py or source_seams.py.
+PRESETS are the shipped fabric presets of 001 research R7, which import matches by trimmed, lower-cased name.
 """
 
 import unittest
@@ -12,7 +13,6 @@ from test_source_seams import SOURCE, accessor_floats, accessor_ints, match_posi
 
 Run = tuple[str, list[Face]]  # a material name and the faces that follow its `usemtl`, in file order
 
-# The shipped fabric presets (001 research R7), compared the way import matches names: trimmed, lower-cased.
 PRESETS = ("Quilting cotton", "Craft felt", "Polar fleece", "Minky / cuddle", "Velboa", "Short faux fur", "Long faux fur")
 NAMES = ["minky / cuddle", "Polar fleece ", "Felt Nose"]
 

@@ -162,14 +162,16 @@ class Buffer:
     views: list[dict[str, int]] = field(default_factory=list)
     accessors: list[dict[str, object]] = field(default_factory=list)
 
-    def add(self, kind: str, component: int, data: bytes, count: int, target: int) -> int:
+    def add(self, kind: str, component: int, data: bytes, target: int) -> int:
+        """Appends one tightly packed accessor of 4-byte components; its count follows from the data's length."""
+        count = len(data) // (4 * {"SCALAR": 1, "VEC2": 2, "VEC3": 3}[kind])
         self.accessors.append({"bufferView": len(self.views), "componentType": component, "count": count, "type": kind})
         self.views.append({"buffer": 0, "byteOffset": len(self.blob), "byteLength": len(data), "target": target})
         self.blob += data
         return len(self.accessors) - 1
 
     def floats(self, kind: str, rows: list[tuple[float, ...]]) -> int:
-        return self.add(kind, 5126, b"".join(struct.pack(f"<{len(r)}f", *r) for r in rows), len(rows), 34962)
+        return self.add(kind, 5126, b"".join(struct.pack(f"<{len(r)}f", *r) for r in rows), 34962)
 
 
 def present(values: list[T | None], what: str) -> list[T]:
@@ -202,7 +204,7 @@ def primitive_json(buf: Buffer, name: str, m: Mesh, prim: Primitive) -> dict[str
         normals = present([n for _, _, n in vertex], f"{name}: a corner without a normal")
         attributes["NORMAL"] = buf.floats("VEC3", [tuple(f32(c) for c in n) for n in normals])
     out: dict[str, object] = {"attributes": attributes}
-    out["indices"] = buf.add("SCALAR", 5125, struct.pack(f"<{len(indices)}I", *indices), len(indices), 34963)
+    out["indices"] = buf.add("SCALAR", 5125, struct.pack(f"<{len(indices)}I", *indices), 34963)
     if prim.material is not None:
         out["material"] = prim.material
     return out

@@ -79,6 +79,7 @@ fn defects(report: &ValidationReport) -> Vec<&'static str> {
         ("inside_out", report.inside_out().is_empty()),
         ("boundary_loops", report.boundary_loops().is_empty()),
         ("multiple_components", report.components().len() <= 1),
+        ("self_intersections", report.self_intersections().is_empty()),
         ("unmeasurable", report.unmeasurable().is_none()),
     ];
     lists
@@ -507,5 +508,26 @@ fn faces_sharing_only_their_last_corner_are_one_component() -> Result<(), MeshEr
     ];
     let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 2]])?);
     assert_eq!(report.components(), [vec![f(0), f(1)]]);
+    Ok(())
+}
+
+#[test]
+fn reports_each_pair_of_faces_that_cross() -> Result<(), MeshError> {
+    // A triangle stabs up through the bottom side, across both of its triangles.
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.extend([[0.5, 0.4, -0.5], [0.5, 0.6, -0.5], [0.5, 0.5, 0.5]]);
+    let report = validate(&soup(&positions, &cube_with(&[[8, 9, 10]]))?);
+    assert_eq!(report.self_intersections(), [[f(0), f(12)], [f(1), f(12)]]);
+    Ok(())
+}
+
+#[test]
+fn does_not_report_faces_that_only_touch_or_share_a_vertex() -> Result<(), MeshError> {
+    // One triangle's corner rests on the bottom side; another shares cube vertex 0.
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.extend([[0.5, 0.25, 0.0], [0.5, 0.25, -1.0], [0.6, 0.25, -1.0]]);
+    positions.extend([[0.5, 0.5, 0.5], [0.2, 0.5, 0.8]]);
+    let report = validate(&soup(&positions, &cube_with(&[[8, 9, 10], [0, 11, 12]]))?);
+    assert!(report.self_intersections().is_empty(), "{report:?}");
     Ok(())
 }

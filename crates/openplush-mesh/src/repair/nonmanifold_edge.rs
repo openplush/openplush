@@ -24,7 +24,9 @@ pub(crate) struct PairedEdge {
 /// Pairs the faces on every edge with more than two, without changing the soup:
 /// a pair sharing a copy of the edge is a manifold edge the half-edge build must
 /// make, even where the copies join the same two vertices. `sheets` are the pairs
-/// of coincident layers (`degenerate::Removed::sheets`). Requires repeated-index
+/// of coincident layers by this soup's face IDs: `degenerate::Removed::sheets` names
+/// the faces of the soup `remove` was given, so map them through `Removed::origin`
+/// first, or no layer is recognised. Requires repeated-index
 /// and zero-area faces gone (`degenerate::remove`, `cap::stitch`); a face with no
 /// area beside such an edge is refused with its error.
 #[cfg_attr(

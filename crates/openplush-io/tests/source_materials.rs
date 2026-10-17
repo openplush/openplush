@@ -129,3 +129,10 @@ fn a_usemtl_without_a_name_is_refused_with_its_line() {
     };
     assert!(detail.starts_with("line 4:"), "{detail}");
 }
+
+#[test]
+fn a_tab_after_the_keyword_is_a_separator_too() -> Result<(), IoError> {
+    let soup = read(&format!("{TRIANGLE}usemtl\tA\nf 1 2 3\n"))?;
+    assert_eq!(soup.materials().names(), ["A"]);
+    Ok(())
+}

@@ -83,6 +83,11 @@ class Weld(unittest.TestCase):
         with self.assertRaises(ValueError):
             mesh.find((0.75 * EPS, 0.0, 0.0))
 
+    def test_degenerate_model_raises(self) -> None:
+        """Prevents a zero tolerance, and the division by zero it causes, when every point coincides."""
+        with self.assertRaises(ValueError):
+            tolerance([[A, A, A]])
+
     def test_tolerance_is_relative_to_the_diagonal(self) -> None:
         """Prevents an absolute tolerance, which 001's weld does not use."""
         self.assertAlmostEqual(tolerance(STRIP), 1e-6 * 5**0.5)

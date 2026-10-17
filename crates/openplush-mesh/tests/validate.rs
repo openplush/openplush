@@ -552,7 +552,9 @@ fn reports_faces_crossing_along_a_segment_that_ends_on_both_boundaries() -> Resu
 
 #[test]
 fn reports_two_grid_snapped_boxes_that_overlap() -> Result<(), MeshError> {
-    for offset in [[0.5, 0.5, 0.5], [0.5, 0.0, 0.0], [0.5, 0.5, 0.0]] {
+    // Offsets that leave faces coplanar meet only edge-on or in one plane, which a
+    // pair of faces cannot tell from touching; these cross transversely.
+    for offset in [[0.5, 0.5, 0.5], [0.25, 0.5, 0.75]] {
         let mut positions = CUBE_POSITIONS.to_vec();
         positions.extend(
             CUBE_POSITIONS
@@ -659,5 +661,23 @@ fn does_not_report_a_face_that_dips_through_another_by_less_than_the_weld_distan
     ];
     let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 5]])?);
     assert!(report.self_intersections().is_empty(), "{report:?}");
+    Ok(())
+}
+
+#[test]
+fn does_not_report_a_face_resting_edge_on_against_another() -> Result<(), MeshError> {
+    // The upright face's bottom edge lies inside the flat face; the rest of it stands
+    // above, so the two only touch. Each of its three edges takes the bottom in turn.
+    let flat = [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]];
+    let upright = [[0.2, 0.2, 0.0], [0.8, 0.2, 0.0], [0.5, 0.2, 1.0]];
+    for turn in 0..3 {
+        let mut positions = flat.to_vec();
+        positions.extend((0..3).map(|i| upright[(i + turn) % 3]));
+        let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 5]])?);
+        assert!(
+            report.self_intersections().is_empty(),
+            "turn {turn}: {report:?}"
+        );
+    }
     Ok(())
 }

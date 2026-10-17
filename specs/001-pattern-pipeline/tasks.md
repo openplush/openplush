@@ -52,6 +52,7 @@ Tasks that will exceed the budget on their own. Split by capability, each with i
 | Task | Why it splits |
 |---|---|
 | T060 weld | Spatial hash, deterministic tie-break, and glTF split-vertex handling are three testable capabilities |
+| T061 degenerates | Dropping repeated-index faces and duplicates (with the sheet flag) is separate from cap stitching (D-035) |
 | T062 non-manifold edge cutting | Dihedral sorting, orientation pairing, and edge duplication |
 | T066 hole filling | Classification is separate from Liepa triangulation and fairing |
 | T073 chart construction | Flood fill, vertex duplication, and provenance mapping |
@@ -203,7 +204,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T058 [US1] `crates/openplush-mesh/src/validate/selfintersect.rs` — BVH triangle-triangle tests. **Warn only** (data-model section 3 step 8)
 - [ ] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003)
 - [ ] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
-- [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag
+- [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag (D-035: caps are stitched by splitting the faces across their longest edge; both sheet layers are kept)
 - [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams
 - [ ] T063 [US1] `crates/openplush-mesh/src/repair/bowtie.rs` — step 4, split one vertex per fan
 - [ ] T064 [US1] `crates/openplush-mesh/src/repair/orientation.rs` — step 5, BFS per component from the largest face; signed volume positive when closed

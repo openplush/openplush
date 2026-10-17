@@ -31,6 +31,7 @@ pub struct SourceMaterials {
 |---|---|---|
 | UV cut | Interior edge, UVs on both sides, endpoint UVs differ by more than `UV_CUT` at either end (research R2) | `openplush-seams::source` |
 | Material boundary | Interior edge whose two faces both come from the source file (neither is repair-filled) and differ in `Option<MaterialIndex>`. A source face with no material next to one with a material is a boundary; a repair-filled face never is (spec FR-024) | `openplush-seams::source` |
+| Projection point | Interior vertex with at least `PROJECTION_MIN_FACES = 5` incident faces, all with UVs, whose corner UVs at that vertex are pairwise more than `UV_CUT` apart (research R2, spec FR-006). Reported only; changes no proposal | `openplush-seams::source` |
 | Dead-end tip | Interior vertex of seam-valence 1 in the graph over UV cuts ∪ material boundaries ∪ mandatory seams, excluding seams already in the project (research R3, spec FR-013) | 001's seam graph (T070) |
 
 `UV_CUT = 1e-5` lives in `openplush_geom::epsilon` beside the other tolerances, as the first tolerance that is neither model-relative nor physical. Its doc comment says why it is absolute.
@@ -62,6 +63,7 @@ pub struct SourceReport {
     material_boundary_edges: u32,
     shared_edges: u32,                // edges that are both, counted once (FR-021)
     faces_without_uv: u32,
+    projection_points: Vec<VertexId>, // ascending; FR-006's hint is shown when non-empty
     filled_areas: Vec<(ComponentId, FabricId)>,  // FR-024: which region each repair-filled area joined
     matched: Vec<(MaterialIndex, FabricId)>,
     created: Vec<(MaterialIndex, FabricId)>,

@@ -251,11 +251,11 @@ fn puts_two_caps_on_one_edge_into_every_face_across_it_in_order() {
 
 #[test]
 fn leaves_faces_that_repeat_a_vertex_and_a_soup_with_no_cap_alone() {
-    let s = soup(&[[0, 1, 3], [0, 0, 1], [1, 0, 0]]);
+    let s = soup(&[[0, 1, 3], [0, 0, 1], [1, 0, 0], [0, 1, 0]]);
     let (out, stitched) = stitch(&s, &tol(&s));
     assert_eq!(out, s);
     assert!(stitched.caps.is_empty() && stitched.retriangulated.is_empty());
-    assert_eq!(stitched.origin, [f(0), f(1), f(2)]);
+    assert_eq!(stitched.origin, [f(0), f(1), f(2), f(3)]);
 }
 
 #[test]
@@ -283,4 +283,92 @@ fn two_caps_meeting_at_one_place_along_an_edge_leave_no_crack() {
     for &[a, b] in directed.iter().filter(|e| e.iter().any(|&v| v >= 4)) {
         assert!(directed.contains(&[b, a]), "edge {a}-{b} is unpaired");
     }
+}
+
+/// `soup` over `positions` instead of `points()`, without UVs.
+fn soup_at(positions: Vec<DVec3>, triangles: &[[u32; 3]]) -> TriangleSoup {
+    let corners = (0..triangles.len() as u32 * 3).map(src).collect();
+    TriangleSoup::new(positions, triangles.to_vec(), corners, None).unwrap()
+}
+
+/// a, then b and m with |a-b| = |a-m| exactly, then x above and y below.
+fn needle() -> Vec<DVec3> {
+    vec![
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(2.0, 1e-12, 0.0),
+        DVec3::new(2.0, -1e-12, 0.0),
+        DVec3::new(1.0, 1.0, 0.0),
+        DVec3::new(1.0, -1.0, 0.0),
+    ]
+}
+
+#[test]
+fn a_tie_for_longest_edge_goes_to_the_first() {
+    let s = soup_at(needle(), &[[0, 1, 2], [1, 0, 3]]);
+    let (out, stitched) = stitch(&s, &tol(&s));
+    assert_eq!(stitched.caps, [f(0)]);
+    assert_eq!(stitched.retriangulated, [f(1)]);
+    assert_eq!(out.triangle_indices(), [[3, 1, 2], [2, 0, 3]]);
+}
+
+#[test]
+fn caps_that_put_each_others_ends_on_their_edges_end_and_add_no_end_twice() {
+    // One cap puts m on a-b, the other b on a-m.
+    let s = soup_at(needle(), &[[0, 1, 2], [2, 0, 1], [1, 0, 3], [0, 1, 4]]);
+    let (out, stitched) = stitch(&s, &tol(&s));
+    assert_eq!(stitched.retriangulated, [f(2), f(3)]);
+    assert_eq!(
+        out.triangle_indices(),
+        [[3, 1, 2], [2, 0, 3], [4, 0, 2], [2, 1, 4]]
+    );
+}
+
+#[test]
+fn a_vertex_two_caps_put_on_an_edge_takes_the_first_caps_record() {
+    let s = soup(&[[0, 1, 3], [1, 0, 2], [0, 1, 2]]);
+    let (out, _) = stitch(&s, &tol(&s));
+    assert_eq!(out.corner_sources()[2], src(5));
+    assert_eq!(out.corner_sources()[3], src(5));
+}
+
+#[test]
+fn follows_a_cap_on_either_half_of_another_caps_longest_edge() {
+    let mut positions = points();
+    positions.push(DVec3::new(1.5, 0.0, 0.0));
+    let s = soup_at(positions, &[[0, 1, 3], [1, 0, 2], [1, 2, 8]]);
+    let (out, _) = stitch(&s, &tol(&s));
+    assert_eq!(out.triangle_indices(), [[3, 0, 2], [3, 2, 8], [8, 1, 3]]);
+}
+
+#[test]
+fn orders_coincident_vertices_on_an_edge_by_id() {
+    let mut positions = points();
+    positions.push(DVec3::new(1.0, 0.0, 0.0));
+    let s = soup_at(positions, &[[1, 0, 8], [1, 0, 2], [0, 1, 3]]);
+    let (out, _) = stitch(&s, &tol(&s));
+    assert_eq!(out.triangle_indices(), [[3, 0, 2], [3, 2, 8], [8, 1, 3]]);
+}
+
+#[test]
+fn a_new_corner_has_no_uv_if_the_start_of_its_edge_has_none() {
+    let mut uvs: Vec<_> = (0..6).map(|i| uv(i as f64)).collect();
+    uvs[0] = None;
+    let corners = (0..6).map(src).collect();
+    let s = TriangleSoup::new(points(), vec![[0, 1, 3], [1, 0, 2]], corners, Some(uvs)).unwrap();
+    let (out, _) = stitch(&s, &tol(&s));
+    assert_eq!(out.corner_uvs().unwrap()[2], None);
+    assert_eq!(out.corner_uvs().unwrap()[3], None);
+}
+
+#[test]
+fn re_triangulates_a_face_whose_last_edge_carries_the_vertices() {
+    let s = soup(&[[1, 3, 0], [1, 0, 2], [1, 0, 6]]);
+    let (out, _) = stitch(&s, &tol(&s));
+    let t = tol(&s);
+    let p = |v: u32| out.positions()[v as usize];
+    assert_eq!(out.triangle_count(), 3);
+    for &[a, b, c] in out.triangle_indices() {
+        assert!(!is_sliver(p(a), p(b), p(c), &t), "{a} {b} {c}");
+    }
+    assert!((area(&out) - area(&s)).abs() < 1e-12);
 }

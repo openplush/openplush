@@ -42,3 +42,44 @@ fn is_ear(polygon: &[Corner], i: usize) -> bool {
         .fold(0b111, |on, (_, c)| on & c.on);
     ear == 0 && rest == 0
 }
+
+#[cfg(test)]
+mod tests {
+    use super::triangles;
+    use crate::SourceCorner;
+    use crate::repair::cap::Corner;
+
+    fn corner(v: u32, on: u8) -> Corner {
+        Corner {
+            v,
+            src: SourceCorner {
+                primitive: 0,
+                vertex: v,
+            },
+            uv: None,
+            on,
+        }
+    }
+
+    #[test]
+    fn clips_every_face_with_up_to_three_vertices_per_edge_into_proper_triangles() {
+        for counts in (0..64u32).map(|k| [k & 3, k >> 2 & 3, k >> 4 & 3]) {
+            let mut polygon = Vec::new();
+            for (i, &count) in counts.iter().enumerate() {
+                polygon.push(corner(polygon.len() as u32, 1 << i | 1 << ((i + 2) % 3)));
+                for _ in 0..count {
+                    polygon.push(corner(polygon.len() as u32, 1 << i));
+                }
+            }
+            let n = polygon.len();
+            let out = triangles(polygon);
+            assert_eq!(out.len(), n - 2, "{counts:?}");
+            for [a, b, c] in &out {
+                assert_eq!(a.on & b.on & c.on, 0, "{counts:?}: {} {} {}", a.v, b.v, c.v);
+            }
+            // Every corner is used, so nothing is dropped.
+            let used: std::collections::BTreeSet<u32> = out.iter().flatten().map(|c| c.v).collect();
+            assert_eq!(used.len(), n, "{counts:?}");
+        }
+    }
+}

@@ -166,6 +166,21 @@ impl TriangleSoup {
         self.corner_uv.as_deref()
     }
 
+    /// This soup with each vertex index `i` replaced by `rep[i]`.
+    // INVARIANT: `rep` has one in-range entry per vertex (the weld's representatives).
+    pub(crate) fn reindexed(&self, rep: &[u32]) -> Self {
+        Self {
+            positions: self.positions.clone(),
+            triangles: self
+                .triangles
+                .iter()
+                .map(|t| t.map(|v| rep[v as usize]))
+                .collect(),
+            corner_src: self.corner_src.clone(),
+            corner_uv: self.corner_uv.clone(),
+        }
+    }
+
     /// The bounding-box diagonal of the vertices triangles use: the scale every
     /// model-space tolerance derives from (`openplush_geom::epsilon`). Unused
     /// vertices are left out, so one stray point cannot inflate the weld and area

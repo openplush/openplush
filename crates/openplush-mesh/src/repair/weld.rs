@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use openplush_geom::DVec3;
+use openplush_geom::epsilon::ModelTolerances;
 
 use crate::disjoint::DisjointSet;
 use crate::{TriangleSoup, VertexId};
@@ -67,6 +68,21 @@ pub(crate) fn weld(soup: &TriangleSoup, distance: f64) -> Weld {
     }
     let groups = groups.into_values().filter(|g| g.len() > 1).collect();
     Weld { rep, groups }
+}
+
+/// Points every corner of a weld group at the group's smallest vertex ID, which
+/// keeps its own position. Corner sources and UVs, and faces the weld collapses,
+/// are left as they are. Returns the welded soup and each group merged.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "called by into_manifold, not yet written")
+)]
+pub(crate) fn merge(
+    soup: &TriangleSoup,
+    tol: &ModelTolerances,
+) -> (TriangleSoup, Vec<Vec<VertexId>>) {
+    let Weld { rep, groups } = weld(soup, tol.weld());
+    (soup.reindexed(&rep), groups)
 }
 
 fn neighbours([x, y, z]: [i64; 3]) -> impl Iterator<Item = [i64; 3]> {

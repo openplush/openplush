@@ -23,7 +23,7 @@ from test_source_seams import (
 )
 
 CornerAt = tuple[Vec, UV]  # a corner by its exact f32 position, and its UV as stored (V flipped)
-LowerRim = -30.0  # z of the tube's lower rim, where the lower cap starts
+UPPER_RIM, LOWER_RIM = 30.0, -30.0  # z of the tube's two rims; the lower cap starts below the second
 
 
 def read_corners(path: Path) -> tuple[list[str], list[tuple[CornerAt, CornerAt, CornerAt]], list[int]]:
@@ -67,8 +67,9 @@ class Reshaped(unittest.TestCase):
         to_obj = dict(zip(positions, match_positions(positions, obj_pos)))
         cuts = {tuple(sorted(to_obj[p] for p in pair)) for pair in cut_positions(faces)}
         self.assertEqual(sorted(cuts), read_seam_set(FIXTURES / "seams" / "capsule-uv.json").edges)
-        head = {p for f, m in zip(faces, materials) if m == 0 for p, _ in f}
-        self.assertAlmostEqual(min(p[2] for p in head), 30.0, places=4, msg="Head is the upper hemisphere, down to the rim")
+        for n, (f, m) in enumerate(zip(faces, materials, strict=True)):
+            upper = all(p[2] >= UPPER_RIM for p, _ in f)
+            self.assertEqual(m, 0 if upper else 1, f"face {n}: Head exactly on the upper hemisphere")
 
     def test_v2_moves_only_the_lower_cap(self) -> None:
         """Prevents an edit that moves vertices outside the cap, which would make the placeable count arbitrary."""
@@ -78,9 +79,10 @@ class Reshaped(unittest.TestCase):
         for n, (f1, f2) in enumerate(zip(v1, v2, strict=True)):
             for (p1, uv1), (p2, uv2) in zip(f1, f2):
                 self.assertLess(max(abs(uv1[0] - uv2[0]), abs(uv1[1] - uv2[1])), UV_TOL, f"face {n}: same UVs")
-                if p1[2] >= LowerRim:
+                if p1[2] >= LOWER_RIM:
                     self.assertEqual(p1, p2, f"face {n}: outside the cap, bit-identical")
                 else:
+                    self.assertEqual(p2[:2], p1[:2], f"face {n}: the cap moves straight down")
                     self.assertLess(p2[2], p1[2] - 1.0, f"face {n}: the cap is stretched down")
 
     def test_exactly_the_seams_away_from_the_cap_replace_by_position(self) -> None:
@@ -91,7 +93,7 @@ class Reshaped(unittest.TestCase):
         new_positions = {p for f in v2 for p, _ in f}
         placed = {pair for pair in old if pair <= new_positions}
         self.assertEqual((len(old), len(placed)), (21, 18))
-        self.assertTrue(all(min(p[2] for p in pair) < LowerRim for pair in old - placed), "only edges touching the cap")
+        self.assertTrue(all(min(p[2] for p in pair) < LOWER_RIM for pair in old - placed), "only edges touching the cap")
         self.assertEqual(placed, cut_positions(v2) & placed, "re-placed seams are still cuts in v2")
 
 

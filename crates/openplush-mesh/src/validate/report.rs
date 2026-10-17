@@ -18,6 +18,7 @@ pub struct ValidationReport {
     pub(super) inside_out: Vec<Vec<FaceId>>,
     pub(super) boundary_loops: Vec<Vec<VertexId>>,
     pub(super) components: Vec<Vec<FaceId>>,
+    pub(super) self_intersections: Vec<[FaceId; 2]>,
 }
 
 /// Why a soup has no model-space tolerances, so nothing else could be judged.
@@ -131,5 +132,11 @@ impl ValidationReport {
     /// Vertex-connected components, by their faces; more than one is a defect.
     pub fn components(&self) -> &[Vec<FaceId>] {
         &self.components
+    }
+
+    /// Pairs of faces sharing no vertex where an edge of one passes strictly through
+    /// the other, smaller face first. Repair only warns about these.
+    pub fn self_intersections(&self) -> &[[FaceId; 2]] {
+        &self.self_intersections
     }
 }

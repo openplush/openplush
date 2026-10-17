@@ -6,6 +6,7 @@ mod disjoint;
 mod nonmanifold;
 mod orientation;
 mod report;
+mod selfintersect;
 mod topology;
 
 use std::collections::BTreeMap;
@@ -28,7 +29,7 @@ struct EdgeUse {
 /// Every edge of the kept faces by its welded ends, smaller first.
 type Edges = BTreeMap<[u32; 2], Vec<EdgeUse>>;
 
-/// Locates every defect class but self-intersection. Never fails: a soup
+/// Locates every defect class. Never fails: a soup
 /// with no triangles, or an extent tolerances cannot be derived for, is reported as
 /// [`Unmeasurable`] with nothing else judged.
 pub fn validate(soup: &TriangleSoup) -> ValidationReport {
@@ -63,6 +64,12 @@ pub fn validate(soup: &TriangleSoup) -> ValidationReport {
             diagonal,
         ),
         boundary_loops: topology::boundary_loops(&edges),
+        self_intersections: selfintersect::crossings(
+            &tris,
+            &degenerate.kept,
+            soup.positions(),
+            &tol,
+        ),
         components,
         zero_area: degenerate.zero_area,
         repeated_index: degenerate.repeated_index,

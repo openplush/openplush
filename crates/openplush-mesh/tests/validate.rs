@@ -79,6 +79,7 @@ fn defects(report: &ValidationReport) -> Vec<&'static str> {
         ("inside_out", report.inside_out().is_empty()),
         ("boundary_loops", report.boundary_loops().is_empty()),
         ("multiple_components", report.components().len() <= 1),
+        ("self_intersections", report.self_intersections().is_empty()),
         ("unmeasurable", report.unmeasurable().is_none()),
     ];
     lists
@@ -507,5 +508,176 @@ fn faces_sharing_only_their_last_corner_are_one_component() -> Result<(), MeshEr
     ];
     let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 2]])?);
     assert_eq!(report.components(), [vec![f(0), f(1)]]);
+    Ok(())
+}
+
+#[test]
+fn reports_each_pair_of_faces_that_cross() -> Result<(), MeshError> {
+    // A triangle stabs up through the bottom side, across both of its triangles.
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.extend([[0.5, 0.4, -0.5], [0.5, 0.6, -0.5], [0.5, 0.5, 0.5]]);
+    let report = validate(&soup(&positions, &cube_with(&[[8, 9, 10]]))?);
+    assert_eq!(report.self_intersections(), [[f(0), f(12)], [f(1), f(12)]]);
+    Ok(())
+}
+
+#[test]
+fn does_not_report_faces_that_touch_at_a_point_or_meet_only_at_a_shared_vertex()
+-> Result<(), MeshError> {
+    // One triangle's corner rests on the bottom side; another shares cube vertex 0.
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.extend([[0.5, 0.25, 0.0], [0.5, 0.25, -1.0], [0.6, 0.25, -1.0]]);
+    positions.extend([[0.5, 0.5, 0.5], [0.2, 0.5, 0.8]]);
+    let report = validate(&soup(&positions, &cube_with(&[[8, 9, 10], [0, 11, 12]]))?);
+    assert!(report.self_intersections().is_empty(), "{report:?}");
+    Ok(())
+}
+
+#[test]
+fn reports_faces_crossing_along_a_segment_that_ends_on_both_boundaries() -> Result<(), MeshError> {
+    // No edge passes through the other face's interior: the crossing runs from
+    // (0, 0, 0) to (2, 0, 0), each end on an edge of both faces.
+    let positions = [
+        [0.0, -1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [4.0, -1.0, 0.0],
+        [0.0, 0.0, -1.0],
+        [0.0, 0.0, 1.0],
+        [4.0, 0.0, -1.0],
+    ];
+    let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 5]])?);
+    assert_eq!(report.self_intersections(), [[f(0), f(1)]]);
+    Ok(())
+}
+
+#[test]
+fn reports_two_grid_snapped_boxes_that_overlap() -> Result<(), MeshError> {
+    // Offsets that leave faces coplanar meet only edge-on or in one plane, which a
+    // pair of faces cannot tell from touching; these cross transversely.
+    for offset in [[0.5, 0.5, 0.5], [0.25, 0.5, 0.75]] {
+        let mut positions = CUBE_POSITIONS.to_vec();
+        positions.extend(
+            CUBE_POSITIONS
+                .iter()
+                .map(|p| [p[0] + offset[0], p[1] + offset[1], p[2] + offset[2]]),
+        );
+        let shifted = CUBE.iter().map(|t| t.map(|v| v + 8));
+        let tris: Vec<[u32; 3]> = CUBE.iter().copied().chain(shifted).collect();
+        let report = validate(&soup(&positions, &tris)?);
+        assert!(!report.self_intersections().is_empty(), "offset {offset:?}");
+    }
+    Ok(())
+}
+
+#[test]
+fn reports_a_fold_between_faces_that_share_a_vertex() -> Result<(), MeshError> {
+    // The second face's far edge passes through the first face at (0.75, 0.75, 0).
+    let positions = [
+        [0.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [0.0, 2.0, 0.0],
+        [1.0, 0.5, -1.0],
+        [0.5, 1.0, 1.0],
+    ];
+    let report = validate(&soup(&positions, &[[0, 1, 2], [0, 3, 4]])?);
+    assert_eq!(report.self_intersections(), [[f(0), f(1)]]);
+    Ok(())
+}
+
+#[test]
+fn reports_every_face_through_one_large_face_in_face_order() -> Result<(), MeshError> {
+    // Twenty fins, one per unit along x, each pierce face 0 well inside its edges.
+    let mut positions = vec![[-10.0, -10.0, 0.0], [30.0, -10.0, 0.0], [-10.0, 30.0, 0.0]];
+    let mut triangles = vec![[0, 1, 2]];
+    for k in 0..20u32 {
+        let x = f64::from(k);
+        positions.extend([[x, 0.0, -1.0], [x + 0.3, 0.0, -1.0], [x + 0.1, 0.0, 1.0]]);
+        triangles.push([3 + 3 * k, 4 + 3 * k, 5 + 3 * k]);
+    }
+    let report = validate(&soup(&positions, &triangles)?);
+    let expected: Vec<[FaceId; 2]> = (1..=20).map(|g| [f(0), f(g)]).collect();
+    assert_eq!(report.self_intersections(), expected.as_slice());
+    Ok(())
+}
+
+#[test]
+fn reports_a_crossing_found_through_one_edge_alone() -> Result<(), MeshError> {
+    // One corner rests inside the flat triangle, so only the edge joining the other
+    // two passes through it; each rotation puts that edge in a different slot.
+    let positions = [
+        [0.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [0.0, 2.0, 0.0],
+        [0.5, 0.5, -1.0],
+        [0.6, 0.4, 0.0],
+        [0.5, 0.5, 1.0],
+    ];
+    for fin in [[3, 4, 5], [5, 3, 4], [4, 5, 3]] {
+        let report = validate(&soup(&positions, &[[0, 1, 2], fin])?);
+        assert_eq!(report.self_intersections(), [[f(0), f(1)]], "{fin:?}");
+    }
+    Ok(())
+}
+
+#[test]
+fn does_not_report_an_edge_that_crosses_the_plane_on_the_other_face_edge() -> Result<(), MeshError>
+{
+    // The upright triangle's edge meets the flat one exactly on its edge y = 0.
+    let positions = [
+        [0.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [0.0, 2.0, 0.0],
+        [1.0, 0.0, -1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, -1.0, 0.0],
+    ];
+    let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 5]])?);
+    assert!(report.self_intersections().is_empty(), "{report:?}");
+    Ok(())
+}
+
+#[test]
+fn reports_crossings_by_soup_face_id_when_a_duplicate_is_dropped() -> Result<(), MeshError> {
+    // Face 12 repeats face 0 and is not judged; the stab is face 13, not 12.
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.extend([[0.5, 0.4, -0.5], [0.5, 0.6, -0.5], [0.5, 0.5, 0.5]]);
+    let report = validate(&soup(&positions, &cube_with(&[[0, 2, 1], [8, 9, 10]]))?);
+    assert_eq!(report.self_intersections(), [[f(0), f(13)], [f(1), f(13)]]);
+    Ok(())
+}
+
+#[test]
+fn does_not_report_a_face_that_dips_through_another_by_less_than_the_weld_distance()
+-> Result<(), MeshError> {
+    // One corner sits 1e-45 below the flat triangle, far inside the weld distance,
+    // so the faces only touch.
+    let positions = [
+        [0.0, 0.0, 0.0],
+        [0.9, 0.0, 0.0],
+        [0.0, 0.9, 0.0],
+        [0.1, 0.1, -1e-45],
+        [0.1, 0.1, 1.0],
+        [0.2, 0.1, 1.0],
+    ];
+    let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 5]])?);
+    assert!(report.self_intersections().is_empty(), "{report:?}");
+    Ok(())
+}
+
+#[test]
+fn does_not_report_a_face_resting_edge_on_against_another() -> Result<(), MeshError> {
+    // The upright face's bottom edge lies inside the flat face; the rest of it stands
+    // above, so the two only touch. Each of its three edges takes the bottom in turn.
+    let flat = [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]];
+    let upright = [[0.2, 0.2, 0.0], [0.8, 0.2, 0.0], [0.5, 0.2, 1.0]];
+    for turn in 0..3 {
+        let mut positions = flat.to_vec();
+        positions.extend((0..3).map(|i| upright[(i + turn) % 3]));
+        let report = validate(&soup(&positions, &[[0, 1, 2], [3, 4, 5]])?);
+        assert!(
+            report.self_intersections().is_empty(),
+            "turn {turn}: {report:?}"
+        );
+    }
     Ok(())
 }

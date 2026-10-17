@@ -20,7 +20,7 @@ The engine is a chain of stages. Each stage's output type promises what the next
 | Stage | Output type | It guarantees | Status |
 |---|---|---|---|
 | Import | `TriangleSoup` (`openplush-mesh`) | Finite coordinates, in-range indices, a provenance record for every triangle corner. Says nothing about mesh quality: holes, duplicates and non-manifold edges pass through | Built for OBJ (`openplush-io`); glTF, STL and PLY are planned |
-| Validate | `ValidationReport` (`openplush-mesh`) | Every defect of the soup located by face, vertex or vertex pair, judged as repair will see the mesh; changes nothing and never fails | Built but for self-intersection |
+| Validate | `ValidationReport` (`openplush-mesh`) | Every defect of the soup located by face, vertex or vertex pair, judged as repair will see the mesh; changes nothing and never fails | Built |
 | Repair | `ManifoldMesh` (`openplush-mesh`) | A consistently oriented 2-manifold, possibly with boundary, with no degenerate or zero-area face and no isolated vertex | Type and its validator built; repair is planned |
 | Seams and charts | Charts, each a topological disk | *planned* | |
 | Flatten | A parameterization with every triangle unflipped (det J > 0) | *planned* | |

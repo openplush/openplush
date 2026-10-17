@@ -8,9 +8,9 @@ The committed files were generated with Python 3.13.16. The tests, including the
 
 | Interpreter | `python3 -m unittest -v` |
 |---|---|
-| CPython 3.11.17 | 32 tests, OK |
-| CPython 3.12.3 | 32 tests, OK |
-| CPython 3.13.16 | 32 tests, OK |
+| CPython 3.11.17 | 35 tests, OK |
+| CPython 3.12.3 | 35 tests, OK |
+| CPython 3.13.16 | 35 tests, OK |
 
 ## Commands
 
@@ -19,7 +19,7 @@ From `research/fixtures_gen/`:
 ```sh
 python3 generate.py                 # writes fixtures/meshes, fixtures/defects, fixtures/seams
 python3.11 -m unittest -v           # likewise with python3.12 and python3.13
-mypy --strict --python-version 3.11 generate.py source_seams.py source_dead_end.py test_fixtures.py test_source_seams.py test_source_materials.py test_dead_end.py
+mypy --strict --python-version 3.11 generate.py source_seams.py source_dead_end.py source_reshaped.py test_fixtures.py test_source_seams.py test_source_materials.py test_dead_end.py test_reshaped.py
 ```
 
 `mypy` 2.4.0 ran from a scratch virtual environment outside the repository; it is a check, not a dependency, so it is not in `requirements.txt`.

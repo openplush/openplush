@@ -210,9 +210,10 @@ def write_all(root: Path) -> None:
     files |= {f"seams/{n}.json": seam_text(f"meshes/{n}.obj", note, e) for n, (note, e) in seams().items()}
     data = {rel: text.encode("utf-8") for rel, text in files.items()}
     from source_dead_end import dead_end_files  # imported here: these modules build on this one's shapes
+    from source_reshaped import reshaped_files
     from source_seams import source_seam_files
 
-    data |= source_seam_files() | dead_end_files()
+    data |= source_seam_files() | dead_end_files() | reshaped_files()
     for rel, blob in sorted(data.items()):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         (root / rel).write_bytes(blob)

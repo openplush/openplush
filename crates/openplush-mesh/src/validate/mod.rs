@@ -19,13 +19,13 @@ use crate::{FaceId, TriangleSoup};
 
 /// One face's use of an edge: `forward` when it walks the edge from the smaller vertex.
 #[derive(Debug, Clone, Copy)]
-struct EdgeUse {
-    face: u32,
-    forward: bool,
+pub(crate) struct EdgeUse {
+    pub(crate) face: u32,
+    pub(crate) forward: bool,
 }
 
 /// Every edge of the kept faces by its welded ends, smaller first.
-type Edges = BTreeMap<[u32; 2], Vec<EdgeUse>>;
+pub(crate) type Edges = BTreeMap<[u32; 2], Vec<EdgeUse>>;
 
 /// Locates every defect class. Never fails: a soup
 /// with no triangles, or an extent tolerances cannot be derived for, is reported as
@@ -71,7 +71,7 @@ pub fn validate(soup: &TriangleSoup) -> ValidationReport {
     }
 }
 
-fn edges(tris: &[[u32; 3]], kept: &[u32]) -> Edges {
+pub(crate) fn edges(tris: &[[u32; 3]], kept: &[u32]) -> Edges {
     let mut edges = Edges::new();
     for &face in kept {
         // INVARIANT: kept faces index `tris`.

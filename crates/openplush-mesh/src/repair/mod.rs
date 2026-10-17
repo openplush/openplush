@@ -2,4 +2,5 @@
 
 pub(crate) mod cap;
 pub(crate) mod degenerate;
+pub(crate) mod nonmanifold_edge;
 pub(crate) mod weld;

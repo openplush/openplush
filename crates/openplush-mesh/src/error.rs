@@ -144,4 +144,6 @@ pub enum Counted {
     Triangles,
     /// Half-edges (twice the edge count).
     HalfEdges,
+    /// Entries in a `SourceMaterials` table.
+    Primitives,
 }

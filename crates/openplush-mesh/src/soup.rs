@@ -45,6 +45,12 @@ impl SourceMaterials {
         &self.names
     }
 
+    /// The material of `primitive`; `None` if it has none or the table has no entry,
+    /// as in a soup that never had materials set.
+    pub fn material(&self, primitive: u32) -> Option<MaterialIndex> {
+        self.by_primitive.get(primitive as usize).copied().flatten()
+    }
+
     /// Each source primitive's material, indexed by `SourceCorner::primitive`.
     pub fn by_primitive(&self) -> &[Option<MaterialIndex>] {
         &self.by_primitive
@@ -137,11 +143,10 @@ impl TriangleSoup {
                 });
             }
         }
-        let primitives = corner_src.iter().map(|c| c.primitive as usize + 1).max();
         Ok(Self {
             positions,
             triangles,
-            materials: SourceMaterials::new(Vec::new(), vec![None; primitives.unwrap_or(0)]),
+            materials: SourceMaterials::new(Vec::new(), Vec::new()),
             extra_uv_sets: 0,
             corner_src,
             corner_uv,
@@ -158,6 +163,12 @@ impl TriangleSoup {
         extra_uv_sets: u32,
     ) -> Result<Self, MeshError> {
         let covered = materials.by_primitive.len();
+        if u32::try_from(covered).is_err() {
+            return Err(MeshError::TooLarge {
+                what: Counted::Primitives,
+                count: covered,
+            });
+        }
         let uncovered = self
             .corner_src
             .iter()
@@ -177,7 +188,7 @@ impl TriangleSoup {
             .position(|m| m.is_some_and(|m| m.index() as usize >= names))
         {
             return Err(MeshError::InvalidMaterial {
-                // Lossless: the primitive table was indexed by u32 primitives.
+                // Lossless: the table length fits in u32 (checked above).
                 primitive: i as u32,
                 fault: MaterialFault::OutOfRange,
             });
@@ -189,7 +200,7 @@ impl TriangleSoup {
         })
     }
 
-    /// The file's materials; empty names and no entry for every primitive unless
+    /// The file's materials; empty names and an empty table unless
     /// set by [`TriangleSoup::with_materials`].
     pub fn materials(&self) -> &SourceMaterials {
         &self.materials
@@ -347,3 +358,6 @@ fn corner_slot(f: FaceId, corner: usize) -> Option<usize> {
         .checked_mul(3)?
         .checked_add(corner)
 }
+
+#[cfg(test)]
+mod tests;

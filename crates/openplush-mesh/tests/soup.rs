@@ -253,7 +253,8 @@ fn materials(names: &[&str], by_primitive: &[Option<u32>]) -> SourceMaterials {
 fn a_soup_without_materials_has_none_and_no_extra_uv_sets() -> Result<(), MeshError> {
     let soup = quad_from(0, 2)?;
     assert!(soup.materials().names().is_empty());
-    assert_eq!(soup.materials().by_primitive(), [None, None, None]);
+    assert!(soup.materials().by_primitive().is_empty());
+    assert_eq!(soup.materials().material(2), None);
     assert_eq!(soup.extra_uv_sets(), 0);
     Ok(())
 }
@@ -335,6 +336,35 @@ fn a_missing_entry_is_reported_before_an_out_of_range_one() -> Result<(), MeshEr
         err,
         MeshError::InvalidMaterial {
             primitive: 3,
+            fault: MaterialFault::Missing
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn the_primitive_one_past_the_table_is_missing() -> Result<(), MeshError> {
+    let err = quad_from(0, 2)?
+        .with_materials(materials(&["a"], &[Some(0), None]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 2,
+            fault: MaterialFault::Missing
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn a_huge_primitive_number_is_a_typed_error_not_an_allocation() -> Result<(), MeshError> {
+    let soup = quad_from(0, u32::MAX)?;
+    let err = soup.with_materials(materials(&[], &[]), 0).unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 0,
             fault: MaterialFault::Missing
         }
     );

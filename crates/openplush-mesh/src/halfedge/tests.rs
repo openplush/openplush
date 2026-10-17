@@ -901,7 +901,7 @@ fn materials_and_extra_uv_sets_move_onto_the_mesh_unchanged() {
         let first = m
             .corner_source(m.face_half_edge(crate::FaceId::new(f)))
             .unwrap();
-        m.materials().by_primitive()[first.primitive as usize]
+        m.materials().material(first.primitive)
     };
     assert_eq!(material_of(0), Some(MaterialIndex::new(1)));
     assert_eq!(material_of(1), None);

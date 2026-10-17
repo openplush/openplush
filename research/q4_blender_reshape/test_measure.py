@@ -100,7 +100,10 @@ class Readers(unittest.TestCase):
         blob += struct.pack("<9f", *B, *C, *F) + struct.pack("<3H", 0, 1, 2) + b"\0\0"
         views, accessors, prims = [], [], []
         for base in (0, 44):
-            views += [{"buffer": 0, "byteOffset": base, "byteLength": 36}, {"buffer": 0, "byteOffset": base + 36, "byteLength": 6}]
+            views += [
+                {"buffer": 0, "byteOffset": base, "byteLength": 36},
+                {"buffer": 0, "byteOffset": base + 36, "byteLength": 6},
+            ]
             accessors += [
                 {"bufferView": len(views) - 2, "componentType": 5126, "count": 3, "type": "VEC3"},
                 {"bufferView": len(views) - 1, "componentType": 5123, "count": 3, "type": "SCALAR"},

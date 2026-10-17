@@ -79,7 +79,18 @@ Spike Q1 found that Blender's default UV sphere map, a projection made without m
 - Under **Merge**, an old seam or region face that maps to nothing is listed as *not placeable* in the difference (FR-051) and located on the old model. It is never dropped silently and never snapped to a nearby edge.
 - Under **Replace**, old seams are discarded by the maker's choice, so mapping only feeds the "would be removed" count.
 
-This needs one sentence in spec FR-051 (made in the same change as this plan). [likely] that positional matching holds up for typical edits (sculpting a limb leaves the rest of the mesh bit-identical); spike Q4 measures it.
+This needs one sentence in spec FR-051 (made in the same change as this plan).
+
+**Measured by spike Q4** (`research/q4_blender_reshape/results.md`, a 166-vertex quadruped, Blender 5.2.2):
+- Blender's export writes every vertex an edit didn't move bit-for-bit, so a seam whose vertices an edit leaves alone always re-places [solid]. After a stretch, a loop cut and an extrusion of one leg, 44 of 44 seams away from it re-placed.
+- How many seams a maker's edit leaves alone depends on the edit [likely]. A proportional edit with a 20 mm falloff also moved a neighbouring leg and lost its 3 sole seams.
+- A loop cut splits the old seam edges it crosses, and plain position matching loses them (3 of 8 on the edited leg).
+- Smoothing or moving the whole model moves most or all vertices, and no seam re-places.
+
+**Decisions after Q4** (plan S-017, S-018):
+- *Split edges re-place as their pieces.* An old seam edge (p, q) re-places as a path p = v0, …, vk = q in the new mesh when every vi lies on segment pq within the weld tolerance and the path moves monotonically from p to q. That is not snapping: the endpoints still match exactly and nothing moves. Q4's split edges were axis-aligned, so their new vertices lay exactly on them; for a general edge, the new vertex's `f32` rounding is far below the weld tolerance [likely]. Faces are not split this way, and a split face stays not placeable, because regions usually come back from materials [likely].
+- *No whole-model move detection.* Fitting a rigid transform would guess. When no old seam re-places at all, the difference carries a plain-language hint instead, and every old seam stays listed as not placeable.
+- *No special case for proportional-edit losses.* They are listed and located like any other unplaceable seam.
 
 **Alternative rejected**: *nearest-edge snapping*. Plausible, wrong, and silent.
 
@@ -90,4 +101,4 @@ This needs one sentence in spec FR-051 (made in the same change as this plan). [
 | Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? **Done 2026-10-17 on UV spheres** (`research/q1_blender_uv_cuts/results.md`): yes to both (the dead end on one slit), so `UV_CUT` stands (R2); projection maps make pole fans (R2); dead ends become darts (R3). The capsule and quadruped were not built | `UV_CUT` value; FR-011 detection | 0.5 day |
 | Q2 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? **Done 2026-10-17**: the first listed; OBJ carries the active map (R1). FR-004 now warns whenever a model has more than one set (plan S-016) | FR-004 wording in the import report | 1 h |
 | Q3 | ~~Does `tobj` split a model on `usemtl` inside one group?~~ Answered by 001 D-034: 001 reads OBJ with its own reader, which splits at `usemtl` | — | none |
-| Q4 | Edit one limb of a quadruped in Blender, re-export, re-import: what share of untouched seams re-place by position? The spike builds its own quadruped, since Q1 did not | R5 confidence | 0.5 day |
+| Q4 | Edit one limb of a quadruped in Blender, re-export, re-import: what share of untouched seams re-place by position? The spike builds its own quadruped, since Q1 did not. **Done 2026-10-17**: every seam whose vertices the edit left alone; whole-model edits lose all (R5) | R5 confidence | 0.5 day |

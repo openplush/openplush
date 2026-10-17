@@ -10,8 +10,12 @@ mod error;
 mod halfedge;
 mod ids;
 mod soup;
+mod validate;
 
 pub use error::{CornerArray, Counted, MeshError};
 pub use halfedge::{ManifoldMesh, Outgoing};
 pub use ids::{ComponentId, EdgeId, FaceId, HalfEdgeId, MeshElement, VertexId};
 pub use soup::{SourceCorner, TriangleSoup};
+pub use validate::{
+    Duplicate, DuplicateOrientation, NonManifoldEdge, Unmeasurable, ValidationReport, validate,
+};

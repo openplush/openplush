@@ -46,7 +46,7 @@ pub struct ManifoldMesh {
 /// threshold, so the cross product stays near 1 and cannot overflow at any
 /// diagonal `ModelTolerances` accepts. (Unscaled, |e1 x e2|^2 overflows above a
 /// diagonal of about 2.6e82, and an overflowed area reads as "large enough".)
-fn is_sliver(a: DVec3, b: DVec3, c: DVec3, tol: &ModelTolerances) -> bool {
+pub(crate) fn is_sliver(a: DVec3, b: DVec3, c: DVec3, tol: &ModelTolerances) -> bool {
     let inv = 1.0 / tol.diagonal();
     0.5 * ((b - a) * inv).cross((c - a) * inv).length() <= AREA_RELATIVE_SQ
 }

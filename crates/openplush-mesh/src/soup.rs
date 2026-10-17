@@ -181,6 +181,23 @@ impl TriangleSoup {
         }
     }
 
+    /// This soup's positions with new faces and corner records.
+    // INVARIANT: the faces index this soup's vertices, with three corner records
+    // (and, if this soup has UVs, three UVs) each.
+    pub(crate) fn with_faces(
+        &self,
+        triangles: Vec<[u32; 3]>,
+        corner_src: Vec<SourceCorner>,
+        corner_uv: Option<Vec<Option<DVec2>>>,
+    ) -> Self {
+        Self {
+            positions: self.positions.clone(),
+            triangles,
+            corner_src,
+            corner_uv,
+        }
+    }
+
     /// This soup with only `faces`, in that order, each with its corner records.
     // INVARIANT: every entry of `faces` is a face of this soup.
     pub(crate) fn retaining(&self, faces: &[u32]) -> Self {

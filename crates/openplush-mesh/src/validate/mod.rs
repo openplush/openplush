@@ -64,7 +64,12 @@ pub fn validate(soup: &TriangleSoup) -> ValidationReport {
             diagonal,
         ),
         boundary_loops: topology::boundary_loops(&edges),
-        self_intersections: selfintersect::crossings(&tris, &degenerate.kept, soup.positions()),
+        self_intersections: selfintersect::crossings(
+            &tris,
+            &degenerate.kept,
+            soup.positions(),
+            &tol,
+        ),
         components,
         zero_area: degenerate.zero_area,
         repeated_index: degenerate.repeated_index,

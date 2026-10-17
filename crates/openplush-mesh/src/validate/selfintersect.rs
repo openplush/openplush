@@ -1,26 +1,51 @@
-use openplush_geom::predicates::orient3d;
+use openplush_geom::epsilon::{ModelTolerances, WELD_RELATIVE};
 use openplush_geom::{DVec3, Sign};
 
 use crate::FaceId;
 
-/// Pairs of kept faces that share no vertex and cross each other: an edge of one
-/// passes strictly through the other. Faces that only touch, at a point or along a
-/// line, or overlap in one plane, are not reported; this report only warns, and an
-/// exact predicate decides every crossing it does report. Candidates come from a
-/// bounding-box tree, so a model is not compared pair by pair.
-pub(super) fn crossings(tris: &[[u32; 3]], kept: &[u32], positions: &[DVec3]) -> Vec<[FaceId; 2]> {
+/// Pairs of kept faces sharing no edge that cross along a segment longer than the
+/// weld distance; faces sharing one vertex count, so a fold is caught. Faces that
+/// touch, share an edge, lie within the weld distance of one plane, or have no area
+/// are not reported. The test is in floating point against the weld distance, which
+/// is enough for a report that only warns; exact predicates would take their slow
+/// path on every pair of coplanar faces. Candidates come from a bounding-box tree;
+/// faces around a vertex of high valence all overlap there, so that vertex costs its
+/// valence squared.
+pub(super) fn crossings(
+    tris: &[[u32; 3]],
+    kept: &[u32],
+    positions: &[DVec3],
+    tol: &ModelTolerances,
+) -> Vec<[FaceId; 2]> {
+    let Some(&first) = kept.first() else {
+        return Vec::new();
+    };
     // INVARIANT: kept faces index `tris`, and their vertices index `positions`.
-    let corners = |f: u32| tris[f as usize].map(|v| positions[v as usize]);
-    let boxes: Vec<Aabb> = kept.iter().map(|&f| Aabb::of(&corners(f))).collect();
+    let origin = positions[tris[first as usize][0] as usize];
+    // Every used vertex is within the diagonal of `origin`, so these stay near 1.
+    let local = |v: u32| (positions[v as usize] - origin) * (1.0 / tol.diagonal());
+    let planes: Vec<Option<Plane>> = kept
+        .iter()
+        .map(|&f| Plane::through(tris[f as usize].map(local)))
+        .collect();
+    let boxes: Vec<Aabb> = kept
+        .iter()
+        .map(|&f| Aabb::of(&tris[f as usize].map(local)))
+        .collect();
     let tree = Tree::build(&boxes);
     let mut out = Vec::new();
+    let mut candidates = Vec::new();
     for (i, &f) in kept.iter().enumerate() {
-        for j in tree.overlapping(&boxes, i) {
+        tree.overlapping(&boxes, i, &mut candidates);
+        for &j in &candidates {
             let g = kept[j];
-            let shares = tris[f as usize]
+            let shared = tris[f as usize]
                 .iter()
-                .any(|v| tris[g as usize].contains(v));
-            if !shares && cross(corners(f), corners(g)) {
+                .filter(|v| tris[g as usize].contains(v))
+                .count();
+            if let (true, Some(a), Some(b)) = (shared < 2, &planes[i], &planes[j])
+                && cross(a, b)
+            {
                 out.push([FaceId::new(f), FaceId::new(g)]);
             }
         }
@@ -29,31 +54,86 @@ pub(super) fn crossings(tris: &[[u32; 3]], kept: &[u32], positions: &[DVec3]) ->
     out
 }
 
-fn cross(a: [DVec3; 3], b: [DVec3; 3]) -> bool {
-    edges(a).iter().any(|&(p, q)| pierces(p, q, b))
-        || edges(b).iter().any(|&(p, q)| pierces(p, q, a))
+/// A face with area: its corners and its unit normal.
+#[derive(Debug, Clone, Copy)]
+struct Plane {
+    corners: [DVec3; 3],
+    unit: DVec3,
 }
 
-fn edges([a, b, c]: [DVec3; 3]) -> [(DVec3, DVec3); 3] {
-    [(a, b), (b, c), (c, a)]
+impl Plane {
+    fn through(corners: [DVec3; 3]) -> Option<Self> {
+        let [a, b, c] = corners;
+        let unit = (b - a).cross(c - a).normalize()?;
+        Some(Self { corners, unit })
+    }
+
+    /// Signed distance from the plane, in diagonals.
+    fn distance(&self, x: DVec3) -> f64 {
+        self.unit.dot(x - self.corners[0])
+    }
+
+    /// Which side each corner of `t` lies on, within the weld distance counting as on.
+    fn sides(&self, t: &Self) -> [Sign; 3] {
+        t.corners.map(|x| {
+            let d = self.distance(x);
+            if d > WELD_RELATIVE {
+                Sign::Positive
+            } else if d < -WELD_RELATIVE {
+                Sign::Negative
+            } else {
+                Sign::Zero
+            }
+        })
+    }
 }
 
-/// Segment pq passes strictly through the interior of triangle abc: its ends lie
-/// strictly on opposite sides of the plane, and it passes strictly inside all three
-/// edges. A predicate that cannot decide counts as no crossing.
-fn pierces(p: DVec3, q: DVec3, [a, b, c]: [DVec3; 3]) -> bool {
-    let side = |d| orient3d(a, b, c, d).ok();
-    let opposite = matches!(
-        (side(p), side(q)),
-        (Some(Sign::Positive), Some(Sign::Negative)) | (Some(Sign::Negative), Some(Sign::Positive))
-    );
-    if !opposite {
+/// The faces' planes meet in a line, and the two faces overlap along it for more
+/// than the weld distance.
+fn cross(a: &Plane, b: &Plane) -> bool {
+    let (sa, sb) = (b.sides(a), a.sides(b));
+    if apart(sa) || apart(sb) {
         return false;
     }
-    let turn = |u, v| orient3d(p, q, u, v).ok();
-    let signs = [turn(a, b), turn(b, c), turn(c, a)];
-    signs.iter().all(|s| *s == Some(Sign::Positive))
-        || signs.iter().all(|s| *s == Some(Sign::Negative))
+    let line = a.unit.cross(b.unit);
+    let Some(line) = line.normalize() else {
+        return false;
+    };
+    let (ia, ib) = (span(a, sa, b, line), span(b, sb, a, line));
+    ia.1.min(ib.1) - ia.0.max(ib.0) > WELD_RELATIVE
+}
+
+/// All corners strictly on one side, or all in the plane: the faces cannot cross.
+fn apart(s: [Sign; 3]) -> bool {
+    s.iter().all(|&x| x == Sign::Positive)
+        || s.iter().all(|&x| x == Sign::Negative)
+        || s.iter().all(|&x| x == Sign::Zero)
+}
+
+/// Where face `t` (corner sides `s`) meets plane `other`, as an interval along the
+/// unit direction `line`: corners on the plane, and edges whose ends lie on opposite
+/// sides, cut where the plane crosses them. `s` is not all one sign (`apart`), so the
+/// interval has at least one point.
+fn span(t: &Plane, s: [Sign; 3], other: &Plane, line: DVec3) -> (f64, f64) {
+    let distance = t.corners.map(|p| other.distance(p));
+    let mut lo = f64::INFINITY;
+    let mut hi = f64::NEG_INFINITY;
+    let mut take = |p: DVec3| {
+        let x = line.dot(p);
+        lo = lo.min(x);
+        hi = hi.max(x);
+    };
+    for i in 0..3 {
+        let j = (i + 1) % 3;
+        if s[i] == Sign::Zero {
+            take(t.corners[i]);
+        }
+        if s[i] != Sign::Zero && s[j] != Sign::Zero && s[i] != s[j] {
+            let (di, dj) = (distance[i], distance[j]);
+            take(t.corners[i] + (t.corners[j] - t.corners[i]) * (di / (di - dj)));
+        }
+    }
+    (lo, hi)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -171,9 +251,10 @@ impl Tree {
         at
     }
 
-    /// Indices `j > i` whose boxes overlap box `i`, in no particular order.
-    fn overlapping(&self, boxes: &[Aabb], i: usize) -> Vec<usize> {
-        let mut out = Vec::new();
+    /// Fills `out` with the indices `j > i` whose boxes overlap box `i`, in no
+    /// particular order.
+    fn overlapping(&self, boxes: &[Aabb], i: usize, out: &mut Vec<usize>) {
+        out.clear();
         let mut stack = if self.nodes.is_empty() {
             vec![]
         } else {
@@ -194,6 +275,5 @@ impl Tree {
                 Kind::Inner { left, right } => stack.extend([left, right]),
             }
         }
-        out
     }
 }

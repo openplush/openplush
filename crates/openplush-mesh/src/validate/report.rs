@@ -134,8 +134,8 @@ impl ValidationReport {
         &self.components
     }
 
-    /// Pairs of faces sharing no vertex where an edge of one passes strictly through
-    /// the other, smaller face first. Repair only warns about these.
+    /// Pairs of faces sharing no edge that cross along a segment longer than the weld
+    /// distance, smaller face first. Repair only warns about these.
     pub fn self_intersections(&self) -> &[[FaceId; 2]] {
         &self.self_intersections
     }

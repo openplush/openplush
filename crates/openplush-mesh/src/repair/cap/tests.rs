@@ -257,3 +257,30 @@ fn leaves_faces_that_repeat_a_vertex_and_a_soup_with_no_cap_alone() {
     assert!(stitched.caps.is_empty() && stitched.retriangulated.is_empty());
     assert_eq!(stitched.origin, [f(0), f(1), f(2)]);
 }
+
+#[test]
+fn two_caps_meeting_at_one_place_along_an_edge_leave_no_crack() {
+    // Two caps on a-b whose middle vertices are at the same place along it, one
+    // each side; faces above and below a-b.
+    let positions = vec![
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(6.7e-6, 0.0, 0.0),
+        DVec3::new(1.0, 1.0, 0.0),
+        DVec3::new(1.0, -1.0, 0.0),
+        DVec3::new(3.35e-6, 1.4e-6, 0.0),
+        DVec3::new(3.35e-6, -1.4e-6, 0.0),
+    ];
+    let triangles = vec![[0, 1, 2], [1, 0, 3], [1, 0, 4], [1, 0, 5]];
+    let corners = (0..12).map(src).collect();
+    let s = TriangleSoup::new(positions, triangles, corners, None).unwrap();
+    let (out, stitched) = stitch(&s, &tol(&s));
+    assert_eq!(stitched.caps, [f(2), f(3)]);
+    let directed: Vec<[u32; 2]> = out
+        .triangle_indices()
+        .iter()
+        .flat_map(|&[a, b, c]| [[a, b], [b, c], [c, a]])
+        .collect();
+    for &[a, b] in directed.iter().filter(|e| e.iter().any(|&v| v >= 4)) {
+        assert!(directed.contains(&[b, a]), "edge {a}-{b} is unpaired");
+    }
+}

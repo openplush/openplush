@@ -67,7 +67,10 @@ def tolerance(polygons: list[Polygon]) -> float:
     points = [p for polygon in polygons for p in polygon]
     low = [min(p[k] for p in points) for k in range(3)]
     high = [max(p[k] for p in points) for k in range(3)]
-    return WELD_RELATIVE * math.dist(low, high)
+    diagonal = math.dist(low, high)
+    if diagonal == 0.0:
+        raise ValueError("every point coincides, so the model has no size to scale the tolerance by")
+    return WELD_RELATIVE * diagonal
 
 
 def kept_positions(old: list[Polygon], new: list[Polygon]) -> int:

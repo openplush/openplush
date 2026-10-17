@@ -116,12 +116,16 @@ def three_materials() -> tuple[Mesh, list[list[Face]], list[Edge]]:
 
 
 def obj_source_text(
-    note: str, m: Mesh, face_uvs: list[FaceUV] | None = None, materials: list[tuple[str, int]] | None = None
+    note: str,
+    m: Mesh,
+    face_uvs: list[FaceUV] | None = None,
+    materials: list[tuple[str, int]] | None = None,
+    obj: str | None = None,
 ) -> str:
     """OBJ of `m`, optionally with one `vt` per distinct UV (in order of first use) and material runs.
 
-    `materials` is (name, face count) per run in face order. With it, the file is one object, named by the note's
-    first word, with a `usemtl` before each run, so the materials switch inside one object.
+    `materials` is (name, face count) per run in face order, each run opened by its `usemtl`. `obj` names the
+    single `o` line those runs sit in, so the materials switch inside one object.
     """
     index: dict[UV, int] = {}
     for uvs in face_uvs or []:
@@ -129,8 +133,9 @@ def obj_source_text(
             index.setdefault(uv, len(index))
     lines = [HEADER, f"# {note}\n"]
     starts: dict[int, str] = {}
+    if obj is not None:
+        lines.append(f"o {obj}\n")
     if materials is not None:
-        lines.append(f"o {note.split(':')[0]}\n")
         first = 0
         for name, count in materials:
             starts[first] = name
@@ -302,7 +307,7 @@ def three_materials_files() -> dict[str, bytes]:
     mesh = "meshes/source-seams/three-materials.obj"
     prims = [Primitive(run, material=k) for k, run in enumerate(runs)]
     return {
-        mesh: obj_source_text(note, m, materials=[(n, len(r)) for n, r in zip(MATERIALS, runs, strict=True)]).encode("utf-8"),
+        mesh: obj_source_text(note, m, None, [(n, len(r)) for n, r in zip(MATERIALS, runs, strict=True)], "three-materials").encode("utf-8"),
         "meshes/source-seams/three-materials.glb": glb_bytes("three-materials", note, m, prims, list(MATERIALS)),
         "seams/non-disk/three-materials.json": seam_text(mesh, note, boundaries, "fabricBoundary").encode("utf-8"),
     }

@@ -89,7 +89,7 @@ def dead_end_files() -> dict[str, bytes]:
     mesh = "meshes/source-seams/dead-end.obj"
     counts = [(name, len(run)) for name, run in zip(MATERIALS, runs, strict=True)]
     return {
-        mesh: obj_source_text(note, m, face_uvs, counts).encode("utf-8"),
+        mesh: obj_source_text(note, m, face_uvs, counts, "dead-end").encode("utf-8"),
         "meshes/source-seams/dead-end.glb": glb_bytes("dead-end", note, m, prims, list(MATERIALS)),
         "seams/non-disk/dead-end.json": seam_text(mesh, note, cuts).encode("utf-8"),
         "seams/non-disk/dead-end.tips.json": tips_text(mesh, note, tips).encode("utf-8"),

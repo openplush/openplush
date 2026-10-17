@@ -38,8 +38,8 @@ Small config and scaffolding tasks sharing one concern:
 | `001/26-T029-warning-remedy` (#58), stacked on 25 | T029, T030 |
 | `001/27-T031-staged-result` (#59), stacked on 26 | T031 |
 | `001/NN-T032-testkit` | T032, T033, T034 (landed as `001/33-T032-fixture-loader` and `001/34-T034-oracles`; T033 waits for the first SVG or metrics output to compare) |
-| `001/NN-T050-obj-import` | T050, T053 |
-| `001/NN-T055-validators` | T055, T056, T057 |
+| `001/NN-T050-obj-import` | T050, T053 (landed as `001/60-T050-T053-obj-import`, #108) |
+| `001/NN-T055-validators` | T055, T056, T057 (landed with T054 and T059 as `001/62-T054-T059-validation`, #114; T058 and T048 as `001/63-T058-T048-self-intersection`, #117) |
 
 `NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks (Phase 1) are repo plumbing, so they are `chore/` branches, not 001 slices.
 
@@ -187,7 +187,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T045 [P] [US1] `crates/openplush-pattern/tests/parity.rs` — on every fixture, both sides of every seam match within max(1.0 mm, 0.5%). Hard assertion, not a tolerance report (D-013)
 - [ ] T046 [P] [US1] `crates/openplush-export/tests/scale.rs` — the scale-check square measures exactly 50.00 mm in the output file (SC-003)
 - [ ] T047 [P] [US1] `bindings/openplush-cli/tests/end_to_end.rs` — capsule from import to SVG through the CLI path, matching a golden snapshot
-- [ ] T048 [P] [US1] `crates/openplush-mesh/tests/defect_corpus.rs` — every model in `fixtures/defects/` is detected and reported (SC-007, 100%)
+- [x] T048 [P] [US1] `crates/openplush-io/tests/defect_corpus.rs` — every model in `fixtures/defects/` is detected and reported (SC-007, 100%) — *merged in #117; it lives in `openplush-io` because reading the fixtures as OBJ from `openplush-mesh` would be a crate cycle. Each defect fixture trips exactly its own detector; each clean fixture trips none*
 - [ ] T049 [P] [US1] `crates/openplush-pipeline/tests/determinism.rs` — same input twice gives byte-identical export (SC-008)
 
 ### Import and model health (FR-001 … FR-006)
@@ -196,12 +196,12 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T051 [P] [US1] `crates/openplush-io/src/gltf.rs` — glTF 2.0 and GLB via `gltf`; skinned and animated data ignored with a warning. *2026-10-16: `.gltf` needs its separate buffers, which `import(bytes, …)` cannot carry; the import input shape is decided, with a contract change, before this task starts (D-034)*
 - [ ] T052 [P] [US1] `crates/openplush-io/src/stl_ply.rs` — STL and PLY (the minor default was yes)
 - [x] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002). A NaN/∞ coordinate anywhere fails the import with `EngineError::NonFiniteInput` naming every non-finite source vertex (D-021); nothing is dropped — *merged in #108 with T050; material assignment rides on the OBJ primitive split (D-034). A self-crossing polygon is refused as `Parse`; a collinear one is split and left to validation*
-- [ ] T054 [US1] `crates/openplush-mesh/src/validate/nonmanifold.rs` — non-manifold edges and bowtie vertices, each located
-- [ ] T055 [P] [US1] `crates/openplush-mesh/src/validate/degenerate.rs` — zero-area, duplicate, and repeated-index faces
-- [ ] T056 [P] [US1] `crates/openplush-mesh/src/validate/topology.rs` — holes, boundary loops, connected components
-- [ ] T057 [P] [US1] `crates/openplush-mesh/src/validate/orientation.rs` — inconsistent winding, non-orientable detection
-- [ ] T058 [US1] `crates/openplush-mesh/src/validate/selfintersect.rs` — BVH triangle-triangle tests. **Warn only** (data-model section 3 step 8)
-- [ ] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003)
+- [x] T054 [US1] `crates/openplush-mesh/src/validate/nonmanifold.rs` — non-manifold edges and bowtie vertices, each located — *merged in #114. Topology is judged on the welded soup (weld cells in `coincident.rs`, at the weld distance), with repeated-index faces and later duplicate copies left out*
+- [x] T055 [P] [US1] `crates/openplush-mesh/src/validate/degenerate.rs` — zero-area, duplicate, and repeated-index faces — *merged in #114; unwelded coincident vertices are reported too*
+- [x] T056 [P] [US1] `crates/openplush-mesh/src/validate/topology.rs` — holes, boundary loops, connected components — *merged in #114; a loop through a repeated vertex is split there*
+- [x] T057 [P] [US1] `crates/openplush-mesh/src/validate/orientation.rs` — inconsistent winding, non-orientable detection — *merged in #114, plus closed shells wound inside out, judged per shell*
+- [x] T058 [US1] `crates/openplush-mesh/src/validate/selfintersect.rs` — BVH triangle-triangle tests. **Warn only** (data-model section 3 step 8) — *merged in #117. Floating point against the weld distance, not exact predicates; a fold at a shared vertex counts, edge-on and coplanar contact are not reported*
+- [x] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003) — *merged in #114 as `validate(&TriangleSoup) -> ValidationReport`; it never fails: a soup with no triangles or an extent with no tolerances is reported `Unmeasurable`*
 - [ ] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
 - [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag
 - [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams

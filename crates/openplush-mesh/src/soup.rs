@@ -181,6 +181,25 @@ impl TriangleSoup {
         }
     }
 
+    /// This soup with only `faces`, in that order, each with its corner records.
+    // INVARIANT: every entry of `faces` is a face of this soup.
+    pub(crate) fn retaining(&self, faces: &[u32]) -> Self {
+        let slots = || {
+            faces
+                .iter()
+                .flat_map(|&f| (0..3).map(move |c| f as usize * 3 + c))
+        };
+        Self {
+            positions: self.positions.clone(),
+            triangles: faces.iter().map(|&f| self.triangles[f as usize]).collect(),
+            corner_src: slots().map(|i| self.corner_src[i]).collect(),
+            corner_uv: self
+                .corner_uv
+                .as_ref()
+                .map(|uv| slots().map(|i| uv[i]).collect()),
+        }
+    }
+
     /// The bounding-box diagonal of the vertices triangles use: the scale every
     /// model-space tolerance derives from (`openplush_geom::epsilon`). Unused
     /// vertices are left out, so one stray point cannot inflate the weld and area

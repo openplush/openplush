@@ -137,6 +137,15 @@ class GlbMaps(unittest.TestCase):
         """Prevents reading from the view's start when the accessor begins later in it."""
         self.assertEqual(glb_maps(glb({"TEXCOORD_0": ALPHA}, acc_offset=8))["texcoords"], ["Alpha"])
 
+    def test_no_mesh_raises(self) -> None:
+        """Prevents an IndexError, which no caller expects, on a GLB with an empty meshes array."""
+
+        def no_meshes(doc: dict[str, Any]) -> None:
+            doc["meshes"] = []
+
+        with self.assertRaises(ValueError):
+            glb_maps(with_doc(glb({"TEXCOORD_0": ZETA}), no_meshes))
+
     def test_two_primitives_raise(self) -> None:
         """Prevents reporting one primitive's sets as the whole mesh's."""
         def duplicate_primitive(doc: dict[str, Any]) -> None:

@@ -1,0 +1,18 @@
+{
+  "format": "openplush-seam-set",
+  "version": 1,
+  "mesh": "meshes/source-seams/dead-end.obj",
+  "vertexIndexBase": 0,
+  "note": "dead-end: an opening, Head and Body materials, one cut ending on both, and two cuts that stop short",
+  "seams": [
+    {"edge": [28, 40], "kind": "cut"},
+    {"edge": [31, 43], "kind": "cut"},
+    {"edge": [40, 52], "kind": "cut"},
+    {"edge": [43, 55], "kind": "cut"},
+    {"edge": [52, 64], "kind": "cut"},
+    {"edge": [64, 65], "kind": "cut"},
+    {"edge": [64, 76], "kind": "cut"},
+    {"edge": [65, 66], "kind": "cut"},
+    {"edge": [76, 88], "kind": "cut"}
+  ]
+}

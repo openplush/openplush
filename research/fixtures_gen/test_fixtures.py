@@ -37,7 +37,8 @@ Edge = tuple[int, int]
 T = TypeVar("T")
 
 
-def read_obj(path: Path) -> tuple[list[Vec], list[Face]]:
+def read_obj(path: Path, uv: bool = False) -> tuple[list[Vec], list[Face]]:
+    """Positions and triangles. `vt` lines and `v/vt` corners are errors unless `uv` allows them."""
     pos: list[Vec] = []
     faces: list[Face] = []
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -46,9 +47,11 @@ def read_obj(path: Path) -> tuple[list[Vec], list[Face]]:
             x, y, z = (float(s) for s in rest)
             pos.append((x, y, z))
         elif word == "f":
-            a, b, c = (int(s) - 1 for s in rest)
+            if not uv and any("/" in s for s in rest):
+                raise ValueError(f"{path.name}: unexpected UV index in {line!r}")
+            a, b, c = (int(s.split("/")[0]) - 1 for s in rest)
             faces.append((a, b, c))
-        elif word not in ("", "#"):
+        elif word not in ("", "#") and not (uv and word == "vt"):
             raise ValueError(f"{path.name}: unexpected OBJ line {line!r}")
     return pos, faces
 
@@ -310,7 +313,7 @@ class SeamSets(unittest.TestCase):
 
     def load(self, path: Path) -> tuple[list[Face], set[Edge]]:
         seam_set = read_seam_set(path)
-        _, faces = read_obj(FIXTURES / seam_set.mesh)
+        _, faces = read_obj(FIXTURES / seam_set.mesh, uv=seam_set.mesh.startswith("meshes/source-seams/"))
         pairs = seam_set.edges
         self.assertEqual(pairs, sorted(set(pairs)), "sorted, no duplicates")
         self.assertTrue(all(a < b for a, b in pairs), "each pair sorted")
@@ -366,7 +369,7 @@ class Reproducible(unittest.TestCase):
                 p.relative_to(FIXTURES)
                 for d in ("meshes", "defects", "seams")
                 for p in (FIXTURES / d).rglob("*")
-                if p.is_file() and p.suffix in (".obj", ".json")
+                if p.is_file() and p.suffix in (".obj", ".json", ".glb")
             )
             self.assertEqual(made, committed)
             for rel in made:

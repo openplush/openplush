@@ -298,7 +298,14 @@ def source_seam_files() -> dict[str, bytes]:
             m,
             [Primitive(m.faces, face_uvs, capsule_hardshade_normals(m))],
         ),
-    } | sphere_band_files() | three_materials_files()
+    } | sphere_band_files() | three_materials_files() | no_uv_files()
+
+
+def no_uv_files() -> dict[str, bytes]:
+    """The plain capsule as one object in one material, with no texture coordinates."""
+    m, _ = capsule()
+    note = "no-uv: the capsule in one material, with no texture coordinates"
+    return {"meshes/source-seams/no-uv.obj": obj_source_text(note, m, None, [("Body", len(m.faces))], "no-uv").encode("utf-8")}
 
 
 def three_materials_files() -> dict[str, bytes]:

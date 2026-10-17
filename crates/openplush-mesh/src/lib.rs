@@ -6,9 +6,11 @@
 //! `ManifoldMesh` satisfies the half-edge invariants and can only be
 //! obtained through repair.
 
+mod disjoint;
 mod error;
 mod halfedge;
 mod ids;
+mod repair;
 mod soup;
 mod validate;
 

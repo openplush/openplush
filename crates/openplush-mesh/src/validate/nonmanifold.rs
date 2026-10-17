@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use super::disjoint::DisjointSet;
 use super::{EdgeUse, Edges};
+use crate::disjoint::DisjointSet;
 use crate::{FaceId, VertexId};
 
 /// Edges with more than two faces, faces in ID order.

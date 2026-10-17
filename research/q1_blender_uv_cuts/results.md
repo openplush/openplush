@@ -1,13 +1,13 @@
 # Spike Q1: results
 
-Run on 2026-10-17, Linux x86_64. Blender `bpy` 5.2.2 LTS (PyPI), CPython 3.13.16 for the export; `measure.py` and its tests on CPython 3.11.17, 3.12.3 and 3.13.16 (6 tests, OK); `mypy --strict --python-version 3.11 measure.py test_measure.py` clean (`export_models.py` is not type-checked, because `bpy` has no stubs). Two full export-and-measure runs gave the same counts; the gaps agree to the 3 significant figures shown.
+Run on 2026-10-17, Linux x86_64. Blender `bpy` 5.2.2 LTS (PyPI), CPython 3.13.16 for the export; `measure.py` and its tests on CPython 3.11.17, 3.12.3 and 3.13.16 (6 tests, OK); `mypy --strict --python-version 3.11 measure.py test_measure.py` clean (`export_models.py` is not type-checked, because `bpy` has no stubs). Eight full export-and-measure runs (one here, eight more by the local review) gave identical counts every time. The gaps vary: the slit's smallest gap took values from 1.81e-4 to 1.84e-4 across runs, while 6.65e-2 and 8.33e-2 held to 3 significant figures.
 
 ## The four questions
 
 | | Answer | Tag |
 |---|---|---|
 | 1. Marked seams, and only those, read as cuts at `1e-5` | **Yes**, in GLB and OBJ alike: 20 of 20 on `sphere-marked`, 10 of 10 on `sphere-dead-end`, 0 extra cuts. Across every unmarked edge the corner UVs are **bit-identical** (largest gap 0.0) | [solid] for these models |
-| 2. A dead-ended seam reads as a slit | **Yes**: both slit edges read as cuts, and each tip carries 1 UV. But the slit barely opens: its smallest gap is **1.81e-4**, against 6.65e-2 for a seam that separates the surface | [solid] for this slit |
+| 2. A dead-ended seam reads as a slit | **Yes**: both slit edges read as cuts, and each tip carries 1 UV. But the slit barely opens: its smallest gap is **1.81e-4 to 1.84e-4** across runs, against 6.65e-2 for a seam that separates the surface | [solid] for this slit |
 | 3. Pole fans read as false cuts | **Not after a marked unwrap**: only the meridian's 2 pole edges are cuts. **Yes in Blender's default UV sphere map**: 24 pole edges read as cuts, because every pole triangle has its own pole UV | [solid] |
 | 4. The exports follow the generator's conventions | **Yes, with one addition**: the GLB splits a vertex wherever any attribute differs (360 vertices for 106 distinct position/UV pairs, because the primitive is flat-shaded); V is flipped (every GLB UV, flipped back, equals an OBJ UV on the same vertex); one GLB primitive per material, named `Head` and `Body`; OBJ switches `usemtl` inside one `o`. The addition: **Blender's OBJ keeps quads** (3- and 4-corner faces), while every committed fixture is triangles | [solid] |
 
@@ -21,8 +21,8 @@ Edges are interior edges of each export (the GLB has more because it is triangul
 | sphere-default | OBJ | 180 | 30 | — | — | — | 24 | — | (8.33e-2) |
 | sphere-marked | GLB | 252 | 20 | 20 | 0 | 0 | 2 | 0.0 | 6.65e-2 |
 | sphere-marked | OBJ | 180 | 20 | 20 | 0 | 0 | 2 | 0.0 | 6.65e-2 |
-| sphere-dead-end | GLB | 252 | 10 | 10 | 0 | 0 | 2 | 0.0 | 1.81e-4 |
-| sphere-dead-end | OBJ | 180 | 10 | 10 | 0 | 0 | 2 | 0.0 | 1.82e-4 |
+| sphere-dead-end | GLB | 252 | 10 | 10 | 0 | 0 | 2 | 0.0 | 1.81e-4 – 1.84e-4 |
+| sphere-dead-end | OBJ | 180 | 10 | 10 | 0 | 0 | 2 | 0.0 | 1.82e-4 – 1.84e-4 |
 | sphere-materials | GLB | 252 | 20 | 20 | 0 | 0 | 2 | 0.0 | 6.65e-2 |
 | sphere-materials | OBJ | 180 | 20 | 20 | 0 | 0 | 2 | 0.0 | 6.65e-2 |
 
@@ -30,7 +30,7 @@ Edges are interior edges of each export (the GLB has more because it is triangul
 
 ## What it means for `UV_CUT`
 
-- Off seams the gap is exactly 0, so any positive threshold separates uncut edges. The binding constraint is the smallest real cut, a slit near its tip, at 1.81e-4.
+- Off seams the gap is exactly 0, so any positive threshold separates uncut edges. The binding constraint is the smallest real cut, a slit near its tip, at 1.81e-4 or more.
 - Below the threshold sit f32 spacing near 1.0 (1.19e-7) and OBJ's 6-decimal rounding (5e-7). So `1e-5` has about 18× margin to the slit and 20× to OBJ rounding [solid for these exports].
 - Recommendation: **keep `UV_CUT = 1e-5`** [likely; one shape family, one unwrap method]. A slit that opens less than 1e-5 would read as no cut at all: an undetected dead end, not a false one. That is the safer failure, but it is a gap in FR-011. A slit's opening grows with its length and with how hard the unwrap relaxes it, so short slits are the risk.
 
@@ -47,7 +47,7 @@ Edges are interior edges of each export (the GLB has more because it is triangul
 A meridian marked from pole to pole ends at the poles, where nothing else meets it. FR-011 defines a dead end as an endpoint inside the surface that touches no other seam, so both poles are dead ends, and import would fail. Yet marking a meridian is the standard way to unwrap a sphere, and with the equator it gives each hemisphere a slit from its rim to its pole. In sewing terms that slit, sewn shut, is a **dart**: a seam ending inside a piece (001 FR-011). 003 FR-010 says an imported cut is never a dart, and FR-011 makes its tip an error. [solid: measured]
 
 Consequences:
-- **Fixtures**: `capsule-uv` (U001) and `reshaped-v1/v2` (U007) use exactly this layout, so the engine would reject them with `DeadEndCut`, while US1's independent test expects them to import. `dead-end` (U005) is unaffected; its cut A ends on a material boundary and an opening.
+- **Fixtures**: `capsule-uv` (U001), `capsule-hardshade` (U002) and `reshaped-v1/v2` (U007) use exactly this layout (the local review confirmed degree-1 poles at z = ±60 in all three), so the engine would reject them with `DeadEndCut`, while US1's independent test expects them to import. `dead-end` (U005) is unaffected; its cut A ends on a material boundary and an opening.
 - **Makers**: a sphere or a capsule unwrapped the usual way in Blender would fail import.
 
 Options for the spec, not decided here:
@@ -55,7 +55,7 @@ Options for the spec, not decided here:
 2. **Import a free end as a dart.** Reverse FR-010 for cuts that end in the interior. This is close to what the maker drew, but it is the case the maintainer ruled out.
 3. **Keep the error, but make it teach.** Report the poles as a distinct, located case, with a remedy naming the fix in Blender: run the seam into another seam.
 
-This needs the maintainer before U016–U019 (UV-cut detection) and U051 (dead ends) are built, and before #109 and #119 merge as US1's oracle.
+This needs the maintainer before U016–U019 (UV-cut detection) and U051 (dead ends) are built, and before #109, #110 and #119 merge as US1's and re-import's oracles.
 
 ## The open problem: pole fans in projection UVs
 

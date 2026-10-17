@@ -6,7 +6,7 @@ Run: python3 -m unittest -v   (from this directory; needs no bpy)
 
 import unittest
 
-from measure import Vertices, edge_gaps, tip_uv_counts
+from measure import Polygon, Vertices, edge_gaps, flip_matches, report, tip_uv_counts
 
 A, B = (0.0, 0.0), (0.5, 0.0)
 
@@ -56,6 +56,40 @@ class Matching(unittest.TestCase):
             verts.index((5.0, 0.0, 0.0))
         with self.assertRaises(ValueError):
             Vertices([(0.0, 0.0, 0.0), (0.0001, 0.0, 0.0)]).index((0.0, 0.0, 0.0))
+
+
+
+def tetrahedron(gap: float) -> list[Polygon]:
+    """A closed tetrahedron whose face (0, 1, 2) alone carries vertex 1 at a UV `gap` away from the others'."""
+    moved = (A[0] + gap, A[1])
+    faces = [(0, 1, 2), (0, 3, 1), (1, 3, 2), (0, 2, 3)]
+    return [[(v, moved if (f == (0, 1, 2) and v == 1) else A) for v in f] for f in faces]
+
+
+class Report(unittest.TestCase):
+    def test_gaps_over_the_threshold_are_cuts_and_their_free_ends_are_tips(self) -> None:
+        """Prevents a cut count or tip count that a wrong threshold or a wrong degree test would leave unchanged."""
+        r = report(tetrahedron(0.5), None, [])
+        self.assertEqual((r["cuts"], r["dead_end_tips"], r["boundary_edges"]), (2, 2, 0))
+
+    def test_a_gap_under_the_threshold_is_no_cut(self) -> None:
+        """Prevents a threshold an order of magnitude off: 2e-5 must cut and 5e-6 must not."""
+        self.assertEqual(report(tetrahedron(2e-5), None, [])["cuts"], 2)
+        self.assertEqual(report(tetrahedron(5e-6), None, [])["cuts"], 0)
+
+    def test_marked_seams_are_compared_edge_for_edge(self) -> None:
+        """Prevents a seam comparison that counts a missing or an extra cut as a match."""
+        r = report(tetrahedron(0.5), [frozenset((0, 1)), frozenset((2, 3))], [])
+        self.assertEqual((r["marked_not_cut"], r["cut_not_marked"]), (1, 1))
+
+
+class Flip(unittest.TestCase):
+    def test_a_flipped_back_uv_must_match_within_a_millionth(self) -> None:
+        """Prevents a V-flip check so loose that any UV passes."""
+        obj = [[(0, (0.25, 0.75))]]
+        self.assertTrue(flip_matches([[(0, (0.25, 0.75))]], obj))
+        self.assertFalse(flip_matches([[(0, (0.25, 0.751))]], obj))
+        self.assertFalse(flip_matches([[(1, (0.25, 0.75))]], obj))
 
 
 if __name__ == "__main__":

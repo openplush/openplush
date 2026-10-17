@@ -9,7 +9,7 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from test_fixtures import FIXTURES, Face, Vec, array, chart_topology, edges_of, exact_int, field, read_seam_set
+from test_fixtures import FIXTURES, Face, Vec, array, chart_topology, edges_of, exact_int, field, read_obj, read_seam_set
 from test_source_seams import SOURCE, accessor_floats, accessor_ints, match_positions, read_glb, read_obj_source
 
 PRESETS = ("Quilting cotton", "Craft felt", "Polar fleece", "Minky / cuddle", "Velboa", "Short faux fur", "Long faux fur")
@@ -100,6 +100,21 @@ class ThreeMaterials(unittest.TestCase):
             acc = array(field(doc, "accessors"), "accessors")[at]
             self.assertEqual(field(acc, "min"), [min(q[k] for q in pos) for k in range(3)])
             self.assertEqual(field(acc, "max"), [max(q[k] for q in pos) for k in range(3)])
+
+
+class NoUv(unittest.TestCase):
+    """The capsule with one material and no texture coordinates."""
+
+    def test_one_material_no_uvs_and_the_capsule_geometry(self) -> None:
+        """Prevents a no-UV fixture that has UVs, more than one material, or other geometry than the plain capsule."""
+        pos, runs, objects = read_obj_source(SOURCE / "no-uv.obj")
+        self.assertEqual((objects, [name for name, _ in runs]), (1, ["Body"]))
+        self.assertEqual({uv for _, fs in runs for f in fs for _, uv in f}, {None}, "no UVs")
+        lines = (SOURCE / "no-uv.obj").read_text(encoding="utf-8").split("\n")
+        self.assertFalse([line for line in lines if line.split(" ", 1)[0] == "vt"], "no vt lines, used or not")
+        capsule_pos, capsule_faces = read_obj(FIXTURES / "meshes" / "capsule.obj")
+        self.assertEqual(pos, capsule_pos)
+        self.assertEqual([(a[0], b[0], c[0]) for _, fs in runs for a, b, c in fs], capsule_faces)
 
 
 if __name__ == "__main__":

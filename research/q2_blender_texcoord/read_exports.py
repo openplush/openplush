@@ -82,8 +82,10 @@ def texture_texcoord(doc: dict[str, object]) -> int | None:
 def glb_maps(data: bytes) -> dict[str, object]:
     doc, blob = read_glb(data)
     meshes = as_list(doc["meshes"], "meshes")
+    if len(meshes) != 1:
+        raise ValueError("expected one mesh with one primitive")
     prims = as_list(as_dict(meshes[0], "mesh")["primitives"], "primitives")
-    if len(meshes) != 1 or len(prims) != 1:
+    if len(prims) != 1:
         raise ValueError("expected one mesh with one primitive")
     attrs = as_dict(as_dict(prims[0], "primitive")["attributes"], "attributes")
     count = len([k for k in attrs if k.startswith("TEXCOORD_")])

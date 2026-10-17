@@ -51,7 +51,7 @@ Tasks that will exceed the budget on their own. Split by capability, each with i
 
 | Task | Why it splits |
 |---|---|
-| T060 weld | Spatial hash, deterministic tie-break, and glTF split-vertex handling are three testable capabilities |
+| T060 weld | Spatial hash, deterministic tie-break, and glTF split-vertex handling are three testable capabilities (landed as a move of validate's grouping, #121, then the remap with tests for all three, #122) |
 | T062 non-manifold edge cutting | Dihedral sorting, orientation pairing, and edge duplication |
 | T066 hole filling | Classification is separate from Liepa triangulation and fairing |
 | T073 chart construction | Flood fill, vertex duplication, and provenance mapping |
@@ -202,7 +202,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [x] T057 [P] [US1] `crates/openplush-mesh/src/validate/orientation.rs` — inconsistent winding, non-orientable detection — *merged in #114, plus closed shells wound inside out, judged per shell*
 - [x] T058 [US1] `crates/openplush-mesh/src/validate/selfintersect.rs` — BVH triangle-triangle tests. **Warn only** (data-model section 3 step 8) — *merged in #117. Floating point against the weld distance, not exact predicates; a fold at a shared vertex counts, edge-on and coplanar contact are not reported*
 - [x] T059 [US1] `crates/openplush-mesh/src/validate/report.rs` — `ValidationReport` with every defect locatable in 3D (FR-003) — *merged in #114 as `validate(&TriangleSoup) -> ValidationReport`; it never fails: a soup with no triangles or an extent with no tolerances is reported `Unmeasurable`*
-- [ ] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works
+- [x] T060 [US1] `crates/openplush-mesh/src/repair/weld.rs` — repair step 1 (step 0 happens at import, D-021). **The weld is the one that matters most in practice**: glTF exporters split vertices at UV and normal discontinuities, so an unwelded import looks full of holes and nothing downstream works — *merged in #121 (branch `001/65-T060-weld-grouping`, validate's grouping moved here) and #122 (`001/66-T060-weld`) as `repair::weld::merge`. Unused and non-representative vertices stay in the soup; `into_manifold` (T067) compacts them*
 - [ ] T061 [US1] `crates/openplush-mesh/src/repair/degenerate.rs` — step 2, including the double-sided-sheet flag
 - [ ] T062 [US1] `crates/openplush-mesh/src/repair/nonmanifold_edge.rs` — step 3, cut and stitch per Guéziec et al. 2001; new boundary edges become mandatory seams
 - [ ] T063 [US1] `crates/openplush-mesh/src/repair/bowtie.rs` — step 4, split one vertex per fan

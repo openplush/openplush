@@ -15,7 +15,7 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 | Blender's glTF exporter writes one primitive per material slot used by a mesh. A primitive has at most one material; one with none uses glTF's default material | [solid] |
 | OBJ stores `vt` per face corner (`f v/vt`), so UV discontinuities survive without vertex splitting. `usemtl` switches the material for the faces that follow; faces before any `usemtl` have none | [solid] |
 | glTF can carry several UV sets (`TEXCOORD_0`, `TEXCOORD_1`, …). Whether Blender writes the *active* UV map as `TEXCOORD_0` or the first in the list is unconfirmed | [verify] spike Q2 |
-| `tobj` (001's OBJ reader, T050) starts a new model at each `o`/`g` and gives each model one `material_id`; whether it also splits on a `usemtl` change inside one group is unconfirmed | [verify] spike Q3 |
+| 001's OBJ reader (its own, not `tobj`: 001 D-034) starts a new source primitive at each `o`, `g` and `usemtl` line, so a primitive has at most one material | [solid] 001 D-034, T050 |
 | A dead-ended Blender seam (one that doesn't separate the UV island) still gives its edges different UVs on each side: it shows up in the UV editor as a slit. So a dead end is detectable from the export alone | [likely] spike Q1 |
 
 **Decision**: read only what the file carries. UV cuts come from per-corner texture coordinates, and materials from the primitive a face came from. No `.blend` reading (out of scope).
@@ -36,9 +36,11 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 
 ## R3. Dead ends
 
-**Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Seams already in the project are left out: the file must be consistent on its own, because Replace would discard them. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, walk each back to its chain, and fail with one error listing every tip and chain.
+**Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Seams already in the project are left out: the file must be consistent on its own, because Replace would discard them. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, and walk each back to its chain: the cut edges from the tip to the first vertex of seam-valence 3 or more, or to the surface boundary. Each chain becomes one dart proposal (spec FR-011, 2026-10-17).
 
-**Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4). Here the same class is an error, because FR-010 rules out imported darts. Reusing the classifier means no second definition of "endpoint" to drift. Reporting all tips at once is the spec's edge case ("not one per attempt").
+**Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4), and that is what these are. Spike Q1 (`research/q1_blender_uv_cuts/`) found that Blender's usual sphere unwrap, a meridian to the pole, makes one at each pole, and that the unwrap opens it into the wedge a dart closes [solid on UV spheres]. So the 2026-10-16 choice to make them an error would have refused correct models. Reusing the classifier means no second definition of "endpoint" to drift.
+
+**Superseded**: on 2026-10-16 a dead end failed the import with one error listing every tip. Replaced on 2026-10-17 by the maintainer's choice of dart proposals (spec Clarifications).
 
 **Alternative rejected**: *drop dead-ended chains and import the rest*. That gives a layout that differs from the maker's design with no clear sign of where, which is Constitution III's worst case (spec Assumptions).
 
@@ -73,7 +75,7 @@ This needs one sentence in spec FR-051 (made in the same change as this plan). [
 
 | ID | Question | Blocks | Effort |
 |---|---|---|---|
-| Q1 | On Blender 4.x exports (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? | `UV_CUT` value; FR-011 detection | 0.5 day |
+| Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? | `UV_CUT` value; FR-011 detection | 0.5 day |
 | Q2 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? | FR-004 wording in the import report | 1 h |
-| Q3 | Does `tobj` split a model on `usemtl` inside one group? If not, the OBJ importer must split primitives itself (S-002) | T050-side work | 1 h |
+| Q3 | ~~Does `tobj` split a model on `usemtl` inside one group?~~ Answered by 001 D-034: 001 reads OBJ with its own reader, which splits at `usemtl` | — | none |
 | Q4 | Edit one limb of a fixture in Blender, re-export, re-import: what share of untouched seams re-place by position? | R5 confidence | 0.5 day |

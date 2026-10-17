@@ -6,6 +6,7 @@ PRESETS are the shipped fabric presets of 001 research R7, which import matches 
 """
 
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from test_fixtures import FIXTURES, Face, Vec, array, chart_topology, edges_of, exact_int, field, read_seam_set
@@ -30,15 +31,15 @@ def read_obj_materials(path: Path) -> tuple[list[Vec], list[tuple[str, list[Face
 
 
 def material_boundaries(runs: list[tuple[str, list[Face]]]) -> set[tuple[int, int]]:
-    """Edges whose two faces come from different runs; raises on an edge without exactly two faces."""
+    """Interior edges whose two faces come from different runs; raises on an edge with more than two faces."""
     owner: dict[tuple[int, int], list[int]] = {}
     for r, (_, faces) in enumerate(runs):
         for f in faces:
             for a, b in edges_of(f):
                 owner.setdefault((min(a, b), max(a, b)), []).append(r)
-    if any(len(rs) != 2 for rs in owner.values()):
-        raise ValueError("not a closed two-manifold")
-    return {e for e, (a, b) in owner.items() if a != b}
+    if any(len(rs) > 2 for rs in owner.values()):
+        raise ValueError("not a two-manifold")
+    return {e for e, rs in owner.items() if len(rs) == 2 and rs[0] != rs[1]}
 
 
 class ThreeMaterials(unittest.TestCase):
@@ -70,6 +71,8 @@ class ThreeMaterials(unittest.TestCase):
         self.assertEqual(heights, [-30.0, 30.0], "the tube's two rims")
         self.assertEqual(len(boundaries), 24, "two full 12-edge rings")
         faces = [f for _, fs in runs for f in fs]
+        uses = Counter((min(a, b), max(a, b)) for f in faces for a, b in edges_of(f))
+        self.assertEqual(set(uses.values()), {2}, "closed surface")
         self.assertEqual(sorted(chart_topology(faces, boundaries)), [(0, 2), (1, 1), (1, 1)], "tube and two caps")
 
     def test_the_gltf_has_one_primitive_per_material_in_obj_order(self) -> None:

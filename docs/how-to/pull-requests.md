@@ -16,7 +16,7 @@ Not counted:
 
 | Excluded | Why |
 |---|---|
-| Fixture models (`fixtures/meshes/**`) | Binary; reviewed by looking at them, not by reading a diff |
+| Fixture models (`fixtures/meshes/**`, `fixtures/models/**`) | Binary; reviewed by looking at them, not by reading a diff |
 | Generated TypeScript types | Reviewed by checking the generator, once |
 | Snapshot files (`*.snap`, `fixtures/golden/**`) | Reviewed as rendered output in the PR comment |
 | Lock files | Reviewed by `cargo deny` |

@@ -92,7 +92,7 @@ crates/openplush-project/                   # + seams[].origin (optional)
 bindings/openplush-cli/src/commands/        # + import-seams; pattern --seams-from-model --accept-closing
 bindings/openplush-wasm/                    # + sourceImport, reimportDiff DTOs
 apps/web/src/import/                        # NEW: import preview, accept all / partial / decline
-fixtures/meshes/source-seams/               # NEW: quickstart's fixture table
+fixtures/models/source-seams/               # NEW: quickstart's fixture table
 ```
 
 **Structure decision**: no new crate. Unlike 002's detectors, this feature has no signal of its own to compute and cache. It reads two attributes and hands them to machinery 001 already has. Each piece goes in the crate that owns the concept it touches:

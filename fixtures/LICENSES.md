@@ -12,4 +12,4 @@ Only CC0 and CC-BY models may ship here. Every fixture file has an entry: either
 
 To regenerate the generated files: `cd research/fixtures_gen && python3 generate.py`. The output is byte-for-byte reproducible, and `python3 -m unittest -v` in the same directory checks the committed files against it.
 
-A contributed model gets its own row: path, license (CC0-1.0, or CC-BY-4.0 with the attribution text the license requires), and where it came from.
+A model in `models/` gets its own row: path, license (CC0-1.0, or CC-BY-4.0 with the attribution text the license requires), and where it came from, for example "Hand-modelled in Blender by <name>".

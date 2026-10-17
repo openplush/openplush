@@ -7,7 +7,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
 ## Prerequisites
 
 - 001's import, repair, seam, flatten and pattern stages are working (see [plan.md](./plan.md), "Hard dependency on 001").
-- Fixtures under `fixtures/meshes/source-seams/`, each with a license entry:
+- Fixtures under `fixtures/models/source-seams/`, each with a license entry:
 
 | Fixture | Built to prove |
 |---|---|

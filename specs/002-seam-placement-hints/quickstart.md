@@ -21,10 +21,10 @@ Same toolchain as 001. Additionally, these 001 tasks must be green:
 
 ```sh
 # Every category at default sensitivity
-openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 300 --json out/hints.json
+openplush-cli hints fixtures/models/quadruped.glb --size-mm 300 --json out/hints.json
 
 # One category, turned up
-openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 300 \
+openplush-cli hints fixtures/models/quadruped.glb --size-mm 300 \
   --only concave-crease --sensitivity 0.8 --json out/concave.json
 ```
 
@@ -35,17 +35,17 @@ openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 300 \
 ```sh
 # SC-004: a smooth sphere has no creases. Must be zero, and must be REPORTED as absent
 # rather than merely missing - an empty panel and a broken detector look identical.
-openplush-cli hints fixtures/meshes/sphere.glb --size-mm 300 --json out/sphere.json
+openplush-cli hints fixtures/meshes/sphere.obj --size-mm 300 --json out/sphere.json
 jq -e '[.hints[] | select(.category=="SharpEdge" or .category=="ConcaveCrease")] | length == 0' out/sphere.json
 jq -e '.absent | index("SharpEdge")' out/sphere.json
 
 # A cube has exactly 12 crease lines - no more, no fewer
-openplush-cli hints fixtures/meshes/cube.glb --size-mm 300 --json out/cube.json
+openplush-cli hints fixtures/meshes/cube.obj --size-mm 300 --json out/cube.json
 jq -e '[.hints[] | select(.category=="SharpEdge")] | length == 12' out/cube.json
 
 # SC-005: symmetry found on a symmetric model, refused on an asymmetric one
 jq -e '.hints[] | select(.category=="Symmetry") | .kind.match_score < 0.02' out/hints.json
-openplush-cli hints fixtures/meshes/asymmetric.glb --size-mm 300 --json out/asym.json
+openplush-cli hints fixtures/models/asymmetric.glb --size-mm 300 --json out/asym.json
 jq -e '[.hints[] | select(.category=="Symmetry")] | length == 0' out/asym.json
 
 # SC-007: every hint explains itself. Must print nothing.
@@ -53,7 +53,7 @@ jq -e '.hints[] | select(.explanation.why == null or .explanation.effect == null
   && echo "UNEXPLAINED HINT" || echo "all hints explained"
 
 # SC-008: determinism
-openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 300 --json out2/hints.json
+openplush-cli hints fixtures/models/quadruped.glb --size-mm 300 --json out2/hints.json
 cmp out/hints.json out2/hints.json && echo "deterministic"
 ```
 
@@ -63,7 +63,7 @@ The guarantee that raising sensitivity only ever adds hints. Checkable from the 
 
 ```sh
 for s in 0.2 0.5 0.8; do
-  openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 300 \
+  openplush-cli hints fixtures/models/quadruped.glb --size-mm 300 \
     --only sharp-edge --sensitivity "$s" --json "out/s$s.json"
 done
 # every hint id at 0.2 must still be present at 0.5, and at 0.8
@@ -78,8 +78,8 @@ If either assertion fails, a threshold somewhere is adaptive rather than absolut
 The same model at two sizes should give different hints, because three of the five thresholds are in millimetres:
 
 ```sh
-openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 80  --json out/small.json
-openplush-cli hints fixtures/meshes/quadruped.glb --size-mm 600 --json out/large.json
+openplush-cli hints fixtures/models/quadruped.glb --size-mm 80  --json out/small.json
+openplush-cli hints fixtures/models/quadruped.glb --size-mm 600 --json out/large.json
 # The 80 mm toy should show fewer crease hints: more of them fall under the length filter.
 ```
 
@@ -94,7 +94,7 @@ pnpm --filter web exec playwright test hints
 
 Manual walkthrough matching US1 and US2:
 
-1. Import `fixtures/meshes/quadruped.glb`, accept repairs, set height 300 mm.
+1. Import `fixtures/models/quadruped.glb`, accept repairs, set height 300 mm.
 2. Open the hints panel. Four categories with counts; the overlay marks the muzzle fold, the neck crease, the head dome.
 3. Click a list entry. The view moves to it and the overlay element is distinguished.
 4. Read the explanation. It says why it was flagged and what a seam there would do — in that order, in plain language.
@@ -102,7 +102,7 @@ Manual walkthrough matching US1 and US2:
 6. Accept the neck crease. A preview shows the flat-pattern effect. Keep it — it becomes an ordinary seam, editable like any hand-drawn one.
 7. Dismiss a hint. It leaves the list. Save, reload: still dismissed.
 8. Change the size to 150 mm. Hints recompute, and a summary says what changed.
-9. Load `fixtures/meshes/sphere.glb`. The crease categories say they found nothing, rather than looking broken.
+9. Load `fixtures/meshes/sphere.obj`. The crease categories say they found nothing, rather than looking broken.
 
 Step 5 is the one most likely to be quietly wrong, and the one a maker will notice fastest — a sensitivity slider that loses the hint you were examining feels broken even when every individual hint is correct.
 
@@ -126,12 +126,12 @@ Step 5 is the one most likely to be quietly wrong, and the one a maker will noti
 ## 4. Fixtures this feature needs
 
 ```
-fixtures/meshes/
+fixtures/models/                  hand-modelled in Blender
 ├── quadruped.glb       symmetric animal: muzzle fold, neck crease, head dome
 ├── asymmetric.glb      deliberately no mirror plane - proves refusal works
 ├── near-symmetric.glb  one ear tilted - proves the match score is meaningful
-├── faceted.glb         icosphere or low-poly - proves the flood cap works
-└── sphere.glb          smooth - proves zero is reportable (shared with 001)
+└── faceted.glb         icosphere or low-poly - proves the flood cap works
+fixtures/meshes/sphere.obj          smooth - proves zero is reportable (shared with 001)
 ```
 
 Plus, for SC-001, any model that arrives with a known-good hand-made pattern. Those are worth more than the rest combined: they are the only way to measure whether this feature does what it claims.

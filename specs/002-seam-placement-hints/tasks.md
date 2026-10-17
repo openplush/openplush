@@ -75,9 +75,9 @@ That is partway through 001's Phase 3, not after all of 001. H001–H004 (fixtur
 
 **Purpose**: Hints are tuned against models. Without the fixtures, every threshold below is a guess, and SC-001 is unmeasurable.
 
-- [ ] H001 [P] `fixtures/meshes/quadruped.glb` — symmetric animal with a muzzle fold, neck crease, and head dome. **The primary tuning fixture**; every default threshold is judged against it. Plus `LICENSES.md` entry
-- [ ] H002 [P] `fixtures/meshes/asymmetric.glb` and `near-symmetric.glb` — one with no mirror plane at all, one with a single tilted ear. These prove refusal and the match score respectively; without them SC-005 cannot distinguish "works" from "always says yes"
-- [ ] H003 [P] `fixtures/meshes/faceted.glb` — icosphere or low-poly model for the flood cap (SC-010)
+- [ ] H001 [P] `fixtures/models/quadruped.glb` — symmetric animal with a muzzle fold, neck crease, and head dome. **The primary tuning fixture**; every default threshold is judged against it. Plus `LICENSES.md` entry
+- [ ] H002 [P] `fixtures/models/asymmetric.glb` and `near-symmetric.glb` — one with no mirror plane at all, one with a single tilted ear. These prove refusal and the match score respectively; without them SC-005 cannot distinguish "works" from "always says yes"
+- [ ] H003 [P] `fixtures/models/faceted.glb` — icosphere or low-poly model for the flood cap (SC-010)
 - [ ] H004 **Fixture call: models with known-good hand-made patterns.** Fixture-lane work, no code. **SC-001 cannot be evaluated at all until this lands**, so the feature's headline claim stays unverified however green the test suite is. Flagged as a release risk, not a task to rush
 - [ ] H005 **H1** — Tune default thresholds (dihedral, concave, curvature, minimum chain length, integration radius) against the corpus so a typical plush yields useful hints with no adjustment. Depends on H001. Box: 1 day
 - [ ] H006 [P] **H2** — Confirm the monotonicity guarantee survives chaining and clustering. This is H012's property test, run as a spike first to find out whether the chain-once design actually holds. Box: 0.5 day

@@ -97,7 +97,7 @@ crates/openplush-project/         # extended: hint decisions + settings persiste
 bindings/openplush-cli/           # extended: `hints` subcommand
 apps/web/src/hints/               # NEW — overlay + inspection panel
 packages/engine-client/           # extended: hints op in the typed protocol
-fixtures/meshes/                  # extended: quadruped, asymmetric, faceted fixtures
+fixtures/models/                  # NEW: hand-modelled quadruped, asymmetric, near-symmetric, faceted fixtures
 ```
 
 **Structure Decision**: a separate `openplush-hints` crate rather than folding detection into `openplush-fields` or `openplush-seams`. Three reasons: it keeps the crate DAG acyclic (hints depends on fields and mesh, and nothing depends on hints except the pipeline); it keeps the feature independently testable; and it gives v0.2's automatic seam layout an obvious place to consume these signals rather than recomputing them.

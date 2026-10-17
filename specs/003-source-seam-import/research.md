@@ -40,7 +40,7 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 
 Spike Q1 found that Blender's default UV sphere map, a projection made without marked seams, gives every pole triangle its own UV at the pole. Under the per-endpoint rule all 24 pole edges read as cuts, and their far ends become 22 dead-end tips, so import would offer 22 darts the maker never meant [solid]. After a marked unwrap there are none.
 
-**Decision** (maintainer, 2026-10-17, plan S-015): the rule stays exact. The import report adds a hint. A **projection point** is an interior vertex with at least `PROJECTION_MIN_FACES = 5` incident faces whose corner UVs there are pairwise more than `UV_CUT` apart. When any exist, the report lists them and says the UVs look like an automatic projection, not marked seams, and suggests marking seams and unwrapping. The proposals are unchanged.
+**Decision** (maintainer, 2026-10-17, plan S-015): the rule stays exact. The import report adds a hint. A **projection point** is an interior vertex with at least `PROJECTION_MIN_FACES = 5` incident faces whose corner UVs there are pairwise more than `UV_CUT` apart. When any exist, the report lists them, says the UVs may come from an automatic projection rather than marked seams, and suggests marking seams and unwrapping. The proposals are unchanged.
 
 - Five faces: at a projection point every incident edge is cut, so every incident face is its own island there. Hand-marked layouts rarely bring five seams to one vertex; a pole fan on a 12-segment sphere has 12 [speculative] (the threshold is checked against U070's tests, and a false hint costs one sentence of advice).
 - *Rejected: treat projection points as uncut*. It would also hide a real five-way seam junction, which is a silent wrong output (Constitution III).
@@ -87,7 +87,7 @@ This needs one sentence in spec FR-051 (made in the same change as this plan). [
 
 | ID | Question | Blocks | Effort |
 |---|---|---|---|
-| Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? **Done 2026-10-17 on UV spheres** (`research/q1_blender_uv_cuts/results.md`): yes to both, so `UV_CUT` stands (R2); projection maps make pole fans (R2); dead ends become darts (R3). The capsule and quadruped were not built | `UV_CUT` value; FR-011 detection | 0.5 day |
+| Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? **Done 2026-10-17 on UV spheres** (`research/q1_blender_uv_cuts/results.md`): yes to both (the dead end on one slit), so `UV_CUT` stands (R2); projection maps make pole fans (R2); dead ends become darts (R3). The capsule and quadruped were not built | `UV_CUT` value; FR-011 detection | 0.5 day |
 | Q2 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? | FR-004 wording in the import report | 1 h |
 | Q3 | ~~Does `tobj` split a model on `usemtl` inside one group?~~ Answered by 001 D-034: 001 reads OBJ with its own reader, which splits at `usemtl` | — | none |
 | Q4 | Edit one limb of a quadruped in Blender, re-export, re-import: what share of untouched seams re-place by position? The spike builds its own quadruped, since Q1 did not | R5 confidence | 0.5 day |

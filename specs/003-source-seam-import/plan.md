@@ -139,7 +139,7 @@ The dead-end chains are split off before the seam proposal is built, so a chain 
 |---|---|---|---|
 | 2026-10-16 | S-001 | **No new crate.** Detection in `openplush-seams`, regions in `openplush-pattern`, composition in `openplush-pipeline`. No new dependency edge | Accepted |
 | 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside T053. 2026-10-16: 001 D-034 replaced `tobj` with a reader that already splits at `usemtl`, so Q3 needs no spike |
-| 2026-10-16 | S-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** Provisional `1e-5`; spike Q1 confirms | Accepted, research R2 |
+| 2026-10-16 | S-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** `1e-5`, confirmed by spike Q1 on UV spheres (research R2) | Accepted, research R2 |
 | 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` (error replaced by dart proposals, S-014) | Accepted, research R3, spec FR-011 and FR-013 |
 | 2026-10-16 | S-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
 | 2026-10-16 | S-006 | **Name match = Unicode-lowercase, trimmed, first in project order.** No fuzzy matching | Accepted, research R4 |

@@ -130,7 +130,7 @@ The maker left a UV cut that stops partway across the surface. Often that is del
 - **FR-003**: Edges on the surface's boundary (holes kept as openings) are never imported seams; they are already unsewn edges.
 - **FR-004**: Only the first set of texture coordinates is read. When a model has more than one set, the import report says which set was used and that the others were ignored.
 - **FR-005**: A model with no texture coordinates or no materials imports normally. The import report states which of the two sources was absent. With no texture coordinates, no UV-cut seams are proposed. With no material on any face, no regions or material-boundary seams are proposed.
-- **FR-006**: When the texture coordinates look like an automatic projection rather than marked seams (an interior point where every one of at least a documented number of surrounding faces has its own texture coordinate), the import report says so in plain language, locates each such point, and suggests marking seams and unwrapping in the modelling tool. The hint changes no proposal: the cuts are still read exactly as FR-001 defines.
+- **FR-006**: When the texture coordinates look like an automatic projection rather than marked seams (an interior point where every one of at least a documented number of surrounding faces has its own texture coordinate), the import report says in plain language that they may come from an automatic projection, locates each such point, and suggests marking seams and unwrapping in the modelling tool. The hint changes no proposal: the cuts are still read exactly as FR-001 defines.
 
 #### Seams from UV cuts
 

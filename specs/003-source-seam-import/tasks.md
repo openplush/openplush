@@ -27,7 +27,7 @@ Same policy as 001 and 002: at most 400 lines of hand-written source, one test t
 | `003/NN-U013-source-materials` | U012, U013 |
 | `003/NN-U015-io-materials` | U014, U015 |
 | `003/NN-U019-uv-cuts` | U016, U017, U019 (stacked on U018's one-constant slice) |
-| `003/NN-U071-projection-hint` | U070, U071 |
+| `003/NN-U071-projection-hint` | U070, U071 (stacked on U019's slice, which creates `source.rs`) |
 | `003/NN-U021-source-import-stage` | U020, U021 |
 | `003/NN-U032-closing` | U031, U032 |
 | `003/NN-U034-accept-all` | U033, U034 |
@@ -99,7 +99,7 @@ Each needs a spec-only PR (specs and implementation never share a PR):
 - [x] U010 **Q3**: answered without a spike by 001 D-034. 001 reads OBJ with its own reader, not `tobj`, and starts a new source primitive at every `o`, `g` and `usemtl` line, so each primitive has at most one material (S-002) with no 003 work
 - [ ] U011 [P] **Q4** `research/q4_blender_reshape/`: in Blender (U069), build a quadruped with a marked seam layout (Q1 built none), reshape one leg, and re-export. Measure the share of seam edges away from the edited leg whose endpoints match within the weld tolerance, and update research.md R5's tag. Depends on U069. Box: 1 day
 
-**Checkpoint**: `UV_CUT` has a measured value; the S-002 OBJ question is answered.
+**Checkpoint**: `UV_CUT` has a value measured on UV spheres; the S-002 OBJ question is answered.
 
 ---
 
@@ -144,7 +144,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 - [ ] U018 [US1] `crates/openplush-geom/src/epsilon.rs`: `UV_CUT` with Q1's value. Its doc comment says why it is absolute and dimensionless, without citing a spec section (AGENTS.md). One-constant slice, stacked under U019. Depends on U008
 - [ ] U019 [US1] `crates/openplush-seams/src/source.rs` (new) and `src/proposal.rs`: UV-cut detection over `&ManifoldMesh` and `&SeamSet`, returning the cut edges and the count of faces without UVs. Adds `SeamReason::SourceModel`, with a doc comment, and builds the seam `Proposal` (`ProposalKind::Seam { reason: SeamReason::SourceModel }`, `SeamKind::Cut`) through `Proposal::new`, or nothing when there are no edges. A `debug_assert!` checks that no `Dart` or `Opening` kind is produced. Makes U016 and U017 pass
-- [ ] U070 [P] [US1] `crates/openplush-seams/tests/source_projection.rs`: failing tests for projection points (spec FR-006, data-model §2). A vertex with 12 incident faces whose pole corners all differ by more than `UV_CUT` is one. A vertex with 4 such faces is not, and neither is one with 5 faces where two corners agree, or one where any incident face has no UVs. A pole fan whose corners share one UV gives none. The points come out ascending, and the cut edges are the same with or without them (the hint changes no proposal). Once T060 and T067 land, also: `capsule-uv.glb` has none
+- [ ] U070 [P] [US1] `crates/openplush-seams/tests/source_projection.rs`: failing tests for projection points (spec FR-006, data-model §2). A vertex with 12 incident faces whose pole corners all differ by more than `UV_CUT` is one. A vertex with 4 such faces is not, and neither is one with 5 faces where two corners agree, or one where any incident face has no UVs. A pole fan whose corners share one UV gives none. A vertex where five hand-marked seams meet is also one: a known false positive, which the hint's "may" wording allows for. The points come out ascending, and the cut edges are the same with or without them (the hint changes no proposal). Once T060 and T067 land, also: `capsule-uv.glb` has none
 - [ ] U071 [US1] `crates/openplush-seams/src/source.rs`: projection points and the private `PROJECTION_MIN_FACES = 5`, whose comment gives research R2's reason for five. Makes U070 pass
 - [ ] U020 [US1] `crates/openplush-pipeline/tests/source_import.rs`: failing tests for `source_import(mesh, existing, fabrics)` (contract §1). On a UV-cut mesh, `seams` is `Some`, with the cuts. With no UVs, `seams` is `None`, the report's `uv_set_read` is `None`, and the report says no UV cuts were found (US1 scenario 4). Edges already in `existing` are excluded. Applying `seams` through T107's path gives the same `SeamSet` as drawing those edges by hand (US1 scenario 2). Report counts (`uv_set_read`, `extra_uv_sets`, `uv_cut_edges`, `faces_without_uv`, `projection_points`) as an `insta` snapshot. Repeated runs give byte-identical serialised output (SC-007)
 - [ ] U021 [US1] `crates/openplush-pipeline/src/source.rs` (new) and `src/lib.rs`: the `source_import` stage and the public `SourceImport { seams, report }` / `SourceReport` with only US1's fields; later stories add theirs. The FR-004 report text follows Q2 (U009). The FR-006 projection hint text goes in `docs/reference/` with the stage. Includes rustdoc for every public item and the `source_import` entry in `docs/reference/engine-api.md`. Makes U020 pass. Its spec follow-up is U068

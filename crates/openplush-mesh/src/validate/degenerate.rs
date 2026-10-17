@@ -1,71 +1,35 @@
-use std::collections::BTreeMap;
-
 use openplush_geom::epsilon::ModelTolerances;
 
 use super::report::{Duplicate, DuplicateOrientation};
 use crate::halfedge::is_sliver;
+use crate::repair::degenerate::Removed;
 use crate::{FaceId, TriangleSoup};
 
-/// The degenerate faces, and the faces topology is judged on: every face but those
-/// that repeat a vertex and the later copies of a duplicate.
-pub(super) struct Degenerate {
-    pub(super) zero_area: Vec<FaceId>,
-    pub(super) repeated_index: Vec<FaceId>,
-    pub(super) duplicates: Vec<Duplicate>,
-    pub(super) kept: Vec<u32>,
+/// Faces with area at or below the area tolerance, from the soup's own positions,
+/// so a face is zero-area exactly when repair would stitch it out.
+// INVARIANT: soup indices are in range (`TriangleSoup::new`).
+pub(super) fn zero_area(soup: &TriangleSoup, tol: &ModelTolerances) -> Vec<FaceId> {
+    let p = |v: u32| soup.positions()[v as usize];
+    (0..)
+        .zip(soup.triangle_indices())
+        .filter(|&(_, &[a, b, c])| is_sliver(p(a), p(b), p(c), tol))
+        .map(|(f, _)| FaceId::new(f))
+        .collect()
 }
 
-/// `welded` holds each face's vertices after welding, in face order. Areas use the
-/// soup's own positions, so a face is zero-area exactly when repair would drop it.
-// INVARIANT: `welded` has one entry per soup face, and soup indices are in range.
-pub(super) fn degenerate(
-    soup: &TriangleSoup,
-    welded: &[[u32; 3]],
-    tol: &ModelTolerances,
-) -> Degenerate {
-    let positions = soup.positions();
-    let mut out = Degenerate {
-        zero_area: Vec::new(),
-        repeated_index: Vec::new(),
-        duplicates: Vec::new(),
-        kept: Vec::new(),
-    };
-    let mut seen: BTreeMap<[u32; 3], u32> = BTreeMap::new();
-    for (i, (&[a, b, c], tri)) in soup.triangle_indices().iter().zip(welded).enumerate() {
-        // Lossless: the face count fits in u32 (`TriangleSoup::new`).
-        let face = i as u32;
-        let [pa, pb, pc] = [a, b, c].map(|v| positions[v as usize]);
-        if is_sliver(pa, pb, pc, tol) {
-            out.zero_area.push(FaceId::new(face));
-        }
-        let [x, y, z] = *tri;
-        if x == y || y == z || z == x {
-            out.repeated_index.push(FaceId::new(face));
-            continue;
-        }
-        let mut key = *tri;
-        key.sort();
-        match seen.get(&key) {
-            Some(&first) => out.duplicates.push(Duplicate {
-                face: FaceId::new(face),
-                of: FaceId::new(first),
-                orientation: orientation(welded[first as usize], *tri),
-            }),
-            None => {
-                seen.insert(key, face);
-                out.kept.push(face);
-            }
-        }
-    }
-    out
-}
-
-/// Same when `b` is a rotation of `a`, so both turn the same way.
-fn orientation(a: [u32; 3], b: [u32; 3]) -> DuplicateOrientation {
-    let rotations = [a, [a[1], a[2], a[0]], [a[2], a[0], a[1]]];
-    if rotations.contains(&b) {
-        DuplicateOrientation::Same
-    } else {
-        DuplicateOrientation::Opposite
-    }
+/// Every copy repair drops or keeps as a sheet layer, by face.
+pub(super) fn duplicates(removed: &Removed) -> Vec<Duplicate> {
+    let same = removed.duplicates.iter().map(|d| Duplicate {
+        face: d.face,
+        of: d.of,
+        orientation: DuplicateOrientation::Same,
+    });
+    let opposite = removed.sheets.iter().map(|&[of, face]| Duplicate {
+        face,
+        of,
+        orientation: DuplicateOrientation::Opposite,
+    });
+    let mut all: Vec<Duplicate> = same.chain(opposite).collect();
+    all.sort_by_key(|d| d.face);
+    all
 }

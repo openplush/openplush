@@ -24,10 +24,6 @@ pub(crate) struct DroppedCopy {
 /// Drops faces that repeat a vertex and every copy of an earlier face wound the
 /// same way, keeping the lowest face ID. Two copies wound opposite ways are both
 /// kept, as a sheet.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "called by into_manifold, not yet written")
-)]
 pub(crate) fn remove(soup: &TriangleSoup) -> (TriangleSoup, Removed) {
     let mut removed = Removed::default();
     let mut kept = Vec::new();

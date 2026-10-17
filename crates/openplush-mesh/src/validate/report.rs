@@ -2,7 +2,7 @@ use crate::{FaceId, VertexId};
 
 /// Every defect `validate` found, each located by soup IDs. Topology is judged as
 /// repair will see it: coincident vertices welded, repeated-index faces and later
-/// copies of duplicate faces left out. A vertex there is named by its weld group's
+/// same-wound copies left out, both layers of a double-sided sheet kept. A vertex there is named by its weld group's
 /// smallest ID. Every list is sorted.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ValidationReport {
@@ -39,7 +39,8 @@ pub enum Unmeasurable {
 pub struct Duplicate {
     /// The later copy.
     pub face: FaceId,
-    /// The first face with these vertices.
+    /// The first face with these vertices wound the copy's way, or, for an
+    /// opposite copy, the first wound the other way.
     pub of: FaceId,
     /// Whether the copy turns the same way; opposite copies make a double-sided sheet.
     pub orientation: DuplicateOrientation,

@@ -50,12 +50,12 @@ Consequences:
 - **Fixtures**: `capsule-uv` (U001), `capsule-hardshade` (U002) and `reshaped-v1/v2` (U007) use exactly this layout (the local review confirmed degree-1 poles at z = ±60 in all three), so the engine would reject them with `DeadEndCut`, while US1's independent test expects them to import. `dead-end` (U005) is unaffected; its cut A ends on a material boundary and an opening.
 - **Makers**: a sphere or a capsule unwrapped the usual way in Blender would fail import.
 
-Options for the spec, not decided here:
+**Decided 2026-10-17 (003 plan S-014): option 2, as a proposal.** A dead-ended cut is offered as a dart proposal, located and explained, which the maker accepts or declines. No fixture needs changing. The options as they were weighed:
 1. **Keep FR-011, change the fixtures.** Give capsule-uv a layout with no free ends, such as both rims plus a meridian on the tube only, like `seams/capsule.json`, and say in the docs that seams must end on another seam or an opening.
 2. **Import a free end as a dart.** Reverse FR-010 for cuts that end in the interior. This is close to what the maker drew, but it is the case the maintainer ruled out.
 3. **Keep the error, but make it teach.** Report the poles as a distinct, located case, with a remedy naming the fix in Blender: run the seam into another seam.
 
-This needs the maintainer before U016–U019 (UV-cut detection) and U051 (dead ends) are built, and before #109, #110 and #119 merge as US1's and re-import's oracles.
+
 
 ## The open problem: pole fans in projection UVs
 

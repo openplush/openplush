@@ -4,7 +4,7 @@
 
 Non-shipping research code for feature 003, task U008 (research R2, R6 Q1).
 
-**Status (2026-10-17): `UV_CUT = 1e-5` holds for marked seams, but the spike found two spec problems.** First, a meridian seam's ends at the poles are dead ends under FR-011, which rejects the usual sphere unwrap and three of the committed fixtures. Second, Blender's default projection UVs put false cuts on pole fans. Numbers are in [`results.md`](results.md).
+**Status (2026-10-17): `UV_CUT = 1e-5` holds for marked seams, but the spike found two spec problems.** First, a meridian seam's ends at the poles are dead ends under FR-011, which rejected the usual sphere unwrap and three of the committed fixtures; decided 2026-10-17 (003 S-014): such a cut becomes a dart proposal. Second, Blender's default projection UVs put false cuts on pole fans. Numbers are in [`results.md`](results.md).
 
 **Scope delivered**: UV spheres only. U008 also asked for a capsule and a quadruped, and U011 (Q4) assumes this spike's quadruped; neither was built. Recording the results in 003 research.md (R1, R2, R6) is a separate spec change.
 

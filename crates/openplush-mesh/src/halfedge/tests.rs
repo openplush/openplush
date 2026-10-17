@@ -523,6 +523,8 @@ fn linked_bowtie() -> ManifoldMesh {
         f_he: hs(&[0, 6]),
         corner_src: vec![None; 12],
         corner_uv: vec![None; 12],
+        materials: SourceMaterials::new(Vec::new(), Vec::new()),
+        extra_uv_sets: 0,
     }
 }
 
@@ -621,6 +623,8 @@ fn one_face_on_both_sides() -> ManifoldMesh {
         f_he: hs(&[0]),
         corner_src: vec![None; 4],
         corner_uv: vec![None; 4],
+        materials: SourceMaterials::new(Vec::new(), Vec::new()),
+        extra_uv_sets: 0,
     }
 }
 

@@ -76,6 +76,8 @@ impl ManifoldMesh {
             f_he: linked.f_he,
             corner_src: linked.corner_src,
             corner_uv: linked.corner_uv,
+            materials: soup.materials().clone(),
+            extra_uv_sets: soup.extra_uv_sets(),
         };
         mesh.refuse_split_fans()?;
         if cfg!(debug_assertions) {

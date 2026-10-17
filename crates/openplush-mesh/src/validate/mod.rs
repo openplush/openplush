@@ -1,8 +1,6 @@
 //! Defect detection on a `TriangleSoup`: reports, never changes, the soup.
 
-mod coincident;
 mod degenerate;
-mod disjoint;
 mod nonmanifold;
 mod orientation;
 mod report;
@@ -39,7 +37,7 @@ pub fn validate(soup: &TriangleSoup) -> ValidationReport {
     let Ok(tol) = ModelTolerances::for_diagonal(diagonal) else {
         return ValidationReport::unmeasured(Unmeasurable::Extent { diagonal });
     };
-    let weld = coincident::weld(soup, tol.weld());
+    let weld = crate::repair::weld::weld(soup, tol.weld());
     // INVARIANT: `rep` has one entry per soup vertex, and soup indices are in range.
     let tris: Vec<[u32; 3]> = soup
         .triangle_indices()

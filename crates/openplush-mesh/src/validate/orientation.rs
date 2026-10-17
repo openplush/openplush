@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use openplush_geom::DVec3;
 
 use super::Edges;
-use super::disjoint::DisjointSet;
+use crate::disjoint::DisjointSet;
 use crate::{FaceId, VertexId};
 
 /// Two-face edges whose faces traverse them the same way.

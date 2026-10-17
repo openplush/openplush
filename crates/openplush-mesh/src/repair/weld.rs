@@ -2,23 +2,23 @@ use std::collections::BTreeMap;
 
 use openplush_geom::DVec3;
 
-use super::disjoint::DisjointSet;
+use crate::disjoint::DisjointSet;
 use crate::{TriangleSoup, VertexId};
 
 /// Used vertices merged within the weld distance: each vertex's representative (the
 /// smallest index it is welded to) and every group of two or more.
-pub(super) struct Weld {
-    pub(super) rep: Vec<u32>,
-    pub(super) groups: Vec<Vec<VertexId>>,
+pub(crate) struct Weld {
+    pub(crate) rep: Vec<u32>,
+    pub(crate) groups: Vec<Vec<VertexId>>,
 }
 
-/// Joins any two used vertices within `distance`, transitively, as repair's weld
-/// will. Vertices are bucketed into cubic cells `distance` wide, measured from the
-/// used vertices' lowest corner, and each is compared only with its own and the 26
-/// neighbouring cells: a sort along one axis would compare every pair in a flat,
-/// axis-aligned model.
+/// Joins any two used vertices within `distance`, transitively; validation calls it
+/// too, so it judges topology as repair welds it. Vertices are bucketed into cubic
+/// cells `distance` wide, measured from the used vertices' lowest corner, and each
+/// is compared only with its own and the 26 neighbouring cells: a sort along one
+/// axis would compare every pair in a flat, axis-aligned model.
 // INVARIANT: soup indices are in range (`TriangleSoup::new`).
-pub(super) fn weld(soup: &TriangleSoup, distance: f64) -> Weld {
+pub(crate) fn weld(soup: &TriangleSoup, distance: f64) -> Weld {
     let positions = soup.positions();
     let mut used = vec![false; positions.len()];
     for &i in soup.triangle_indices().iter().flatten() {

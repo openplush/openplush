@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::Edges;
-use super::disjoint::DisjointSet;
+use crate::disjoint::DisjointSet;
 use crate::{FaceId, VertexId};
 
 /// One-face edges chained into loops in their face's direction, split wherever a

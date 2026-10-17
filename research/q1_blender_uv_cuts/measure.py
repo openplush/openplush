@@ -153,6 +153,11 @@ def report(polygons: list[Polygon], seams: list[frozenset[Key]] | None, poles: l
     cuts = {e for e, g in gaps.items() if g > UV_CUT}
     out: dict[str, object] = {"edges": len(gaps), "boundary_edges": boundary, "cuts": len(cuts)}
     out["pole_edges_cut"] = sum(1 for e in cuts if any(p in e for p in poles))
+    degree: dict[Key, int] = {}
+    for e in cuts:
+        for v in e:
+            degree[v] = degree.get(v, 0) + 1
+    out["dead_end_tips"] = sum(1 for n in degree.values() if n == 1) if boundary == 0 else None  # closed surfaces only
     if seams is not None:
         marked = set(seams)
         uncut = [g for e, g in gaps.items() if e not in marked]

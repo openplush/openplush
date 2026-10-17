@@ -36,7 +36,7 @@ Edges are interior edges of each export (the GLB has more because it is triangul
 
 ## The open problem: pole fans in projection UVs
 
-Blender's default UV sphere map gives each pole triangle its own pole UV, so the u-coordinate varies around the pole while v is 0 or 1. Under R2's per-endpoint rule every pole edge then reads as a cut. Each ring-0 vertex (one UV on both sides) would become a dead-end tip: about 11 per pole on this sphere, 22 in all. Import would fail with `DeadEndCut` on a model whose maker never marked a seam.
+Blender's default UV sphere map gives each pole triangle its own pole UV, so the u-coordinate varies around the pole while v is 0 or 1. Under R2's per-endpoint rule every pole edge then reads as a cut. Each ring-0 vertex (one UV on both sides) would become a dead-end tip: 22 on this sphere, measured (`dead_end_tips` in the report), against the 2 that `sphere-dead-end`'s slit really has. Import would fail with `DeadEndCut` on a model whose maker never marked a seam.
 
 - A pole-fan edge and a slit's last edge look the same locally: UVs agree at one end and differ at the other. The edge alone can't tell them apart.
 - What differs is the far vertex. At a projection pole *every* incident face has its own UV, and those UVs share v and vary only in u.

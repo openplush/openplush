@@ -91,6 +91,20 @@ def smooth_all(bm: bmesh.types.BMesh, leg: list[bmesh.types.BMVert]) -> None:
     bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
 
 
+def nudge_sole(bm: bmesh.types.BMesh, leg: list[bmesh.types.BMVert]) -> None:
+    """Leg 0's sole moved 5 mm down with proportional editing, as a maker dragging it would.
+
+    Blender's Smooth falloff: weight 3t^2 - 2t^3 with t = 1 - d / r, for vertices within r = 20 mm of the sole.
+    """
+    low = min(v.co.z for v in leg)
+    sole = [v for v in leg if abs(v.co.z - low) < 1e-6]
+    for v in bm.verts:
+        d = min((v.co - s.co).length for s in sole)
+        if d < 20.0:
+            t = 1.0 - d / 20.0
+            v.co.z -= 5.0 * (3 * t * t - 2 * t * t * t)
+
+
 def move_all(bm: bmesh.types.BMesh, leg: list[bmesh.types.BMVert]) -> None:
     bmesh.ops.translate(bm, vec=(5.0, 0.0, 0.0), verts=bm.verts)
 
@@ -100,6 +114,7 @@ EDITS: dict[str, Callable[[bmesh.types.BMesh, list[bmesh.types.BMVert]], None]] 
     "stretch-leg": stretch,
     "loop-cut-leg": loop_cut,
     "extrude-toe": extrude_toe,
+    "nudge-sole-proportional": nudge_sole,
     "smooth-all": smooth_all,
     "move-all": move_all,
 }

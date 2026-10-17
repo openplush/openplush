@@ -2,7 +2,7 @@
 """Re-places the original export's seams and faces on each edited re-export by position (003 research R5).
 
 Run: python3 measure.py <export-dir>   (the directory export_models.py wrote; needs no bpy)
-Prints one JSON report. Every number in results.md comes from it.
+Prints one JSON report. Every count in results.md comes from it; export_models.py's printout gives the model's size.
 """
 
 import json
@@ -70,6 +70,11 @@ def tolerance(polygons: list[Polygon]) -> float:
     return WELD_RELATIVE * math.dist(low, high)
 
 
+def kept_positions(old: list[Polygon], new: list[Polygon]) -> int:
+    """How many of the old export's distinct positions appear bit-for-bit in the new one."""
+    return len({p for polygon in old for p in polygon} & {p for polygon in new for p in polygon})
+
+
 def placed_edges(edges: list[tuple[Vec, Vec]], new: Mesh) -> list[bool]:
     """Whether each old edge's endpoints are both vertices of `new`, joined by an edge there."""
     out = []
@@ -133,13 +138,15 @@ def as_int(x: object, what: str) -> int:
 
 
 def accessor(doc: dict[str, object], blob: bytes, index: object) -> list[tuple[float, ...]]:
-    """One accessor as rows: f32 VEC3 positions or u16/u32 SCALAR indices, tightly packed or strided."""
+    """One tightly packed accessor as rows: f32 VEC3 positions or u16/u32 SCALAR indices."""
     acc = as_dict(as_list(doc["accessors"], "accessors")[as_int(index, "accessor index")], "accessor")
     view = as_dict(as_list(doc["bufferViews"], "bufferViews")[as_int(acc["bufferView"], "bufferView")], "bufferView")
     width = {"SCALAR": 1, "VEC3": 3}[str(acc["type"])]
     fmt, size = {5126: ("f", 4), 5125: ("I", 4), 5123: ("H", 2)}[as_int(acc["componentType"], "componentType")]
     start = as_int(view.get("byteOffset", 0), "byteOffset") + as_int(acc.get("byteOffset", 0), "byteOffset")
-    stride = as_int(view.get("byteStride", size * width), "byteStride")
+    stride = size * width
+    if as_int(view.get("byteStride", stride), "byteStride") != stride:
+        raise ValueError("interleaved accessor data is not supported")
     count = as_int(acc["count"], "count")
     return [struct.unpack_from(f"<{width}{fmt}", blob, start + i * stride) for i in range(count)]
 
@@ -192,7 +199,9 @@ def measure(directory: Path) -> dict[str, object]:
     for fmt in ("glb", "obj"):
         old = read(directory, "original", fmt)
         for edit in as_list(record["edits"], "edits"):
-            report[f"{edit}.{fmt}"] = shares(old, seams, edited, read(directory, str(edit), fmt))
+            new = read(directory, str(edit), fmt)
+            report[f"{edit}.{fmt}"] = {**shares(old, seams, edited, new), "positions_kept": kept_positions(old, new),
+                                       "positions": len({p for polygon in old for p in polygon})}
     return report
 
 

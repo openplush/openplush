@@ -1,3 +1,76 @@
+use std::collections::BTreeMap;
+
+use crate::{FaceId, TriangleSoup};
+
+/// What the degenerate step removed or flagged, by the IDs of the soup it was given.
+#[derive(Debug, Default)]
+pub(crate) struct Removed {
+    pub(crate) repeated_index: Vec<FaceId>,
+    pub(crate) duplicates: Vec<DroppedCopy>,
+    /// Each pair of opposite-orientation copies kept as the two layers of a sheet,
+    /// the lower face ID first, sorted by it.
+    pub(crate) sheets: Vec<[FaceId; 2]>,
+    /// The input face each face of the returned soup came from, in its order.
+    pub(crate) origin: Vec<FaceId>,
+}
+
+/// A face dropped because it repeats the earlier face `of` with the same winding.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct DroppedCopy {
+    pub(crate) face: FaceId,
+    pub(crate) of: FaceId,
+}
+
+/// Drops faces that repeat a vertex and every copy of an earlier face wound the
+/// same way, keeping the lowest face ID. Two copies wound opposite ways are both
+/// kept, as a sheet.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "called by into_manifold, not yet written")
+)]
+pub(crate) fn remove(soup: &TriangleSoup) -> (TriangleSoup, Removed) {
+    let mut removed = Removed::default();
+    let mut kept = Vec::new();
+    // Rotated to start at the smallest vertex, so copies wound the same way share
+    // a key and copies wound opposite ways do not.
+    let mut first: BTreeMap<[u32; 3], u32> = BTreeMap::new();
+    for (i, &tri) in soup.triangle_indices().iter().enumerate() {
+        // Lossless: the face count fits in u32 (`TriangleSoup::new`).
+        let face = i as u32;
+        let [a, b, c] = tri;
+        if a == b || b == c || c == a {
+            removed.repeated_index.push(FaceId::new(face));
+            continue;
+        }
+        let key = rotated(tri);
+        if let Some(&of) = first.get(&key) {
+            removed.duplicates.push(DroppedCopy {
+                face: FaceId::new(face),
+                of: FaceId::new(of),
+            });
+            continue;
+        }
+        if let Some(&layer) = first.get(&rotated([a, c, b])) {
+            removed.sheets.push([FaceId::new(layer), FaceId::new(face)]);
+        }
+        first.insert(key, face);
+        kept.push(face);
+    }
+    removed.sheets.sort_by_key(|&[layer, _]| layer);
+    removed.origin = kept.iter().map(|&f| FaceId::new(f)).collect();
+    (soup.retaining(&kept), removed)
+}
+
+fn rotated([a, b, c]: [u32; 3]) -> [u32; 3] {
+    if a < b && a < c {
+        [a, b, c]
+    } else if b < c {
+        [b, c, a]
+    } else {
+        [c, a, b]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use openplush_geom::{DVec2, DVec3};

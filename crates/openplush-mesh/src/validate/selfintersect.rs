@@ -5,8 +5,9 @@ use crate::FaceId;
 
 /// Pairs of kept faces sharing no edge that cross along a segment longer than the
 /// weld distance; faces sharing one vertex count, so a fold is caught. Faces that
-/// touch, share an edge, lie within the weld distance of one plane, or have no area
-/// are not reported. The test is in floating point against the weld distance, which
+/// touch (at a corner or edge-on), share an edge, lie within the weld distance of one
+/// plane, or have no area are not reported, so shells that overlap only through
+/// coplanar faces go unreported. The test is in floating point against the weld distance, which
 /// is enough for a report that only warns; exact predicates would take their slow
 /// path on every pair of coplanar faces. Candidates come from a bounding-box tree;
 /// faces around a vertex of high valence all overlap there, so that vertex costs its
@@ -103,11 +104,10 @@ fn cross(a: &Plane, b: &Plane) -> bool {
     ia.1.min(ib.1) - ia.0.max(ib.0) > WELD_RELATIVE
 }
 
-/// All corners strictly on one side, or all in the plane: the faces cannot cross.
+/// No corner strictly on one side of the other plane: the face stays on the other
+/// side, at most touching it at a corner or along an edge, so the faces cannot cross.
 fn apart(s: [Sign; 3]) -> bool {
-    s.iter().all(|&x| x == Sign::Positive)
-        || s.iter().all(|&x| x == Sign::Negative)
-        || s.iter().all(|&x| x == Sign::Zero)
+    !s.contains(&Sign::Positive) || !s.contains(&Sign::Negative)
 }
 
 /// Where face `t` (corner sides `s`) meets plane `other`, as an interval along the

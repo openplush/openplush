@@ -20,31 +20,72 @@ UV_TOL = 1e-6  # the OBJ prints 6 decimals; the glTF holds f32, which is finer t
 POS_TOL = 1e-4  # mm; f32 spacing near 90 mm is about 8e-6
 
 
-def read_obj_uv(path: Path) -> tuple[list[Vec], list[tuple[Corner, Corner, Corner]]]:
-    """`v`, `vt` and `f v/vt` lines only; anything else is an error, never skipped."""
+MaybeCorner = tuple[int, UV | None]  # a corner from a file that may have no `vt` lines
+Run = tuple[str | None, list[tuple[MaybeCorner, MaybeCorner, MaybeCorner]]]  # usemtl name (None before any)
+
+
+def read_obj_source(path: Path) -> tuple[list[Vec], list[Run], int]:
+    """Positions, the faces in `usemtl` runs in file order, and the number of `o` lines.
+
+    Reads `v`, `vt`, `o`, `usemtl` and triangle `f` lines with `v` or `v/vt` corners; anything else is an error.
+    A material name is the rest of its `usemtl` line exactly, trailing spaces included.
+    """
     pos: list[Vec] = []
     uvs: list[UV] = []
-    faces: list[tuple[Corner, Corner, Corner]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        word, *rest = line.split() or [""]
+    runs: list[Run] = []
+    objects = 0
+    for line in path.read_text(encoding="utf-8").split("\n"):
+        word = line.split(" ", 1)[0]
+        rest = line.split()[1:]
         if word == "v":
             x, y, z = (float(s) for s in rest)
             pos.append((x, y, z))
         elif word == "vt":
             u, v = (float(s) for s in rest)
             uvs.append((u, v))
+        elif word == "o":
+            objects += 1
+        elif word == "usemtl":
+            runs.append((line[len("usemtl ") :], []))
         elif word == "f":
-            corners: list[Corner] = []
-            for s in rest:
-                vi, ti = (int(n) for n in s.split("/"))
-                if not (1 <= vi <= len(pos) and 1 <= ti <= len(uvs)):
-                    raise ValueError(f"{path.name}: corner {s!r} indexes outside the v or vt lines before it")
-                corners.append((vi - 1, uvs[ti - 1]))
-            a, b, c = corners
-            faces.append((a, b, c))
+            if len(rest) != 3:
+                raise ValueError(f"{path.name}: not a triangle: {line!r}")
+            a, b, c = (obj_corner(path, s, len(pos), uvs) for s in rest)
+            if not runs:
+                runs.append((None, []))
+            runs[-1][1].append((a, b, c))
         elif word not in ("", "#"):
             raise ValueError(f"{path.name}: unexpected OBJ line {line!r}")
-    return pos, faces
+    return pos, runs, objects
+
+
+def obj_corner(path: Path, text: str, vertices: int, uvs: list[UV]) -> MaybeCorner:
+    parts = [int(n) for n in text.split("/")]
+    if len(parts) > 2 or not 1 <= parts[0] <= vertices or (len(parts) == 2 and not 1 <= parts[1] <= len(uvs)):
+        raise ValueError(f"{path.name}: corner {text!r} indexes outside the v or vt lines before it")
+    return (parts[0] - 1, uvs[parts[1] - 1] if len(parts) == 2 else None)
+
+
+def with_uvs(faces: list[tuple[MaybeCorner, MaybeCorner, MaybeCorner]]) -> list[tuple[Corner, Corner, Corner]]:
+    """The faces with every corner's UV present; raises on a corner without one."""
+    out: list[tuple[Corner, Corner, Corner]] = []
+    for face in faces:
+        corners: list[Corner] = []
+        for v, uv in face:
+            if uv is None:
+                raise ValueError(f"corner at vertex {v} has no UV")
+            corners.append((v, uv))
+        a, b, c = corners
+        out.append((a, b, c))
+    return out
+
+
+def read_obj_uv(path: Path) -> tuple[list[Vec], list[tuple[Corner, Corner, Corner]]]:
+    """Positions and every face with its corner UVs; an `o` or `usemtl` line is an error, as these files have none."""
+    pos, runs, objects = read_obj_source(path)
+    if objects or any(name is not None for name, _ in runs):
+        raise ValueError(f"{path.name}: unexpected object or material line")
+    return pos, with_uvs([f for _, faces in runs for f in faces])
 
 
 def uv_cuts(faces: list[tuple[Corner, Corner, Corner]]) -> tuple[set[tuple[int, int]], int]:

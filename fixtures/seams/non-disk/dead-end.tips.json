@@ -1,0 +1,11 @@
+{
+  "format": "openplush-dead-ends",
+  "version": 1,
+  "mesh": "meshes/source-seams/dead-end.obj",
+  "vertexIndexBase": 0,
+  "note": "dead-end: an opening, Head and Body materials, one cut ending on both, and two cuts that stop short",
+  "tips": [
+    55,
+    66
+  ]
+}

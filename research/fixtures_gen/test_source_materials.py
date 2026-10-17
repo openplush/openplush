@@ -6,56 +6,40 @@ PRESETS are the shipped fabric presets of 001 research R7, which import matches 
 """
 
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from test_fixtures import FIXTURES, Face, Vec, array, chart_topology, edges_of, exact_int, field, read_seam_set
-from test_source_seams import SOURCE, accessor_floats, accessor_ints, match_positions, read_glb
-
-Run = tuple[str, list[Face]]  # a material name and the faces that follow its `usemtl`, in file order
+from test_source_seams import SOURCE, accessor_floats, accessor_ints, match_positions, read_glb, read_obj_source
 
 PRESETS = ("Quilting cotton", "Craft felt", "Polar fleece", "Minky / cuddle", "Velboa", "Short faux fur", "Long faux fur")
 NAMES = ["minky / cuddle", "Polar fleece ", "Felt Nose"]
 
 
-def read_obj_materials(path: Path) -> tuple[list[Vec], list[Run], int]:
-    """Positions, the `usemtl` runs in order, and the number of `o` lines. Faces before any `usemtl` are an error.
+def read_obj_materials(path: Path) -> tuple[list[Vec], list[tuple[str, list[Face]]], int]:
+    """Positions, the named `usemtl` runs with plain triangles, and the number of `o` lines.
 
-    A material name is the rest of the `usemtl` line exactly, trailing spaces included.
+    Faces before any `usemtl` are an error here, because every face of these fixtures has a material.
     """
-    pos: list[Vec] = []
-    runs: list[Run] = []
-    objects = 0
-    for line in path.read_text(encoding="utf-8").split("\n"):
-        word = line.split(" ", 1)[0]
-        if word == "v":
-            x, y, z = (float(s) for s in line.split()[1:])
-            pos.append((x, y, z))
-        elif word == "o":
-            objects += 1
-        elif word == "usemtl":
-            runs.append((line[len("usemtl ") :], []))
-        elif word == "f":
-            if not runs:
-                raise ValueError(f"{path.name}: a face before any usemtl")
-            ids = [int(s) for s in line.split()[1:]]
-            if len(ids) != 3 or not all(1 <= i <= len(pos) for i in ids):
-                raise ValueError(f"{path.name}: bad face {line!r}")
-            runs[-1][1].append((ids[0] - 1, ids[1] - 1, ids[2] - 1))
-        elif word not in ("", "#"):
-            raise ValueError(f"{path.name}: unexpected OBJ line {line!r}")
-    return pos, runs, objects
+    pos, runs, objects = read_obj_source(path)
+    named: list[tuple[str, list[Face]]] = []
+    for name, faces in runs:
+        if name is None:
+            raise ValueError(f"{path.name}: a face before any usemtl")
+        named.append((name, [(a[0], b[0], c[0]) for a, b, c in faces]))
+    return pos, named, objects
 
 
-def material_boundaries(runs: list[Run]) -> set[tuple[int, int]]:
-    """Edges whose two faces come from different runs; raises on an edge without exactly two faces."""
+def material_boundaries(runs: list[tuple[str, list[Face]]]) -> set[tuple[int, int]]:
+    """Interior edges whose two faces come from different runs; raises on an edge with more than two faces."""
     owner: dict[tuple[int, int], list[int]] = {}
     for r, (_, faces) in enumerate(runs):
         for f in faces:
             for a, b in edges_of(f):
                 owner.setdefault((min(a, b), max(a, b)), []).append(r)
-    if any(len(rs) != 2 for rs in owner.values()):
-        raise ValueError("not a closed two-manifold")
-    return {e for e, (a, b) in owner.items() if a != b}
+    if any(len(rs) > 2 for rs in owner.values()):
+        raise ValueError("not a two-manifold")
+    return {e for e, rs in owner.items() if len(rs) == 2 and rs[0] != rs[1]}
 
 
 class ThreeMaterials(unittest.TestCase):
@@ -64,6 +48,8 @@ class ThreeMaterials(unittest.TestCase):
     def test_obj_switches_material_twice_inside_one_object(self) -> None:
         """Prevents an OBJ that never puts two materials in one object, which is the case a reader must split."""
         _, runs, objects = read_obj_materials(SOURCE / "three-materials.obj")
+        _, source_runs, _ = read_obj_source(SOURCE / "three-materials.obj")
+        self.assertEqual({uv for _, fs in source_runs for f in fs for _, uv in f}, {None}, "no UVs")
         self.assertEqual(objects, 1)
         self.assertEqual([name for name, _ in runs], NAMES)
         self.assertTrue(all(faces for _, faces in runs), "every run has faces")
@@ -87,6 +73,8 @@ class ThreeMaterials(unittest.TestCase):
         self.assertEqual(heights, [-30.0, 30.0], "the tube's two rims")
         self.assertEqual(len(boundaries), 24, "two full 12-edge rings")
         faces = [f for _, fs in runs for f in fs]
+        uses = Counter((min(a, b), max(a, b)) for f in faces for a, b in edges_of(f))
+        self.assertEqual(set(uses.values()), {2}, "closed surface")
         self.assertEqual(sorted(chart_topology(faces, boundaries)), [(0, 2), (1, 1), (1, 1)], "tube and two caps")
 
     def test_the_gltf_has_one_primitive_per_material_in_obj_order(self) -> None:

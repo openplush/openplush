@@ -192,10 +192,10 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Import and model health (FR-001 … FR-006)
 
-- [ ] T050 [US1] `crates/openplush-io/src/obj.rs` — OBJ geometry and per-corner UVs, read by our own reader (plan D-034: `tobj` loses provenance and fabricates UVs). Source primitives split at `o`, `g` and `usemtl`. *2026-10-16: MTL and textures wait for a consumer (FR-043, v0.2); the primitive split keeps that addition out of `TriangleSoup` and repair*
+- [x] T050 [US1] `crates/openplush-io/src/obj.rs` — OBJ geometry and per-corner UVs, read by our own reader (plan D-034: `tobj` loses provenance and fabricates UVs). Source primitives split at `o`, `g` and `usemtl`. *2026-10-16: MTL and textures wait for a consumer (FR-043, v0.2); the primitive split keeps that addition out of `TriangleSoup` and repair* — *merged in #108 (branch `001/60-T050-T053-obj-import`) as `obj::read` in `src/obj/`; its errors are `IoError`, which the pipeline maps to `EngineError` in T092*
 - [ ] T051 [P] [US1] `crates/openplush-io/src/gltf.rs` — glTF 2.0 and GLB via `gltf`; skinned and animated data ignored with a warning. *2026-10-16: `.gltf` needs its separate buffers, which `import(bytes, …)` cannot carry; the import input shape is decided, with a contract change, before this task starts (D-034)*
 - [ ] T052 [P] [US1] `crates/openplush-io/src/stl_ply.rs` — STL and PLY (the minor default was yes)
-- [ ] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002). A NaN/∞ coordinate anywhere fails the import with `EngineError::NonFiniteInput` naming every non-finite source vertex (D-021); nothing is dropped
+- [x] T053 [US1] `crates/openplush-io/src/triangulate.rs` — polygons to triangles, preserving per-corner UVs and material assignment (FR-002). A NaN/∞ coordinate anywhere fails the import with `EngineError::NonFiniteInput` naming every non-finite source vertex (D-021); nothing is dropped — *merged in #108 with T050; material assignment rides on the OBJ primitive split (D-034). A self-crossing polygon is refused as `Parse`; a collinear one is split and left to validation*
 - [ ] T054 [US1] `crates/openplush-mesh/src/validate/nonmanifold.rs` — non-manifold edges and bowtie vertices, each located
 - [ ] T055 [P] [US1] `crates/openplush-mesh/src/validate/degenerate.rs` — zero-area, duplicate, and repeated-index faces
 - [ ] T056 [P] [US1] `crates/openplush-mesh/src/validate/topology.rs` — holes, boundary loops, connected components
@@ -254,7 +254,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T096 [US1] `apps/web/src/health/` — defect list with 3D highlight; nothing changes until the maker confirms (FR-004)
 - [ ] T097 [US1] `apps/web/src/seams/` — seam drawing with `three-mesh-bvh` edge picking, plus the optional symmetry-mirroring mode
 - [ ] T098 [US1] `apps/web/src/export/` — page size choice, export, download
-- [ ] T099 [US1] `packages/engine-client/src/worker.ts` — the real worker host with transferable buffers, replacing the mock for integration; wraps every export call so any exception is a crash (contracts/worker-protocol.md §4)
+- [ ] T099 [US1] `packages/engine-client/src/worker.ts` — the real worker host with transferable buffers, replacing the mock for integration; wraps every export call so any exception is a crash (contracts/worker-protocol.md §4) — *first slice merged in #105 (branch `001/58-T099-worker-host`): `fromWorker` and the worker script's `serve`. Open: the wasm entry file and default spawn, waiting for the binding's first exported op, and transfer buffers, waiting for an op that returns geometry*
 
 **Checkpoint**: US1 is independently functional. A maker can import, seam, and print a true-scale pattern. This is the MVP.
 

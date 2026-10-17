@@ -181,6 +181,17 @@ impl TriangleSoup {
         }
     }
 
+    /// This soup with a copy of each listed vertex appended, in that order.
+    // INVARIANT: every entry of `of` is a vertex of this soup.
+    pub(crate) fn with_vertex_copies(&self, of: &[u32]) -> Self {
+        let mut positions = self.positions.clone();
+        positions.extend(of.iter().map(|&v| self.positions[v as usize]));
+        Self {
+            positions,
+            ..self.clone()
+        }
+    }
+
     /// This soup's positions with new faces and corner records.
     // INVARIANT: the faces index this soup's vertices, with three corner records
     // (and, if this soup has UVs, three UVs) each.

@@ -10,7 +10,7 @@ import json
 import math
 import struct
 
-from generate import HEADER, Edge, Face, Mesh, Vec, capsule, num, seam_text
+from generate import HEADER, Edge, Face, Mesh, Vec, capsule, num, seam_text, sphere
 
 UV = tuple[float, float]
 FaceUV = tuple[UV, UV, UV]  # the UV at each corner of one face, in the face's corner order
@@ -18,6 +18,7 @@ FaceNormals = tuple[Vec, Vec, Vec]
 
 CUT_RING = 2  # the capsule ring cut all the way round: the tube's upper rim, where it meets the hemisphere (z = +30 mm)
 SPLIT_V = (0.45, 0.55)  # the bottom island fills v up to the first, the top island from the second
+BAND_RINGS = (1, 5)  # sphere rings cut all the way round, like a neck and a waist: z = +-35.36 mm
 
 
 def capsule_uv() -> tuple[Mesh, list[FaceUV], list[Edge]]:
@@ -53,6 +54,42 @@ def capsule_uv() -> tuple[Mesh, list[FaceUV], list[Edge]]:
     meridian = [north] + [r[0] for r in rings] + [south]
     rim = rings[CUT_RING] + rings[CUT_RING][:1]
     cuts = list(zip(meridian, meridian[1:])) + list(zip(rim, rim[1:]))
+    return m, face_uvs, cuts
+
+
+def sphere_band() -> tuple[Mesh, list[FaceUV], list[Edge]]:
+    """Sphere cut around rings BAND_RINGS: two caps and the band between them, so three UV islands.
+
+    Each island is a polar projection about its own centre in UV space, so no meridian is cut. The band's
+    island is therefore a ring, which is why it cannot lie flat in one piece without one more cut.
+    """
+    m, rings = sphere()
+    north, south = 0, len(m.pos) - 1
+    top_cut, bottom_cut = BAND_RINGS
+    ring_of = {v: i for i, r in enumerate(rings) for v in r} | {north: -1, south: len(rings)}
+    column = {v: j for r in rings for j, v in enumerate(r)}
+    centre = ((0.25, 0.75), (0.5, 0.3), (0.75, 0.75))  # top cap, band, bottom cap
+
+    def radius(ring: int, island: int) -> float:
+        if island == 0:
+            return 0.2 * (ring + 1) / (top_cut + 1)
+        if island == 2:
+            return 0.2 * (len(rings) - ring) / (len(rings) - bottom_cut)
+        return 0.1 + 0.15 * (ring - top_cut) / (bottom_cut - top_cut)
+
+    face_uvs: list[FaceUV] = []
+    for f in m.faces:
+        ringed = [ring_of[v] for v in f]
+        island = 0 if max(ringed) <= top_cut else 2 if min(ringed) >= bottom_cut else 1
+
+        def uv(v: int) -> UV:
+            r, t = radius(ring_of[v], island), 2 * math.pi * column.get(v, 0) / len(rings[0])
+            cx, cy = centre[island]
+            turn = -1.0 if island == 2 else 1.0  # radius grows away from the south pole, so turn the other way
+            return (round(cx + r * math.cos(t), 6) + 0.0, round(cy + turn * r * math.sin(t), 6) + 0.0)
+
+        face_uvs.append((uv(f[0]), uv(f[1]), uv(f[2])))
+    cuts = [e for ring in BAND_RINGS for e in zip(rings[ring], rings[ring][1:] + rings[ring][:1])]
     return m, face_uvs, cuts
 
 
@@ -92,7 +129,12 @@ def glb_bytes(name: str, note: str, m: Mesh, face_uvs: list[FaceUV], face_normal
         ("TEXCOORD_0", "VEC2", [(f32(u), f32(1.0 - w)) for _, (u, w), _ in vertex]),
     ]
     if face_normals is not None:
-        columns.append(("NORMAL", "VEC3", [tuple(f32(c) for c in n) for _, _, n in vertex if n is not None]))
+        normals: list[tuple[float, ...]] = []
+        for _, _, n in vertex:
+            if n is None:
+                raise ValueError(f"{name}: face_normals leaves a corner without a normal")
+            normals.append(tuple(f32(c) for c in n))
+        columns.append(("NORMAL", "VEC3", normals))
     blob = b""
     views: list[dict[str, int]] = []
     accessors: list[dict[str, object]] = []
@@ -178,4 +220,15 @@ def source_seam_files() -> dict[str, bytes]:
             face_uvs,
             capsule_hardshade_normals(m),
         ),
+    } | sphere_band_files()
+
+
+def sphere_band_files() -> dict[str, bytes]:
+    note = "sphere-band: UV cuts around two rings, so two caps and a band that is an annulus"
+    m, face_uvs, cuts = sphere_band()
+    mesh = "meshes/source-seams/sphere-band.obj"
+    return {
+        mesh: obj_uv_text(note, m, face_uvs).encode("utf-8"),
+        "meshes/source-seams/sphere-band.glb": glb_bytes("sphere-band", note, m, face_uvs),
+        "seams/non-disk/sphere-band.json": seam_text(mesh, note, cuts).encode("utf-8"),
     }

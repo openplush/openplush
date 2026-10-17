@@ -8,9 +8,9 @@ The committed files were generated with Python 3.13.16. The tests, including the
 
 | Interpreter | `python3 -m unittest -v` |
 |---|---|
-| CPython 3.11.17 | 21 tests, OK |
-| CPython 3.12.3 | 21 tests, OK |
-| CPython 3.13.16 | 21 tests, OK |
+| CPython 3.11.17 | 22 tests, OK |
+| CPython 3.12.3 | 22 tests, OK |
+| CPython 3.13.16 | 22 tests, OK |
 
 ## Commands
 

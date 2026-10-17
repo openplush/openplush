@@ -84,7 +84,8 @@ def sphere_band() -> tuple[Mesh, list[FaceUV], list[Edge]]:
         def uv(v: int) -> UV:
             r, t = radius(ring_of[v], island), 2 * math.pi * column.get(v, 0) / len(rings[0])
             cx, cy = centre[island]
-            return (round(cx + r * math.cos(t), 6) + 0.0, round(cy + r * math.sin(t), 6) + 0.0)
+            turn = -1.0 if island == 2 else 1.0  # radius grows away from the south pole, so turn the other way
+            return (round(cx + r * math.cos(t), 6) + 0.0, round(cy + turn * r * math.sin(t), 6) + 0.0)
 
         face_uvs.append((uv(f[0]), uv(f[1]), uv(f[2])))
     cuts = [e for ring in BAND_RINGS for e in zip(rings[ring], rings[ring][1:] + rings[ring][:1])]
@@ -127,10 +128,12 @@ def glb_bytes(name: str, note: str, m: Mesh, face_uvs: list[FaceUV], face_normal
         ("TEXCOORD_0", "VEC2", [(f32(u), f32(1.0 - w)) for _, (u, w), _ in vertex]),
     ]
     if face_normals is not None:
-        normals = [n for _, _, n in vertex]
-        if any(n is None for n in normals):
-            raise ValueError(f"{name}: face_normals leaves a corner without a normal")
-        columns.append(("NORMAL", "VEC3", [tuple(f32(c) for c in n) for n in normals if n is not None]))
+        normals: list[tuple[float, ...]] = []
+        for _, _, n in vertex:
+            if n is None:
+                raise ValueError(f"{name}: face_normals leaves a corner without a normal")
+            normals.append(tuple(f32(c) for c in n))
+        columns.append(("NORMAL", "VEC3", normals))
     blob = b""
     views: list[dict[str, int]] = []
     accessors: list[dict[str, object]] = []

@@ -1,6 +1,6 @@
 # Spike Q1: results
 
-Run on 2026-10-17, Linux x86_64. Blender `bpy` 5.2.2 LTS (PyPI), CPython 3.13.16 for the export; `measure.py` and its tests on CPython 3.11.17, 3.12.3 and 3.13.16 (6 tests, OK); `mypy --strict --python-version 3.11 measure.py test_measure.py` clean (`export_models.py` is not type-checked, because `bpy` has no stubs). Eight full export-and-measure runs (one here, eight more by the local review) gave identical counts every time. The gaps vary: the slit's smallest gap took values from 1.81e-4 to 1.84e-4 across runs, while 6.65e-2 and 8.33e-2 held to 3 significant figures.
+Run on 2026-10-17, Linux x86_64. Blender `bpy` 5.2.2 LTS (PyPI), CPython 3.13.16 for the export; `measure.py` and its tests on CPython 3.11.17, 3.12.3 and 3.13.16 (10 tests, OK); `mypy --strict --python-version 3.11 measure.py test_measure.py` clean (`export_models.py` is not type-checked, because `bpy` has no stubs). Eight full export-and-measure runs gave identical counts every time. The gaps vary: the slit's smallest gap took values from 1.81e-4 to 1.84e-4 across runs, while 6.65e-2 and 8.33e-2 held to 3 significant figures.
 
 ## The four questions
 

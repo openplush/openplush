@@ -136,3 +136,18 @@ fn a_tab_after_the_keyword_is_a_separator_too() -> Result<(), IoError> {
     assert_eq!(soup.materials().names(), ["A"]);
     Ok(())
 }
+
+#[test]
+fn a_continued_usemtl_joins_its_lines_with_one_space() -> Result<(), IoError> {
+    let soup = read(&format!("{TRIANGLE}usemtl A \\\nB\nf 1 2 3\n"))?;
+    assert_eq!(soup.materials().names(), ["A  B"]);
+    Ok(())
+}
+
+#[test]
+fn a_name_no_face_uses_is_still_listed() -> Result<(), IoError> {
+    let soup = read(&format!("{TRIANGLE}usemtl A\nf 1 2 3\nusemtl B\n"))?;
+    assert_eq!(soup.materials().names(), ["A", "B"]);
+    assert_eq!(by_primitive(&soup), [Some(0)]);
+    Ok(())
+}

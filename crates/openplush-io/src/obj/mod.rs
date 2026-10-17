@@ -118,16 +118,20 @@ fn build(s: Statements) -> Result<TriangleSoup, IoError> {
         }
     }
     let uvs = has_uvs.then_some(uvs);
-    let materials = SourceMaterials::new(
-        s.material_names,
-        s.primitive_materials
-            .iter()
-            // Lossless: a name is added only for a primitive, and primitives fit in u32.
-            .map(|m| m.map(|i| MaterialIndex::new(i as u32)))
-            .collect(),
-    );
+    let by_primitive = s
+        .primitive_materials
+        .iter()
+        .map(|m| m.map(material_index).transpose())
+        .collect::<Result<Vec<_>, _>>()?;
+    let materials = SourceMaterials::new(s.material_names, by_primitive);
     // No other UV set exists: OBJ carries only the active map.
     Ok(TriangleSoup::new(s.positions, triangles, sources, uvs)?.with_materials(materials, 0)?)
+}
+
+fn material_index(i: usize) -> Result<MaterialIndex, IoError> {
+    u32::try_from(i)
+        .map(MaterialIndex::new)
+        .map_err(|_| parse_error(format!("{i} materials exceed the u32 index space")))
 }
 
 /// A face's triangles as indices into its corners.

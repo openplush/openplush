@@ -1,5 +1,4 @@
 ---
-# Proposed | Accepted | Rejected | Deprecated | Superseded by ADR-NNNN
 status: Proposed
 date: 2026-10-17
 deciders: maintainer
@@ -11,11 +10,11 @@ deciders: maintainer
 
 Feature 003 imports seams and fabric regions from models exported by a modelling tool, Blender above all. Its fixtures come from the standard-library generator in `research/fixtures_gen/`, which imitates Blender's export conventions. Whether real Blender exports follow those conventions is for the spikes Q1, Q2 and Q4 to answer (003 research R6, tasks U008, U009, U011), and they need Blender itself.
 
-Blender's Python module, `bpy` on PyPI, is GPL-3.0 [solid: the 5.2.2 package metadata says `License: GPL-3.0`]. The research lane requires spike dependencies to pass the same allowlist as the engine's (`research/AGENTS.md`), and GPL is not on it. So these spikes need either an exception or no Blender at all. This ADR is task U069.
+Blender's Python module, `bpy` on PyPI, is GPL-3.0 [solid: the 5.2.2 package metadata says `License: GPL-3.0`]. The research lane requires spike dependencies to pass the same allowlist as the engine's (`research/AGENTS.md`), and GPL is not on it. So these spikes need either an exception or no Blender at all. This ADR is task U069 (the 003 task list, `specs/003-source-seam-import/tasks.md`, arrives with PR #107).
 
 ## Decision drivers
 
-* Constitution IX: nothing GPL, AGPL or LGPL in the shipped artifact, and project code stays MIT OR Apache-2.0.
+* Constitution IX: nothing GPL, AGPL or LGPL in the shipped artifact, and project code stays MIT OR Apache-2.0. This ADR reads IX as governing what the project ships and the code it is licensed under; a spike directory licensed GPL on its own is outside both, and nothing that ships may depend on it.
 * Constitution IV: test oracles independent of the code under test. A spike that reads real Blender exports checks the generator's assumptions from outside it.
 * Blender's own position that scripts using its Python API are derived works [likely: Blender's licensing FAQ]. A committed script that imports `bpy` is therefore GPL-licensed itself.
 * Contributor burden: a contributor running the engine, shell or fixture gates must never need Blender.

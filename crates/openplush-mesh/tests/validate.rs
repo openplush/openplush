@@ -758,3 +758,23 @@ fn a_copy_of_a_sheets_second_layer_repeats_that_layer() -> Result<(), MeshError>
     assert_eq!(defects(&report), ["duplicates"]);
     Ok(())
 }
+
+#[test]
+fn a_dropped_copy_takes_no_part_in_orientation() -> Result<(), MeshError> {
+    let mut tris = cube_with(&[CUBE[0]]);
+    tris[1] = [0, 2, 3];
+    let report = validate(&soup(&CUBE_POSITIONS, &tris)?);
+    assert!(report.non_orientable().is_empty());
+    assert!(!report.winding_conflicts().is_empty());
+    Ok(())
+}
+
+#[test]
+fn a_repeated_index_face_joins_no_component() -> Result<(), MeshError> {
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.push([5.0, 5.0, 5.0]);
+    let report = validate(&soup(&positions, &cube_with(&[[0, 0, 8]]))?);
+    assert_eq!(report.repeated_index(), [f(12)]);
+    assert_eq!(report.components(), [(0..12).map(f).collect::<Vec<_>>()]);
+    Ok(())
+}

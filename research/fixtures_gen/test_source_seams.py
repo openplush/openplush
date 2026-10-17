@@ -254,5 +254,41 @@ class CapsuleHardshade(unittest.TestCase):
             self.assertAlmostEqual(math.sqrt(sum(c * c for c in n)), 1.0, places=5)
 
 
+
+class SphereBand(unittest.TestCase):
+    """A sphere cut around two rings, so the band between them is an annulus that cannot lie flat in one piece."""
+
+    def test_uv_cuts_in_the_obj_are_exactly_the_reference_seam_set(self) -> None:
+        """Prevents a fixture whose UVs and recorded layout disagree."""
+        seam_set = read_seam_set(FIXTURES / "seams" / "non-disk" / "sphere-band.json")
+        self.assertEqual(seam_set.mesh, "meshes/source-seams/sphere-band.obj")
+        self.assertEqual(seam_set.kinds, {"cut"})
+        _, faces = read_obj_uv(FIXTURES / seam_set.mesh)
+        cuts, boundary = uv_cuts(faces)
+        self.assertEqual(boundary, 0, "closed surface")
+        self.assertEqual(sorted(cuts), seam_set.edges)
+
+    def test_the_layout_is_two_full_rings_leaving_two_caps_and_a_band(self) -> None:
+        """Prevents a band that is secretly a disk, which would let a closing-seam proposal never be exercised."""
+        pos, faces = read_obj_uv(SOURCE / "sphere-band.obj")
+        cuts, _ = uv_cuts(faces)
+        heights = sorted({pos[v][2] for e in cuts for v in e})
+        self.assertEqual(len(heights), 2, "every cut vertex lies on one of two rings")
+        self.assertAlmostEqual(heights[0], -heights[1], places=5)
+        for z in heights:
+            self.assertEqual(len([e for e in cuts if pos[e[0]][2] == z == pos[e[1]][2]]), 12, f"full ring at z = {z}")
+        self.assertEqual(len(cuts), 24)
+        tris: list[Face] = [(f[0][0], f[1][0], f[2][0]) for f in faces]
+        self.assertEqual(sorted(chart_topology(tris, cuts)), [(0, 2), (1, 1), (1, 1)], "an annulus and two disks")
+
+    def test_the_gltf_is_the_obj_split_where_corner_uvs_differ(self) -> None:
+        """Prevents a glTF twin with other geometry, other UVs, or splits that a Blender export would not make."""
+        check_gltf_twin(self, SOURCE / "sphere-band.obj", SOURCE / "sphere-band.glb")
+
+    def test_position_bounds_match_the_data(self) -> None:
+        """Prevents a glTF that strict loaders reject."""
+        check_position_bounds(self, SOURCE / "sphere-band.glb")
+
+
 if __name__ == "__main__":
     unittest.main()

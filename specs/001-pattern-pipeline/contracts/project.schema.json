@@ -93,6 +93,11 @@
             "type": "number",
             "minimum": 0,
             "description": "Per-seam override. Zero is legal only on non-fraying fabric (FR-057)."
+          },
+          "origin": {
+            "enum": ["drawn", "imported", "proposed"],
+            "default": "drawn",
+            "description": "Where the seam came from: drawn by hand, imported from the source model, or an accepted engine proposal (003 data-model section 5). Lets a re-import count the hand-drawn seams it would remove."
           }
         }
       }
@@ -283,7 +288,12 @@
         "thicknessMm": { "type": "number", "minimum": 0, "default": 0 },
         "frays": { "type": "boolean", "default": true },
         "defaultAllowanceMm": { "type": "number", "minimum": 0, "default": 6 },
-        "rollWidthMm": { "type": "number", "exclusiveMinimum": 0, "default": 1500 }
+        "rollWidthMm": { "type": "number", "exclusiveMinimum": 0, "default": 1500 },
+        "fromMaterial": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set on a profile created for an unmatched source material, cleared by the first edit. While set, the profile raises an UnreviewedFabric warning (003 data-model section 3a)."
+        }
       }
     },
     "hintCategorySetting": {

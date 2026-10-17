@@ -1,0 +1,33 @@
+{
+  "format": "openplush-seam-set",
+  "version": 1,
+  "mesh": "meshes/source-seams/three-materials.obj",
+  "vertexIndexBase": 0,
+  "note": "three-materials: the capsule's upper hemisphere, tube and lower hemisphere in three materials, no UVs",
+  "seams": [
+    {"edge": [25, 26], "kind": "fabricBoundary"},
+    {"edge": [25, 36], "kind": "fabricBoundary"},
+    {"edge": [26, 27], "kind": "fabricBoundary"},
+    {"edge": [27, 28], "kind": "fabricBoundary"},
+    {"edge": [28, 29], "kind": "fabricBoundary"},
+    {"edge": [29, 30], "kind": "fabricBoundary"},
+    {"edge": [30, 31], "kind": "fabricBoundary"},
+    {"edge": [31, 32], "kind": "fabricBoundary"},
+    {"edge": [32, 33], "kind": "fabricBoundary"},
+    {"edge": [33, 34], "kind": "fabricBoundary"},
+    {"edge": [34, 35], "kind": "fabricBoundary"},
+    {"edge": [35, 36], "kind": "fabricBoundary"},
+    {"edge": [61, 62], "kind": "fabricBoundary"},
+    {"edge": [61, 72], "kind": "fabricBoundary"},
+    {"edge": [62, 63], "kind": "fabricBoundary"},
+    {"edge": [63, 64], "kind": "fabricBoundary"},
+    {"edge": [64, 65], "kind": "fabricBoundary"},
+    {"edge": [65, 66], "kind": "fabricBoundary"},
+    {"edge": [66, 67], "kind": "fabricBoundary"},
+    {"edge": [67, 68], "kind": "fabricBoundary"},
+    {"edge": [68, 69], "kind": "fabricBoundary"},
+    {"edge": [69, 70], "kind": "fabricBoundary"},
+    {"edge": [70, 71], "kind": "fabricBoundary"},
+    {"edge": [71, 72], "kind": "fabricBoundary"}
+  ]
+}

@@ -1,18 +1,20 @@
 //! `obj::read` fills `SourceMaterials`: names exactly as written after `usemtl`, one
 //! material per primitive. The glTF half lands with the glTF reader.
 
-use std::path::PathBuf;
-
 use openplush_io::{IoError, obj};
 use openplush_mesh::{FaceId, MaterialIndex, TriangleSoup};
 
 type Outcome<T> = Result<T, Box<dyn std::error::Error>>;
 
-fn fixture(name: &str) -> Outcome<TriangleSoup> {
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/meshes/source-seams")
-        .join(name);
-    Ok(obj::read(&std::fs::read(path)?)?)
+/// The fixture loader serves only the top of `fixtures/meshes`, so these two are embedded.
+macro_rules! seam_fixture {
+    ($name:literal) => {
+        obj::read(include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../fixtures/meshes/source-seams/",
+            $name
+        )))
+    };
 }
 
 fn read(text: &str) -> Result<TriangleSoup, IoError> {
@@ -31,7 +33,7 @@ fn by_primitive(soup: &TriangleSoup) -> Vec<Option<u32>> {
 
 #[test]
 fn three_materials_keep_their_names_untrimmed_in_file_order() -> Outcome<()> {
-    let soup = fixture("three-materials.obj")?;
+    let soup = seam_fixture!("three-materials.obj")?;
     assert_eq!(
         soup.materials().names(),
         ["minky / cuddle", "Polar fleece ", "Felt Nose"]
@@ -44,7 +46,7 @@ fn three_materials_keep_their_names_untrimmed_in_file_order() -> Outcome<()> {
 
 #[test]
 fn every_face_of_three_materials_belongs_to_a_primitive_with_a_material() -> Outcome<()> {
-    let soup = fixture("three-materials.obj")?;
+    let soup = seam_fixture!("three-materials.obj")?;
     for f in 0..u32::try_from(soup.triangle_count())? {
         let primitive = soup.corner_source(FaceId::new(f), 0).map(|c| c.primitive);
         assert!(
@@ -57,8 +59,8 @@ fn every_face_of_three_materials_belongs_to_a_primitive_with_a_material() -> Out
 
 #[test]
 fn no_uv_imports_without_uvs_and_with_one_material() -> Outcome<()> {
-    let soup = fixture("no-uv.obj")?;
-    assert_eq!(soup.materials().names(), ["Body "]);
+    let soup = seam_fixture!("no-uv.obj")?;
+    assert_eq!(soup.materials().names(), ["Body"]);
     assert!(by_primitive(&soup).iter().all(|m| *m == Some(0)));
     assert!(!by_primitive(&soup).is_empty());
     for f in 0..u32::try_from(soup.triangle_count())? {

@@ -3,13 +3,14 @@
 //! Every `v` line is a soup vertex, in file order, used or not. A corner's provenance
 //! is its primitive and its position index. A primitive is a maximal run of `f` lines
 //! with no `o`, `g` or `usemtl` line between them, numbered from 0 in file order, so
-//! every primitive has one material. Normals, materials, lines and points are not
-//! read; free-form geometry is refused.
+//! every primitive has one material: the name on the last `usemtl` line, kept across
+//! `o` and `g`. No MTL file is read. Normals, lines and points are not read;
+//! free-form geometry is refused.
 
 mod parse;
 
 use openplush_geom::DVec2;
-use openplush_mesh::{SourceCorner, TriangleSoup};
+use openplush_mesh::{MaterialIndex, SourceCorner, SourceMaterials, TriangleSoup};
 
 use crate::triangulate::triangulate;
 use crate::{Format, IoError};
@@ -117,7 +118,16 @@ fn build(s: Statements) -> Result<TriangleSoup, IoError> {
         }
     }
     let uvs = has_uvs.then_some(uvs);
-    Ok(TriangleSoup::new(s.positions, triangles, sources, uvs)?)
+    let materials = SourceMaterials::new(
+        s.material_names,
+        s.primitive_materials
+            .iter()
+            // Lossless: a name is added only for a primitive, and primitives fit in u32.
+            .map(|m| m.map(|i| MaterialIndex::new(i as u32)))
+            .collect(),
+    );
+    // No other UV set exists: OBJ carries only the active map.
+    Ok(TriangleSoup::new(s.positions, triangles, sources, uvs)?.with_materials(materials, 0)?)
 }
 
 /// A face's triangles as indices into its corners.

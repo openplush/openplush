@@ -115,27 +115,35 @@ def three_materials() -> tuple[Mesh, list[list[Face]], list[Edge]]:
     return m, runs, boundaries
 
 
-def obj_material_text(note: str, m: Mesh, runs: list[list[Face]]) -> str:
-    """OBJ with one `o` and a `usemtl` before each run, so materials switch inside one object; no UVs."""
-    lines = [HEADER, f"# {note}\n", "o three-materials\n"]
-    lines += [f"v {num(p[0])} {num(p[1])} {num(p[2])}\n" for p in m.pos]
-    for name, run in zip(MATERIALS, runs, strict=True):
-        lines.append(f"usemtl {name}\n")
-        lines += [f"f {a + 1} {b + 1} {c + 1}\n" for a, b, c in run]
-    return "".join(lines)
+def obj_source_text(
+    note: str, m: Mesh, face_uvs: list[FaceUV] | None = None, materials: list[tuple[str, int]] | None = None
+) -> str:
+    """OBJ of `m`, optionally with one `vt` per distinct UV (in order of first use) and material runs.
 
-
-def obj_uv_text(note: str, m: Mesh, face_uvs: list[FaceUV]) -> str:
-    """OBJ with one `vt` per distinct UV, in order of first use."""
+    `materials` is (name, face count) per run in face order. With it, the file is one object, named by the note's
+    first word, with a `usemtl` before each run, so the materials switch inside one object.
+    """
     index: dict[UV, int] = {}
-    for corners in face_uvs:
-        for uv in corners:
+    for uvs in face_uvs or []:
+        for uv in uvs:
             index.setdefault(uv, len(index))
     lines = [HEADER, f"# {note}\n"]
+    starts: dict[int, str] = {}
+    if materials is not None:
+        lines.append(f"o {note.split(':')[0]}\n")
+        first = 0
+        for name, count in materials:
+            starts[first] = name
+            first += count
     lines += [f"v {num(p[0])} {num(p[1])} {num(p[2])}\n" for p in m.pos]
     lines += [f"vt {num(u)} {num(v)}\n" for u, v in index]
-    for f, corners in zip(m.faces, face_uvs):
-        lines.append("f " + " ".join(f"{v + 1}/{index[uv] + 1}" for v, uv in zip(f, corners)) + "\n")
+    for k, f in enumerate(m.faces):
+        if k in starts:
+            lines.append(f"usemtl {starts[k]}\n")
+        if face_uvs is None:
+            lines.append(f"f {f[0] + 1} {f[1] + 1} {f[2] + 1}\n")
+        else:
+            lines.append("f " + " ".join(f"{v + 1}/{index[uv] + 1}" for v, uv in zip(f, face_uvs[k])) + "\n")
     return "".join(lines)
 
 
@@ -276,7 +284,7 @@ def source_seam_files() -> dict[str, bytes]:
     m, face_uvs, cuts = capsule_uv()
     mesh = "meshes/source-seams/capsule-uv.obj"
     return {
-        mesh: obj_uv_text(note, m, face_uvs).encode("utf-8"),
+        mesh: obj_source_text(note, m, face_uvs).encode("utf-8"),
         "meshes/source-seams/capsule-uv.glb": glb_bytes("capsule-uv", note, m, [Primitive(m.faces, face_uvs)]),
         "seams/capsule-uv.json": seam_text(mesh, note, cuts).encode("utf-8"),
         "meshes/source-seams/capsule-hardshade.glb": glb_bytes(
@@ -294,7 +302,7 @@ def three_materials_files() -> dict[str, bytes]:
     mesh = "meshes/source-seams/three-materials.obj"
     prims = [Primitive(run, material=k) for k, run in enumerate(runs)]
     return {
-        mesh: obj_material_text(note, m, runs).encode("utf-8"),
+        mesh: obj_source_text(note, m, materials=[(n, len(r)) for n, r in zip(MATERIALS, runs, strict=True)]).encode("utf-8"),
         "meshes/source-seams/three-materials.glb": glb_bytes("three-materials", note, m, prims, list(MATERIALS)),
         "seams/non-disk/three-materials.json": seam_text(mesh, note, boundaries, "fabricBoundary").encode("utf-8"),
     }
@@ -305,7 +313,7 @@ def sphere_band_files() -> dict[str, bytes]:
     m, face_uvs, cuts = sphere_band()
     mesh = "meshes/source-seams/sphere-band.obj"
     return {
-        mesh: obj_uv_text(note, m, face_uvs).encode("utf-8"),
+        mesh: obj_source_text(note, m, face_uvs).encode("utf-8"),
         "meshes/source-seams/sphere-band.glb": glb_bytes("sphere-band", note, m, [Primitive(m.faces, face_uvs)]),
         "seams/non-disk/sphere-band.json": seam_text(mesh, note, cuts).encode("utf-8"),
     }

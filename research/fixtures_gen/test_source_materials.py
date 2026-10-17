@@ -9,44 +9,27 @@ import unittest
 from pathlib import Path
 
 from test_fixtures import FIXTURES, Face, Vec, array, chart_topology, edges_of, exact_int, field, read_seam_set
-from test_source_seams import SOURCE, accessor_floats, accessor_ints, match_positions, read_glb
-
-Run = tuple[str, list[Face]]  # a material name and the faces that follow its `usemtl`, in file order
+from test_source_seams import SOURCE, accessor_floats, accessor_ints, match_positions, read_glb, read_obj_source
 
 PRESETS = ("Quilting cotton", "Craft felt", "Polar fleece", "Minky / cuddle", "Velboa", "Short faux fur", "Long faux fur")
 NAMES = ["minky / cuddle", "Polar fleece ", "Felt Nose"]
 
 
-def read_obj_materials(path: Path) -> tuple[list[Vec], list[Run], int]:
-    """Positions, the `usemtl` runs in order, and the number of `o` lines. Faces before any `usemtl` are an error.
+def read_obj_materials(path: Path) -> tuple[list[Vec], list[tuple[str, list[Face]]], int]:
+    """Positions, the named `usemtl` runs with plain triangles, and the number of `o` lines.
 
-    A material name is the rest of the `usemtl` line exactly, trailing spaces included.
+    Faces before any `usemtl` are an error here, because every face of these fixtures has a material.
     """
-    pos: list[Vec] = []
-    runs: list[Run] = []
-    objects = 0
-    for line in path.read_text(encoding="utf-8").split("\n"):
-        word = line.split(" ", 1)[0]
-        if word == "v":
-            x, y, z = (float(s) for s in line.split()[1:])
-            pos.append((x, y, z))
-        elif word == "o":
-            objects += 1
-        elif word == "usemtl":
-            runs.append((line[len("usemtl ") :], []))
-        elif word == "f":
-            if not runs:
-                raise ValueError(f"{path.name}: a face before any usemtl")
-            ids = [int(s) for s in line.split()[1:]]
-            if len(ids) != 3 or not all(1 <= i <= len(pos) for i in ids):
-                raise ValueError(f"{path.name}: bad face {line!r}")
-            runs[-1][1].append((ids[0] - 1, ids[1] - 1, ids[2] - 1))
-        elif word not in ("", "#"):
-            raise ValueError(f"{path.name}: unexpected OBJ line {line!r}")
-    return pos, runs, objects
+    pos, runs, objects = read_obj_source(path)
+    named: list[tuple[str, list[Face]]] = []
+    for name, faces in runs:
+        if name is None:
+            raise ValueError(f"{path.name}: a face before any usemtl")
+        named.append((name, [(a[0], b[0], c[0]) for a, b, c in faces]))
+    return pos, named, objects
 
 
-def material_boundaries(runs: list[Run]) -> set[tuple[int, int]]:
+def material_boundaries(runs: list[tuple[str, list[Face]]]) -> set[tuple[int, int]]:
     """Edges whose two faces come from different runs; raises on an edge without exactly two faces."""
     owner: dict[tuple[int, int], list[int]] = {}
     for r, (_, faces) in enumerate(runs):

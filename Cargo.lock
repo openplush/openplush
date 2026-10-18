@@ -648,6 +648,7 @@ name = "openplush-flatten"
 version = "0.0.0"
 dependencies = [
  "faer",
+ "libm",
  "openplush-geom",
  "openplush-mesh",
  "openplush-seams",

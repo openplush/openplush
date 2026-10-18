@@ -1,7 +1,7 @@
 ---
-status: Proposed
+status: Accepted
 date: 2026-10-15
-deciders: maintainer (proposed by the implementing agent from spike S5, T005)
+deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent from spike S5, T005
 ---
 
 # Write the tiled PDF directly with `pdf-writer`; label with standard-14 Helvetica, embed no fonts

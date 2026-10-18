@@ -19,6 +19,15 @@ impl PatternPiece {
         cut_quantity: u32,
         rotations_deg: Vec<f64>,
     ) -> Result<Self, PatternError> {
+        if cut_quantity == 0 {
+            return Err(PatternError::ZeroCutQuantity);
+        }
+        if rotations_deg.is_empty() {
+            return Err(PatternError::NoRotations);
+        }
+        if let Some(index) = rotations_deg.iter().position(|r| !r.is_finite()) {
+            return Err(PatternError::NonFiniteRotation { index });
+        }
         Ok(Self {
             id,
             sewing_line,

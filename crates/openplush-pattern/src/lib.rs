@@ -4,6 +4,7 @@ mod error;
 mod outline;
 pub mod parity;
 mod piece;
+pub mod scale;
 
 pub use error::PatternError;
 pub use outline::Outline;

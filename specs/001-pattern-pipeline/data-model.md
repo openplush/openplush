@@ -254,7 +254,7 @@ pub struct Fabric {
 |---|---|---|
 | `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, `k = 2` (D-046) | `Advisory` — shorter-pile fabric, or scale the toy up |
 | `CurveTighterThanPile` (FR-055) | seam-curve radius < `k × pile_len_mm` | `Advisory` — same |
-| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, provisional 20 percentage points, compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
+| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, 20 percentage points (D-046), compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
 | `LowNapCoherence` (FR-052) | R < 0.85 (warn), R < 0.7 (suggest split) | `Actionable` — proposed split curve |
 | `UnsupportedConcavity` (FR-025) | concave crease with no seam along it | `Actionable` — proposed seam along the crease |
 

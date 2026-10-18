@@ -41,6 +41,7 @@ pub(super) fn read(text: &str) -> Result<Corners, IoError> {
             State::Solid if word("facet") => State::Facet,
             State::Solid if word("endsolid") => State::Outside,
             State::Facet if word("outer") => {
+                expect_loop(&mut tokens).map_err(&fail)?;
                 in_loop = 0;
                 State::Loop
             }
@@ -49,7 +50,7 @@ pub(super) fn read(text: &str) -> Result<Corners, IoError> {
                     return Err(fail("a facet has more than three vertices".into()));
                 }
                 in_loop += 1;
-                corners.positions.push(vertex(tokens).map_err(&fail)?);
+                corners.positions.push(vertex(&mut tokens).map_err(&fail)?);
                 State::Loop
             }
             State::Loop if word("endloop") => {
@@ -72,12 +73,24 @@ pub(super) fn read(text: &str) -> Result<Corners, IoError> {
     Ok(corners)
 }
 
-fn vertex<'a>(mut tokens: impl Iterator<Item = &'a str>) -> Result<DVec3, String> {
+fn expect_loop<'a>(tokens: &mut impl Iterator<Item = &'a str>) -> Result<(), String> {
+    match tokens.next() {
+        Some(t) if t.eq_ignore_ascii_case("loop") => Ok(()),
+        _ => Err("`outer` must be followed by `loop`".into()),
+    }
+}
+
+/// Three coordinates and nothing after them.
+fn vertex<'a>(tokens: &mut impl Iterator<Item = &'a str>) -> Result<DVec3, String> {
     let mut next = || {
         let token = tokens.next().ok_or("a vertex needs three coordinates")?;
         token
             .parse::<f64>()
             .map_err(|_| format!("`{token}` is not a number"))
     };
-    Ok(DVec3::new(next()?, next()?, next()?))
+    let at = DVec3::new(next()?, next()?, next()?);
+    match tokens.next() {
+        Some(extra) => Err(format!("`{extra}` follows the three coordinates")),
+        None => Ok(at),
+    }
 }

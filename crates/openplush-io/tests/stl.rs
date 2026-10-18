@@ -256,3 +256,18 @@ fn a_file_that_ends_inside_a_solid_names_the_line_after_the_last() {
         format!("line {}: the file ends inside a solid", lines + 1)
     );
 }
+
+#[test]
+fn extra_tokens_on_a_vertex_and_an_outer_without_loop_are_refused() {
+    let head = "solid a\nfacet normal 0 0 1\n";
+    let extra = format!("{head}outer loop\nvertex 1 0 0 9\n");
+    assert_eq!(
+        parse_detail(extra.as_bytes()).unwrap(),
+        "line 4: `9` follows the three coordinates"
+    );
+    let bare = format!("{head}outer\n");
+    assert_eq!(
+        parse_detail(bare.as_bytes()).unwrap(),
+        "line 3: `outer` must be followed by `loop`"
+    );
+}

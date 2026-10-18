@@ -268,3 +268,28 @@ fn a_sheets_interior_vertex_gets_a_copy_for_the_second_layer() {
     );
     assert_eq!(most_faces_on_an_edge(&out), 2);
 }
+
+#[test]
+fn an_unpaired_face_and_an_unnamed_one_are_separate_fans_from_each_other_and_the_pair() {
+    // Four faces on edge 0-1; the pairing names three of them.
+    let s = soup(6, &[[0, 1, 2], [1, 0, 3], [0, 1, 4], [1, 0, 5]]);
+    let pairs = [pairing([0, 1], &[[0, 1]], Some(2))];
+    let (out, split) = split(&s, &pairs).unwrap();
+    assert_eq!(split.copies.len(), 4);
+    assert_eq!(
+        out.triangle_indices(),
+        [[0, 1, 2], [1, 0, 3], [6, 8, 4], [9, 7, 5]]
+    );
+}
+
+#[test]
+fn unnamed_faces_on_a_paired_edge_share_one_fan() {
+    let s = soup(6, &[[0, 1, 2], [1, 0, 3], [0, 1, 4], [1, 0, 5]]);
+    let pairs = [pairing([0, 1], &[[0, 1]], None)];
+    let (out, split) = split(&s, &pairs).unwrap();
+    assert_eq!(split.copies.len(), 2);
+    assert_eq!(
+        out.triangle_indices(),
+        [[0, 1, 2], [1, 0, 3], [6, 7, 4], [7, 6, 5]]
+    );
+}

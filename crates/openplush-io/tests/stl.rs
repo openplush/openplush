@@ -127,8 +127,8 @@ fn a_truncated_binary_file_is_refused_with_both_sizes() {
     let mut bytes = binary(&SQUARE);
     bytes.truncate(bytes.len() - 10);
     let detail = parse_detail(&bytes).unwrap();
-    assert!(detail.contains("2 triangles"), "{detail}");
-    assert!(detail.contains(&(bytes.len() + 10).to_string()), "{detail}");
+    assert!(detail.contains("174 bytes"), "{detail}");
+    assert!(detail.contains("184 bytes"), "{detail}");
 }
 
 #[test]
@@ -189,4 +189,13 @@ fn non_finite_vertices_are_all_named_in_file_order() {
     assert_eq!(named(&binary(&tris)), [src(0, 1), src(0, 5)]);
     let text = ascii(&[&tris]).replace("NaN", "nan");
     assert_eq!(named(text.as_bytes()), [src(0, 1), src(0, 5)]);
+}
+
+#[test]
+fn ascii_after_a_byte_order_mark_is_read() {
+    let text = format!("\u{feff}{}", ascii(&[&SQUARE]));
+    assert_eq!(
+        stl::read(text.as_bytes()).unwrap(),
+        stl::read(&binary(&SQUARE)).unwrap()
+    );
 }

@@ -111,7 +111,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - Pieces below minimum sewable size; seam curves tighter than the allowance.
 - Ears or fins sandwiched into a seam (more than two layers meeting along one seam line).
 - Markings straddling a seam; markings on a region later re-seamed.
-- Extreme scales (keychain to wearable), very dense meshes, quads/n-gons.
+- Extreme scales (below 75 mm or above 1000 mm, FR-006), very dense meshes, quads/n-gons.
 - Concave regions without a seam (stuffing will push them outward — FR-024, FR-025).
 - Seams joining fabrics with different stretch (fur to minky).
 - Pile longer than a detail it covers.
@@ -175,7 +175,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 
 ### Output
 - **FR-060**: SVG export at true scale (document dimensions in mm; 1 user unit = 1 mm).
-- **FR-061**: Print export tiled for Letter or A4 (the maker picks, defaulting by region) with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. Pages are joined by overlapping without trimming: a 15 mm overlap band carries matching marks and the pattern lines, each page is labeled by row letter and column number, page 1 carries the page map, and the scale-check square is 50 mm with a labeled 1 in square inside it. [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
+- **FR-061**: Print export tiled for Letter or A4 (the maker picks, defaulting by region) with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. Pages are joined by overlapping without trimming: a 15 mm overlap band carries matching marks and the pattern lines, each page is labeled by row letter and column number, page 1 carries the page map, and the scale-check square is 50 mm with a labeled 1 in square inside it. [verify: the 15 mm overlap on a test print; the row-and-column labels are not yet confirmed (D-045)] [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
 - **FR-062**: Fabric-saving layout within a given fabric width. v0.1 places pieces by a simple rule and reports the fabric length needed; genuinely optimized nesting is deferred.
 - **FR-063**: Export pattern geometry and metadata as open JSON; DXF for cutting machines. (P3)
 - **FR-064**: A warning never blocks export. Before exporting a pattern that still has unresolved warnings, the maker acknowledges them once, and a summary of each unresolved warning is printed on the pattern's first page — so a printed pattern always carries its own known problems. A violated geometric invariant (e.g. FR-023) is an error, not a warning, and does block export.

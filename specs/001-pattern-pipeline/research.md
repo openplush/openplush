@@ -308,7 +308,7 @@ Seven shipped presets, all editable, all persisted in the project. The schema is
 
 ### Why these fields and not others
 
-- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, mirrored printing (FR-054), and pile-scaled allowance (FR-055).
+- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, the export-time mirroring question (FR-054), and pile-scaled allowance (FR-055).
 - **Per-direction stretch** is recorded but does **not** steer flattening (D-014). Its only job in 001 is FR-058's cross-seam mismatch warning. Knit-backed fur stretching ~30% crosswise against a 0% woven is exactly the seam that fights back while sewing.
 - **Pile length** scales the default allowance and triggers the small-part warning (FR-055). The 2× rule (D-046) means long faux fur (30 mm) warns on any piece or detail under 60 mm. That is informative, not a bug, but it is the strongest argument for making the multiple configurable.
 - **Thickness** is recorded for the "thick backing on a small plush" edge case and for future thickness compensation, which is explicitly out of scope here. It drives no geometry in 001.

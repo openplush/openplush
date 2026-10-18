@@ -279,7 +279,7 @@ pub struct PatternPiece {
     pub id: PieceId,
     pub sewing_line: Outline,
     pub cut_line: Outline,
-    pub cut_quantity: u32,        // at least 1
+    pub cut_quantity: u32,        // 1 to 100 (D-047)
     pub rotations_deg: Vec<f64>,  // computed from the fabric by the pattern stage on every run; not part of the saved project document (§12, §6a, ADR 0007)
 }
 
@@ -288,7 +288,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 ```
 
 - `Outline::new` is the only constructor, so an outline that crosses itself, repeats a point, has zero area or is wound clockwise is a typed error, never repaired. It uses the exact predicates in `openplush-geom`; the testkit's `outline_simple` oracle checks the same properties independently.
-- Marks, labels, grain and notches join `PatternPiece` in the tasks that produce them. The label block's cut quantity and mirror flag (§8) are read from `cut_quantity` and the fabric.
+- Marks, labels, grain and notches join `PatternPiece` in the tasks that produce them. The label block's cut quantity and mirror flag (§8) are read from `cut_quantity` and the maker's mirroring choice at export (D-039, FR-054).
 - A `Sheet` is a rectangle of fabric: its width is the roll width (or the piece extent when none is set) and its length is what the placements use. `PageTiling` (FR-061) is a layout output derived from one `Sheet`; both live in `openplush-layout`, and `openplush-export` reads them (ADR 0012).
 
 ## 8. Notches and Labels

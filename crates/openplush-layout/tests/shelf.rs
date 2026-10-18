@@ -1,33 +1,12 @@
 //! `shelf::pack`: simple shelf packing across a roll, with rotation sets and mirroring honoured.
 
+use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
-use openplush_geom::{DVec2, GeomError};
 use openplush_layout::shelf::pack;
 use openplush_layout::{LayoutError, LayoutOptions, Placement, Sheet};
 use openplush_pattern::{Outline, PatternError, PatternPiece, PieceId};
 
-#[derive(Debug)]
-enum Setup {
-    Geom(GeomError),
-    Pattern(PatternError),
-    Layout(LayoutError),
-}
-
-impl From<GeomError> for Setup {
-    fn from(e: GeomError) -> Self {
-        Self::Geom(e)
-    }
-}
-impl From<PatternError> for Setup {
-    fn from(e: PatternError) -> Self {
-        Self::Pattern(e)
-    }
-}
-impl From<LayoutError> for Setup {
-    fn from(e: LayoutError) -> Self {
-        Self::Layout(e)
-    }
-}
+type Setup = Box<dyn std::error::Error>;
 
 /// A rectangle with its lower-left corner at (x0, y0).
 fn rect(x0: f64, y0: f64, w: f64, h: f64) -> Result<Outline, PatternError> {
@@ -67,7 +46,7 @@ fn only(sheets: Vec<Sheet>) -> Result<Sheet, Setup> {
     let mut it = sheets.into_iter();
     match (it.next(), it.next()) {
         (Some(s), None) => Ok(s),
-        _ => Err(Setup::Layout(LayoutError::NoPieces)),
+        _ => Err(LayoutError::NoPieces.into()),
     }
 }
 
@@ -108,7 +87,7 @@ fn one_piece_sits_in_the_corner_and_the_sheet_is_as_long_as_it_is() -> Result<()
     )?)?;
     assert_eq!((s.width_mm(), s.length_mm()), (100.0, 20.0));
     let [p] = s.placements() else {
-        return Err(Setup::Layout(LayoutError::NoPieces));
+        return Err(LayoutError::NoPieces.into());
     };
     assert_eq!(
         (p.piece(), p.copy(), p.rotation_deg(), p.mirrored()),
@@ -296,7 +275,7 @@ fn a_varied_set_never_overlaps_and_stays_inside_the_roll() -> Result<(), Setup> 
             src.map(|q| bounds(&placed(q.cut_line(), p)))
         })
         .collect::<Option<_>>()
-        .ok_or(Setup::Layout(LayoutError::NoPieces))?;
+        .ok_or(LayoutError::NoPieces)?;
     assert_eq!(
         boxes.len(),
         pieces

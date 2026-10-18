@@ -38,7 +38,7 @@ Exactly one terminal message (`ok: true` or `ok: false`) per `id`. `{ crashed: t
 
 | `op` | Payload | Result | Notes |
 |---|---|---|---|
-| `import` | bytes (transferred), `ImportOptions` | `MeshHandle`, `ValidationReport` | Import and validate in one round trip — the UI always wants both |
+| `import` | `ImportFiles`: a primary file and its sidecars, each `name` + bytes (transferred), `ImportOptions` | `MeshHandle`, `ValidationReport` | Import and validate in one round trip — the UI always wants both |
 | `repair` | `MeshHandle`, `RepairPlan` | `MeshHandle` (new), `RepairReport` | Never mutates in place; the pre-repair handle stays valid for before/after display (Constitution VII) |
 | `renderMesh` | `MeshHandle`, LOD | positions, indices, normals (transferred) | For the 3D view |
 | `setSeams` | `PipelineHandle`, `SeamSet` | affected chart IDs | Invalidates only affected charts (FR-014) |

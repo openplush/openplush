@@ -85,6 +85,25 @@ Order matters; each step records entries in `RepairReport`.
 | 8 | Self-intersections | BVH triangle-triangle tests | **Warn only.** Disk charts flatten regardless; intersecting limbs in 3D usually need separate pieces anyway | Suggest seams along intersection curves |
 | — | Last resort | Hopeless input | Not in v0.1 (D-024: `baby_shark` fails the dependency gates). If it returns: opt-in voxel remesh, which destroys UVs and sharp features → explicit warning | All seams/decals must be redrawn |
 
+### 3a. RepairPlan and RepairReport (D-039)
+
+`RepairPlan` is what the maker confirmed; steps 0-6 are lossless or mandatory and need no choice, so the plan carries only the two decisions the maker owns. Both are keyed by an ID that is stable across re-application (`RepairPlan` is stored and re-applied, §12).
+
+```rust
+pub struct RepairPlan {
+    /// A boundary loop, named by its lowest vertex ID in the repaired mesh's pre-fill numbering,
+    /// → what to do with it. A loop not listed stays an opening: filling is opt-in.
+    pub holes: BTreeMap<VertexId, HoleDisposition>,   // Fill | Opening
+    /// A component, named by its lowest face ID, → whether it is a detail part (FR-005).
+    /// A component not listed follows the 1%-of-area default (step 6).
+    pub components: BTreeMap<FaceId, ComponentRole>,  // Detail | Body
+}
+```
+
+`RepairReport` lists everything repair did or found, so nothing is silent (Constitution VII, FR-004): the welded vertex groups; faces dropped as repeated-index or duplicate; the double-sided sheets; stitched caps and the faces re-triangulated with them; every paired non-manifold edge (pairs and unpaired face); every added vertex copy (bowtie); every flipped face; every orientation-conflict edge; every component with its detail flag and the role that decided it; every boundary loop with its disposition and the faces a fill added; and the mandatory seams the above create. Removals, flips and pairings name faces and vertices of the soup given to repair; additions (vertex copies, hole faces) name those of the repaired mesh.
+
+A loop's fill is never silent: it appears in the report whether the plan named it or not, and a `Fill` of a loop that no longer exists (the mesh changed) is a typed error naming the loop, not a skipped entry.
+
 ## 4. Seams, Charts, and Sewing Correspondence
 
 ### SeamSet (non-destructive)

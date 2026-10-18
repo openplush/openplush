@@ -305,7 +305,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 ### Tests for US3
 
 - [ ] T110 [P] [US3] `crates/openplush-pattern/tests/notches.rs` — paired notches sit at the same fractional arc length on both sides of every chain
-- [ ] T111 [P] [US3] `crates/openplush-pattern/tests/dedupe.rs` — a symmetric model yields one template labelled cut 2 mirrored, not two identical pieces
+- [ ] T111 [P] [US3] `crates/openplush-pattern/tests/dedupe.rs` — a symmetric model yields one template labelled "cut 2 (1 + 1 flipped)", not two identical pieces; a near match, or a pair whose markings or grain differ, stays two templates
 - [ ] T112 [P] [US3] `crates/openplush-pattern/tests/clip_marks.rs` — tight concave curves get clip marks, tight convex curves get notch-out marks, and zero-allowance edges get neither
 
 ### Implementation
@@ -313,7 +313,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T113 [US3] `crates/openplush-pattern/src/notches.rs` — notches at chain ends plus every 50 mm (provisional); side B placed at the same fractional arc length as side A
 - [ ] T114 [US3] `crates/openplush-pattern/src/pairing.rs` — unambiguous pairing codes. Notch multiplicity differs between adjacent chains on the same piece, so a sewist cannot rotate a piece and match the wrong edge. **The whole point is that a wrong match must be impossible, not merely unlikely**
 - [ ] T115 [US3] `crates/openplush-pattern/src/labels.rs` — piece label block: ID, name, cut counts ("Cut 2 (1 + 1 flipped)", D-048), fabric, grain and nap arrows, seam-partner labels (FR-033)
-- [ ] T116 [US3] `crates/openplush-pattern/src/dedupe.rs` — identical and mirror-image pieces collapse to one template (FR-034) *2026-10-18: D-048: fills `as_printed` and `flipped`; never merges across fabric or nap, or pieces whose seam partners differ once mirrored; merges within seam-parity tolerance and asks the maker about a near match, showing its largest difference in mm; the question's type and where the answer is saved are open in D-048*
+- [ ] T116 [US3] `crates/openplush-pattern/src/dedupe.rs` — identical and mirror-image pieces collapse to one template (FR-034) *2026-10-18: D-048: fills `as_printed` and `flipped`; merges only when fabric, nap, seam partners, markings and grain arrows match through the mirror and every seam is within seam-parity tolerance; a near match is never merged: the maker sees its largest difference in mm and is offered seam mirroring (FR-010), else the pieces stay separate; the question's type and where the answer is saved are open in D-048*
 - [ ] T117 [US3] `crates/openplush-pattern/src/marks.rs` — clip marks on tight concave curves, notch-out marks on tight convex curves, spacing proportional to curvature (FR-035)
 - [ ] T118 [US3] `crates/openplush-pattern/src/opening.rs` — the opening chain is labelled and uses the opening allowance (FR-012)
 - [ ] T119 [US3] `apps/web/src/pieces/` — piece inspector showing labels, notches, and partners

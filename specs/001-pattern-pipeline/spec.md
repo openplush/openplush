@@ -152,7 +152,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-031**: Sewing line and cut line drawn distinctly.
 - **FR-032**: Match notches on paired seams with unambiguous pairing codes, at matching arc-length positions.
 - **FR-033**: Piece labels: ID, name, how many to cut as printed and how many flipped, fabric, grain and nap arrows, seam-partner labels.
-- **FR-034**: Identical and mirror-image pieces deduplicated into one template, labelled with how many to cut as printed and how many flipped ("cut 4", "cut 2 (1 + 1 flipped)"). Pieces that only nearly match are merged only when the maker accepts, after seeing how far apart they are (D-048).
+- **FR-034**: Identical and mirror-image pieces deduplicated into one template, labelled with how many to cut as printed and how many flipped ("cut 4", "cut 2 (1 + 1 flipped)"). Pieces that only nearly match are never merged: the maker is told how far apart they are and offered seam mirroring, and otherwise they stay separate (D-048).
 - **FR-035**: Clip marks on tight concave curves; notch-out marks on tight convex curves.
 - **FR-036**: Assembly order hints. (P3)
 

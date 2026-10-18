@@ -58,12 +58,12 @@ pub enum PatternError {
     ZeroCutQuantity,
     /// More copies than any plush needs: a typo or a corrupt project file.
     #[error(
-        "a piece can be cut at most {} times, got {cut_quantity}",
-        crate::PatternPiece::MAX_CUT_QUANTITY
+        "a piece can be cut at most {} times, got {total}",
+        crate::CutCount::MAX_TOTAL
     )]
     TooManyCuts {
-        /// The quantity given.
-        cut_quantity: u32,
+        /// Copies as printed plus copies flipped.
+        total: u64,
     },
     /// A piece needs at least one allowed rotation.
     #[error("a piece needs at least one allowed rotation")]

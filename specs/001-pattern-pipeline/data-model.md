@@ -212,7 +212,9 @@ At every seam bundle, compare the mapped nap directions on each side at matched 
 |---|---|---|
 | Napped (faux fur, velvet, minky with pile) | {0°} (± small tolerance, provisional 3°) | Reflect across the axis **parallel** to the nap — preserves nap direction |
 | Non-napped, no directional print | {0°, 180°} | Either axis |
-| Bias-cut woven | {45°, 225°} | Parallel to grain |
+| Felt (no grain) | {0°, 90°, 180°, 270°} | Either axis |
+
+No piece is placed on the bias in this feature (D-046).
 
 `jagua-rs` supports reflection about specified local axes, which maps directly to mirrored pieces (S4 confirms discrete rotation sets).
 
@@ -241,8 +243,8 @@ pub struct Fabric {
 }
 ```
 
-- **Presets** (research R7) ship as data, not code: seven `Fabric` values the user can edit or delete. An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
-- **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether mirrored printing applies (FR-054: `category == Pile`), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
+- **Presets** (research R7) ship as data, not code: `Fabric` values the user can edit or delete, each added once a sewist has measured it (D-046). An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
+- **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether export must ask about mirrored printing (FR-054: `category == Pile`; the answer is the maker's, never a stored default), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
 - **Invariants**: `pile_len_mm > 0 ⇒ nap` for `Pile`; all stretch percentages ≥ 0; `roll_width_mm > 0`; `default_allowance_mm ≥ 0` (zero is legal only when `!frays`, FR-057).
 - **Per-piece assignment** comes from painted fabric regions (FR-041). A piece spanning two fabrics is impossible by construction, because region boundaries are seams.
 
@@ -250,7 +252,7 @@ pub struct Fabric {
 
 | Warning | Condition | Remedy kind |
 |---|---|---|
-| `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, provisional `k = 3` | `Advisory` — shorter-pile fabric, or scale the toy up |
+| `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, `k = 2` (D-046) | `Advisory` — shorter-pile fabric, or scale the toy up |
 | `CurveTighterThanPile` (FR-055) | seam-curve radius < `k × pile_len_mm` | `Advisory` — same |
 | `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, provisional 20 percentage points, compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
 | `LowNapCoherence` (FR-052) | R < 0.85 (warn), R < 0.7 (suggest split) | `Actionable` — proposed split curve |
@@ -306,7 +308,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 ## 10. Units and Scale
 - `ImportOptions.units` declared or inferred (heuristic on bbox size) and confirmed by the user.
 - `Scale` is a single uniform factor applied at the pattern stage. Flattening output is in model units × scale; physical constraints (allowance, min piece size, min curvature radius) are evaluated in mm after scaling.
-- **Supported range** (FR-006): keychain to roughly 1 m in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
+- **Supported range** (FR-006, D-040): 75 mm to 1000 mm in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
 - **Shrink compensation** (FR-056, D-012): an optional uniform percentage `shrink_pct`, applied as a second uniform factor at the pattern stage, so a stretch fabric sewn and stuffed lands nearer the model's size. It is **uniform only** — one number, every direction, every piece. Direction-dependent compensation is out of scope (D-014), and so is any attempt to predict the stuffed shape (D-012). The maker sets this from experience with their fabric; the tool does not infer it.
 - Because both `Scale` and `shrink_pct` are uniform factors at the same stage, flattening never re-runs when either changes — only `pattern` onward. That is the practical payoff of keeping compensation uniform.
 

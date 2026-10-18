@@ -127,7 +127,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-003**: Detect and report non-manifold edges/vertices, inconsistent orientation, degenerate/duplicate faces, holes, disconnected components, and self-intersections; each defect is locatable in 3D.
 - **FR-004**: Offer repair per defect class with a before/after report; never modify geometry without confirmation (or an explicit per-project auto-repair setting).
 - **FR-005**: Classify small disconnected components as candidate detail parts the user can mark as non-sewn.
-- **FR-006**: User sets real-world size (by a dimension or a measured reference distance) and units; a human-scale reference is shown. Supported range is handheld to large plush (roughly keychain up to a metre in the longest dimension); wearable/costume scale is out of scope.
+- **FR-006**: User sets real-world size (by a dimension or a measured reference distance) and units; a human-scale reference is shown. Supported range is 75 mm to 1000 mm in the longest finished dimension, the smallest plush that can still be turned and stuffed up to large plush; outside it the maker is warned, never blocked. Wearable/costume scale is out of scope.
 
 ### Seams
 - **FR-010**: Draw and erase seams along the surface in 3D (point-to-point with automatic shortest path), with an optional symmetry-mirroring mode.
@@ -163,19 +163,19 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-043**: Transfer the model's texture onto pieces as printable images for print-on-fabric, with bleed into the allowance. Deferred past v0.1.
 
 ### Fabric & grain
-- **FR-050**: Fabric profiles: name, category (woven, knit, pile, felt), stretch along grain / across grain / bias (%), nap (yes/no), pile length (mm), thickness (mm), frays (yes/no), default seam allowance, roll width. Ship editable presets: quilting cotton, felt, fleece, minky, velboa, short faux fur, long faux fur. Profiles are saved in the project.
+- **FR-050**: Fabric profiles: name, category (woven, knit, pile, felt), stretch along grain / across grain / bias (%), nap (yes/no), pile length (mm), thickness (mm), frays (yes/no), default seam allowance, roll width. Ship editable presets for quilting cotton, felt, fleece, minky, velboa, short faux fur and long faux fur, each only once someone who sews has measured it; fleece, minky and long faux fur come first. Profiles are saved in the project.
 - **FR-051**: User-defined nap/grain direction on the model via strokes, with a sensible default when none is given.
 - **FR-052**: Each piece is oriented so grain/nap align with the fabric; poor nap coherence within a piece triggers a warning and split suggestion.
-- **FR-053**: Layout honors allowed rotations per fabric (napped: none; non-napped: 180°).
-- **FR-054**: For pile fabrics, print pieces mirrored and labeled "trace on wrong side" by default; the user can switch to right-side printing.
-- **FR-055**: Default seam allowance scales with pile length; warn when a piece, detail part, or curve is smaller than a multiple of the pile length. [NEEDS CLARIFICATION: multiple — provisional 3×]
+- **FR-053**: Layout honors allowed rotations per fabric (napped: none; non-napped: 180°; felt, which has no grain: any quarter turn). No piece is placed on the bias.
+- **FR-054**: For pile fabrics, export asks the maker each time whether to print pieces mirrored, labeled "trace on wrong side", or as-is, labeled "lay face down on wrong side"; there is no default.
+- **FR-055**: Default seam allowance scales with pile length; warn when a piece, detail part, or curve is smaller than twice the pile length.
 - **FR-056**: Optional uniform shrink compensation (%) for stretch fabrics so the stuffed toy matches the model size; direction-dependent compensation is out of scope for this feature.
 - **FR-057**: Non-fraying fabrics may use zero allowance for edge-stitched or appliqué pieces.
-- **FR-058**: Warn when a seam joins fabrics whose stretch differs by more than a threshold. [NEEDS CLARIFICATION: threshold — provisional 20 percentage points]
+- **FR-058**: Warn when a seam joins fabrics whose stretch differs by more than 20 percentage points, stated to the maker as "over a 100 mm span, one fabric stretches N mm further".
 
 ### Output
 - **FR-060**: SVG export at true scale (document dimensions in mm; 1 user unit = 1 mm).
-- **FR-061**: Print export tiled for Letter and A4 with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
+- **FR-061**: Print export tiled for Letter or A4 (the maker picks, defaulting by region) with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. Pages are joined by overlapping without trimming: a 15 mm overlap band carries matching marks and the pattern lines, each page is labeled by row letter and column number, page 1 carries the page map, and the scale-check square is 50 mm with a labeled 1 in square inside it. [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
 - **FR-062**: Fabric-saving layout within a given fabric width. v0.1 places pieces by a simple rule and reports the fabric length needed; genuinely optimized nesting is deferred.
 - **FR-063**: Export pattern geometry and metadata as open JSON; DXF for cutting machines. (P3)
 - **FR-064**: A warning never blocks export. Before exporting a pattern that still has unresolved warnings, the maker acknowledges them once, and a summary of each unresolved warning is printed on the pattern's first page — so a printed pattern always carries its own known problems. A violated geometric invariant (e.g. FR-023) is an error, not a warning, and does block export.
@@ -237,5 +237,3 @@ Remaining minor decisions, with the default that applies if nobody answers:
 - STL/PLY import (default: yes) — FR-001.
 - PDF print export in v0.1 (default: yes) — FR-061.
 - Default seam allowance (default: 6 mm in metric locales, ¼ in in the US) — FR-030.
-- Pile-length multiple below which a piece, detail, or curve is flagged (default: 3×) — FR-055.
-- Stretch difference between two fabrics that triggers a seam warning (default: 20 percentage points) — FR-058.

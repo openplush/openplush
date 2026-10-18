@@ -39,6 +39,8 @@ impl Placement {
 }
 
 /// A rectangle of fabric holding placed pieces: as wide as the roll, as long as the placements need.
+///
+/// Coordinates are y-up, like the outlines placed on it, so its top edge is `y = length_mm`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sheet {
     pub(crate) width_mm: f64,

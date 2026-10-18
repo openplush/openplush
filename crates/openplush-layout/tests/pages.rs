@@ -133,21 +133,21 @@ fn a_wide_short_sheet_is_one_row_of_pages() -> Result<(), Setup> {
     Ok(())
 }
 
+/// The pages of a one-column tiling on A4, top row first.
+fn one_column_of_pages(s: &Sheet) -> Result<Vec<openplush_layout::pages::Page>, Setup> {
+    let t = tile(s, Paper::A4)?;
+    assert_eq!(t.columns(), 1);
+    Ok(t.pages().to_vec())
+}
+
 #[test]
 fn rows_run_down_from_the_top_edge_each_repeating_15_mm_at_its_bottom() -> Result<(), Setup> {
     // Sheets are y-up, so the top edge is the highest y and row A starts there.
-    let t = tiling_columns(&sheet(100.0, 600.0)?)?;
+    let t = one_column_of_pages(&sheet(100.0, 600.0)?)?;
     assert_eq!(t[0].window_max().y, 600.0);
     for pair in t.windows(2) {
         assert_eq!(pair[1].window_max().y, pair[0].window_min().y + 15.0);
         assert!(pair[1].window_min().y < pair[0].window_min().y);
     }
     Ok(())
-}
-
-/// The pages of a one-column tiling on A4, top row first.
-fn tiling_columns(s: &Sheet) -> Result<Vec<openplush_layout::pages::Page>, Setup> {
-    let t = tile(s, Paper::A4)?;
-    assert_eq!(t.columns(), 1);
-    Ok(t.pages().to_vec())
 }

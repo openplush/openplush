@@ -18,18 +18,18 @@ Thanks for helping. OpenPlush is pre-alpha with no code yet, but both features a
 OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spec-kit)).
 
 1. Features are specified in `specs/NNN-name/spec.md`, planned in `plan.md`, and broken into tasks in `tasks.md`.
-2. Pick a task, open one small PR for it, and reference it: `Task: T014 (specs/001-pattern-pipeline/tasks.md)`.
+2. Pick a task, or a few that finish one outcome together, open one PR for them, and reference them: `Tasks: T014 (specs/001-pattern-pipeline/tasks.md)`.
 3. **Trivial changes skip the task requirement:** docs or typo fixes, comment fixes, dependency patch bumps, new fixtures with a license entry, and CI changes that don't alter gates.
 
-## Pull requests are small here
-`main` is the trunk and everything arrives by PR. The size rule is not a preference:
+## Pull requests carry one intent
+`main` is the trunk and everything arrives by PR ([ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)):
 
-- **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
-- **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
-- **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
-- Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#commits-and-prs).
+- **One intent per PR**: one finishable outcome toward a user story, stated in one sentence. Every task it touches is finished, and ticked, in that PR. There is no line budget.
+- **Each task is a test commit, then the implementation that makes it pass.** A large PR is reviewed commit by commit, so name the reading order in the description.
+- **Never in one PR**: two user stories, a spec change and the code that implements it, a refactor and a behaviour change, or chores mixed with features.
+- Branch names: `NNN/NN-slug` for feature work (`001/42-obj-import`: feature, position, intent; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#commits-and-prs).
 
-Why so strict: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A sign error in a dihedral angle or an epsilon against the wrong scale is a one-line defect that produces plausible output. It does not survive a focused review of 200 lines, and it sails through 2,000.
+Why intent and not size: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A reviewer catches that by checking a stated outcome against its tests, which needs the whole capability in view. Test-first commits keep a large PR readable one step at a time.
 
 Details and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 
@@ -38,7 +38,7 @@ Read the [constitution](.specify/memory/constitution.md) before your first PR. R
 ## Pull requests
 Use Conventional Commits (`feat(flatten): …`, `fix(mesh): …`, `docs(spec): …`). The PR description covers:
 - **What** and **why**
-- **Task** ID (unless trivial)
+- **Intent**, and the **Task** IDs it finishes (unless trivial)
 - **Edge cases** you considered
 - **Failure modes** and the error each produces
 - **Tests** added and what each proves
@@ -53,7 +53,7 @@ Every non-draft pull request gets one adversarial review from the agents in [`.c
 - `spec-reviewer` when `specs/` changes: contradictions between documents, missing ledger entries.
 - `mutation-auditor` on request (it is the expensive one): breaks each new check in turn and reports the ones no test catches.
 
-It runs once per PR, not on every push. Add the `rereview` label to run it again after fixing findings, and `mutation-audit` to include the mutation auditor. Both labels are removed when the run starts. A rerun reviews only what changed since the last summary, and skips findings already answered on the PR.
+It runs once per PR, not on every push. A rerun is the maintainer's call: the `rereview` label runs it again, and `mutation-audit` alone runs it again with the mutation auditor (with both labels on, it runs once). AI agents never add either label; they prove their own fixes with tests. Both labels are removed when the run starts. A rerun reviews only what changed since the last summary, and skips findings already answered on the PR.
 
 Findings arrive as review comments marked 🔴 blocking, 🟡 optional, or 🟣 pre-existing. Answer every 🔴: fix it or reply with why not. The review is advisory; it never approves, and a maintainer still merges. To run the same agents before you push, ask Claude Code in this repository to use them by name, for example "run the mutation-auditor agent on my branch against main".
 

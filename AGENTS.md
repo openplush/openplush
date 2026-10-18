@@ -68,10 +68,10 @@ All gates for the lane you touched pass locally, any public change has its as-bu
 Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 - Driving a PR (CI, review findings, stacks, merges, check-ins): follow [`.claude/skills/steward/SKILL.md`](.claude/skills/steward/SKILL.md).
 - Conventional Commits (`feat(flatten): …`). Every PR uses `.github/pull_request_template.md`.
-- One reviewable slice: ≤ 400 changed lines of hand-written source (fixtures, generated types, snapshots, lock files, and `docs/` prose excluded). Over → split, or justify in a `Size` section by naming what is indivisible.
-- A PR is a test task plus the implementation that makes it pass, test commit first.
-- Never in one PR: two user stories; two crates (a thin wiring commit excepted); spec and implementation; refactor and behaviour change; chores and feature work.
-- Branches: `NNN/NN-slug` for feature slices (`NN` = position in the feature, never reused; implementation slugs include the task ID) or `chore/slug`. The slug names the content, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.
+- One intent per PR ([ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)): one finishable outcome toward a user story, stated in one sentence without joining unrelated results by "and". Every task it touches is finished and ticked in that PR. No line budget.
+- Each task is a test commit, then the implementation commit that makes it pass; the PR body names its tasks and a reading order.
+- Never in one PR: two user stories; a spec or decision change and its implementation; refactor and behaviour change; chores and feature work. The changes `tasks.md` isolates for blast radius get their own PR.
+- Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused) or `chore/slug`. The slug names the intent, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.
 - Session branches (`claude/…`, `codex/…`, `copilot/…`) are not PR branches. If you cannot push the real name, put it and the stack position in the PR title and body.
-- Work that depends on anything unmerged is stacked: branch from the parent, PR base = parent, fill the `Stack` section, link the child from the parent. A stack never spans features or mixes chores with feature slices.
+- Work that depends on anything unmerged is stacked: branch from the parent, PR base = parent, fill the `Stack` section, link the child from the parent. A stack never spans features or mixes chores with feature work.
 - Merge commits only, bottom-up, and only a PR whose base is `main`. A fix to a lower slice is merged upward; never rebase or force-push a stack under review.

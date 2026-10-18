@@ -1,90 +1,81 @@
-# How to size and open a pull request
+# How to scope and open a pull request
 
-The binding rules are in [`AGENTS.md`](../../AGENTS.md#commits-and-prs). This page explains the reasoning and works through the cases you will actually hit.
+The binding rules are in [`AGENTS.md`](../../AGENTS.md#commits-and-prs); the decision is [ADR 0013](../adr/0013-intent-sized-pull-requests.md). This page explains the reasoning and works through the cases you will actually hit.
 
-## Why small PRs, specifically here
+## Why one intent per PR
 
-This project's worst failure mode is a pattern that looks right and is wrong — you find out after cutting fabric. Review is the main defence, and review quality collapses with size. A 2,000-line PR gets approved, not reviewed.
+This project's worst failure mode is a pattern that looks right and is wrong — you find out after cutting fabric. Review is the main defence, and a reviewer catches that kind of defect by checking a stated outcome against its tests: does the boundary come out at its 3D lengths, does a developable chart flatten with zero distortion. That needs the whole capability in one place.
 
-Geometry makes this sharper than usual. A sign error in a dihedral angle, an epsilon compared against the wrong scale, a `HashMap` iteration on an output path — each is a one-line defect that produces plausible-looking output. None survives a focused review of 200 lines. All three survive a sweep through 2,000.
+A line budget cut capabilities into pieces that could not be judged alone. Boundary prescription (T079) landed as three PRs, closing the polygon, finding the boundary loop, and the curvature step, and none of them showed a chart's boundary laid flat. Each piece cost a review run, a CI run and a merge. So the unit is the intent, not the line count.
 
-## The budget
+## What an intent is
 
-**400 changed lines of hand-written source.**
+**One finishable outcome toward a user story**, stated in one sentence without joining unrelated results by "and":
 
-Not counted:
+> The flattener lays a chart's boundary flat with every edge at its 3D length. *(T079)*
+> A chart flattens end to end: SLIM interior, fallback when the boundary cannot close, and step-wise progress for the worker. *(T080, T082, T083: one outcome, "a chart flattens")*
 
-| Excluded | Why |
-|---|---|
-| Fixture models (`fixtures/meshes/**`) | Binary; reviewed by looking at them, not by reading a diff |
-| Generated TypeScript types | Reviewed by checking the generator, once |
-| Snapshot files (`*.snap`, `fixtures/golden/**`) | Reviewed as rendered output in the PR comment |
-| Lock files | Reviewed by `cargo deny` |
-| Docs prose (`docs/**`) | Docs ship with the change they describe, and counting them would push them out of the PR; the docs-reviewer agent checks them instead |
+Not one intent:
 
-Going over is allowed when the work is genuinely indivisible — one algorithm, one solver, one parser. Say so in a `**Size**` section and name what makes it indivisible. These are real:
+> ~~OBJ import and the weld step.~~ *(two outcomes)*
+> ~~Half of the SLIM solver.~~ *(not finishable: nothing to check it against)*
 
-> **Size**: 520 lines. The SLIM interior solve is one energy, one line search, and one convergence test; splitting it leaves a half-solver that cannot be tested against the developable oracle.
+Every task the PR touches is finished, and ticked with its as-built note, in the same PR. There is no line budget. A large PR stays reviewable because of how its commits are laid out.
 
-These are not:
+## How a PR is laid out
 
-> ~~**Size**: 1,400 lines. Implements US1.~~
-> ~~**Size**: 900 lines. Easier to land together.~~
-
-## What goes in one PR
-
-**The test task plus the implementation that makes it pass.** Commit the test first, then the implementation, so the history shows test-first and CI is green at the PR tip.
+**Each task is a test commit, then the implementation that makes it pass.** A reviewer reads the test commit to learn what was promised, then the implementation to check it was delivered. In a PR with several tasks the commits run task by task:
 
 ```
-001/42-T050-obj-import
-├── test(io): OBJ import preserves per-corner UVs and materials   ← fails
-└── feat(io): OBJ import via tobj                                  ← passes
+001/115-slim-interior          Tasks: T080, T082
+├── test(flatten): a developable chart flattens with no distortion   ← T080, fails
+├── feat(flatten): SLIM interior solve                                ← T080, passes
+├── test(flatten): an unclosable boundary is refused with darts      ← T082, fails
+└── feat(flatten): boundary fallback                                  ← T082, passes
 ```
 
-A reviewer reads the test commit to learn what was promised, then the implementation to check it was delivered. That ordering is the whole point and it is lost if they land separately.
+The PR's `Reading order` section says where to start. Commit by commit, a 1,500-line PR is still a series of small, checkable steps.
 
-### Why not a PR per task, strictly
+### Why not a PR per task
 
-Because `AGENTS.md` also says tests come first and never weaken a test. A PR containing only a failing test cannot merge with green CI, and the ways to force it green — `#[ignore]`, `#[should_panic]`, commenting out the assertion — are all explicitly forbidden. So the test and its implementation travel together. Everything else stays one task per PR.
+A PR containing only a failing test cannot merge with green CI, and the ways to force it green — `#[ignore]`, `#[should_panic]`, commenting out the assertion — are all forbidden (`AGENTS.md`). So a test and its implementation always travel together. Beyond that, splitting a capability into one PR per task buys a review of a part nobody can judge alone.
 
 ## Worked examples
 
 ### Several tiny tasks, one PR
 
-`T009`–`T012` are the Cargo workspace, `deny.toml`, `pnpm-workspace.yaml`, and `rustfmt.toml`. Four tasks, one concern (workspace configuration). One PR:
+`T009`–`T012` are the Cargo workspace, `deny.toml`, `pnpm-workspace.yaml`, and `rustfmt.toml`. Four tasks, one intent (the workspace is configured). One PR:
 
 ```
 chore/workspace-config     Tasks: T009, T010, T011, T012
 ```
 
-Splitting these into four PRs is ceremony, not review.
+### One task, one PR, however large
 
-### One task, several PRs
+`T060` is the weld step: a spatial hash, a deterministic tie-break, and the glTF split-vertex handling that is the reason it matters. One task, one outcome ("welded geometry"), one PR, committed as three test-then-implementation pairs if that reads best.
 
-`T060` is the weld step. It is one task and it will exceed the budget, because welding needs a spatial hash, a deterministic tie-break, and the glTF split-vertex handling that is the entire reason it matters. Split by capability, each with its own test:
+### A change that must not be bundled
 
-```
-001/57-T060a-weld-spatial-hash      the hash and its determinism test
-001/58-T060b-weld-gltf-split-verts  the case that makes or breaks glTF import   (stacked on 57)
-```
+`T087` is the seam-parity assertion, the last line of defence against the failure this project exists to prevent. It gets a PR of its own, however small the diff, because blast radius, not size, decides isolation. `tasks.md` lists these.
 
-Then annotate `T060` in `tasks.md` with both branch names so the task's history is findable. Splitting a task is fine; losing the trace is not.
+### Never together
 
-### A task that must not be bundled
-
-`T079` prescribes boundary edge lengths — decision `D-013`, the one the entire pattern stage rests on, with an unverified injectivity risk tracked as spike `S7`. It gets its own PR with its own review, however small the diff. Size is not the only reason to isolate a change; blast radius is.
+Two user stories; a spec or decision change and the code that implements it (the decision is reviewed on its own first); a refactor and a behaviour change; chores and feature work.
 
 ## PR description
 
 ```markdown
-## What
-One or two sentences. What changed, not how.
+## Intent
+One sentence: the outcome this PR finishes.
+
+## Tasks
+T080, T082 (specs/001-pattern-pipeline/tasks.md), ticked in this PR.
+
+## Reading order
+The commits in order, or the files to start from.
 
 ## Why
-The task, and what it unblocks.
-
-## Task
-Task: T050 (specs/001-pattern-pipeline/tasks.md)
+What it unblocks.
 
 ## Edge cases
 Degenerate geometry, empty input, seam and boundary cases, scale extremes —
@@ -102,10 +93,11 @@ explicitly — a reviewer cannot see an absence.
 
 ## Docs
 The as-built docs this PR updates, or "n/a: no public change".
-
-## Size
-Only if over budget. What makes the change indivisible.
 ```
+
+## Review
+
+The automated review runs once, when a PR opens. Only the maintainer asks for another run (the `rereview` label, or `mutation-audit` alone for one that includes the mutation auditor). An agent that fixes a 🔴 proves the fix with a test that fails before and passes after, then answers the thread; it does not request a rerun.
 
 `Skipped` is the section people leave empty because it feels like an admission. It is the most useful one in the template: an unstated gap becomes a surprise later, and `AGENTS.md` requires it precisely so deferral is a decision rather than an oversight.
 
@@ -126,19 +118,21 @@ Only if over budget. What makes the change indivisible.
 chore/pr-policy
 ```
 
-`NNN` is the feature, `NN` is the slice's position in it (assigned when the PR opens, never reused), and the slug is what the slice contains. Stacked slices merge in `NN` order. You should be able to pick any branch and know what it is and what it waits on without opening it.
+`NNN` is the feature, `NN` is the PR's position in it (assigned when the PR opens, never reused), and the slug is the intent it carries. Stacked PRs merge in `NN` order. You should be able to pick any branch and know what it is and what it waits on without opening it.
 
 ### Why stack
 
+Stacks are rare now that a PR carries a whole intent; they remain for work that genuinely depends on an unmerged PR.
+
 Spec Kit work is a chain: the plan cites the research, the data model implements the plan, the tasks cite all of them. Code is the same: the weld step needs the mesh types.
 
-If every slice branches from `main` instead:
+If every PR branches from `main` instead:
 
 - Each PR's diff is correct, but its links point at files that don't exist on that branch, so a reviewer can't follow them.
 - Merge order lives only in prose ("merge after `002/research`"), and nothing enforces it.
 - Nobody can check out one branch and see the feature as it will land.
 
-Stacking fixes all three. Each PR targets its parent, so its diff is still one slice. The top branch of the stack is the whole feature.
+Stacking fixes all three. Each PR targets its parent, so its diff is still just that PR. The top branch of the stack is the whole feature.
 
 ### How
 
@@ -152,7 +146,7 @@ git push -u origin 002/03-plan
 
 The PR body's `Stack` section (from the template) lists position, parent, and child. When you open a child, edit the parent's body to link it, so the chain can be walked from either end.
 
-**No depth cap.** The old cap of 2 assumed a deep stack shows reviewers changes they haven't read. That isn't true when each PR targets its parent: the diff shown is always exactly one slice.
+**No depth cap.** The old cap of 2 assumed a deep stack shows reviewers changes they haven't read. That isn't true when each PR targets its parent: the diff shown is always exactly one PR.
 
 ### Merging a stack
 
@@ -160,7 +154,7 @@ The repo uses **merge commits only**:
 
 | Strategy | What happens to the PR above |
 |---|---|
-| Merge commit ✅ | Its commits are already on `main` byte-for-byte. GitHub retargets it to `main` and the diff is just that slice. Nothing to do. |
+| Merge commit ✅ | Its commits are already on `main` byte-for-byte. GitHub retargets it to `main` and the diff is just that PR. Nothing to do. |
 | Squash ❌ | `main` gets a new commit; the child still carries the original. The child's diff against `main` shows the parent's changes again until someone runs `git rebase --onto`. It also destroys the test → implementation commit order this policy requires. |
 | Rebase-merge ❌ | Same SHA problem as squash, less severe. |
 
@@ -170,9 +164,9 @@ Steps:
 2. Its branch is deleted on merge, and GitHub retargets the next PR to `main`.
 3. Repeat.
 
-Never merge a PR whose base is another slice. That merges it into the parent's branch, not into `main`, and the stack falls apart quietly.
+Never merge a PR whose base is another PR's branch. That merges it into the parent's branch, not into `main`, and the stack falls apart quietly.
 
-### Changing a lower slice
+### Changing a lower PR
 
 Review asks for a change in `002/02-research` while `03`–`05` are open:
 
@@ -192,16 +186,16 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 ## Tooling
 
 - [`.github/pull_request_template.md`](../../.github/pull_request_template.md) pre-fills the description with the required sections as HTML comments, so an unfilled section is visibly empty rather than silently absent.
-- No CI job measures PR size; reviewers enforce the budget. Whether a large PR is justified is a judgement a CI job cannot make, and a check that merely verified a `Size` section exists would be satisfied by typing anything at all.
+- No CI job judges whether a PR is one intent; reviewers do. A PR whose `Intent` needs "and" is split.
 
 ## Checklist before opening
 
-- [ ] Under 400 lines, or `**Size**` explains why not
-- [ ] Test commit precedes implementation commit
+- [ ] One intent; every task it touches finished and ticked here
+- [ ] Each task's test commit precedes its implementation commit
 - [ ] CI green at the tip — not green because a test was weakened
-- [ ] One story, one crate, one concern
+- [ ] One story; no spec change, refactor or chore mixed in
 - [ ] Branch is `NNN/NN-slug` (or `chore/slug`); stacked on its parent if it depends on unmerged work
 - [ ] No golden snapshot updated to make a test pass ([`AGENTS.md`](../../AGENTS.md))
-- [ ] Task ID referenced, or the change is in the trivial-change lane
+- [ ] Task IDs referenced, or the change is in the trivial-change lane
 - [ ] `Skipped` section filled in honestly
 - [ ] Public changes have their as-built docs, or `Docs` says n/a

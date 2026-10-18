@@ -5,8 +5,10 @@
 # still merges.
 #
 # Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
-# opened (or marked ready for review), not on every push. To run it again, add
-# the `rereview` label; for the mutation auditor too, add `mutation-audit`. The
+# opened (or marked ready for review), not on every push. Only the maintainer
+# asks for another run (ADR 0013): add the `rereview` label, or `mutation-audit`
+# alone for a rerun that also runs the mutation auditor. When both labels are on
+# the PR, only the `mutation-audit` event runs, so adding both costs one run. The
 # labels are removed when the run starts, so they can be added again later.
 # A PR titled `docs(tasks): tick …` (checkbox ticks only) is not reviewed on
 # opening; `rereview` still runs it.
@@ -45,13 +47,15 @@ jobs:
   review:
     name: adversarial review
     # Same-repo, non-draft PRs only (fork PRs get no secrets; drafts are not
-    # ready). A `labeled` event runs only for the two review labels; a tick PR
-    # runs only on a label.
+    # ready). A `labeled` event runs only for the two review labels, and a
+    # `rereview` event yields to `mutation-audit` when both are on the PR; a tick
+    # PR runs only on a label.
     if: >-
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       (github.event.action != 'labeled' ||
-       github.event.label.name == 'rereview' ||
+       (github.event.label.name == 'rereview' &&
+        !contains(github.event.pull_request.labels.*.name, 'mutation-audit')) ||
        github.event.label.name == 'mutation-audit') &&
       (github.event.action == 'labeled' ||
        !startsWith(github.event.pull_request.title, 'docs(tasks): tick'))

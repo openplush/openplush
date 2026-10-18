@@ -16,7 +16,7 @@ A contributor becomes a lane reviewer after several merged PRs in that lane, on 
 
 From smallest to largest:
 
-1. **Code and docs** — a PR, reviewed against [`AGENTS.md`](AGENTS.md) and the constitution. One reviewable slice per PR (the test task plus the implementation task(s) that make it pass), test first, merge commits only. Detail: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
+1. **Code and docs** — a PR, reviewed against [`AGENTS.md`](AGENTS.md) and the constitution. One intent per PR (a finishable outcome; [ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)), each task test first, merge commits only. Detail: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 2. **What gets built** — a spec, plan, and tasks under `specs/<feature>/`, written with [Spec Kit](https://github.com/github/spec-kit). Every non-trivial change maps to a task ID.
 3. **Design decisions inside a feature** — an entry in that feature's Decision Ledger (`plan.md`), with an absolute date and a reason.
 4. **Principle or public-contract changes, new dependency categories, non-allowlist licenses, sideways crate edges, `unsafe` exceptions** — an ADR in [`docs/adr/`](docs/adr/). The full list is in the [ADR README](docs/adr/README.md).

@@ -1,9 +1,13 @@
 //! Pattern pieces: allowance, notches, labels, grain, piece dedupe.
 
 mod error;
+mod outline;
 pub mod parity;
+mod piece;
 
 pub use error::PatternError;
+pub use outline::Outline;
+pub use piece::PatternPiece;
 
 use openplush_mesh::id_newtype;
 

@@ -17,7 +17,7 @@ Covers: representations per stage, the half-edge structure, non-manifold handlin
 | Pattern | `PatternPiece` ×N | param + fabric + scale | Simple polygons in mm; seam parity within max(1.0 mm, 0.5%) — hard (D-013) |
 | Layout | `Sheet` ×N | pieces + layout options | No overlaps; rotation sets honored |
 
-**Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>`. Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
+**Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>` (as built: `openplush_mesh::into_manifold`, which returns `MeshError`; see `docs/reference/crates.md`). Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
 
 ## 2. Half-Edge Structure
 

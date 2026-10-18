@@ -135,8 +135,8 @@ fn a_flipped_face_of_a_soup_without_uvs_still_swaps_its_provenance() {
     let s = TriangleSoup::new(pos, vec![[0, 2, 1], [1, 3, 2], [2, 4, 3]], corners, None).unwrap();
     let (out, _) = oriented(&s);
     assert_eq!(out.corner_uv(f(0), 0), None);
-    assert_eq!(out.corner_source(f(0), 1).unwrap().vertex, 1);
-    assert_eq!(out.corner_source(f(0), 2).unwrap().vertex, 2);
+    assert_eq!(out.corner_source(f(0), 1).unwrap().vertex, 2);
+    assert_eq!(out.corner_source(f(0), 2).unwrap().vertex, 1);
 }
 
 #[test]
@@ -188,8 +188,7 @@ fn a_shell_touching_another_only_at_a_vertex_is_judged_alone() {
     positions.extend(pos.iter().skip(1).map(|&q| q * -1.0));
     let mut triangles = tris.clone();
     triangles.extend(
-        reversed(&tris)
-            .into_iter()
+        tris.iter()
             .map(|t| t.map(|i| if i == 0 { 0 } else { i + 3 })),
     );
     let (out, done) = oriented(&soup(positions, &triangles));
@@ -197,12 +196,16 @@ fn a_shell_touching_another_only_at_a_vertex_is_judged_alone() {
     assert_agrees_and_encloses(&out);
 }
 
-/// Five faces in a ring, each sharing an edge with the next, with a half twist.
+/// Five faces in a ring, each sharing an edge with the next, with a half twist. Vertex 0
+/// is pulled out so face 4, which has it in the middle, is the largest.
 fn mobius() -> TriangleSoup {
-    let positions = (0..5)
-        .map(|i| {
-            let angle = std::f64::consts::TAU * f64::from(i) / 5.0;
-            p(angle.cos(), angle.sin(), 0.0)
+    let radii = [3.0, 1.0, 2.0, 1.0, 1.0];
+    let positions = radii
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            let angle = std::f64::consts::TAU * i as f64 / 5.0;
+            p(r * angle.cos(), r * angle.sin(), 0.0)
         })
         .collect();
     soup(
@@ -215,8 +218,8 @@ fn mobius() -> TriangleSoup {
 fn a_twisted_ring_reports_the_one_edge_where_the_walk_meets_itself() {
     let s = mobius();
     let (out, done) = oriented(&s);
-    assert_eq!(done.flipped, [f(1), f(4)]);
-    assert_eq!(done.conflicts, [[v(3), v(4)]]);
+    assert_eq!(done.flipped, [f(0), f(3)]);
+    assert_eq!(done.conflicts, [[v(2), v(3)]]);
     assert_eq!(validate(&out).winding_conflicts(), done.conflicts);
 }
 

@@ -627,3 +627,36 @@ fn a_non_text_ascii_body_names_the_byte() {
         format!("byte {}: the body is not text", start + 4)
     );
 }
+
+#[test]
+fn a_non_finite_texture_coordinate_is_refused_naming_its_vertex() {
+    let props = [
+        ("float", "x"),
+        ("float", "y"),
+        ("float", "z"),
+        ("float", "s"),
+        ("float", "t"),
+    ];
+    for bad in [f64::NAN, f64::INFINITY, 1e50] {
+        for enc in [Enc::Ascii, Enc::Little, Enc::Big] {
+            let s = Spec {
+                enc,
+                vertex: &props,
+                face: ("uchar", "int", "vertex_indices"),
+            };
+            let mut rows: Vec<Vec<f64>> = square()
+                .into_iter()
+                .map(|mut r| {
+                    r.extend([0.5, 0.5]);
+                    r
+                })
+                .collect();
+            rows[2][4] = bad;
+            let detail = parse_detail(&file(&s, "", &rows, &[vec![0, 1, 2]])).unwrap();
+            assert!(
+                detail.contains("vertex 2") && detail.contains("texture"),
+                "{bad} {detail}"
+            );
+        }
+    }
+}

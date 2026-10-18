@@ -313,3 +313,40 @@ fn each_refusal_maps_to_the_variant_that_names_it() {
         FlattenError::SolveFailed { chart: CHART }
     );
 }
+
+#[test]
+fn the_iteration_cap_settles_the_solve_on_that_iteration_and_no_later_one_moves_it()
+-> Result<(), FlattenError> {
+    let (xyz, f) = hemisphere();
+    for cap in [1, 2] {
+        let mut solve = Solve::start(CHART, &xyz, &f)?;
+        let start = solve.energy();
+        solve.cap = cap;
+        for _ in 1..cap {
+            assert_eq!(solve.iterate()?, Step::Improved);
+        }
+        assert_eq!(solve.iterate()?, Step::Settled, "cap {cap}");
+        assert!(solve.energy() < start);
+        let (layout, energy) = (solve.layout(), solve.energy());
+        assert_eq!(solve.iterate()?, Step::Settled);
+        assert_eq!((solve.layout(), solve.energy()), (layout, energy));
+    }
+    Ok(())
+}
+
+#[test]
+fn the_solve_keeps_going_until_the_gain_is_negligible() -> Result<(), FlattenError> {
+    let (xyz, f) = hemisphere();
+    let mut solve = Solve::start(CHART, &xyz, &f)?;
+    assert_eq!(solve.iterate()?, Step::Improved);
+    let after_one = solve.energy();
+    while solve.iterate()? == Step::Improved {}
+    assert!(solve.energy() < after_one);
+    // Pinned from the settled run: a looser stop would leave the energy visibly higher.
+    assert!(
+        (solve.energy() - 5.200_134_098).abs() <= 1e-6,
+        "{}",
+        solve.energy()
+    );
+    Ok(())
+}

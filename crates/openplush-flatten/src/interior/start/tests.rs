@@ -4,7 +4,7 @@ use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
 use openplush_seams::ChartId;
 
-use super::{choose, harmonic};
+use super::{choose, fill, harmonic};
 use crate::FlattenError;
 use crate::boundary::cotangent_weights;
 use crate::boundary::fixtures::{Faces, grid};
@@ -123,4 +123,52 @@ fn the_uniform_fill_inside_a_convex_boundary_flips_no_face() -> Result<(), crate
         .collect();
     assert_eq!(injectivity::verify(CHART, &tris), Ok(()));
     Ok(())
+}
+
+/// Cotangent weights spoiled so that the vertex next to the rim is pulled out of its fan.
+fn spoiled(faces: &Faces) -> BTreeMap<(u32, u32), f64> {
+    let mut w: BTreeMap<(u32, u32), f64> = faces
+        .iter()
+        .flat_map(|(_, t)| {
+            let t = t.map(VertexId::index);
+            [(t[0], t[1]), (t[1], t[2]), (t[0], t[2])].map(|(a, b)| ((a.min(b), a.max(b)), 1.0))
+        })
+        .collect();
+    w.insert((1, 7), -3.0);
+    w
+}
+
+#[test]
+fn a_flipped_cotangent_start_gives_way_to_the_uniform_one() -> Result<(), FlattenError> {
+    let (xyz, faces, free) = bent_grid();
+    let uv = flat(&xyz);
+    let spoiled = spoiled(&faces);
+    let cotangent =
+        harmonic(&free, &spoiled, &uv).map_err(|_| FlattenError::SolveFailed { chart: CHART })?;
+    let tris = |l: &[DVec2]| -> Vec<_> {
+        faces
+            .iter()
+            .map(|&(f, t)| (f, t.map(|v| l[v.index() as usize])))
+            .collect()
+    };
+    assert!(
+        injectivity::verify(CHART, &tris(&cotangent)).is_err(),
+        "the fixture must flip"
+    );
+    let uniform: BTreeMap<(u32, u32), f64> = spoiled.keys().map(|&e| (e, 1.0)).collect();
+    let want =
+        harmonic(&free, &uniform, &uv).map_err(|_| FlattenError::SolveFailed { chart: CHART })?;
+    assert_eq!(fill(CHART, &faces, &free, &spoiled, &uv), Ok(want));
+    Ok(())
+}
+
+#[test]
+fn a_refused_solve_is_reported_with_its_chart() {
+    let (xyz, faces, free) = bent_grid();
+    let mut weights = spoiled(&faces);
+    weights.insert((1, 7), f64::NAN);
+    assert_eq!(
+        fill(CHART, &faces, &free, &weights, &flat(&xyz)),
+        Err(FlattenError::SolveFailed { chart: CHART })
+    );
 }

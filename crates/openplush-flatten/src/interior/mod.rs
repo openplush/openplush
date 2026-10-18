@@ -46,6 +46,8 @@ pub(crate) struct Solve<'a> {
     energy: f64,
     system: Option<System>,
     iterations: u32,
+    /// Iterations allowed in all; a field so tests can reach the cap.
+    cap: u32,
     settled: bool,
 }
 
@@ -82,6 +84,7 @@ impl<'a> Solve<'a> {
             settled: system.is_none(),
             system,
             iterations: 0,
+            cap: MAX_ITERATIONS,
         })
     }
 
@@ -100,7 +103,7 @@ impl<'a> Solve<'a> {
             (self.uv, self.energy) = (uv, e);
             gain
         });
-        self.settled = self.iterations >= MAX_ITERATIONS || gain.is_none_or(|g| g < SETTLED_BELOW);
+        self.settled = self.iterations >= self.cap || gain.is_none_or(|g| g < SETTLED_BELOW);
         Ok(if self.settled {
             Step::Settled
         } else {

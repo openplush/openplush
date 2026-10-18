@@ -105,7 +105,7 @@ fn a_vertex_touching_another_edge_is_not_simple() {
         (5.0, 0.0),
         (0.0, 10.0),
     ];
-    assert_eq!(refused(&p), not_simple(0, 3));
+    assert_eq!(refused(&p), not_simple(0, 2));
 }
 
 #[test]

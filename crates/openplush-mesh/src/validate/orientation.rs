@@ -28,7 +28,6 @@ pub(super) fn non_orientable(edges: &Edges, tris: &[[u32; 3]], kept: &[u32]) -> 
 /// The flips a breadth-first walk assigns across two-face edges.
 pub(crate) struct Walk {
     /// Per face: `None` if no seed reached it, `Some(true)` if it must turn over to agree.
-    #[expect(dead_code, reason = "read by repair's orientation step")]
     pub(crate) flip: Vec<Option<bool>>,
     /// Edges, smaller vertex first, whose two faces cannot be made to agree.
     pub(crate) conflicts: BTreeSet<[u32; 2]>,

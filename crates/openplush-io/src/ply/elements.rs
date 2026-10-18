@@ -3,8 +3,11 @@
 use openplush_geom::{DVec2, DVec3};
 
 use super::Failure;
-use super::header::{Element, Kind, Property};
+use super::header::{Element, Kind, Property, Ty};
 use super::source::Source;
+
+/// Ear clipping a polygon takes about the cube of its corners, so a file cannot make it run for minutes.
+const MAX_FACE_CORNERS: u64 = 1000;
 
 pub(super) struct Vertices {
     pub(super) positions: Vec<DVec3>,
@@ -59,12 +62,18 @@ fn row(properties: &[Property], source: &mut Source) -> Result<Vec<f64>, Failure
         .collect()
 }
 
-fn skip_list(
-    source: &mut Source,
-    count: super::header::Ty,
-    item: super::header::Ty,
-) -> Result<(), Failure> {
-    for _ in 0..source.next(count)? as u64 {
+/// A list's length: a count type is an integer, but a signed one can still be negative.
+fn list_len(source: &mut Source, count: Ty) -> Result<u64, Failure> {
+    let len = source.next(count)?;
+    if len < 0.0 {
+        return Err(Failure(format!("a list has the negative length {len}")));
+    }
+    // Lossless: an integer count type is at most 32 bits and now non-negative.
+    Ok(len as u64)
+}
+
+fn skip_list(source: &mut Source, count: Ty, item: Ty) -> Result<(), Failure> {
+    for _ in 0..list_len(source, count)? {
         source.next(item)?;
     }
     Ok(())
@@ -77,6 +86,7 @@ pub(super) fn read_vertices(element: &Element, source: &mut Source) -> Result<Ve
     let mut uvs = slots.uv.map(|_| Vec::new());
     for _ in 0..element.count {
         let values = row(&element.properties, source)?;
+        // INVARIANT: `values` has one entry per property, and the slots index the properties.
         let [x, y, z] = slots.xyz.map(|i| values[i]);
         positions.push(DVec3::new(x, y, z));
         if let (Some(list), Some([u, v])) = (uvs.as_mut(), slots.uv) {
@@ -109,7 +119,13 @@ pub(super) fn read_faces(
                     source.next(ty)?;
                 }
                 Kind::List { count, item } if i == list => {
-                    for _ in 0..source.next(count)? as u64 {
+                    let len = list_len(source, count)?;
+                    if len > MAX_FACE_CORNERS {
+                        return Err(Failure(format!(
+                            "face {face} has {len} corners, over the {MAX_FACE_CORNERS} the reader triangulates"
+                        )));
+                    }
+                    for _ in 0..len {
                         corners.push(source.next(item)?);
                     }
                 }

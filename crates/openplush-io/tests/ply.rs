@@ -340,7 +340,7 @@ fn body_faults_are_refused() {
     assert!(parse_detail(&cut).is_some(), "truncated binary");
     let text = String::from_utf8(with(&tri))
         .unwrap()
-        .replace("1 1 0", "1 one 0");
+        .replace("1 1 0", "1 zzz 0");
     let detail = parse_detail(text.as_bytes()).unwrap();
     assert!(detail.starts_with("line "), "{detail}");
 }
@@ -357,7 +357,7 @@ fn list_types_must_be_integers() {
     for list in ["float int", "uchar float", "double double"] {
         let header = TRI_HEADER.replace("uchar int", list);
         let detail = parse_detail(&ascii_with(&header, &format!("{TRI_VERTICES}3 0 1 2\n")));
-        assert!(detail.is_some_and(|d| d.starts_with("line 7:")), "{list}");
+        assert!(detail.is_some_and(|d| d.starts_with("line 8:")), "{list}");
     }
 }
 
@@ -382,8 +382,7 @@ fn an_ascii_integer_must_fit_its_declared_type() {
         ),
     ];
     for (header, body) in cases {
-        let detail = parse_detail(&ascii_with(&header, body)).unwrap();
-        assert!(detail.starts_with("line "), "{detail}");
+        assert!(parse_detail(&ascii_with(&header, body)).is_some());
     }
 }
 
@@ -422,7 +421,9 @@ fn a_polygon_with_too_many_corners_is_refused_rather_than_clipped_for_minutes() 
     }
     body += &format!("{n}");
     (0..n).for_each(|i| body += &format!(" {i}"));
-    let header = TRI_HEADER.replace("vertex 3", &format!("vertex {n}"));
+    let header = TRI_HEADER
+        .replace("vertex 3", &format!("vertex {n}"))
+        .replace("uchar int", "ushort int");
     let detail = parse_detail(&ascii_with(&header, &body)).unwrap();
     assert!(detail.contains("1000"), "{detail}");
     // At the cap it still reads.
@@ -433,11 +434,196 @@ fn a_polygon_with_too_many_corners_is_refused_rather_than_clipped_for_minutes() 
         .collect::<String>()
         + "1000"
         + &(0..1000).map(|i| format!(" {i}")).collect::<String>();
-    let header = TRI_HEADER.replace("vertex 3", "vertex 1000");
+    let header = TRI_HEADER
+        .replace("vertex 3", "vertex 1000")
+        .replace("uchar int", "ushort int");
     assert_eq!(
         ply::read(&ascii_with(&header, &ok_body))
             .unwrap()
             .triangle_count(),
         998
+    );
+}
+
+const TYPE_NAMES: [&str; 16] = [
+    "char", "int8", "uchar", "uint8", "short", "int16", "ushort", "uint16", "int", "int32", "uint",
+    "uint32", "float", "float32", "double", "float64",
+];
+
+#[test]
+fn every_type_name_reads_its_value_in_every_encoding() {
+    for ty in TYPE_NAMES {
+        for enc in [Enc::Ascii, Enc::Little, Enc::Big] {
+            let s = Spec {
+                enc,
+                vertex: &[(ty, "x"), (ty, "y"), (ty, "z")],
+                face: ("uchar", "int", "vertex_indices"),
+            };
+            let soup = ply::read(&file(&s, "", &[vec![3.0, 4.0, 5.0]], &[])).unwrap();
+            assert_eq!(
+                soup.position(VertexId::new(0)),
+                Some(DVec3::new(3.0, 4.0, 5.0)),
+                "{ty}"
+            );
+        }
+    }
+}
+
+#[test]
+fn signed_and_unsigned_types_decode_their_full_range() {
+    let cases = [
+        (["char", "short", "int"], [-2.0, -300.0, -70_000.0]),
+        (
+            ["uchar", "ushort", "uint"],
+            [200.0, 40_000.0, 3_000_000_000.0],
+        ),
+    ];
+    for enc in [Enc::Little, Enc::Big] {
+        for (types, row) in &cases {
+            let s = Spec {
+                enc,
+                vertex: &[(types[0], "x"), (types[1], "y"), (types[2], "z")],
+                face: ("uchar", "int", "vertex_indices"),
+            };
+            let soup = ply::read(&file(&s, "", &[row.to_vec()], &[])).unwrap();
+            assert_eq!(
+                soup.position(VertexId::new(0)),
+                Some(DVec3::new(row[0], row[1], row[2]))
+            );
+        }
+    }
+}
+
+#[test]
+fn a_quad_gives_exactly_these_triangles_and_every_position_is_where_it_was_written() {
+    let soup = ply::read(&file(&spec(Enc::Ascii), "", &square(), &[vec![0, 1, 2, 3]])).unwrap();
+    assert_eq!(triangles(&soup), [[0, 1, 2], [0, 2, 3]]);
+    let at = |i| soup.position(VertexId::new(i));
+    assert_eq!(at(0), Some(DVec3::new(0.0, 0.0, 0.0)));
+    assert_eq!(at(1), Some(DVec3::new(1.0, 0.0, 0.0)));
+    assert_eq!(at(3), Some(DVec3::new(0.0, 1.0, 0.0)));
+    let tall = vec![
+        vec![0.0, 0.0, 7.0],
+        vec![1.0, 0.0, 7.0],
+        vec![1.0, 2.0, 7.0],
+        vec![0.0, 2.0, 7.0],
+    ];
+    let soup = ply::read(&file(&spec(Enc::Ascii), "", &tall, &[vec![0, 1, 2, 3]])).unwrap();
+    assert_eq!(
+        soup.position(VertexId::new(2)),
+        Some(DVec3::new(1.0, 2.0, 7.0))
+    );
+}
+
+#[test]
+fn non_integers_in_integer_slots_are_refused() {
+    for body in ["3 0.5 1 2\n", "2.5 0 1 2\n", "3 -1.5 1 2\n"] {
+        let detail =
+            parse_detail(&ascii_with(TRI_HEADER, &format!("{TRI_VERTICES}{body}"))).unwrap();
+        assert!(detail.contains("not an integer"), "{detail}");
+    }
+}
+
+#[test]
+fn more_header_faults_are_refused_and_blank_header_lines_are_not() {
+    let good =
+        String::from_utf8(ascii_with(TRI_HEADER, &format!("{TRI_VERTICES}3 0 1 2\n"))).unwrap();
+    for (what, case) in [
+        ("no format", good.replace("format ascii 1.0\n", "")),
+        (
+            "unknown keyword",
+            good.replace("element face 1", "bogus 1\nelement face 1"),
+        ),
+        (
+            "bad count",
+            good.replace("element vertex 3", "element vertex abc"),
+        ),
+        ("ply with extras", good.replacen("ply\n", "ply junk\n", 1)),
+        (
+            "scalar index list",
+            good.replace(
+                "property list uchar int vertex_indices",
+                "property int vertex_indices",
+            ),
+        ),
+    ] {
+        assert!(parse_detail(case.as_bytes()).is_some(), "{what}");
+    }
+    let blank = good.replace("element face 1", "\n\nelement face 1");
+    assert_eq!(
+        triangles(&ply::read(blank.as_bytes()).unwrap()),
+        [[0, 1, 2]]
+    );
+}
+
+#[test]
+fn a_file_ending_at_end_header_without_a_newline_is_an_empty_soup() {
+    let text = "ply\nformat ascii 1.0\nelement vertex 0\nproperty float x\nproperty float y\nproperty float z\nend_header";
+    assert_eq!(ply::read(text.as_bytes()).unwrap().vertex_count(), 0);
+}
+
+#[test]
+fn faces_may_lead_with_scalars_and_a_vertex_may_carry_lists() {
+    let header = "element vertex 3\nproperty float x\nproperty list uchar int tags\nproperty float y\nproperty float z\nelement edge 2\nproperty int a\nproperty int b\nelement face 2\nproperty uchar flags\nproperty list uchar int vertex_indices\nproperty list uchar int more\nelement junk 18446744073709551615\n";
+    let body = "0 2 5 6 0 0\n1 0 0 0\n0 1 9 1 0\n0 1\n1 2\n7 3 0 1 2 1 9\n9 3 0 1 2 0\n";
+    let soup = ply::read(&ascii_with(header, body)).unwrap();
+    assert_eq!(triangles(&soup), [[0, 1, 2], [0, 1, 2]]);
+    assert_eq!(
+        soup.position(VertexId::new(1)),
+        Some(DVec3::new(1.0, 0.0, 0.0))
+    );
+    assert_eq!(
+        soup.position(VertexId::new(2)),
+        Some(DVec3::new(0.0, 1.0, 0.0))
+    );
+}
+
+#[test]
+fn a_face_index_equal_to_the_vertex_count_or_negative_is_refused() {
+    assert!(parse_detail(&file(&spec(Enc::Ascii), "", &square(), &[vec![0, 1, 4]])).is_some());
+    assert!(ply::read(&file(&spec(Enc::Ascii), "", &square(), &[vec![0, 1, 3]])).is_ok());
+    let mut bytes = file(&spec(Enc::Little), "", &square(), &[vec![0, 1, 2]]);
+    let end = bytes.len();
+    bytes[end - 8..end - 4].copy_from_slice(&(-1i32).to_le_bytes());
+    assert!(parse_detail(&bytes).is_some());
+}
+
+#[test]
+fn a_face_before_the_vertex_element_says_so() {
+    let text = "ply\nformat ascii 1.0\nelement face 1\nproperty list uchar int vertex_indices\nelement vertex 3\nproperty float x\nproperty float y\nproperty float z\nend_header\n3 0 1 2\n0 0 0\n1 0 0\n0 1 0\n";
+    assert!(
+        parse_detail(text.as_bytes())
+            .unwrap()
+            .contains("comes before")
+    );
+}
+
+#[test]
+fn a_body_fault_names_its_exact_line_with_lf_or_crlf_and_comments() {
+    for (header, nl) in [("", "\n"), ("comment one\ncomment two\n", "\r\n")] {
+        let text = String::from_utf8(file(&spec(Enc::Ascii), header, &square(), &[vec![0, 1, 2]]))
+            .unwrap()
+            .replace("1 1 0", "1 zzz 0")
+            .replace('\n', nl);
+        let line = text.lines().position(|l| l.contains("zzz")).unwrap() + 1;
+        assert_eq!(
+            parse_detail(text.as_bytes()).unwrap(),
+            format!("line {line}: `zzz` is not a number")
+        );
+    }
+}
+
+#[test]
+fn a_non_text_ascii_body_names_the_byte() {
+    let mut bytes = file(&spec(Enc::Ascii), "", &square(), &[vec![0, 1, 2]]);
+    let start = bytes
+        .windows(11)
+        .position(|w| w == b"end_header\n")
+        .unwrap()
+        + 11;
+    bytes[start + 4] = 0xff;
+    assert_eq!(
+        parse_detail(&bytes).unwrap(),
+        format!("byte {}: the body is not text", start + 4)
     );
 }

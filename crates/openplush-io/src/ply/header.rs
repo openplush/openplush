@@ -40,6 +40,19 @@ impl Ty {
         !matches!(self, Self::F32 | Self::F64)
     }
 
+    /// The smallest and largest value of an integer type.
+    pub(super) fn range(self) -> (f64, f64) {
+        match self {
+            Self::I8 => (f64::from(i8::MIN), f64::from(i8::MAX)),
+            Self::U8 => (0.0, f64::from(u8::MAX)),
+            Self::I16 => (f64::from(i16::MIN), f64::from(i16::MAX)),
+            Self::U16 => (0.0, f64::from(u16::MAX)),
+            Self::I32 => (f64::from(i32::MIN), f64::from(i32::MAX)),
+            Self::U32 => (0.0, f64::from(u32::MAX)),
+            Self::F32 | Self::F64 => (f64::NEG_INFINITY, f64::INFINITY),
+        }
+    }
+
     pub(super) fn size(self) -> usize {
         match self {
             Self::I8 | Self::U8 => 1,
@@ -157,10 +170,11 @@ fn property<'a>(
     };
     let first = tokens.next();
     let kind = if first == Some("list") {
-        Kind::List {
-            count: ty(tokens.next())?,
-            item: ty(tokens.next())?,
+        let (count, item) = (ty(tokens.next())?, ty(tokens.next())?);
+        if !(count.is_integer() && item.is_integer()) {
+            return Err(fail(line, "a list's count and item types must be integers"));
         }
+        Kind::List { count, item }
     } else {
         Kind::Scalar(ty(first)?)
     };

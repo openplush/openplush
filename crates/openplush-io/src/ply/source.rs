@@ -54,10 +54,20 @@ impl<'a> Source<'a> {
                 let value: f64 = token
                     .parse()
                     .map_err(|_| Failure(format!("line {line}: `{token}` is not a number")))?;
-                if ty.is_integer() && value.fract() != 0.0 {
-                    return Err(Failure(format!("line {line}: `{token}` is not an integer")));
+                if ty.is_integer() {
+                    let (low, high) = ty.range();
+                    if value.fract() != 0.0 || value < low || value > high {
+                        return Err(Failure(format!(
+                            "line {line}: `{token}` is not an integer of the declared type"
+                        )));
+                    }
                 }
-                Ok(value)
+                // A `float` is 32 bits however it is written, as in a binary file.
+                Ok(if ty == Ty::F32 {
+                    f64::from(value as f32)
+                } else {
+                    value
+                })
             }
             Self::Binary { bytes, at, big } => {
                 let end = *at + ty.size();

@@ -65,6 +65,13 @@ pub fn read(bytes: &[u8]) -> Result<TriangleSoup, IoError> {
 
 fn check_elements(header: &Header) -> Result<(), Failure> {
     let position = |name: &str| header.elements.iter().position(|e| e.name == name);
+    for name in ["vertex", "face"] {
+        if header.elements.iter().filter(|e| e.name == name).count() > 1 {
+            return Err(Failure(format!(
+                "the file has more than one `{name}` element"
+            )));
+        }
+    }
     let vertex =
         position("vertex").ok_or_else(|| Failure("the file has no `vertex` element".into()))?;
     let has = |name: &str| {
@@ -113,6 +120,7 @@ fn build(vertices: Vertices, faces: &[Vec<u32>]) -> Result<TriangleSoup, IoError
     let mut sources = Vec::new();
     let mut corner_uvs = Vec::new();
     for (face, corners) in faces.iter().enumerate() {
+        // INVARIANT: `read_faces` checked every corner index against the vertex count.
         let points: Vec<DVec3> = corners.iter().map(|&i| positions[i as usize]).collect();
         let split = triangulate(&points).ok_or_else(|| {
             Failure(format!(
@@ -127,6 +135,7 @@ fn build(vertices: Vertices, faces: &[Vec<u32>]) -> Result<TriangleSoup, IoError
                     primitive: 0,
                     vertex,
                 });
+                // INVARIANT: as above, and `uvs` has one entry per vertex.
                 corner_uvs.push(uvs.as_ref().map(|u| u[vertex as usize]));
             }
         }

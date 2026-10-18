@@ -27,7 +27,9 @@ pub struct VertexCopy {
 
 /// Gives every fan of faces at a vertex after the first (the one holding the lowest
 /// corner) a copy of the vertex. Faces are fans when they share an edge at the
-/// vertex, however many faces the edge has. Faces, their order and their corners
+/// vertex; on an edge `pairings` resolve, only the faces of one pair do, and an
+/// unpaired face is a fan of its own there. Faces `pairings` do not name share the
+/// edge as one group. Faces, their order and their corners
 /// are unchanged and no vertex moves. A face that repeats a vertex is refused
 /// (`degenerate::remove` drops them first).
 #[cfg_attr(
@@ -36,7 +38,7 @@ pub struct VertexCopy {
 )]
 pub(crate) fn split(
     soup: &TriangleSoup,
-    _pairings: &[PairedEdge],
+    pairings: &[PairedEdge],
 ) -> Result<(TriangleSoup, Split), MeshError> {
     let tris = soup.triangle_indices();
     if let Some(f) = tris
@@ -51,11 +53,19 @@ pub(crate) fn split(
     // Lossless: the face count fits in u32 (`TriangleSoup::new`).
     let faces: Vec<u32> = (0..tris.len() as u32).collect();
     let mut fans = DisjointSet::new(tris.len() * 3);
+    let copies = copies_by_edge(pairings);
     for (&ends, uses) in &crate::validate::edges(tris, &faces) {
+        let on_edge: Vec<u32> = uses.iter().map(|u| u.face).collect();
+        let groups = match copies.get(&ends) {
+            Some(groups) => with_the_rest(groups, &on_edge),
+            None => vec![on_edge],
+        };
         for v in ends {
-            let mut corners = uses.iter().filter_map(|u| corner(tris, u.face, v));
-            if let Some(first) = corners.next() {
-                corners.for_each(|c| fans.union(first, c));
+            for group in &groups {
+                let mut corners = group.iter().filter_map(|&f| corner(tris, f, v));
+                if let Some(first) = corners.next() {
+                    corners.for_each(|c| fans.union(first, c));
+                }
             }
         }
     }
@@ -95,6 +105,36 @@ pub(crate) fn split(
         soup.corner_uvs().map(<[_]>::to_vec),
     );
     Ok((rebuilt, Split { copies }))
+}
+
+/// The groups of faces that share a copy of each paired edge, by its ends.
+fn copies_by_edge(pairings: &[PairedEdge]) -> BTreeMap<[u32; 2], Vec<Vec<u32>>> {
+    pairings
+        .iter()
+        .map(|p| {
+            let groups = p
+                .pairs
+                .iter()
+                .map(|pair| pair.iter().map(|f| f.index()).collect())
+                .chain(p.unpaired.map(|f| vec![f.index()]))
+                .collect();
+            (p.vertices.map(VertexId::index), groups)
+        })
+        .collect()
+}
+
+/// `groups`, and the faces of `on_edge` that no group names as one more group.
+fn with_the_rest(groups: &[Vec<u32>], on_edge: &[u32]) -> Vec<Vec<u32>> {
+    let rest: Vec<u32> = on_edge
+        .iter()
+        .copied()
+        .filter(|f| !groups.iter().flatten().any(|g| g == f))
+        .collect();
+    let mut all = groups.to_vec();
+    if !rest.is_empty() {
+        all.push(rest);
+    }
+    all
 }
 
 /// The vertex ID of each (vertex, fan root) pair.

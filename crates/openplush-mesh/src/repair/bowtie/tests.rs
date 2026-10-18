@@ -17,6 +17,11 @@ fn soup(n: usize, triangles: &[[u32; 3]]) -> TriangleSoup {
     let positions = (0..n)
         .map(|i| DVec3::new(i as f64, (i * i) as f64, 0.0))
         .collect();
+    soup_at(positions, triangles)
+}
+
+/// As [`soup`], with the vertices where the caller puts them.
+fn soup_at(positions: Vec<DVec3>, triangles: &[[u32; 3]]) -> TriangleSoup {
     let corners = (0..triangles.len() * 3)
         .map(|i| SourceCorner {
             primitive: 0,
@@ -205,7 +210,15 @@ fn faces_on_an_over_shared_edge_the_pairings_do_not_name_stay_one_fan() {
 
 #[test]
 fn a_square_sheet_keeps_its_rim_vertices_single() {
-    let s = soup(4, &[[0, 1, 2], [0, 2, 3], [0, 3, 2], [2, 1, 0]]);
+    let s = soup_at(
+        vec![
+            DVec3::new(0., 0., 0.),
+            DVec3::new(1., 0., 0.),
+            DVec3::new(1., 1., 0.),
+            DVec3::new(0., 1., 0.),
+        ],
+        &[[0, 1, 2], [0, 2, 3], [0, 3, 2], [2, 1, 0]],
+    );
     let sheets = [[f(0), f(3)], [f(1), f(2)]];
     let pairs = pair_edges(&s, &sheets).unwrap();
     let (out, split) = split(&s, &pairs).unwrap();
@@ -216,8 +229,13 @@ fn a_square_sheet_keeps_its_rim_vertices_single() {
 #[test]
 fn a_sheets_interior_vertex_gets_a_copy_for_the_second_layer() {
     // Three triangles round vertex 0, both sides: faces 0-2 one layer, 3-5 the other.
-    let s = soup(
-        4,
+    let s = soup_at(
+        vec![
+            DVec3::new(0., 0., 0.),
+            DVec3::new(1., 0., 0.),
+            DVec3::new(0., 1., 0.),
+            DVec3::new(-1., -1., 0.),
+        ],
         &[
             [0, 1, 2],
             [0, 2, 3],

@@ -25,13 +25,7 @@ fn piece(
     rot: &[f64],
 ) -> Result<PatternPiece, PatternError> {
     let cut = rect(o.0, o.1, o.2, o.3)?;
-    Ok(PatternPiece::new(
-        PieceId::new(id),
-        cut.clone(),
-        cut,
-        cuts,
-        rot.to_vec(),
-    )?)
+    PatternPiece::new(PieceId::new(id), cut.clone(), cut, cuts, rot.to_vec())
 }
 
 fn opts(roll: f64, gap: f64, mirrored: bool) -> Result<LayoutOptions, Setup> {

@@ -155,7 +155,11 @@ fn uv_cut_is_1e_minus_5_between_f32_noise_and_the_tightest_measured_cut() {
     // f32 spacing at the top of a UDIM tile row (u near 10) is below the tolerance
     // by a factor of ten, so bit-level export noise never reads as a cut.
     let spacing_at_ten = f64::from(f32::from_bits(10.0_f32.to_bits() + 1) - 10.0_f32);
-    assert!(UV_CUT > 10.0 * spacing_at_ten, "{spacing_at_ten}");
+    assert!(
+        std::hint::black_box(UV_CUT) > 10.0 * spacing_at_ten,
+        "{spacing_at_ten}"
+    );
     // Blender 5.2 spike Q1: the tightest real cut, a slit near its tip, was 1.81e-4.
-    assert!(UV_CUT * 18.0 <= 1.81e-4);
+    let tightest_cut = std::hint::black_box(1.81e-4);
+    assert!(UV_CUT * 18.0 <= tightest_cut);
 }

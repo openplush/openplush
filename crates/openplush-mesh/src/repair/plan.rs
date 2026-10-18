@@ -10,7 +10,7 @@ use crate::{FaceId, SourceCorner, VertexId};
 
 /// A boundary loop, named by the lowest source corner among its vertices, so the name is
 /// the same on every replay whatever the repaired numbering is.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LoopRef(SourceCorner);
 
 impl LoopRef {

@@ -18,9 +18,11 @@ pub(crate) struct Split {
 
 /// A vertex added so one fan of faces no longer shares `of` with the others.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct VertexCopy {
-    pub(crate) of: VertexId,
-    pub(crate) copy: VertexId,
+pub struct VertexCopy {
+    /// The vertex whose fans were separated.
+    pub of: VertexId,
+    /// The vertex added for one fan.
+    pub copy: VertexId,
 }
 
 /// Gives every fan of faces at a vertex after the first (the one holding the lowest

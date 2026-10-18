@@ -17,6 +17,11 @@ mod validate;
 pub use error::{CornerArray, Counted, MaterialFault, MeshError};
 pub use halfedge::{ManifoldMesh, Outgoing};
 pub use ids::{ComponentId, EdgeId, FaceId, HalfEdgeId, MaterialIndex, MeshElement, VertexId};
+pub use repair::bowtie::VertexCopy;
+pub use repair::components::Component;
+pub use repair::degenerate::DroppedCopy;
+pub use repair::nonmanifold_edge::PairedEdge;
+pub use repair::plan::{HoleReport, LoopRef, RepairPlan, RepairReport};
 pub use soup::{SourceCorner, SourceMaterials, TriangleSoup};
 pub use validate::{
     Duplicate, DuplicateOrientation, NonManifoldEdge, Unmeasurable, ValidationReport, validate,

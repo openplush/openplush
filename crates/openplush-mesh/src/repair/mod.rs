@@ -6,4 +6,5 @@ pub(crate) mod components;
 pub(crate) mod degenerate;
 pub(crate) mod nonmanifold_edge;
 pub(crate) mod orientation;
+pub(crate) mod plan;
 pub(crate) mod weld;

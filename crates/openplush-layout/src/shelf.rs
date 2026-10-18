@@ -4,19 +4,48 @@ use openplush_pattern::{PatternPiece, PieceId};
 use crate::sheet::{quarter_turns, transform};
 use crate::{LayoutError, LayoutOptions, Placement, Sheet};
 
-/// Lays every copy of every piece on shelves across the roll, tallest first.
+/// The fabric plan: every copy of every piece on shelves across the roll, tallest first.
 ///
+/// Copies cut as printed come first, then the flipped ones, mirrored. The whole plan is mirrored
+/// when the print is (`LayoutOptions`'s `mirrored`), so a flipped copy is then the unmirrored one.
 /// Each piece uses its first allowed rotation. Pieces tie on height by `PieceId`, then keep input order.
 pub fn pack(pieces: &[PatternPiece], opts: &LayoutOptions) -> Result<Vec<Sheet>, LayoutError> {
-    if pieces.is_empty() {
+    let mut items = Vec::new();
+    for p in pieces {
+        let cuts = p.cuts();
+        if cuts.as_printed() > 0 {
+            items.push(Item::new(p, opts.mirrored, cuts.as_printed(), 0)?);
+        }
+        if cuts.flipped() > 0 {
+            items.push(Item::new(
+                p,
+                !opts.mirrored,
+                cuts.flipped(),
+                cuts.as_printed(),
+            )?);
+        }
+    }
+    place(items, opts)
+}
+
+/// The print: one template per piece, mirrored when the print is, laid out as `pack` lays copies.
+pub fn pack_templates(
+    pieces: &[PatternPiece],
+    opts: &LayoutOptions,
+) -> Result<Vec<Sheet>, LayoutError> {
+    let items = pieces
+        .iter()
+        .map(|p| Item::new(p, opts.mirrored, 1, 0))
+        .collect::<Result<Vec<_>, _>>()?;
+    place(items, opts)
+}
+
+fn place(mut items: Vec<Item>, opts: &LayoutOptions) -> Result<Vec<Sheet>, LayoutError> {
+    if items.is_empty() {
         return Err(LayoutError::NoPieces);
     }
     let roll = opts.roll_width.get();
     let gap = opts.gap.get();
-    let mut items = pieces
-        .iter()
-        .map(|p| Item::new(p, opts.mirrored))
-        .collect::<Result<Vec<_>, _>>()?;
     items.sort_by(|a, b| b.height.total_cmp(&a.height).then(a.piece.cmp(&b.piece)));
 
     let mut placements = Vec::new();
@@ -30,7 +59,7 @@ pub fn pack(pieces: &[PatternPiece], opts: &LayoutOptions) -> Result<Vec<Sheet>,
                 roll_mm: roll,
             });
         }
-        for copy in 0..item.cuts {
+        for copy in item.first_copy..item.first_copy + item.cuts {
             if !shelf_empty && x + gap + item.width > roll {
                 y += shelf_height + gap;
                 (x, shelf_height, shelf_empty) = (0.0, 0.0, true);
@@ -53,6 +82,7 @@ pub fn pack(pieces: &[PatternPiece], opts: &LayoutOptions) -> Result<Vec<Sheet>,
 struct Item {
     piece: PieceId,
     cuts: u32,
+    first_copy: u32,
     rotation_deg: f64,
     turns: u8,
     mirrored: bool,
@@ -62,7 +92,12 @@ struct Item {
 }
 
 impl Item {
-    fn new(piece: &PatternPiece, mirrored: bool) -> Result<Self, LayoutError> {
+    fn new(
+        piece: &PatternPiece,
+        mirrored: bool,
+        cuts: u32,
+        first_copy: u32,
+    ) -> Result<Self, LayoutError> {
         // INVARIANT: `PatternPiece::new` refuses an empty rotation set.
         let rotation_deg = piece.rotations_deg()[0];
         let turns = quarter_turns(rotation_deg).ok_or(LayoutError::UnsupportedRotation {
@@ -82,7 +117,8 @@ impl Item {
         }
         Ok(Self {
             piece: piece.id(),
-            cuts: piece.cuts().total(),
+            cuts,
+            first_copy,
             rotation_deg,
             turns,
             mirrored,

@@ -238,3 +238,11 @@ fn edges_meeting_only_on_a_bounding_box_boundary_are_not_simple() {
         );
     }
 }
+
+#[test]
+fn negative_zero_is_the_same_height_as_zero() {
+    let p = [(0.0, 0.0), (1.0, -0.0), (2.0, 0.0), (1.0, 1.0)];
+    assert!(refused(&p).is_ok());
+    let q = [(-0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)];
+    assert!(refused(&q).is_ok());
+}

@@ -355,6 +355,12 @@ version = "0.0.0"
 [[package]]
 name = "openplush-export"
 version = "0.0.0"
+dependencies = [
+ "openplush-geom",
+ "openplush-layout",
+ "openplush-pattern",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-fields"

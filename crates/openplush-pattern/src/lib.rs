@@ -5,6 +5,7 @@ mod fabric;
 mod outline;
 pub mod parity;
 mod piece;
+pub mod scale;
 
 pub use error::PatternError;
 pub use fabric::{Fabric, FabricCategory, FabricSpec, StretchDirection};

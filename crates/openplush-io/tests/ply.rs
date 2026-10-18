@@ -37,7 +37,7 @@ fn value(enc: Enc, ty: &str, v: f64, out: &mut Vec<u8>) {
         "uint" | "uint32" => (v as u32).to_le_bytes().to_vec(),
         "float" | "float32" => (v as f32).to_le_bytes().to_vec(),
         "double" | "float64" => v.to_le_bytes().to_vec(),
-        other => panic!("{other}"),
+        _ => Vec::new(),
     };
     if enc == Enc::Big {
         out.extend(bytes.iter().rev());

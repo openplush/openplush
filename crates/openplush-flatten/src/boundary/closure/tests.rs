@@ -2,7 +2,7 @@ use std::f64::consts::{PI, TAU};
 
 use openplush_geom::DVec2;
 
-use super::{close, walk};
+use super::{close, conditions, damped, norm, step, walk};
 use crate::boundary::BoundaryError;
 
 fn near(a: f64, b: f64, tol: f64) -> bool {
@@ -109,6 +109,61 @@ fn the_same_input_closes_to_the_same_bits() -> Result<(), BoundaryError> {
         b.iter().map(|k| k.to_bits()).collect::<Vec<_>>()
     );
     Ok(())
+}
+
+#[test]
+fn closing_does_not_depend_on_scale() -> Result<(), BoundaryError> {
+    let lengths: Vec<f64> = (0..24).map(|i| 1.0 + 0.37 * f64::from(i % 5)).collect();
+    let target: Vec<f64> = (0..24)
+        .map(|i| TAU / 24.0 + 0.3 * (f64::from(i) * 0.25).sin())
+        .collect();
+    let unscaled = close(&lengths, &target)?;
+    for s in [1e-9, 1e-6, 1e3, 1e9] {
+        let scaled: Vec<f64> = lengths.iter().map(|l| l * s).collect();
+        for (a, b) in close(&scaled, &target)?.iter().zip(&unscaled) {
+            assert!(near(*a, *b, 1e-12), "scale {s}");
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn a_long_irregular_boundary_closes() -> Result<(), BoundaryError> {
+    let n = 2000;
+    let lengths: Vec<f64> = (0..n)
+        .map(|i| 1.0 + 0.9 * (f64::from(i) * 2.3).sin())
+        .collect();
+    let target: Vec<f64> = (0..n)
+        .map(|i| TAU / f64::from(n) + 0.01 * (f64::from(i) * 0.7).cos())
+        .collect();
+    let kappa = close(&lengths, &target)?;
+    let perimeter: f64 = lengths.iter().sum();
+    assert!(end_point(&lengths, &kappa).length() <= 1e-10 * perimeter);
+    Ok(())
+}
+
+#[test]
+fn one_step_near_a_closed_polygon_squares_the_error() {
+    // Newton-like steps converge quadratically; half steps or a scaled condition only linearly.
+    let unit = vec![1.0 / 9.0; 9];
+    let kappa: Vec<f64> = (0..9)
+        .map(|i| TAU / 9.0 + 1e-3 * (1.3 * f64::from(i)).sin())
+        .collect();
+    let (r0, jacobian) = conditions(&unit, &kappa);
+    let e0 = norm(r0);
+    let full = step(&kappa, &kappa, r0, &jacobian).unwrap_or_default();
+    let next = damped(&unit, &kappa, &full, e0).unwrap_or_default();
+    assert_eq!(next.len(), 9);
+    assert!(norm(conditions(&unit, &next).0) <= e0 * e0);
+}
+
+#[test]
+fn a_polygon_still_open_when_the_steps_run_out_is_refused() {
+    // Just past degenerate: each step closes a little, never enough within the step limit.
+    assert_eq!(
+        close(&[1.0, 1.0, 1.0, 3.0 + 1e-9], &[1.5; 4]),
+        Err(BoundaryError::NotClosed)
+    );
 }
 
 #[test]

@@ -331,3 +331,34 @@ fn a_face_that_repeats_a_vertex_is_refused() {
     let err = orient(&s, &tol(&s)).unwrap_err();
     assert_eq!(err, MeshError::DegenerateTriangle { triangle: f(1) });
 }
+
+#[test]
+fn every_way_a_face_can_repeat_a_vertex_is_refused_at_the_first_such_face() {
+    let (pos, _) = strip();
+    for bad in [[1, 1, 2], [1, 2, 2], [1, 2, 1]] {
+        let s = soup(pos.clone(), &[[0, 1, 2], bad, [0, 0, 2]]);
+        let err = orient(&s, &tol(&s)).unwrap_err();
+        assert_eq!(err, MeshError::DegenerateTriangle { triangle: f(1) });
+    }
+}
+
+#[test]
+fn a_shell_at_the_extremes_of_the_supported_scale_is_still_turned_over() {
+    for scale in [1e-99, 1e99] {
+        let (pos, tris) = tetrahedron();
+        let pos = pos.into_iter().map(|q| q * scale).collect();
+        let (out, done) = oriented(&soup(pos, &reversed(&tris)));
+        assert_eq!(out.triangle_indices(), tris);
+        assert_eq!(done.flipped.len(), 4);
+    }
+}
+
+#[test]
+fn volume_is_judged_after_the_walk_not_on_the_input_winding() {
+    let (pos, tris) = tetrahedron();
+    let mut wound = reversed(&tris);
+    wound[3] = tris[3];
+    let (out, done) = oriented(&soup(pos, &wound));
+    assert_eq!(out.triangle_indices(), tris);
+    assert_eq!(done.flipped, [f(0), f(1), f(2)]);
+}

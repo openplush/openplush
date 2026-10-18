@@ -10,6 +10,8 @@
 mod boundary;
 mod error;
 pub mod injectivity;
+#[cfg_attr(not(test), expect(dead_code, reason = "no caller outside tests"))]
+mod interior;
 #[cfg_attr(
     not(test),
     expect(

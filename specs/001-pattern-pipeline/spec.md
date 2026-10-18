@@ -66,13 +66,13 @@ The maker sees, before cutting, where fabric would stretch, pucker, or not fit, 
 2. **Given** a region over the fabric's tolerance, **When** the user requests suggestions, **Then** the system proposes darts or seams, previews the improvement, and applies them only on acceptance.
 
 ### US3 — Sewing marks that make assembly unambiguous (Priority: P2)
-Pieces carry match notches, partner labels ("A3 → C1"), cut counts, mirror flags, and a marked stuffing opening.
+Pieces carry match notches, partner labels ("A3 → C1"), cut counts as printed and flipped, and a marked stuffing opening.
 
 **Why P2**: The difference between a shape and a usable pattern.
 **Independent test**: For every seam in the capsule fixture, both sides carry matching notch codes at equal arc-length positions.
 
 **Acceptance scenarios**
-1. **Given** a left/right symmetric model with mirrored seams, **When** the pattern is generated, **Then** mirror-image pieces appear once, labeled "cut 2 (mirrored)".
+1. **Given** a left/right symmetric model with mirrored seams, **When** the pattern is generated, **Then** mirror-image pieces appear once, labeled "cut 2 (1 + 1 flipped)".
 2. **Given** a seam segment marked as the opening, **When** exported, **Then** that segment is labeled and its allowance uses the opening allowance.
 3. **Given** a tight concave curve, **When** exported, **Then** clip marks are drawn in its allowance; tight convex curves get notch-out marks.
 

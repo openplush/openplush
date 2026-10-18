@@ -182,7 +182,7 @@ fn pairing(
 }
 
 #[test]
-fn a_face_the_pairing_does_not_name_shares_no_copy_with_a_pair() {
+fn a_pairing_that_leaves_a_face_of_the_edge_out_is_refused() {
     // The sheet's diagonal 0-2 plus a fifth face on it that the pairing leaves out.
     let s = soup(
         vec![
@@ -195,22 +195,48 @@ fn a_face_the_pairing_does_not_name_shares_no_copy_with_a_pair() {
         vec![[0, 1, 2], [0, 2, 3], [0, 3, 2], [2, 1, 0], [0, 2, 4]],
     );
     let pairs = pairing([v(0), v(2)], vec![[f(0), f(1)], [f(2), f(3)]], None);
-    // The fifth face is alone on the first copy, a fan that does not rejoin the sheet.
+    // A pairing must name every face on the edge it pairs.
     assert_eq!(
         build(&s, &[pairs], &[[f(0), f(3)], [f(1), f(2)]]).unwrap_err(),
-        MeshError::NonManifoldVertex { vertex: v(0) }
+        MeshError::PairingMismatch {
+            face: f(4),
+            a: v(0),
+            b: v(2)
+        }
     );
 }
 
 #[test]
-fn an_unpaired_face_and_an_unnamed_one_get_copies_of_their_own() {
+fn an_unpaired_face_gets_a_boundary_copy_of_its_own() {
     let s = square_sheet();
     let sheets = [[f(0), f(3)], [f(1), f(2)]];
-    let one_left = pairing([v(0), v(2)], vec![[f(0), f(1)]], Some(f(2)));
-    let mesh = build(&s, &[one_left], &sheets).unwrap();
-    // Four rim edges, the pair's copy, the unpaired face's and the unnamed face's.
-    assert_eq!(mesh.edge_count(), 7);
-    assert_eq!(mesh.boundary_loops().len(), 1);
+    let all = pairing([v(0), v(2)], vec![[f(0), f(1)]], Some(f(2)));
+    // Face 3 is on the edge too, and left out.
+    assert_eq!(
+        build(&s, &[all], &sheets).unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(3),
+            a: v(0),
+            b: v(2)
+        }
+    );
+}
+
+#[test]
+fn a_pairing_on_an_edge_with_two_faces_is_refused_rather_than_cutting_it() {
+    let s = soup(
+        vec![p(0., 0., 0.), p(1., 0., 0.), p(0., 1., 0.), p(0., 0., 1.)],
+        vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [0, 3, 2]],
+    );
+    let cut = pairing([v(0), v(1)], vec![], Some(f(0)));
+    assert_eq!(
+        build(&s, &[cut], &[]).unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(0),
+            a: v(0),
+            b: v(1)
+        }
+    );
 }
 
 #[test]

@@ -186,7 +186,7 @@ fn build(
     } = pending;
     let (compact, map) = stage.soup.compacted();
     // INVARIANT: every vertex the pairings, copies and seams name is used by a face.
-    let renumber = |v: VertexId| VertexId::new(map[v.index() as usize].unwrap_or(v.index()));
+    let renumber = |v: VertexId| VertexId::new(map[v.index() as usize]);
     let edge = |[a, b]: [VertexId; 2]| [renumber(a), renumber(b)];
     let pairings: Vec<PairedEdge> = pairings
         .iter()

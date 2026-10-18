@@ -145,7 +145,7 @@ impl RepairReport {
         &self.flipped_faces
     }
 
-    /// Edges whose two faces no flips make agree.
+    /// Edges whose two faces no flips make agree. Empty today: such an edge is refused by the build.
     pub fn orientation_conflicts(&self) -> &[[VertexId; 2]] {
         &self.orientation_conflicts
     }

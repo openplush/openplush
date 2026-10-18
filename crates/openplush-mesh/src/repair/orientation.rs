@@ -16,7 +16,7 @@ pub(crate) struct Oriented {
     /// Edges, smaller end first and sorted, whose two faces no flips make agree.
     #[cfg_attr(
         not(test),
-        expect(dead_code, reason = "read by the cut of a conflict edge")
+        expect(dead_code, reason = "only tests read the conflict edges")
     )]
     pub(crate) conflicts: Vec<[VertexId; 2]>,
 }

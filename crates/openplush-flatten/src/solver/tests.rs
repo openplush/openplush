@@ -21,7 +21,12 @@ fn grid(side: usize) -> Lower {
         for j in 0..side {
             let r = i * side + j;
             let mut degree = 0.0;
-            for (ni, nj) in [(i.wrapping_sub(1), j), (i + 1, j), (i, j.wrapping_sub(1)), (i, j + 1)] {
+            for (ni, nj) in [
+                (i.wrapping_sub(1), j),
+                (i + 1, j),
+                (i, j.wrapping_sub(1)),
+                (i, j + 1),
+            ] {
                 if ni < side && nj < side {
                     degree += 1.0;
                     let c = ni * side + nj;
@@ -45,7 +50,10 @@ fn residual(n: usize, entries: &Lower, x: &[f64], b: &[f64]) -> f64 {
             ax[c] += v * x[r];
         }
     }
-    ax.iter().zip(b).map(|(a, b)| (a - b).abs()).fold(0.0, f64::max)
+    ax.iter()
+        .zip(b)
+        .map(|(a, b)| (a - b).abs())
+        .fold(0.0, f64::max)
 }
 
 #[test]
@@ -73,7 +81,11 @@ fn one_analysis_serves_new_values() -> Result<(), SolveError> {
     for scale in [1.0, 2.5] {
         let scaled: Vec<f64> = values.iter().map(|v| v * scale).collect();
         let x = pattern.factor(&scaled)?.solve(&b)?;
-        let entries: Lower = at.iter().zip(&scaled).map(|(&(r, c), &v)| (r, c, v)).collect();
+        let entries: Lower = at
+            .iter()
+            .zip(&scaled)
+            .map(|(&(r, c), &v)| (r, c, v))
+            .collect();
         assert!(residual(100, &entries, &x, &b) < 1e-10, "scale {scale}");
     }
     Ok(())
@@ -84,7 +96,10 @@ fn the_same_system_gives_the_same_bits() -> Result<(), SolveError> {
     let entries = grid(20);
     let b: Vec<f64> = (0..400).map(|r| (r as f64).sqrt()).collect();
     let bits = |x: Vec<f64>| x.into_iter().map(f64::to_bits).collect::<Vec<_>>();
-    assert_eq!(bits(solve(400, &entries, &b)?), bits(solve(400, &entries, &b)?));
+    assert_eq!(
+        bits(solve(400, &entries, &b)?),
+        bits(solve(400, &entries, &b)?)
+    );
     Ok(())
 }
 
@@ -112,12 +127,18 @@ fn values_and_right_hand_sides_must_match_the_system() -> Result<(), SolveError>
     let pattern = analyse(2, &[(0, 0), (1, 1)])?;
     assert!(matches!(
         pattern.factor(&[1.0]),
-        Err(SolveError::Length { expected: 2, got: 1 })
+        Err(SolveError::Length {
+            expected: 2,
+            got: 1
+        })
     ));
     let factor = pattern.factor(&[1.0, 1.0])?;
     assert!(matches!(
         factor.solve(&[1.0, 2.0, 3.0]),
-        Err(SolveError::Length { expected: 2, got: 3 })
+        Err(SolveError::Length {
+            expected: 2,
+            got: 3
+        })
     ));
     Ok(())
 }
@@ -126,9 +147,15 @@ fn values_and_right_hand_sides_must_match_the_system() -> Result<(), SolveError>
 fn a_value_or_right_hand_side_that_is_not_finite_is_refused() -> Result<(), SolveError> {
     let pattern = analyse(2, &[(0, 0), (1, 1)])?;
     for bad in [f64::NAN, f64::INFINITY] {
-        assert!(matches!(pattern.factor(&[1.0, bad]), Err(SolveError::NotFinite)));
+        assert!(matches!(
+            pattern.factor(&[1.0, bad]),
+            Err(SolveError::NotFinite)
+        ));
         let factor = pattern.factor(&[1.0, 1.0])?;
-        assert!(matches!(factor.solve(&[bad, 0.0]), Err(SolveError::NotFinite)));
+        assert!(matches!(
+            factor.solve(&[bad, 0.0]),
+            Err(SolveError::NotFinite)
+        ));
     }
     Ok(())
 }

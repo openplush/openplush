@@ -5,5 +5,10 @@
 
 mod error;
 pub mod injectivity;
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "the interior solve is the first caller")
+)]
+mod solver;
 
 pub use error::FlattenError;

@@ -2,7 +2,7 @@
 
 mod degenerate;
 mod nonmanifold;
-mod orientation;
+pub(crate) mod orientation;
 mod report;
 mod selfintersect;
 mod topology;

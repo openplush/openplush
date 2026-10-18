@@ -18,11 +18,32 @@ pub(super) fn conflicts(edges: &Edges) -> Vec<[VertexId; 2]> {
 /// Two-face edges where the flips a breadth-first walk assigns (from each
 /// component's first face, across two-face edges) contradict each other.
 pub(super) fn non_orientable(edges: &Edges, tris: &[[u32; 3]], kept: &[u32]) -> Vec<[VertexId; 2]> {
-    // flip[face]: None until reached; Some(true) if the face must turn over to agree.
+    walk(edges, tris, kept)
+        .conflicts
+        .into_iter()
+        .map(|[a, b]| [VertexId::new(a), VertexId::new(b)])
+        .collect()
+}
+
+/// The flips a breadth-first walk assigns across two-face edges.
+pub(crate) struct Walk {
+    /// Per face: `None` if no seed reached it, `Some(true)` if it must turn over to agree.
+    #[expect(
+        dead_code,
+        reason = "read by repair's orientation step, not yet written"
+    )]
+    pub(crate) flip: Vec<Option<bool>>,
+    /// Edges, smaller vertex first, whose two faces cannot be made to agree.
+    pub(crate) conflicts: BTreeSet<[u32; 2]>,
+}
+
+/// Walks from each seed not already reached, in order, so the seed of a component is
+/// the first of `seeds` it holds.
+pub(crate) fn walk(edges: &Edges, tris: &[[u32; 3]], seeds: &[u32]) -> Walk {
     let mut flip: Vec<Option<bool>> = vec![None; tris.len()];
-    let mut bad: BTreeSet<[u32; 2]> = BTreeSet::new();
-    for &seed in kept {
-        // INVARIANT: kept faces index `tris` and `flip`.
+    let mut conflicts: BTreeSet<[u32; 2]> = BTreeSet::new();
+    for &seed in seeds {
+        // INVARIANT: seeds index `tris` and `flip`.
         if flip[seed as usize].is_some() {
             continue;
         }
@@ -43,16 +64,14 @@ pub(super) fn non_orientable(edges: &Edges, tris: &[[u32; 3]], kept: &[u32]) -> 
                         queue.push_back(there.face);
                     }
                     Some(have) if have != wanted => {
-                        bad.insert(key);
+                        conflicts.insert(key);
                     }
                     Some(_) => {}
                 }
             }
         }
     }
-    bad.into_iter()
-        .map(|[a, b]| [VertexId::new(a), VertexId::new(b)])
-        .collect()
+    Walk { flip, conflicts }
 }
 
 fn pair<T: Copy>(uses: &[T]) -> Option<[T; 2]> {
@@ -64,10 +83,6 @@ fn pair<T: Copy>(uses: &[T]) -> Option<[T; 2]> {
 
 /// Shells, faces joined across two-face edges, that are closed (each of their edges
 /// used by exactly two of their own faces) and whose signed volume is not positive.
-/// Judging shells rather than components catches an inside-out shell that touches the
-/// rest of the mesh only at a vertex or a non-manifold edge. Positions are taken
-/// relative to the shell's first vertex and divided by the diagonal, so a tiny model's
-/// volume does not underflow to zero.
 pub(super) fn inside_out(
     edges: &Edges,
     tris: &[[u32; 3]],
@@ -75,10 +90,32 @@ pub(super) fn inside_out(
     positions: &[DVec3],
     diagonal: f64,
 ) -> Vec<Vec<FaceId>> {
+    closed_volumes(edges, tris, kept, positions, diagonal)
+        .into_iter()
+        .filter(|&(_, volume)| volume <= 0.0)
+        .map(|(shell, _)| shell.into_iter().map(FaceId::new).collect())
+        .collect()
+}
+
+/// Each closed shell with its signed volume, in order of its first face. Judging shells
+/// rather than components catches an inside-out shell that touches the rest of the
+/// mesh only at a vertex or a non-manifold edge. Positions are taken relative to the
+/// shell's first vertex and divided by the diagonal, so a tiny model's volume does
+/// not underflow to zero.
+pub(crate) fn closed_volumes(
+    edges: &Edges,
+    tris: &[[u32; 3]],
+    kept: &[u32],
+    positions: &[DVec3],
+    diagonal: f64,
+) -> Vec<(Vec<u32>, f64)> {
     shells(edges, tris, kept)
         .into_iter()
-        .filter(|shell| closed(tris, shell) && volume(tris, shell, positions, diagonal) <= 0.0)
-        .map(|shell| shell.into_iter().map(FaceId::new).collect())
+        .filter(|shell| closed(tris, shell))
+        .map(|shell| {
+            let volume = volume(tris, &shell, positions, diagonal);
+            (shell, volume)
+        })
         .collect()
 }
 
@@ -130,6 +167,6 @@ fn volume(tris: &[[u32; 3]], shell: &[u32], positions: &[DVec3], diagonal: f64) 
 }
 
 /// The three edge keys of a triangle, smaller vertex first.
-pub(super) fn edge_keys([a, b, c]: [u32; 3]) -> [[u32; 2]; 3] {
+pub(crate) fn edge_keys([a, b, c]: [u32; 3]) -> [[u32; 2]; 3] {
     [[a, b], [b, c], [c, a]].map(|[x, y]| if x < y { [x, y] } else { [y, x] })
 }

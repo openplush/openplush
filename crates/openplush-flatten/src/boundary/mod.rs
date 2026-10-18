@@ -7,6 +7,8 @@ mod curvature;
 pub(crate) mod fixtures;
 mod topology;
 
+use std::collections::BTreeMap;
+
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
 
@@ -37,6 +39,14 @@ impl From<SolveError> for BoundaryError {
     fn from(e: SolveError) -> Self {
         Self::Solve(e)
     }
+}
+
+/// Each edge's cotangent weight, keyed smaller vertex first (see `curvature::Intrinsic`).
+pub(crate) fn cotangent_weights(
+    xyz: &[DVec3],
+    faces: &[(FaceId, [VertexId; 3])],
+) -> Result<BTreeMap<(u32, u32), f64>, BoundaryError> {
+    Ok(curvature::intrinsic(xyz, faces)?.weight)
 }
 
 /// The chart's boundary corners laid flat, from its lowest vertex in the faces' winding

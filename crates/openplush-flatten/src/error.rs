@@ -31,4 +31,31 @@ pub enum FlattenError {
         /// The predicate's refusal.
         source: GeomError,
     },
+    /// A face with zero, non-finite or overflowing area, which has no rest shape.
+    #[error("face {} of chart {} has no measurable area", .face.index(), .chart.index())]
+    Degenerate {
+        /// The chart.
+        chart: ChartId,
+        /// The face.
+        face: FaceId,
+    },
+    /// The flattener's own guard: the chart is not one connected, consistently wound surface
+    /// with a single boundary loop and Euler characteristic 1.
+    #[error("chart {} is not a disk", .chart.index())]
+    NotADisk {
+        /// The chart.
+        chart: ChartId,
+    },
+    /// A sparse solve was refused (not positive definite, not finite, or out of memory).
+    #[error("a linear solve for chart {} failed", .chart.index())]
+    SolveFailed {
+        /// The chart.
+        chart: ChartId,
+    },
+    /// The boundary could not be closed at its 3D edge lengths.
+    #[error("the boundary of chart {} cannot be laid flat at its 3D edge lengths", .chart.index())]
+    BoundaryNotRealizable {
+        /// The chart.
+        chart: ChartId,
+    },
 }

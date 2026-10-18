@@ -12,6 +12,34 @@ pub(super) struct Rest {
     area: f64,
 }
 
+impl Rest {
+    pub(super) fn area(&self) -> f64 {
+        self.area
+    }
+
+    /// The Jacobian of the map taking this face's rest shape to the layout.
+    pub(super) fn jacobian(&self, uv: &[DVec2], t: &[VertexId; 3]) -> [[f64; 2]; 2] {
+        let (d1, d2) = edges(uv, t);
+        [
+            [
+                d1.x * self.inv[0][0] + d2.x * self.inv[1][0],
+                d1.x * self.inv[0][1] + d2.x * self.inv[1][1],
+            ],
+            [
+                d1.y * self.inv[0][0] + d2.y * self.inv[1][0],
+                d1.y * self.inv[0][1] + d2.y * self.inv[1][1],
+            ],
+        ]
+    }
+
+    /// Row `v` holds the coefficients of corner `v`'s position in the Jacobian's two columns,
+    /// so `J[k][m] = Σ_v operator[v][m] · uv_v[k]`.
+    pub(super) fn operator(&self) -> [[f64; 2]; 3] {
+        let [a, b] = self.inv;
+        [[-(a[0] + b[0]), -(a[1] + b[1])], a, b]
+    }
+}
+
 /// Each face's rest shape, or the first face naming a missing vertex or with zero or
 /// non-finite area.
 pub(super) fn rest_shapes(
@@ -52,17 +80,7 @@ pub(super) fn energy(
     let mut total = 0.0;
     let mut area = 0.0;
     for (r, (_, t)) in rest.iter().zip(faces) {
-        let (d1, d2) = edges(uv, t);
-        let j = [
-            [
-                d1.x * r.inv[0][0] + d2.x * r.inv[1][0],
-                d1.x * r.inv[0][1] + d2.x * r.inv[1][1],
-            ],
-            [
-                d1.y * r.inv[0][0] + d2.y * r.inv[1][0],
-                d1.y * r.inv[0][1] + d2.y * r.inv[1][1],
-            ],
-        ];
+        let j = r.jacobian(uv, t);
         let det = j[0][0] * j[1][1] - j[0][1] * j[1][0];
         if det <= 0.0 {
             return None;

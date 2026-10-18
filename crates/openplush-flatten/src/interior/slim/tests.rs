@@ -55,13 +55,18 @@ fn iterating_a_shoved_flat_chart_returns_to_the_isometry() -> Result<(), String>
     let mut e = energy(&rest, &faces, &uv).ok_or("start flipped")?;
     assert!(e > 4.1, "the shove must cost something: {e}");
     for _ in 0..200 {
-        let target = system.target(&rest, &faces, &uv).map_err(|e| format!("{e:?}"))?;
+        let target = system
+            .target(&rest, &faces, &uv)
+            .map_err(|e| format!("{e:?}"))?;
         let dir: Vec<DVec2> = target.iter().zip(&uv).map(|(t, u)| *t - *u).collect();
         let Some((next, lower)) = descend(&rest, &faces, &uv, &dir, e) else {
             break;
         };
         assert!(lower < e, "an accepted step lowers the energy");
-        assert_eq!(injectivity::verify(ChartId::new(0), &tris(&faces, &next)), Ok(()));
+        assert_eq!(
+            injectivity::verify(ChartId::new(0), &tris(&faces, &next)),
+            Ok(())
+        );
         (uv, e) = (next, lower);
     }
     assert!((e - 4.0).abs() <= 1e-6, "energy {e}");
@@ -73,7 +78,9 @@ fn the_rim_never_moves() -> Result<(), String> {
     let (xyz, faces, free, uv) = shoved();
     let rest = rest_shapes(&xyz, &faces).map_err(|f| format!("{f:?}"))?;
     let system = System::new(&faces, &free).map_err(|e| format!("{e:?}"))?;
-    let target = system.target(&rest, &faces, &uv).map_err(|e| format!("{e:?}"))?;
+    let target = system
+        .target(&rest, &faces, &uv)
+        .map_err(|e| format!("{e:?}"))?;
     for (v, slot) in free.slot.iter().enumerate() {
         if slot.is_none() {
             assert_eq!(target[v], uv[v], "vertex {v}");
@@ -88,7 +95,9 @@ fn an_overlong_direction_is_cut_back_before_any_face_flips() -> Result<(), Strin
     let rest = rest_shapes(&xyz, &faces).map_err(|f| format!("{f:?}"))?;
     let system = System::new(&faces, &free).map_err(|e| format!("{e:?}"))?;
     let e = energy(&rest, &faces, &uv).ok_or("start flipped")?;
-    let target = system.target(&rest, &faces, &uv).map_err(|e| format!("{e:?}"))?;
+    let target = system
+        .target(&rest, &faces, &uv)
+        .map_err(|e| format!("{e:?}"))?;
     let dir: Vec<DVec2> = target
         .iter()
         .zip(&uv)
@@ -96,7 +105,10 @@ fn an_overlong_direction_is_cut_back_before_any_face_flips() -> Result<(), Strin
         .collect();
     let (next, lower) = descend(&rest, &faces, &uv, &dir, e).ok_or("no step found")?;
     assert!(lower < e);
-    assert_eq!(injectivity::verify(ChartId::new(0), &tris(&faces, &next)), Ok(()));
+    assert_eq!(
+        injectivity::verify(ChartId::new(0), &tris(&faces, &next)),
+        Ok(())
+    );
     Ok(())
 }
 
@@ -107,7 +119,9 @@ fn no_step_is_found_at_the_minimum() -> Result<(), String> {
     let rest = rest_shapes(&xyz, &faces).map_err(|f| format!("{f:?}"))?;
     let system = System::new(&faces, &free).map_err(|e| format!("{e:?}"))?;
     let e = energy(&rest, &faces, &lattice).ok_or("flipped")?;
-    let target = system.target(&rest, &faces, &lattice).map_err(|e| format!("{e:?}"))?;
+    let target = system
+        .target(&rest, &faces, &lattice)
+        .map_err(|e| format!("{e:?}"))?;
     let dir: Vec<DVec2> = target.iter().zip(&lattice).map(|(t, u)| *t - *u).collect();
     assert!(descend(&rest, &faces, &lattice, &dir, e).is_none());
     Ok(())

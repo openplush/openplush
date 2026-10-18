@@ -251,7 +251,10 @@ fn charts_that_cannot_be_flattened_are_refused_with_their_chart() {
             .collect::<Vec<_>>(),
         grid(3, 3),
     );
-    let annulus: Faces = disk.into_iter().filter(|(f, _)| f.index() / 2 != 4).collect();
+    let annulus: Faces = disk
+        .into_iter()
+        .filter(|(f, _)| f.index() / 2 != 4)
+        .collect();
     assert_eq!(
         flatten(CHART, &xyz, &annulus),
         Err(FlattenError::NotADisk { chart: CHART })
@@ -274,7 +277,10 @@ fn charts_that_cannot_be_flattened_are_refused_with_their_chart() {
 fn each_refusal_maps_to_the_variant_that_names_it() {
     let face = FaceId::new(5);
     for (from, to) in [
-        (BoundaryError::Empty, FlattenError::EmptyChart { chart: CHART }),
+        (
+            BoundaryError::Empty,
+            FlattenError::EmptyChart { chart: CHART },
+        ),
         (
             BoundaryError::BadVertex { face },
             FlattenError::Degenerate { chart: CHART, face },
@@ -283,7 +289,10 @@ fn each_refusal_maps_to_the_variant_that_names_it() {
             BoundaryError::Degenerate { face },
             FlattenError::Degenerate { chart: CHART, face },
         ),
-        (BoundaryError::NotADisk, FlattenError::NotADisk { chart: CHART }),
+        (
+            BoundaryError::NotADisk,
+            FlattenError::NotADisk { chart: CHART },
+        ),
         (
             BoundaryError::Solve(SolveError::NotFinite),
             FlattenError::SolveFailed { chart: CHART },

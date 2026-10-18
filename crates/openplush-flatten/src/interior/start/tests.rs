@@ -49,7 +49,10 @@ fn a_start_no_predicate_can_judge_is_reported_at_once() {
         choose([Err(unjudgeable.clone()), Ok(())]),
         Err(unjudgeable.clone())
     );
-    assert_eq!(choose([flip(&[1]), Err(unjudgeable.clone())]), Err(unjudgeable));
+    assert_eq!(
+        choose([flip(&[1]), Err(unjudgeable.clone())]),
+        Err(unjudgeable)
+    );
 }
 
 /// A flat 5 by 5 grid on `(c, r)` with its interior vertices moved off the lattice, and the
@@ -63,7 +66,10 @@ fn bent_grid() -> (Vec<DVec3>, Faces, Free) {
             let wobble = if on_rim(c, r) {
                 DVec2::ZERO
             } else {
-                DVec2::new(0.2 * f64::from((c * 7 + r * 3) % 5) - 0.4, 0.15 * f64::from((c * 5 + r * 11) % 4) - 0.2)
+                DVec2::new(
+                    0.2 * f64::from((c * 7 + r * 3) % 5) - 0.4,
+                    0.15 * f64::from((c * 5 + r * 11) % 4) - 0.2,
+                )
             };
             DVec3::new(f64::from(c) + wobble.x, f64::from(r) + wobble.y, 0.0)
         })
@@ -100,13 +106,16 @@ fn the_cotangent_fill_of_a_flat_chart_is_the_identity() -> Result<(), crate::sol
 }
 
 #[test]
-fn the_uniform_fill_inside_a_convex_boundary_flips_no_face() -> Result<(), crate::solver::SolveError> {
+fn the_uniform_fill_inside_a_convex_boundary_flips_no_face() -> Result<(), crate::solver::SolveError>
+{
     let (xyz, faces, free) = bent_grid();
-    let uniform: BTreeMap<(u32, u32), f64> =
-        faces.iter().flat_map(|(_, t)| {
+    let uniform: BTreeMap<(u32, u32), f64> = faces
+        .iter()
+        .flat_map(|(_, t)| {
             let t = t.map(VertexId::index);
             [(t[0], t[1]), (t[1], t[2]), (t[0], t[2])].map(|(a, b)| ((a.min(b), a.max(b)), 1.0))
-        }).collect();
+        })
+        .collect();
     let filled = harmonic(&free, &uniform, &flat(&xyz))?;
     let tris: Vec<_> = faces
         .iter()

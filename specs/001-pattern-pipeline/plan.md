@@ -103,14 +103,13 @@ openplush-geom
                   ├─ openplush-seams ─┐
                   └─ openplush-fields ┤
                                   └─ openplush-flatten ─ openplush-pattern ─┬─ openplush-decal
-                                                                    ├─ openplush-layout
-                                                                    └─ openplush-export
+                                                                    └─ openplush-layout ─ openplush-export
 openplush-project  (depends on mesh/seams/pattern types; serde only)
 openplush-pipeline (depends on all of the above)
 bindings/*     (depend on openplush-pipeline ONLY; it re-exports the project document API — D-020)
 ```
 
-Accepted, not yet built: `openplush-export` depends on `openplush-layout` (D-039, [ADR 0012](../../docs/adr/0012-export-reads-layout.md)); this diagram and `scripts/check-boundary.sh` gain the edge with the first export task that imports layout (T090).
+`openplush-export` depends on `openplush-layout` (D-039, [ADR 0012](../../docs/adr/0012-export-reads-layout.md)), built with T090; `scripts/check-boundary.sh` enforces it.
 
 Rules: no cycles; no sideways edges between siblings without an ADR; `openplush-testkit` is a dev-dependency only. A CI script parses `cargo metadata` and fails on violations.
 

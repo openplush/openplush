@@ -138,7 +138,8 @@ fn a_tab_after_the_keyword_is_a_separator_too() -> Result<(), IoError> {
 }
 
 #[test]
-fn a_continued_usemtl_joins_its_lines_with_one_space() -> Result<(), IoError> {
+fn a_continued_usemtl_keeps_blanks_before_the_backslash_and_adds_one_space() -> Result<(), IoError>
+{
     let soup = read(&format!("{TRIANGLE}usemtl A \\\nB\nf 1 2 3\n"))?;
     assert_eq!(soup.materials().names(), ["A  B"]);
     Ok(())

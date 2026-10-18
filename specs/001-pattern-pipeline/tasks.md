@@ -217,7 +217,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Seams and charts (FR-010 … FR-014)
 
-- [ ] T069 [US1] `crates/openplush-seams/src/set.rs` — `SeamSet` as non-destructive `BTreeMap<EdgeId, SeamKind>` (`SeamKind` itself comes from T175); the mesh never changes when seams change
+- [x] T069 [US1] `crates/openplush-seams/src/set.rs` — `SeamSet` as non-destructive `BTreeMap<EdgeId, SeamKind>` (`SeamKind` itself comes from T175); the mesh never changes when seams change — *merged in #149 (`SeamSet`: a `Mandatory` seam is never removed or changed and is placed only on an edge with no seam; `SeamsError::MandatorySeam`)*
 - [ ] T070 [US1] `crates/openplush-seams/src/graph.rs` — seam graph node classification and maximal seam chains (the unit of notching, labelling, and parity)
 - [ ] T071 [US1] `crates/openplush-seams/src/path.rs` — shortest surface path between two picked points, for seam drawing (FR-010)
 - [ ] T072 [US1] `crates/openplush-seams/src/dart.rs` — darts as seams ending inside a piece; dart tips stay single vertices, a slit rather than a separation (FR-011)

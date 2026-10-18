@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::disjoint::DisjointSet;
-use crate::{Counted, FaceId, MeshError, TriangleSoup, VertexId};
+use crate::{Counted, FaceId, MeshError, PairedEdge, TriangleSoup, VertexId};
 
 /// The vertices a split added, by the IDs of the soup it was given.
 #[derive(Debug, Default)]
@@ -34,7 +34,10 @@ pub struct VertexCopy {
     not(test),
     expect(dead_code, reason = "called by into_manifold, not yet written")
 )]
-pub(crate) fn split(soup: &TriangleSoup) -> Result<(TriangleSoup, Split), MeshError> {
+pub(crate) fn split(
+    soup: &TriangleSoup,
+    _pairings: &[PairedEdge],
+) -> Result<(TriangleSoup, Split), MeshError> {
     let tris = soup.triangle_indices();
     if let Some(f) = tris
         .iter()

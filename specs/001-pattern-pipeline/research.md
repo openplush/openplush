@@ -294,7 +294,7 @@ The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) 
 
 Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
 
-> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike S8 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker.
+> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike S8 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker. Per D-046, fleece, minky and long faux fur ship first, with the maintainer's measured values replacing these rows; the other four wait for their own measurements.
 
 | Preset | Category | Stretch grain / cross / bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
 |---|---|---|---|---|---|---|---|---|
@@ -308,9 +308,9 @@ Seven shipped presets, all editable, all persisted in the project. The schema is
 
 ### Why these fields and not others
 
-- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, mirrored printing (FR-054), and pile-scaled allowance (FR-055).
+- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, the export-time mirroring question (FR-054), and pile-scaled allowance (FR-055).
 - **Per-direction stretch** is recorded but does **not** steer flattening (D-014). Its only job in 001 is FR-058's cross-seam mismatch warning. Knit-backed fur stretching ~30% crosswise against a 0% woven is exactly the seam that fights back while sewing.
-- **Pile length** scales the default allowance and triggers the small-part warning (FR-055). The provisional 3× rule means long faux fur (30 mm) warns on any piece or detail under 90 mm — which is most plush faces. That is informative, not a bug, but it is the strongest argument for making the multiple configurable.
+- **Pile length** scales the default allowance and triggers the small-part warning (FR-055). The 2× rule (D-046) means long faux fur (30 mm) warns on any piece or detail under 60 mm. That is informative, not a bug, but it is the strongest argument for making the multiple configurable.
 - **Thickness** is recorded for the "thick backing on a small plush" edge case and for future thickness compensation, which is explicitly out of scope here. It drives no geometry in 001.
 - **Frays** gates FR-057's zero-allowance option. Felt is the case that motivates it: edge-stitched or appliqué felt pieces need no allowance at all, and adding one makes the piece wrong.
 - **Roll width** bounds FR-062's layout. Note that pile fabrics are commonly sold at 1500 mm while quilting cotton is ~1120 mm, so the same pattern can fit one and not the other.

@@ -1,7 +1,7 @@
 ---
-status: Proposed
+status: Accepted
 date: 2026-10-18
-deciders: maintainer (proposed by the implementing agent)
+deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent
 ---
 
 # `openplush-export` may depend on `openplush-layout`

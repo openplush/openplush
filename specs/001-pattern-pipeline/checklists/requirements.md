@@ -35,19 +35,19 @@
 
 ### The one failing item
 
-Five `[NEEDS CLARIFICATION]` markers remain, all deliberate, all with a stated default that applies if nobody decides, and none blocking implementation:
+Three `[NEEDS CLARIFICATION]` markers remain, all deliberate, all with a stated default that applies if nobody decides, and none blocking implementation:
 
 | Marker | Default | Where it bites |
 |---|---|---|
 | FR-001 STL/PLY import | yes | T052 — a parser either exists or does not |
 | FR-061 PDF in v0.1 | yes | T091, already assumed by D-008 |
 | FR-030 default seam allowance | 6 mm metric / quarter-inch US | `patternOptions.defaultAllowanceMm` |
-| FR-055 pile-length multiple | 3x | `patternOptions.pileAllowanceMultiple` |
-| FR-058 stretch-difference threshold | 20 percentage points | `patternOptions.stretchMismatchThresholdPct` |
 
-All five are **settings with defaults already wired into the project schema**, not architecture. Leaving them open costs nothing; the schema carries each default and each is a one-line change. They are listed in the spec's "Open Clarifications" section rather than hidden.
+All three are **settings with defaults already wired into the project schema**, not architecture. Leaving them open costs nothing; the schema carries each default and each is a one-line change. They are listed in the spec's "Open Clarifications" section rather than hidden.
 
-Marking this item as failing is the honest reading: markers do remain. Closing it would require either deciding five things nobody needs to decide yet, or pretending the markers are gone.
+FR-055 (2×) and FR-058 (20 points) were resolved by the maintainer on 2026-10-18 (D-046).
+
+Marking this item as failing is the honest reading: markers do remain. Closing it would require either deciding three things nobody needs to decide yet, or pretending the markers are gone.
 
 ### Blocking clarifications — closed
 

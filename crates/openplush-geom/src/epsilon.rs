@@ -26,6 +26,11 @@ pub const MAX_DIAGONAL: f64 = 1e100;
 /// A flattened triangle needs det J above this to count as unflipped. det J is a
 /// ratio of areas, so this threshold is dimensionless and does not scale.
 pub const MIN_DET_J: f64 = 1e-10;
+/// Corner UVs on the two sides of an edge differing by more than this make it a UV
+/// cut. UV space is dimensionless, so the value is neither model-relative nor
+/// physical. It is about two orders above `f32` spacing near 1.0, where an exporter's
+/// bit-identical uncut UVs live, and far below any real cut.
+pub const UV_CUT: f64 = 1e-5;
 
 /// Model-space tolerances for one model, derived from its bounding-box diagonal.
 #[derive(Debug, Clone, Copy, PartialEq)]

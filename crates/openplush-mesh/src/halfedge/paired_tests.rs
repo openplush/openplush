@@ -168,3 +168,88 @@ fn without_pairings_it_builds_what_from_oriented_triangles_builds() {
     assert_eq!(plain.edge_count(), paired.edge_count());
     assert_eq!(plain.face_count(), paired.face_count());
 }
+
+fn pairing(
+    vertices: [VertexId; 2],
+    pairs: Vec<[FaceId; 2]>,
+    unpaired: Option<FaceId>,
+) -> PairedEdge {
+    PairedEdge {
+        vertices,
+        pairs,
+        unpaired,
+    }
+}
+
+#[test]
+fn a_face_the_pairing_does_not_name_shares_no_copy_with_a_pair() {
+    // The sheet's diagonal 0-2 plus a fifth face on it that the pairing leaves out.
+    let s = soup(
+        vec![
+            p(0., 0., 0.),
+            p(1., 0., 0.),
+            p(1., 1., 0.),
+            p(0., 1., 0.),
+            p(0., 0., 1.),
+        ],
+        vec![[0, 1, 2], [0, 2, 3], [0, 3, 2], [2, 1, 0], [0, 2, 4]],
+    );
+    let pairs = pairing([v(0), v(2)], vec![[f(0), f(1)], [f(2), f(3)]], None);
+    // The fifth face is alone on the first copy, a fan that does not rejoin the sheet.
+    assert_eq!(
+        build(&s, &[pairs], &[[f(0), f(3)], [f(1), f(2)]]).unwrap_err(),
+        MeshError::NonManifoldVertex { vertex: v(0) }
+    );
+}
+
+#[test]
+fn an_unpaired_face_and_an_unnamed_one_get_copies_of_their_own() {
+    let s = square_sheet();
+    let sheets = [[f(0), f(3)], [f(1), f(2)]];
+    let one_left = pairing([v(0), v(2)], vec![[f(0), f(1)]], Some(f(2)));
+    let mesh = build(&s, &[one_left], &sheets).unwrap();
+    // Four rim edges, the pair's copy, the unpaired face's and the unnamed face's.
+    assert_eq!(mesh.edge_count(), 7);
+    assert_eq!(mesh.boundary_loops().len(), 1);
+}
+
+#[test]
+fn an_unpaired_face_must_use_the_edge_and_a_pair_must_name_a_real_face() {
+    let s = square_sheet();
+    let sheets = [[f(0), f(3)], [f(1), f(2)]];
+    assert_eq!(
+        build(&s, &[pairing([v(1), v(3)], vec![], Some(f(0)))], &sheets).unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(0),
+            a: v(1),
+            b: v(3)
+        }
+    );
+    assert_eq!(
+        build(
+            &s,
+            &[pairing([v(0), v(2)], vec![[f(0), f(99)]], None)],
+            &sheets
+        )
+        .unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(99),
+            a: v(0),
+            b: v(2)
+        }
+    );
+    // Face 1 is [0, 2, 3]: it has no edge 0-1.
+    assert_eq!(
+        build(
+            &s,
+            &[pairing([v(0), v(1)], vec![[f(1), f(3)]], None)],
+            &sheets
+        )
+        .unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(1),
+            a: v(0),
+            b: v(1)
+        }
+    );
+}

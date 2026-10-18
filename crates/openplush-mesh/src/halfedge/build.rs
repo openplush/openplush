@@ -11,7 +11,9 @@ use openplush_geom::DVec2;
 use openplush_geom::epsilon::ModelTolerances;
 
 use super::{ManifoldMesh, is_sliver, ix};
-use crate::{Counted, FaceId, HalfEdgeId, MeshError, SourceCorner, TriangleSoup, VertexId};
+use crate::{
+    Counted, FaceId, HalfEdgeId, MeshError, PairedEdge, SourceCorner, TriangleSoup, VertexId,
+};
 
 /// Placeholder for a link not yet set. Every one is overwritten before the mesh is
 /// returned (see the balance argument on `link_boundary`).
@@ -59,6 +61,16 @@ impl ManifoldMesh {
     pub(crate) fn from_oriented_triangles(
         soup: &TriangleSoup,
         tol: &ModelTolerances,
+    ) -> Result<Self, MeshError> {
+        Self::from_paired_triangles(soup, tol, &[], &[])
+    }
+
+    /// Stub.
+    pub(crate) fn from_paired_triangles(
+        soup: &TriangleSoup,
+        tol: &ModelTolerances,
+        _pairings: &[PairedEdge],
+        _sheets: &[[FaceId; 2]],
     ) -> Result<Self, MeshError> {
         refuse_bad_triangles(soup, tol)?;
         refuse_duplicates(soup.triangle_indices())?;

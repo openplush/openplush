@@ -5,14 +5,17 @@
 
 #[cfg_attr(
     not(test),
-    expect(dead_code, reason = "boundary prescription is the first caller")
+    expect(dead_code, reason = "the interior solve is the first caller")
 )]
 mod boundary;
 mod error;
 pub mod injectivity;
 #[cfg_attr(
     not(test),
-    expect(dead_code, reason = "the interior solve is the first caller")
+    expect(
+        dead_code,
+        reason = "reached only through boundary prescription, which has no caller yet"
+    )
 )]
 mod solver;
 

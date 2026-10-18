@@ -652,6 +652,7 @@ dependencies = [
  "openplush-geom",
  "openplush-mesh",
  "openplush-seams",
+ "openplush-testkit",
  "thiserror",
 ]
 

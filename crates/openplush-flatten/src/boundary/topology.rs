@@ -23,6 +23,8 @@ pub(super) fn boundary_loop(faces: &[(FaceId, [VertexId; 3])]) -> Result<Vec<u32
         .copied()
         .filter(|&(a, b)| !directed.contains(&(b, a)))
         .collect();
+    // A vertex with two boundary edges out (a pinch) keeps only one in the map; the walk then
+    // misses an edge, and `follow` refuses it for not using all of them.
     let ring = follow(&boundary.iter().copied().collect(), boundary.len())?;
     let vertices: BTreeSet<u32> = directed.iter().map(|&(a, _)| a).collect();
     // Each interior edge is in `directed` twice and each boundary edge once.

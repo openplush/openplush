@@ -344,3 +344,100 @@ fn body_faults_are_refused() {
     let detail = parse_detail(text.as_bytes()).unwrap();
     assert!(detail.starts_with("line "), "{detail}");
 }
+
+fn ascii_with(header: &str, body: &str) -> Vec<u8> {
+    format!("ply\nformat ascii 1.0\n{header}end_header\n{body}").into_bytes()
+}
+
+const TRI_HEADER: &str = "element vertex 3\nproperty float x\nproperty float y\nproperty float z\nelement face 1\nproperty list uchar int vertex_indices\n";
+const TRI_VERTICES: &str = "0 0 0\n1 0 0\n0 1 0\n";
+
+#[test]
+fn list_types_must_be_integers() {
+    for list in ["float int", "uchar float", "double double"] {
+        let header = TRI_HEADER.replace("uchar int", list);
+        let detail = parse_detail(&ascii_with(&header, &format!("{TRI_VERTICES}3 0 1 2\n")));
+        assert!(detail.is_some_and(|d| d.starts_with("line 7:")), "{list}");
+    }
+}
+
+#[test]
+fn an_ascii_integer_must_fit_its_declared_type() {
+    let big = TRI_HEADER.replace(
+        "property list uchar int",
+        "property uchar 8\nproperty list uchar int",
+    );
+    let cases = [
+        (
+            big.replace("8", "tag"),
+            "0 0 0\n1 0 0\n0 1 0\n300 3 0 1 2\n",
+        ),
+        (
+            TRI_HEADER.replace("uchar int", "uchar uint"),
+            "0 0 0\n1 0 0\n0 1 0\n3 0 -1 2\n",
+        ),
+        (
+            TRI_HEADER.replace("uchar int", "char int"),
+            "0 0 0\n1 0 0\n0 1 0\n-3 0 1 2\n",
+        ),
+    ];
+    for (header, body) in cases {
+        let detail = parse_detail(&ascii_with(&header, body)).unwrap();
+        assert!(detail.starts_with("line "), "{detail}");
+    }
+}
+
+#[test]
+fn an_ascii_float_is_rounded_to_f32_as_binary_is() {
+    let ascii_text = ascii_with(TRI_HEADER, "0.1 0 0\n1 0 0\n0 1 0\n3 0 1 2\n");
+    let from_ascii = ply::read(&ascii_text).unwrap();
+    let rows = vec![
+        vec![0.1, 0.0, 0.0],
+        vec![1.0, 0.0, 0.0],
+        vec![0.0, 1.0, 0.0],
+    ];
+    let from_binary = ply::read(&file(&spec(Enc::Little), "", &rows, &[vec![0, 1, 2]])).unwrap();
+    assert_eq!(from_ascii, from_binary);
+}
+
+#[test]
+fn a_second_vertex_or_face_element_is_refused() {
+    for dup in [
+        "element vertex 0\nproperty float x\n",
+        "element face 0\nproperty list uchar int vertex_indices\n",
+    ] {
+        let header = format!("{TRI_HEADER}{dup}");
+        let detail = parse_detail(&ascii_with(&header, &format!("{TRI_VERTICES}3 0 1 2\n")));
+        assert!(detail.is_some_and(|d| d.contains("more than one")));
+    }
+}
+
+#[test]
+fn a_polygon_with_too_many_corners_is_refused_rather_than_clipped_for_minutes() {
+    let n = 1001;
+    let mut body = String::new();
+    for i in 0..n {
+        let a = std::f64::consts::TAU * f64::from(i) / f64::from(n);
+        body += &format!("{} {} 0\n", a.cos(), a.sin());
+    }
+    body += &format!("{n}");
+    (0..n).for_each(|i| body += &format!(" {i}"));
+    let header = TRI_HEADER.replace("vertex 3", &format!("vertex {n}"));
+    let detail = parse_detail(&ascii_with(&header, &body)).unwrap();
+    assert!(detail.contains("1000"), "{detail}");
+    // At the cap it still reads.
+    let ok_body: String = body
+        .lines()
+        .take(1000)
+        .map(|l| format!("{l}\n"))
+        .collect::<String>()
+        + "1000"
+        + &(0..1000).map(|i| format!(" {i}")).collect::<String>();
+    let header = TRI_HEADER.replace("vertex 3", "vertex 1000");
+    assert_eq!(
+        ply::read(&ascii_with(&header, &ok_body))
+            .unwrap()
+            .triangle_count(),
+        998
+    );
+}

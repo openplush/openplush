@@ -106,6 +106,24 @@ fn the_curvature_target_turns_once_in_total_before_any_closing() -> Result<(), B
 }
 
 #[test]
+fn mirror_image_corners_of_a_symmetric_cap_turn_alike() -> Result<(), BoundaryError> {
+    // The cap and its diagonal triangulation are both symmetric under swapping column and
+    // row, so a corner and its mirror image must get the same turning, each its own.
+    let (xyz, f) = cap();
+    let ring = topology::boundary_loop(&f)?;
+    let target = curvature::turning(&curvature::intrinsic(&xyz, &f)?, &ring)?;
+    let at = |v: u32| ring.iter().position(|&r| r == v).map(|i| target[i]);
+    for &v in &ring {
+        let (a, b) = (at(v), at((v % 7) * 7 + v / 7));
+        assert!(
+            matches!((a, b), (Some(a), Some(b)) if (a - b).abs() <= 1e-12),
+            "{v}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn scaling_the_chart_scales_its_boundary() -> Result<(), BoundaryError> {
     let (xyz, f) = cap();
     let big: Vec<DVec3> = xyz.iter().map(|&p| p * 1000.0).collect();
@@ -166,6 +184,26 @@ fn faces_that_cannot_be_measured_are_refused() {
             prescribe(&xyz, &face(f, t)),
             Err(BoundaryError::Degenerate {
                 face: FaceId::new(f)
+            })
+        );
+    }
+    // Valid triangles whose cross product or dot product overflows have no measurable angles.
+    for far in [
+        [
+            DVec3::ZERO,
+            DVec3::new(1e100, 0.0, 0.0),
+            DVec3::new(0.0, 1e100, 0.0),
+        ],
+        [
+            DVec3::ZERO,
+            DVec3::new(1e160, 0.0, 0.0),
+            DVec3::new(1e160, 1e-10, 0.0),
+        ],
+    ] {
+        assert_eq!(
+            prescribe(&far, &face(0, [0, 1, 2])),
+            Err(BoundaryError::Degenerate {
+                face: FaceId::new(0)
             })
         );
     }

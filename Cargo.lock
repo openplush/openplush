@@ -363,6 +363,12 @@ version = "0.0.0"
 [[package]]
 name = "openplush-flatten"
 version = "0.0.0"
+dependencies = [
+ "openplush-geom",
+ "openplush-mesh",
+ "openplush-seams",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-geom"

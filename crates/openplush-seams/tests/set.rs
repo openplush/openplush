@@ -88,17 +88,21 @@ fn a_mandatory_seam_cannot_be_given_another_kind() -> Result<(), SeamsError> {
 }
 
 #[test]
-fn a_seam_can_become_mandatory_and_mandatory_can_be_set_again() -> Result<(), SeamsError> {
+fn a_mandatory_seam_is_only_placed_on_an_edge_with_no_seam() -> Result<(), SeamsError> {
     let mut set = SeamSet::new();
-    set.insert(e(4), SeamKind::Cut)?;
+    assert_eq!(set.insert(e(4), SeamKind::Mandatory), Ok(None));
     assert_eq!(
         set.insert(e(4), SeamKind::Mandatory),
-        Ok(Some(SeamKind::Cut))
+        Ok(Some(SeamKind::Mandatory)),
+        "setting it again changes nothing"
     );
+    // Otherwise a user's seam could become one that undo can never remove.
+    set.insert(e(5), SeamKind::Cut)?;
     assert_eq!(
-        set.insert(e(4), SeamKind::Mandatory),
-        Ok(Some(SeamKind::Mandatory))
+        set.insert(e(5), SeamKind::Mandatory),
+        Err(SeamsError::MandatorySeam { edge: e(5) })
     );
+    assert_eq!(set.get(e(5)), Some(SeamKind::Cut));
     Ok(())
 }
 

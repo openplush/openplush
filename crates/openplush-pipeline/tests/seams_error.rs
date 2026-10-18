@@ -1,6 +1,6 @@
 //! A shell names the error a proposal-ID parse returns through this crate alone.
 
-use openplush_pipeline::{ProposalId, SeamsError};
+use openplush_pipeline::{EdgeId, ProposalId, SeamsError};
 
 #[test]
 fn a_bad_proposal_id_is_a_pipeline_nameable_error() {
@@ -23,5 +23,12 @@ fn seams_error_messages_are_pinned() {
     assert_eq!(
         SeamsError::EmptyProposal.to_string(),
         "a proposal must add at least one seam edge"
+    );
+    assert_eq!(
+        SeamsError::MandatorySeam {
+            edge: EdgeId::new(4)
+        }
+        .to_string(),
+        "a mandatory seam cannot be removed, replaced, or placed over another seam (edge EdgeId(4))"
     );
 }

@@ -31,7 +31,7 @@ pub enum FlattenError {
         /// The predicate's refusal.
         source: GeomError,
     },
-    /// A face with zero, non-finite or overflowing area, which has no rest shape.
+    /// A face with zero, non-finite or overflowing area, or a vertex with no position: it has no rest shape.
     #[error("face {} of chart {} has no measurable area", .face.index(), .chart.index())]
     Degenerate {
         /// The chart.

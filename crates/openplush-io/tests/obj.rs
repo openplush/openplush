@@ -483,3 +483,25 @@ fn refuses_a_polygon_that_crosses_itself() {
         assert!(detail.starts_with(&line), "{detail:?}");
     }
 }
+
+fn polygon(corners: usize) -> String {
+    let mut text = String::new();
+    for i in 0..corners {
+        let a = std::f64::consts::TAU * i as f64 / corners as f64;
+        text += &format!("v {} {} 0\n", a.cos(), a.sin());
+    }
+    text += "f";
+    (1..=corners).for_each(|i| text += &format!(" {i}"));
+    text
+}
+
+#[test]
+fn a_polygon_over_the_corner_cap_is_refused_at_its_line_and_one_at_the_cap_is_read() {
+    let big = polygon(1001);
+    let line = big.lines().count();
+    assert_eq!(
+        parse_detail(big.as_bytes()).unwrap(),
+        format!("line {line}: a face has 1001 corners, over the 1000 the reader triangulates")
+    );
+    assert_eq!(read(&polygon(1000)).unwrap().triangle_count(), 998);
+}

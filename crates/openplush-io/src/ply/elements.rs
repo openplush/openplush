@@ -5,9 +5,7 @@ use openplush_geom::{DVec2, DVec3};
 use super::Failure;
 use super::header::{Element, Kind, Property, Ty};
 use super::source::Source;
-
-/// Ear clipping is quadratic in a polygon's corners; the cap keeps a file from making it run for minutes.
-const MAX_FACE_CORNERS: u64 = 1000;
+use crate::triangulate::MAX_POLYGON_CORNERS;
 
 pub(super) struct Vertices {
     pub(super) positions: Vec<DVec3>,
@@ -126,9 +124,9 @@ pub(super) fn read_faces(
                 }
                 Kind::List { count, item } if i == list => {
                     let len = list_len(source, count)?;
-                    if len > MAX_FACE_CORNERS {
+                    if len > MAX_POLYGON_CORNERS as u64 {
                         return Err(Failure(format!(
-                            "face {face} has {len} corners, over the {MAX_FACE_CORNERS} the reader triangulates"
+                            "face {face} has {len} corners, over the {MAX_POLYGON_CORNERS} the reader triangulates"
                         )));
                     }
                     for _ in 0..len {

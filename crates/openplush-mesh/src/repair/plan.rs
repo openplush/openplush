@@ -45,11 +45,11 @@ pub struct RepairPlan {
 impl Default for RepairPlan {
     fn default() -> Self {
         Self {
-            weld: false,
-            drop_degenerates: false,
-            split_non_manifold_edges: false,
-            split_bowties: false,
-            fix_orientation: false,
+            weld: true,
+            drop_degenerates: true,
+            split_non_manifold_edges: true,
+            split_bowties: true,
+            fix_orientation: true,
             fill_holes: BTreeSet::new(),
         }
     }
@@ -102,67 +102,67 @@ pub struct RepairReport {
 impl RepairReport {
     /// Each group of vertices merged into one.
     pub fn welded(&self) -> &[Vec<VertexId>] {
-        &[]
+        &self.welded
     }
 
     /// Faces dropped for repeating a vertex.
     pub fn repeated_index_faces(&self) -> &[FaceId] {
-        &[]
+        &self.repeated_index_faces
     }
 
     /// Faces dropped as same-wound copies of an earlier face.
     pub fn duplicate_faces(&self) -> &[DroppedCopy] {
-        &[]
+        &self.duplicate_faces
     }
 
     /// Pairs of coincident opposite-wound faces kept as the layers of a sheet.
     pub fn sheets(&self) -> &[[FaceId; 2]] {
-        &[]
+        &self.sheets
     }
 
     /// Zero-area faces dropped after their vertices were put on their neighbours' edges.
     pub fn stitched_caps(&self) -> &[FaceId] {
-        &[]
+        &self.stitched_caps
     }
 
     /// Faces re-triangulated with a cap's vertex on an edge.
     pub fn retriangulated_faces(&self) -> &[FaceId] {
-        &[]
+        &self.retriangulated_faces
     }
 
     /// Edges with more than two faces, and how their faces pair.
     pub fn paired_edges(&self) -> &[PairedEdge] {
-        &[]
+        &self.paired_edges
     }
 
     /// Vertices added to separate fans.
     pub fn vertex_copies(&self) -> &[VertexCopy] {
-        &[]
+        &self.vertex_copies
     }
 
     /// Faces whose corners were reversed.
     pub fn flipped_faces(&self) -> &[FaceId] {
-        &[]
+        &self.flipped_faces
     }
 
     /// Edges whose two faces no flips make agree.
     pub fn orientation_conflicts(&self) -> &[[VertexId; 2]] {
-        &[]
+        &self.orientation_conflicts
     }
 
     /// Each connected component, with whether it is a candidate detail part.
     pub fn components(&self) -> &[Component] {
-        &[]
+        &self.components
     }
 
     /// Each boundary loop, filled or left open.
     pub fn holes(&self) -> &[HoleReport] {
-        &[]
+        &self.holes
     }
 
     /// Edges that must be seams because repair made them boundaries.
     pub fn mandatory_seams(&self) -> &[[VertexId; 2]] {
-        &[]
+        &self.mandatory_seams
     }
 }
 

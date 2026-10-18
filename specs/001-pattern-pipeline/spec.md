@@ -151,8 +151,8 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-030**: Seam allowance outside the sewing line: global default, per-seam override, separate opening allowance, hem allowance for unsewn edges. [NEEDS CLARIFICATION: default — 6 mm vs. ¼ in, locale-dependent?]
 - **FR-031**: Sewing line and cut line drawn distinctly.
 - **FR-032**: Match notches on paired seams with unambiguous pairing codes, at matching arc-length positions.
-- **FR-033**: Piece labels: ID, name, cut quantity, mirror flag, fabric, grain and nap arrows, seam-partner labels.
-- **FR-034**: Identical and mirror-image pieces deduplicated into one template ("cut N", "cut N mirrored").
+- **FR-033**: Piece labels: ID, name, how many to cut as printed and how many flipped, fabric, grain and nap arrows, seam-partner labels.
+- **FR-034**: Identical and mirror-image pieces deduplicated into one template ("cut N", "cut N mirrored"). Pieces that only nearly match are merged only when the maker accepts, after seeing how far apart they are (D-048).
 - **FR-035**: Clip marks on tight concave curves; notch-out marks on tight convex curves.
 - **FR-036**: Assembly order hints. (P3)
 

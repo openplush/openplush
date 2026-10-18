@@ -37,8 +37,8 @@ Read the [constitution](.specify/memory/constitution.md) before your first PR. R
 
 ## Pull requests
 Use Conventional Commits (`feat(flatten): …`, `fix(mesh): …`, `docs(spec): …`). The PR description covers:
-- **What** and **why**
 - **Intent**, and the **Task** IDs it finishes (unless trivial)
+- **Reading order** and **why**
 - **Edge cases** you considered
 - **Failure modes** and the error each produces
 - **Tests** added and what each proves
@@ -53,7 +53,7 @@ Every non-draft pull request gets one adversarial review from the agents in [`.c
 - `spec-reviewer` when `specs/` changes: contradictions between documents, missing ledger entries.
 - `mutation-auditor` on request (it is the expensive one): breaks each new check in turn and reports the ones no test catches.
 
-It runs once per PR, not on every push. A rerun is the maintainer's call: the `rereview` label runs it again, and `mutation-audit` alone runs it again with the mutation auditor (with both labels on, it runs once). AI agents never add either label; they prove their own fixes with tests. Both labels are removed when the run starts. A rerun reviews only what changed since the last summary, and skips findings already answered on the PR.
+It runs once per PR, not on every push. A rerun is the maintainer's call: the `rereview` label runs it again, and `mutation-audit` alone runs it again with the mutation auditor (add only that one; two labels added one after the other can start two runs). AI agents never add either label; they prove their own fixes with tests. Both labels are removed when the run starts. A rerun reviews only what changed since the last summary, and skips findings already answered on the PR.
 
 Findings arrive as review comments marked 🔴 blocking, 🟡 optional, or 🟣 pre-existing. Answer every 🔴: fix it or reply with why not. The review is advisory; it never approves, and a maintainer still merges. To run the same agents before you push, ask Claude Code in this repository to use them by name, for example "run the mutation-auditor agent on my branch against main".
 

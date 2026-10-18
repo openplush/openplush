@@ -47,7 +47,7 @@ T022–T027 were planned as one batch and landed as one slice per task, because 
 
 ### Split under the old budget — history
 
-Until ADR 0013 (2026-10-18) these tasks were planned to split by capability under the 400-line budget. The budget is retired: an unfinished task lands whole, in the PR whose intent it serves. The table keeps the splits that already landed, so each task stays traceable:
+Until ADR 0013 (2026-10-18) these tasks were planned to split by capability under the 400-line budget. The budget is retired: an unfinished task lands whole, in the PR whose intent it serves. The table keeps every planned split; a row that names PRs records what landed that way, and the rest now land whole:
 
 | Task | Why it splits |
 |---|---|

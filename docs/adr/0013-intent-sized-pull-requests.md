@@ -35,7 +35,7 @@ Chosen option: **3**, because it is the only one that stops splitting a capabili
 * **Readable by commit.** Each task is a test commit followed by the implementation commit that makes it pass, so a large PR is reviewed commit by commit. The PR body names the tasks and a reading order.
 * **Still never in one PR**: two user stories; a spec or decision change and the code that implements it; a refactor and a behaviour change; chores and feature work. Crossing crates is allowed when the intent needs it (the crate DAG still holds).
 * **Still isolated**: the changes `tasks.md` lists for their blast radius get a PR of their own.
-* **One automated review per PR**, on opening. Agents never add `rereview` or `mutation-audit`: they fix findings, verify the fix locally (tests, and re-running a mutation the fix was meant to kill) and answer the thread. Only the maintainer requests a rerun. When both labels arrive together, the workflow runs once.
+* **One automated review per PR**, on opening. Agents never add `rereview` or `mutation-audit`: they fix findings, verify the fix locally (tests, and re-running a mutation the fix was meant to kill) and answer the thread. Only the maintainer requests a rerun, with `rereview`, or `mutation-audit` alone for one that includes the mutation auditor. When both labels are added in one operation, the workflow runs once.
 * **Ticks ride along**: a PR ticks the tasks it finishes; no separate tick PR.
 
 ### Consequences

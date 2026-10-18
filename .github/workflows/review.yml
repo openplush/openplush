@@ -8,7 +8,8 @@
 # opened (or marked ready for review), not on every push. Only the maintainer
 # asks for another run (ADR 0013): add the `rereview` label, or `mutation-audit`
 # alone for a rerun that also runs the mutation auditor. When both labels are on
-# the PR, only the `mutation-audit` event runs, so adding both costs one run. The
+# the PR as one event sees them (added in one operation), only the
+# `mutation-audit` event runs; added one after the other, both can run. The
 # labels are removed when the run starts, so they can be added again later.
 # A PR titled `docs(tasks): tick …` (checkbox ticks only) is not reviewed on
 # opening; `rereview` still runs it.
@@ -209,7 +210,7 @@ jobs:
             jq --arg head "$SUMMARY_HEAD" '[.comments[] | select((.author.login | startswith("github-actions"))
               and (.body | startswith($head)))] | length')
           if ((after <= SUMMARIES_BEFORE)); then
-            echo "::error::The review agent finished without posting a summary, so nothing was reviewed. Its transcript is in this run's artifacts; add the rereview label to run it again."
+            echo "::error::The review agent finished without posting a summary, so nothing was reviewed. Its transcript is in this run's artifacts; the maintainer can add the rereview label to run it again."
             exit 1
           fi
       # The artifact needs a browser and repository access to read; the log does not.

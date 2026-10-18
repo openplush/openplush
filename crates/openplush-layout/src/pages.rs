@@ -70,10 +70,13 @@ impl Page {
         self.window_max
     }
 
-    /// The scale square's lowest corner in sheet millimetres: inset by the overlap from the page's
-    /// lowest corner, so the bands this page shares with earlier pages never cover it.
+    /// The scale square's lowest corner in sheet millimetres. The square sits at the page's top left,
+    /// inset by the overlap, so the bands this page shares with the pages left of and above it never cover it.
     pub fn scale_square_min(&self) -> DVec2 {
-        self.window_min + DVec2::new(OVERLAP_MM, OVERLAP_MM)
+        DVec2::new(
+            self.window_min.x + OVERLAP_MM,
+            self.window_max.y - OVERLAP_MM - SCALE_SQUARE_MM,
+        )
     }
 
     /// Row letter then column number from 1, so the second row's third page is "B3".

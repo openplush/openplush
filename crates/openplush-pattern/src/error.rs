@@ -8,7 +8,7 @@ use thiserror::Error;
 pub enum PatternError {
     /// The two sides of a seam chain differ by more than the tolerance.
     #[error(
-        "seam chain {}: sides {} mm and {} mm differ by more than {} mm",
+        "seam chain {}: sides {:.3} mm and {:.3} mm differ by more than {:.3} mm",
         .chain.index(), .a.get(), .b.get(), .tolerance.get()
     )]
     SeamParity {

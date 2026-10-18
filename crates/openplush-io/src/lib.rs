@@ -2,7 +2,11 @@
 
 mod error;
 pub mod obj;
+<<<<<<< HEAD
 pub mod ply;
+=======
+pub mod stl;
+>>>>>>> origin/main
 mod triangulate;
 
 pub use error::IoError;

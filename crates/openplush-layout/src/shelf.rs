@@ -1,6 +1,7 @@
 use openplush_geom::DVec2;
 use openplush_pattern::{PatternPiece, PieceId};
 
+use crate::sheet::{quarter_turns, transform};
 use crate::{LayoutError, LayoutOptions, Placement, Sheet};
 
 /// Lays every copy of every piece on shelves across the roll, tallest first.
@@ -53,6 +54,7 @@ struct Item {
     piece: PieceId,
     cuts: u32,
     rotation_deg: f64,
+    turns: u8,
     mirrored: bool,
     min: DVec2,
     width: f64,
@@ -82,6 +84,7 @@ impl Item {
             piece: piece.id(),
             cuts: piece.cut_quantity(),
             rotation_deg,
+            turns,
             mirrored,
             min: lo,
             width: hi.x - lo.x,
@@ -95,28 +98,9 @@ impl Item {
             piece: self.piece,
             copy,
             rotation_deg: self.rotation_deg,
+            turns: self.turns,
             offset: DVec2::new(corner.x - self.min.x, corner.y - self.min.y),
             mirrored: self.mirrored,
         }
-    }
-}
-
-/// Quarter turns (0 to 3) for a rotation that is an exact multiple of 90 degrees.
-fn quarter_turns(deg: f64) -> Option<u8> {
-    let d = deg.rem_euclid(360.0);
-    [0.0, 90.0, 180.0, 270.0]
-        .iter()
-        .position(|&q| q == d)
-        .and_then(|i| u8::try_from(i).ok())
-}
-
-/// Mirrors about the y-axis if asked, then turns counter-clockwise: exact, with no trigonometry.
-fn transform(p: DVec2, turns: u8, mirrored: bool) -> DVec2 {
-    let (x, y) = if mirrored { (-p.x, p.y) } else { (p.x, p.y) };
-    match turns {
-        1 => DVec2::new(-y, x),
-        2 => DVec2::new(-x, -y),
-        3 => DVec2::new(y, -x),
-        _ => DVec2::new(x, y),
     }
 }

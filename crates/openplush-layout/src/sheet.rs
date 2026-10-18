@@ -7,6 +7,8 @@ pub struct Placement {
     pub(crate) piece: PieceId,
     pub(crate) copy: u32,
     pub(crate) rotation_deg: f64,
+    /// `rotation_deg` as quarter turns; layout places a piece only at a rotation `quarter_turns` accepts.
+    pub(crate) turns: u8,
     pub(crate) offset: DVec2,
     pub(crate) mirrored: bool,
 }
@@ -36,6 +38,11 @@ impl Placement {
     pub fn mirrored(&self) -> bool {
         self.mirrored
     }
+
+    /// Where a point of the piece's outline lands on the sheet: exact, with no trigonometry.
+    pub fn apply(&self, p: DVec2) -> DVec2 {
+        transform(p, self.turns, self.mirrored) + self.offset
+    }
 }
 
 /// A rectangle of fabric holding placed pieces: as wide as the roll, as long as the placements need.
@@ -62,5 +69,25 @@ impl Sheet {
     /// Every copy of every piece, in placement order.
     pub fn placements(&self) -> &[Placement] {
         &self.placements
+    }
+}
+
+/// Quarter turns (0 to 3) for a rotation that is an exact multiple of 90 degrees.
+pub(crate) fn quarter_turns(deg: f64) -> Option<u8> {
+    let d = deg.rem_euclid(360.0);
+    [0.0, 90.0, 180.0, 270.0]
+        .iter()
+        .position(|&q| q == d)
+        .and_then(|i| u8::try_from(i).ok())
+}
+
+/// Mirrors about the y-axis if asked, then turns counter-clockwise: exact, with no trigonometry.
+pub(crate) fn transform(p: DVec2, turns: u8, mirrored: bool) -> DVec2 {
+    let (x, y) = if mirrored { (-p.x, p.y) } else { (p.x, p.y) };
+    match turns {
+        1 => DVec2::new(-y, x),
+        2 => DVec2::new(-x, -y),
+        3 => DVec2::new(y, -x),
+        _ => DVec2::new(x, y),
     }
 }

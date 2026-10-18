@@ -189,7 +189,7 @@ fn a_fin_on_a_body_becomes_boundary_edges_that_are_mandatory_seams() {
 }
 
 #[test]
-fn a_twisted_ring_reports_its_conflict_edge_as_a_mandatory_seam() {
+fn a_twisted_ring_is_refused_at_its_conflict_edge_not_built_or_cut() {
     let radii = [3.0, 1.0, 2.0, 1.0, 1.0];
     let positions = radii
         .iter()
@@ -203,9 +203,10 @@ fn a_twisted_ring_reports_its_conflict_edge_as_a_mandatory_seam() {
         positions,
         &[[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 0], [4, 0, 1]],
     );
-    let (_, report) = repair(&s).unwrap();
-    assert_eq!(report.orientation_conflicts(), [[v(2), v(3)]]);
-    assert!(report.mandatory_seams().contains(&[v(2), v(3)]));
+    assert_eq!(
+        repair(&s).unwrap_err(),
+        MeshError::InconsistentOrientation { a: v(2), b: v(3) }
+    );
 }
 
 #[test]
@@ -249,5 +250,25 @@ fn a_plan_that_fills_a_loop_is_refused_until_filling_exists_and_a_missing_loop_i
     assert!(matches!(
         into_manifold(&s, &named(9)).unwrap_err(),
         MeshError::UnknownHoleLoop { .. }
+    ));
+}
+
+#[test]
+fn a_cap_vertex_a_few_weld_distances_from_a_corner_leaves_a_sliver_the_build_refuses() {
+    // The cap 0-3-1 puts vertex 3 on the long edge 0-1, 1.2 weld distances from corner 0.
+    // Stitching splits face 0 there, and the piece at corner 0 has a base of 1.2e-6 and a
+    // height of 1.2e-6: under the area tolerance.
+    let s = soup(
+        vec![
+            p(0., 0., 0.),
+            p(1., 0., 0.),
+            p(0., 1.2e-6, 0.),
+            p(1.2e-6, 0., 0.),
+        ],
+        &[[0, 1, 2], [0, 3, 1]],
+    );
+    assert!(matches!(
+        repair(&s).unwrap_err(),
+        MeshError::ZeroAreaTriangle { .. }
     ));
 }

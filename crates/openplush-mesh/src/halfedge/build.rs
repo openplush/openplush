@@ -58,10 +58,7 @@ impl ManifoldMesh {
     ///
     /// Repair is the caller; it is crate-private so that repair stays the
     /// only way to obtain a `ManifoldMesh`.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "called by repair, not yet written")
-    )]
+    #[cfg(test)]
     pub(crate) fn from_oriented_triangles(
         soup: &TriangleSoup,
         tol: &ModelTolerances,
@@ -75,10 +72,6 @@ impl ManifoldMesh {
     /// unpaired gets a copy of its own. `sheets` are the pairs of coincident faces
     /// (lower face ID first) that are the two layers of a double-sided sheet, which the duplicate check
     /// lets through. A face the pairings do not name shares the first copy.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "called by repair, not yet written")
-    )]
     pub(crate) fn from_paired_triangles(
         soup: &TriangleSoup,
         tol: &ModelTolerances,

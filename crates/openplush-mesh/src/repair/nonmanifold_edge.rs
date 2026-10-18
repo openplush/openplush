@@ -29,10 +29,6 @@ pub struct PairedEdge {
 /// first, or no layer is recognised. Requires repeated-index
 /// and zero-area faces gone (`degenerate::remove`, `cap::stitch`); a face with no
 /// area beside such an edge is refused with its error.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "called by into_manifold, not yet written")
-)]
 pub(crate) fn pair_edges(
     soup: &TriangleSoup,
     sheets: &[[FaceId; 2]],

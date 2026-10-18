@@ -15,6 +15,8 @@ fn not_simple(edge: usize, other: usize) -> Result<Outline, PatternError> {
     Err(PatternError::OutlineNotSimple { edge, other })
 }
 
+type Flip = fn((f64, f64)) -> (f64, f64);
+
 const SQUARE: [(f64, f64); 4] = [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)];
 
 #[test]
@@ -222,7 +224,7 @@ fn edges_meeting_only_on_a_bounding_box_boundary_are_not_simple() {
         (0.0, 4.0),
         (2.0, 2.0),
     ];
-    let flips: [fn((f64, f64)) -> (f64, f64); 4] = [
+    let flips: [Flip; 4] = [
         |(x, y)| (x, y),
         |(x, y)| (-x, y),
         |(x, y)| (y, x),

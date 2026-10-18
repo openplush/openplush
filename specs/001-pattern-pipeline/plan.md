@@ -110,6 +110,8 @@ openplush-pipeline (depends on all of the above)
 bindings/*     (depend on openplush-pipeline ONLY; it re-exports the project document API — D-020)
 ```
 
+Proposed, not yet in force: `openplush-export` depends on `openplush-layout` (D-039, [ADR 0012](../../docs/adr/0012-export-reads-layout.md)); this diagram and `scripts/check-boundary.sh` change when it is accepted.
+
 Rules: no cycles; no sideways edges between siblings without an ADR; `openplush-testkit` is a dev-dependency only. A CI script parses `cargo metadata` and fails on violations.
 
 ### Contributor lanes (labels + CODEOWNERS)

@@ -256,7 +256,7 @@ pub struct PatternPiece {
     pub sewing_line: Outline,
     pub cut_line: Outline,
     pub cut_quantity: u32,        // at least 1
-    pub rotations_deg: Vec<f64>,  // derived from the fabric (§6a), never stored (ADR 0007)
+    pub rotations_deg: Vec<f64>,  // computed from the fabric each time pattern runs; pieces are never saved in the project (§6a, ADR 0007)
 }
 
 pub struct Placement { pub piece: PieceId, pub copy: u32, pub rotation_deg: f64, pub offset: DVec2, pub mirrored: bool }

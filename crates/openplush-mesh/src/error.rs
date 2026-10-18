@@ -43,6 +43,14 @@ pub enum MeshError {
         /// The element count.
         count: usize,
     },
+    /// A source primitive's material entry is missing or names no material.
+    #[error("source primitive {primitive}'s material entry is invalid: {fault:?}")]
+    InvalidMaterial {
+        /// The lowest offending primitive.
+        primitive: u32,
+        /// What is wrong with its entry.
+        fault: MaterialFault,
+    },
     /// A triangle uses the same vertex twice. Repair removes these; a manifold
     /// mesh cannot contain one.
     #[error("triangle {triangle:?} repeats a vertex")]
@@ -118,6 +126,15 @@ pub enum CornerArray {
     Uvs,
 }
 
+/// What is wrong with a primitive's entry in `SourceMaterials`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MaterialFault {
+    /// A triangle uses the primitive, but the table has no entry for it.
+    Missing,
+    /// The entry is a `MaterialIndex` not below the number of names.
+    OutOfRange,
+}
+
 /// What a [`MeshError::TooLarge`] counted.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Counted {
@@ -127,4 +144,6 @@ pub enum Counted {
     Triangles,
     /// Half-edges (twice the edge count).
     HalfEdges,
+    /// Entries in a `SourceMaterials` table.
+    Primitives,
 }

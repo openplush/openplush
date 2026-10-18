@@ -15,7 +15,7 @@ mod validate;
 use openplush_geom::epsilon::{AREA_RELATIVE_SQ, ModelTolerances};
 use openplush_geom::{DVec2, DVec3};
 
-use crate::{FaceId, HalfEdgeId, SourceCorner, VertexId};
+use crate::{FaceId, HalfEdgeId, SourceCorner, SourceMaterials, VertexId};
 
 /// A triangle mesh satisfying the five invariants of `debug_validate`: a
 /// consistently oriented 2-manifold, possibly with boundary, with no degenerate or
@@ -39,6 +39,9 @@ pub struct ManifoldMesh {
     // per corner, stored per half-edge (`None` on boundary half-edges)
     corner_src: Vec<Option<SourceCorner>>,
     corner_uv: Vec<Option<DVec2>>,
+    // file-level, moved unchanged from the soup
+    materials: SourceMaterials,
+    extra_uv_sets: u32,
 }
 
 /// True if triangle (a, b, c) has area at or below `tol.area()`. The edge vectors
@@ -135,6 +138,16 @@ impl ManifoldMesh {
     /// half-edge or a corner the source gave no UV.
     pub fn corner_uv(&self, h: HalfEdgeId) -> Option<DVec2> {
         self.corner_uv[ix(h.index())]
+    }
+
+    /// The source file's materials, unchanged by repair.
+    pub fn materials(&self) -> &SourceMaterials {
+        &self.materials
+    }
+
+    /// UV sets the source file has beyond the one read.
+    pub fn extra_uv_sets(&self) -> u32 {
+        self.extra_uv_sets
     }
 
     /// The half-edges leaving `v`, each exactly once, starting at

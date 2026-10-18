@@ -8,8 +8,11 @@ pub enum SeamsError {
     /// A proposal must add at least one seam edge.
     #[error("a proposal must add at least one seam edge")]
     EmptyProposal,
-    /// A mandatory seam can be neither removed nor given another kind.
-    #[error("edge {edge:?} is a mandatory seam and cannot be changed")]
+    /// A mandatory seam can be neither removed nor replaced, and none is placed over
+    /// another seam.
+    #[error(
+        "a mandatory seam cannot be removed, replaced, or placed over another seam (edge {edge:?})"
+    )]
     MandatorySeam {
         /// The edge.
         edge: EdgeId,

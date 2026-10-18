@@ -9,7 +9,9 @@ use crate::{SeamKind, SeamsError};
 /// The seams of one mesh, each edge with its kind, in ascending `EdgeId` order.
 ///
 /// **Invariant**: a [`SeamKind::Mandatory`] seam is never removed and never takes
-/// another kind, because repair needs it to hold the surface together.
+/// another kind, and it is only placed on an edge with no seam. Repair makes them
+/// on the edges it splits, so a maker's seam can never become one that undo cannot
+/// remove.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SeamSet {
     kind: BTreeMap<EdgeId, SeamKind>,
@@ -42,9 +44,13 @@ impl SeamSet {
     }
 
     /// Sets `edge`'s kind and returns the kind it replaced. Errors with
-    /// [`SeamsError::MandatorySeam`] if `edge` is mandatory and `kind` is not.
+    /// [`SeamsError::MandatorySeam`] if `edge` is mandatory and `kind` is not, or
+    /// `kind` is mandatory and `edge` has another seam.
     pub fn insert(&mut self, edge: EdgeId, kind: SeamKind) -> Result<Option<SeamKind>, SeamsError> {
-        if self.get(edge) == Some(SeamKind::Mandatory) && kind != SeamKind::Mandatory {
+        let current = self.get(edge);
+        let mandatory = SeamKind::Mandatory;
+        // An existing seam may be replaced only by a kind on the same side of `Mandatory`.
+        if (current == Some(mandatory)) != (kind == mandatory) && current.is_some() {
             return Err(SeamsError::MandatorySeam { edge });
         }
         Ok(self.kind.insert(edge, kind))

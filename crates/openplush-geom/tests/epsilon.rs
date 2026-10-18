@@ -159,7 +159,7 @@ fn uv_cut_is_1e_minus_5_between_f32_noise_and_the_tightest_measured_cut() {
         std::hint::black_box(UV_CUT) > 10.0 * spacing_at_ten,
         "{spacing_at_ten}"
     );
-    // Blender 5.2 spike Q1: the tightest real cut, a slit near its tip, was 1.81e-4.
+    // The tightest cut measured on Blender 5.2 UV spheres, a slit near its tip, was 1.81e-4.
     let tightest_cut = std::hint::black_box(1.81e-4);
     assert!(UV_CUT * 18.0 <= tightest_cut);
 }

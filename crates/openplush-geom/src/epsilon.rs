@@ -28,8 +28,9 @@ pub const MAX_DIAGONAL: f64 = 1e100;
 pub const MIN_DET_J: f64 = 1e-10;
 /// Corner UVs on the two sides of an edge differing by more than this make it a UV
 /// cut. UV space is dimensionless, so the value is neither model-relative nor
-/// physical. It is about two orders above `f32` spacing near 1.0, where an exporter's
-/// bit-identical uncut UVs live, and far below any real cut.
+/// physical. It is about two orders above `f32` spacing near 1.0 (ten times at
+/// u = 10), where an exporter's bit-identical uncut UVs live, and well below the
+/// tightest cut measured on a Blender UV sphere (18 times smaller).
 pub const UV_CUT: f64 = 1e-5;
 
 /// Model-space tolerances for one model, derived from its bounding-box diagonal.

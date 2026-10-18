@@ -11,6 +11,9 @@ const OVERLAP_MM: f64 = 15.0;
 /// Pages along either side: one row letter per row, and the same cap across so the count stays bounded.
 /// 26 A4 pages reach 4.5 m across and 6.8 m down, far past the 1000 mm largest plush.
 const MAX_PAGES_PER_SIDE: u32 = 26;
+const ROW_LETTERS: &[u8; 26] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+/// Where along a shared edge its two registration marks sit, as fractions of the page's printable length.
+const MARK_AT: [f64; 2] = [0.25, 0.75];
 
 /// A paper size, printed portrait.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,6 +65,13 @@ impl Page {
     pub fn window_max(&self) -> DVec2 {
         self.window_max
     }
+
+    /// Row letter then column number from 1, so the second row's third page is "B3".
+    pub fn label(&self) -> String {
+        // INVARIANT: `tile` refuses more than 26 rows, so the row is 0 to 25 and a letter A to Z.
+        let letter = char::from(ROW_LETTERS[self.row as usize]);
+        format!("{letter}{}", self.column + 1)
+    }
 }
 
 /// The pages that print one sheet at true scale.
@@ -71,6 +81,7 @@ pub struct PageTiling {
     rows: u32,
     columns: u32,
     pages: Vec<Page>,
+    marks: Vec<DVec2>,
 }
 
 impl PageTiling {
@@ -92,6 +103,12 @@ impl PageTiling {
     /// Every page, row by row, each row in column order.
     pub fn pages(&self) -> &[Page] {
         &self.pages
+    }
+
+    /// Registration mark centres in sheet millimetres, each mid-band on an edge two pages share,
+    /// so it prints on both: the edges between columns row by row, then those between rows.
+    pub fn marks(&self) -> &[DVec2] {
+        &self.marks
     }
 }
 
@@ -122,7 +139,26 @@ pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
         rows,
         columns,
         pages,
+        marks: marks(rows, columns, printable, step),
     })
+}
+
+/// Two marks on each shared edge, centred across its overlap band and placed along it by `MARK_AT`.
+fn marks(rows: u32, columns: u32, printable: DVec2, step: DVec2) -> Vec<DVec2> {
+    let mid_band = OVERLAP_MM / 2.0;
+    let between_columns = (0..rows).flat_map(|row| {
+        (1..columns).flat_map(move |column| {
+            let x = f64::from(column) * step.x + mid_band;
+            MARK_AT.map(|at| DVec2::new(x, f64::from(row) * step.y + at * printable.y))
+        })
+    });
+    let between_rows = (1..rows).flat_map(|row| {
+        (0..columns).flat_map(move |column| {
+            let y = f64::from(row) * step.y + mid_band;
+            MARK_AT.map(|at| DVec2::new(f64::from(column) * step.x + at * printable.x, y))
+        })
+    });
+    between_columns.chain(between_rows).collect()
 }
 
 /// The fewest pages that cover `extent` along one side, or `None` past the cap.

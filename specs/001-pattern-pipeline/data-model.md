@@ -245,6 +245,28 @@ pub struct Fabric {
 - **Tight curves**: where sewing-line curvature radius < allowance, the offset self-intersects; the union resolves it, and the piece gets **clip marks** (concave) or **notch-out marks** (convex) at a spacing proportional to curvature (FR-035).
 - **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (S3). *Superseded 2026-10-15 by [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md): a panic cannot be caught on wasm32, so it is a crash on both targets and nothing catches it.*
 
+## 7a. Pieces, Outlines, and Sheets (D-039)
+
+```rust
+pub struct Outline { /* private: closed, simple, counter-clockwise, millimetres */ }
+impl Outline { pub fn new(points: Vec<DVec2>) -> Result<Self, PatternError>; }
+
+pub struct PatternPiece {
+    pub id: PieceId,
+    pub sewing_line: Outline,
+    pub cut_line: Outline,
+    pub cut_quantity: u32,        // at least 1
+    pub rotations_deg: Vec<f64>,  // computed from the fabric by the pattern stage on every run; not part of the saved project document (§12, §6a, ADR 0007)
+}
+
+pub struct Placement { pub piece: PieceId, pub copy: u32, pub rotation_deg: f64, pub offset: DVec2, pub mirrored: bool }
+pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Placement> }
+```
+
+- `Outline::new` is the only constructor, so an outline that crosses itself, repeats a point, has zero area or is wound clockwise is a typed error, never repaired. It uses the exact predicates in `openplush-geom`; the testkit's `outline_simple` oracle checks the same properties independently.
+- Marks, labels, grain and notches join `PatternPiece` in the tasks that produce them. The label block's cut quantity and mirror flag (§8) are read from `cut_quantity` and the fabric.
+- A `Sheet` is a rectangle of fabric: its width is the roll width (or the piece extent when none is set) and its length is what the placements use. `PageTiling` (FR-061) is a layout output derived from one `Sheet`; both live in `openplush-layout`, and `openplush-export` reads them (ADR 0012).
+
 ## 8. Notches and Labels
 
 - Parametrize each chain side by arc length. Notches at both chain ends (junctions) plus every `Δ` mm (provisional 50 mm) along the chain.

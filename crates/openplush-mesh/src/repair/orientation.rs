@@ -14,6 +14,10 @@ pub(crate) struct Oriented {
     /// Faces whose corners were reversed, sorted.
     pub(crate) flipped: Vec<FaceId>,
     /// Edges, smaller end first and sorted, whose two faces no flips make agree.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "read by the cut of a conflict edge")
+    )]
     pub(crate) conflicts: Vec<[VertexId; 2]>,
 }
 

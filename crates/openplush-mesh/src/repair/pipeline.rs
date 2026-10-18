@@ -13,7 +13,6 @@ use crate::{
 struct Pending {
     pairings: Vec<PairedEdge>,
     sheets: Vec<[FaceId; 2]>,
-    conflicts: Vec<[VertexId; 2]>,
     /// Edges cut loose by the pairings, as the vertices the soup now gives them.
     seams: Vec<[VertexId; 2]>,
 }
@@ -41,7 +40,13 @@ impl Stage {
         let one = |f: FaceId| self.input_faces(&[f])[0];
         PairedEdge {
             vertices: p.vertices,
-            pairs: p.pairs.iter().map(|&[a, b]| [one(a), one(b)]).collect(),
+            // Two halves of one stitched face are not a pair the input had.
+            pairs: p
+                .pairs
+                .iter()
+                .map(|&[a, b]| [one(a), one(b)])
+                .filter(|[a, b]| a != b)
+                .collect(),
             unpaired: p.unpaired.map(one),
         }
     }
@@ -73,9 +78,17 @@ pub fn into_manifold(
     if plan.drop_degenerates {
         drop_degenerates(&mut stage, &tol, &mut report);
     }
-    let sheets = degenerate::classify(stage.soup.triangle_indices()).sheets;
+    let sheets = if plan.drop_degenerates {
+        degenerate::classify(stage.soup.triangle_indices()).sheets
+    } else {
+        Vec::new()
+    };
     let pairings = pair(plan.split_non_manifold_edges, &stage.soup, &sheets)?;
-    report.paired_edges = pairings.iter().map(|p| stage.input_pairing(p)).collect();
+    report.paired_edges = pairings
+        .iter()
+        .map(|p| stage.input_pairing(p))
+        .filter(|p| !p.pairs.is_empty() || p.unpaired.is_some())
+        .collect();
     let mut seams = unpaired_edges(&pairings, &stage.soup, &stage.soup);
     if plan.split_bowties {
         let (split, copies) = bowtie::split(&stage.soup, &pairings)?;
@@ -85,12 +98,11 @@ pub fn into_manifold(
     }
     // The pairings name the soup before the split, so they are stale after it.
     let pairings = pair(plan.split_non_manifold_edges, &stage.soup, &sheets)?;
-    let mut conflicts = Vec::new();
     if plan.fix_orientation {
         let (oriented, done) = orientation::orient(&stage.soup, &tol)?;
         stage.soup = oriented;
+        // A conflict edge is left in the soup, so the build refuses it.
         report.flipped_faces = stage.input_faces(&done.flipped);
-        conflicts = done.conflicts;
     }
     report.components = components::split(&stage.soup)
         .into_iter()
@@ -102,7 +114,6 @@ pub fn into_manifold(
     let pending = Pending {
         pairings,
         sheets,
-        conflicts,
         seams,
     };
     build(&stage, &tol, plan, pending, report)
@@ -171,11 +182,10 @@ fn build(
     let Pending {
         pairings,
         sheets,
-        conflicts,
         seams,
     } = pending;
     let (compact, map) = stage.soup.compacted();
-    // INVARIANT: every vertex the pairings, copies and conflicts name is used by a face.
+    // INVARIANT: every vertex the pairings, copies and seams name is used by a face.
     let renumber = |v: VertexId| VertexId::new(map[v.index() as usize].unwrap_or(v.index()));
     let edge = |[a, b]: [VertexId; 2]| [renumber(a), renumber(b)];
     let pairings: Vec<PairedEdge> = pairings
@@ -190,12 +200,7 @@ fn build(
         copy.of = renumber(copy.of);
         copy.copy = renumber(copy.copy);
     }
-    report.orientation_conflicts = conflicts.into_iter().map(edge).collect();
-    let mut seams: Vec<[VertexId; 2]> = seams
-        .into_iter()
-        .map(edge)
-        .chain(report.orientation_conflicts.iter().copied())
-        .collect();
+    let mut seams: Vec<[VertexId; 2]> = seams.into_iter().map(edge).collect();
     seams.sort();
     seams.dedup();
     report.mandatory_seams = seams;

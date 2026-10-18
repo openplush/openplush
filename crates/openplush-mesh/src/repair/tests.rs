@@ -272,3 +272,213 @@ fn a_cap_vertex_a_few_weld_distances_from_a_corner_leaves_a_sliver_the_build_ref
         MeshError::ZeroAreaTriangle { .. }
     ));
 }
+
+fn without(change: fn(&mut RepairPlan)) -> RepairPlan {
+    let mut plan = RepairPlan::default();
+    change(&mut plan);
+    plan
+}
+
+fn unwelded_tetra() -> TriangleSoup {
+    let base = tetra_positions();
+    let mut positions = Vec::new();
+    let mut triangles = Vec::new();
+    for (i, tri) in TETRA.iter().enumerate() {
+        positions.extend(tri.map(|k| base[k as usize]));
+        triangles.push([3 * i as u32, 3 * i as u32 + 1, 3 * i as u32 + 2]);
+    }
+    soup(positions, &triangles)
+}
+
+fn square_sheet() -> TriangleSoup {
+    soup(
+        vec![p(0., 0., 0.), p(1., 0., 0.), p(1., 1., 0.), p(0., 1., 0.)],
+        &[[0, 1, 2], [0, 2, 3], [0, 3, 2], [2, 1, 0]],
+    )
+}
+
+const FAN: [[u32; 3]; 6] = [
+    [0, 1, 2],
+    [0, 2, 3],
+    [0, 3, 1],
+    [0, 2, 1],
+    [0, 3, 2],
+    [0, 1, 3],
+];
+
+fn fan_positions() -> Vec<DVec3> {
+    vec![p(0., 0., 0.), p(1., 0., 0.), p(0., 1., 0.), p(-1., -1., 0.)]
+}
+
+#[test]
+fn each_step_the_plan_turns_off_is_skipped() {
+    // Left unwelded, the faces stay four separate triangles.
+    let (mesh, report) = into_manifold(&unwelded_tetra(), &without(|p| p.weld = false)).unwrap();
+    assert_eq!(mesh.vertex_count(), 12);
+    assert!(report.welded().is_empty());
+    // Left unsplit, the sheet's interior vertex is a bowtie.
+    let sheet = soup(fan_positions(), &FAN);
+    assert_eq!(
+        into_manifold(&sheet, &without(|p| p.split_bowties = false)).unwrap_err(),
+        MeshError::NonManifoldVertex { vertex: v(0) }
+    );
+    // Left unturned, the inside-out shell is built as it is.
+    let reversed: Vec<[u32; 3]> = TETRA.iter().map(|&[a, b, c]| [a, c, b]).collect();
+    let inside_out = soup(tetra_positions(), &reversed);
+    let (_, report) = into_manifold(&inside_out, &without(|p| p.fix_orientation = false)).unwrap();
+    assert!(report.flipped_faces().is_empty());
+    // Left unpaired, the sheet's diagonal has four faces.
+    assert_eq!(
+        into_manifold(
+            &square_sheet(),
+            &without(|p| p.split_non_manifold_edges = false)
+        )
+        .unwrap_err(),
+        MeshError::NonManifoldEdge { a: v(0), b: v(2) }
+    );
+    // Left alone, the sheet's two layers are duplicates to the build.
+    assert_eq!(
+        into_manifold(&square_sheet(), &without(|p| p.drop_degenerates = false)).unwrap_err(),
+        MeshError::DuplicateTriangle {
+            triangle: f(2),
+            first: f(1)
+        }
+    );
+}
+
+#[test]
+fn a_repeated_copy_of_a_face_is_dropped_and_listed_by_input_id() {
+    let mut triangles = TETRA.to_vec();
+    triangles.push(TETRA[0]);
+    let (mesh, report) = repair(&soup(tetra_positions(), &triangles)).unwrap();
+    assert_eq!(mesh.face_count(), 4);
+    assert_eq!(report.duplicate_faces().len(), 1);
+    assert_eq!(report.duplicate_faces()[0].face, f(4));
+    assert_eq!(report.duplicate_faces()[0].of, f(0));
+}
+
+#[test]
+fn ids_are_the_inputs_after_a_leading_face_is_dropped() {
+    let reversed: Vec<[u32; 3]> = TETRA.iter().map(|&[a, b, c]| [a, c, b]).collect();
+    let mut triangles = vec![[0, 0, 1]];
+    triangles.extend(reversed);
+    let (_, report) = repair(&soup(tetra_positions(), &triangles)).unwrap();
+    assert_eq!(report.repeated_index_faces(), [f(0)]);
+    assert_eq!(report.flipped_faces(), [f(1), f(2), f(3), f(4)]);
+    assert_eq!(report.components()[0].faces, [f(1), f(2), f(3), f(4)]);
+}
+
+#[test]
+fn a_cap_and_the_face_it_splits_are_listed_by_input_id() {
+    // Face 3 is a cap whose middle vertex 4 lies on the edge 0-1 of face 1.
+    let s = soup(
+        vec![
+            p(0., 0., 0.),
+            p(1., 0., 0.),
+            p(1., 1., 0.),
+            p(0., 1., 0.),
+            p(0.5, 0., 0.),
+        ],
+        &[[0, 0, 1], [0, 1, 2], [0, 2, 3], [0, 4, 1]],
+    );
+    let (mesh, report) = repair(&s).unwrap();
+    assert_eq!(report.repeated_index_faces(), [f(0)]);
+    assert_eq!(report.stitched_caps(), [f(3)]);
+    assert_eq!(report.retriangulated_faces(), [f(1)]);
+    assert_eq!(report.components()[0].faces, [f(1), f(2)]);
+    assert_eq!(mesh.face_count(), 3);
+}
+
+#[test]
+fn the_report_names_the_pairing_and_seams_in_input_ids_and_mesh_vertices() {
+    // Vertex 0 is unused, face 0 is dropped, and face 5 is a fin on edge 1-2.
+    let mut positions = vec![p(0.3, 0.3, 0.3)];
+    positions.extend(tetra_positions());
+    positions.push(p(0.5, -1., 0.));
+    let mut triangles = vec![[1, 1, 2]];
+    triangles.extend(TETRA.iter().map(|t| t.map(|i| i + 1)));
+    triangles.push([1, 2, 5]);
+    let (mesh, report) = repair(&soup(positions, &triangles)).unwrap();
+    assert_eq!(report.repeated_index_faces(), [f(0)]);
+    // The pairing names the input's vertices and faces.
+    assert_eq!(report.paired_edges().len(), 1);
+    let pairing = &report.paired_edges()[0];
+    assert_eq!(pairing.vertices, [v(1), v(2)]);
+    assert_eq!(pairing.pairs, [[f(1), f(2)]]);
+    assert_eq!(pairing.unpaired, Some(f(5)));
+    // The copies and the seam are the mesh's: the unused vertex is gone.
+    assert_eq!(
+        (report.vertex_copies()[0].of, report.vertex_copies()[0].copy),
+        (v(0), v(5))
+    );
+    assert_eq!(
+        (report.vertex_copies()[1].of, report.vertex_copies()[1].copy),
+        (v(1), v(6))
+    );
+    assert_eq!(report.mandatory_seams(), [[v(5), v(6)]]);
+    assert_eq!((mesh.vertex_count(), mesh.face_count()), (7, 5));
+}
+
+#[test]
+fn a_fin_left_unsplit_is_refused_not_built() {
+    // The unpaired fin keeps the body's vertices, so the build refuses the shared fan.
+    let mut positions = tetra_positions();
+    positions.push(p(0.5, -1., 0.));
+    let mut triangles = TETRA.to_vec();
+    triangles.push([0, 1, 4]);
+    let plan = without(|p| p.split_bowties = false);
+    assert!(into_manifold(&soup(positions, &triangles), &plan).is_err());
+}
+
+#[test]
+fn a_leading_unused_vertex_does_not_move_the_copy_a_sheet_gets() {
+    let mut positions = vec![p(0.3, 0.3, 0.3)];
+    positions.extend(fan_positions());
+    let triangles: Vec<[u32; 3]> = FAN.iter().map(|t| t.map(|i| i + 1)).collect();
+    let (_, report) = repair(&soup(positions, &triangles)).unwrap();
+    assert_eq!(report.vertex_copies().len(), 1);
+    assert_eq!(report.vertex_copies()[0].of, v(0));
+    assert_eq!(report.vertex_copies()[0].copy, v(4));
+}
+
+#[test]
+fn a_plan_naming_a_real_loop_and_a_missing_one_reports_the_missing_one() {
+    let s = soup(
+        vec![p(0., 0., 0.), p(1., 0., 0.), p(1., 1., 0.), p(0., 1., 0.)],
+        &[[0, 1, 2], [0, 2, 3]],
+    );
+    let corner = |vertex| SourceCorner {
+        primitive: 0,
+        vertex,
+    };
+    let mut plan = RepairPlan::default();
+    plan.fill_holes.insert(crate::LoopRef::new(corner(0)));
+    plan.fill_holes.insert(crate::LoopRef::new(corner(9)));
+    assert_eq!(
+        into_manifold(&s, &plan).unwrap_err(),
+        MeshError::UnknownHoleLoop {
+            loop_ref: crate::LoopRef::new(corner(9))
+        }
+    );
+}
+
+#[test]
+fn sheets_found_with_degenerates_kept_are_not_reported_and_not_built() {
+    let (mesh, report) = repair(&square_sheet()).unwrap();
+    assert_eq!(report.sheets().len(), 2);
+    assert_eq!(mesh.face_count(), 4);
+    let plan = without(|p| p.drop_degenerates = false);
+    assert!(into_manifold(&square_sheet(), &plan).is_err());
+}
+
+#[test]
+fn halves_of_one_stitched_face_are_not_reported_as_a_pairing_the_input_had() {
+    // A one-triangle sheet whose edge 0-1 gets a cap vertex: both layers are split.
+    let s = soup(
+        vec![p(0., 0., 0.), p(1., 0., 0.), p(0., 1., 0.), p(0.5, 0., 0.)],
+        &[[0, 1, 2], [0, 2, 1], [0, 3, 1]],
+    );
+    let (mesh, report) = repair(&s).unwrap();
+    assert_eq!(mesh.face_count(), 4);
+    assert!(report.paired_edges().is_empty());
+}

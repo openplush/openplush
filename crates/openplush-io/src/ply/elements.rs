@@ -6,7 +6,7 @@ use super::Failure;
 use super::header::{Element, Kind, Property, Ty};
 use super::source::Source;
 
-/// Ear clipping a polygon takes about the cube of its corners, so a file cannot make it run for minutes.
+/// Ear clipping is quadratic in a polygon's corners; the cap keeps a file from making it run for minutes.
 const MAX_FACE_CORNERS: u64 = 1000;
 
 pub(super) struct Vertices {
@@ -84,13 +84,19 @@ pub(super) fn read_vertices(element: &Element, source: &mut Source) -> Result<Ve
         .ok_or_else(|| Failure("the `vertex` element needs scalar `x`, `y` and `z`".into()))?;
     let mut positions = Vec::new();
     let mut uvs = slots.uv.map(|_| Vec::new());
-    for _ in 0..element.count {
+    for vertex in 0..element.count {
         let values = row(&element.properties, source)?;
         // INVARIANT: `values` has one entry per property, and the slots index the properties.
         let [x, y, z] = slots.xyz.map(|i| values[i]);
         positions.push(DVec3::new(x, y, z));
         if let (Some(list), Some([u, v])) = (uvs.as_mut(), slots.uv) {
-            list.push(DVec2::new(values[u], values[v]));
+            let uv = DVec2::new(values[u], values[v]);
+            if !(uv.x.is_finite() && uv.y.is_finite()) {
+                return Err(Failure(format!(
+                    "vertex {vertex} has a non-finite texture coordinate"
+                )));
+            }
+            list.push(uv);
         }
     }
     Ok(Vertices { positions, uvs })

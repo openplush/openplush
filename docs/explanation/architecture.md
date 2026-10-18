@@ -24,7 +24,7 @@ The engine is a chain of stages. Each stage's output type promises what the next
 | Repair | `ManifoldMesh` (`openplush-mesh`) | A consistently oriented 2-manifold, possibly with boundary, with no degenerate or zero-area face and no isolated vertex | Type and its validator built; repair is planned |
 | Seams and charts | Charts, each a topological disk | *planned* | |
 | Flatten | A parameterization with every triangle unflipped (det J > 0) | *planned* | The unflipped check is built (`openplush-flatten`'s `injectivity::verify`); the solver is planned |
-| Pattern, layout, export | Pieces with matched seam lengths, pages, SVG/PDF bytes | *planned* | Partly built: `Outline` and `PatternPiece` and the seam-side parity check (`openplush-pattern`), shelf packing (`openplush-layout`); allowance, page tiling and export are planned |
+| Pattern, layout, export | Pieces with matched seam lengths, pages, SVG/PDF bytes | *planned* | Partly built: `Outline`, `PatternPiece`, the seam-side parity check and real-world scale (`openplush-pattern`), shelf packing and page tiling (`openplush-layout`); allowance, page marks and labels, and export are planned |
 
 `ManifoldMesh` has **no public constructor**: repair will be its only producer, so unrepaired geometry cannot reach the flattener by construction. `ManifoldMesh::debug_validate` checks all five half-edge invariants and is what the property tests run against every mesh they build.
 

@@ -32,13 +32,13 @@ fn the_squares_are_50_mm_and_one_inch() {
 }
 
 #[test]
-fn every_page_has_its_square_just_inside_the_bands_it_shares_with_earlier_pages()
+fn every_page_has_its_square_at_the_top_left_just_inside_the_bands_it_shares_with_earlier_pages()
 -> Result<(), Setup> {
     let t = tiling(400.0, 600.0, Paper::A4)?;
     for p in t.pages() {
         assert_eq!(
             p.scale_square_min(),
-            p.window_min() + DVec2::new(15.0, 15.0),
+            DVec2::new(p.window_min().x + 15.0, p.window_max().y - 15.0 - 50.0),
             "{}",
             p.label()
         );

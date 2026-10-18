@@ -98,6 +98,16 @@ pub enum MeshError {
         /// The edge's higher-indexed endpoint.
         b: VertexId,
     },
+    /// A pairing names a face that does not use the edge it pairs, or names a face twice.
+    #[error("a pairing on the edge between {a:?} and {b:?} names triangle {face:?} wrongly")]
+    PairingMismatch {
+        /// The face named wrongly.
+        face: FaceId,
+        /// The edge's lower-indexed endpoint.
+        a: VertexId,
+        /// The edge's higher-indexed endpoint.
+        b: VertexId,
+    },
     /// A vertex's triangles do not form a single fan (disk or half-disk): for
     /// example two cones touching at their tips, or a bowtie.
     #[error("vertex {vertex:?} is non-manifold (its triangles form more than one fan)")]

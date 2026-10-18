@@ -142,7 +142,7 @@ Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_
 
 ### S3 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
 
-Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Proposed).
+Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
 
 - **No panics** [solid for the corpus].
   - The corpus: 10,000 seeded near-degenerate outlines × 4 methods, plus six invalid inputs. The release and debug-assert builds gave byte-identical output.
@@ -195,7 +195,7 @@ Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md)
 
 ### S5 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
 
-**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Proposed). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
+**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
 
 The spike wrote one A3 pattern page (a 400-vertex outline, the 50.00 mm square, and three labels) two ways: through `svg2pdf` 0.13, and directly with `pdf-writer` 0.15. Both ran natively and on wasm32. An independent pypdf interpreter measured the scale.
 

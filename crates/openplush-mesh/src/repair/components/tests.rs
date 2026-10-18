@@ -86,15 +86,12 @@ fn a_component_just_under_one_percent_is_a_candidate() {
 #[test]
 fn components_are_in_order_of_their_first_face_with_faces_ascending() {
     // Faces 0 and 2 share vertex 1; face 1 stands alone.
-    let positions = (0..7)
+    let positions = (0..8)
         .map(|i| DVec3::new(f64::from(i), f64::from(i * i), 0.0))
         .collect();
-    let s = soup(positions, &[[0, 1, 2], [3, 4, 5], [1, 5, 6]]);
+    let s = soup(positions, &[[0, 1, 2], [3, 4, 5], [1, 6, 7]]);
     let faces: Vec<Vec<FaceId>> = split(&s).into_iter().map(|c| c.faces).collect();
-    assert_eq!(
-        faces,
-        [vec![f(0), f(2)], vec![f(1)]].map(|v| v.into_iter().collect::<Vec<_>>())
-    );
+    assert_eq!(faces, [vec![f(0), f(2)], vec![f(1)]]);
 }
 
 #[test]

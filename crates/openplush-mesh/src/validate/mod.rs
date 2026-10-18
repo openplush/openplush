@@ -5,7 +5,7 @@ mod nonmanifold;
 pub(crate) mod orientation;
 mod report;
 mod selfintersect;
-mod topology;
+pub(crate) mod topology;
 
 use std::collections::{BTreeMap, BTreeSet};
 

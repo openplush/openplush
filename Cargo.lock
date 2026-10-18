@@ -396,6 +396,11 @@ dependencies = [
 [[package]]
 name = "openplush-layout"
 version = "0.0.0"
+dependencies = [
+ "openplush-geom",
+ "openplush-pattern",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-mesh"

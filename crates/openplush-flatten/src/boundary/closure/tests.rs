@@ -189,3 +189,16 @@ fn input_that_is_not_a_polygon_is_refused() {
     );
     assert_eq!(close(&[1.0; 3], &[2.0, f64::INFINITY, 2.0]), Err(bad));
 }
+
+#[test]
+fn the_gap_is_how_far_the_edges_end_from_where_they_start() {
+    use super::gap;
+    // A unit square turning by a quarter at each corner closes; losing one turn leaves the
+    // last edge pointing along the first, so the end lands one edge length short of the start.
+    let square = [1.0; 4];
+    let quarter = std::f64::consts::FRAC_PI_2;
+    assert!(gap(&square, &[quarter; 4]) <= 1e-15);
+    assert!((gap(&square, &[quarter, quarter, quarter, 0.0]) - 1.0).abs() <= 1e-15);
+    // Edge lengths scale the gap.
+    assert!((gap(&[3.0; 4], &[quarter, quarter, quarter, 0.0]) - 3.0).abs() <= 1e-14);
+}

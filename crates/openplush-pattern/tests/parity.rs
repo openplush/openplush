@@ -66,3 +66,14 @@ fn a_difference_just_past_the_floor_is_refused() {
         Ok(Err(PatternError::SeamParity { .. }))
     ));
 }
+
+#[test]
+fn the_message_names_the_chain_both_sides_and_the_tolerance_to_the_micron() -> Result<(), GeomError>
+{
+    let message = verdict(100.0, 101.5)?.err().map(|e| e.to_string());
+    assert_eq!(
+        message.as_deref(),
+        Some("seam chain 3: sides 100.000 mm and 101.500 mm differ by more than 1.000 mm")
+    );
+    Ok(())
+}

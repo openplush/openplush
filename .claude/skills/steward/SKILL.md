@@ -30,7 +30,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Waiting
 
-- Subscribe only to PRs you are actively changing. While a PR only waits on CI, a review, or the maintainer, schedule one check-in instead of reacting to every CI event.
+- After opening a PR, subscribe to it, so CI and review results wake you. Also schedule one safety-net check-in of at most 10 minutes; re-arm it silently while nothing changed. Unsubscribe when the PR merges or closes.
 - A turn that would only say "nothing new" is not worth taking. Report when a merge needs the maintainer, something is blocked, or a PR has merged.
 
 ## Sessions

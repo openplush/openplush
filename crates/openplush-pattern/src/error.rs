@@ -1,6 +1,8 @@
 use openplush_geom::GeomError;
 use openplush_geom::units::Mm;
 use openplush_seams::SeamChainId;
+
+use crate::{FabricId, StretchDirection};
 use thiserror::Error;
 
 /// Every way `openplush-pattern` refuses its input or its own result.
@@ -66,10 +68,49 @@ pub enum PatternError {
     /// A piece needs at least one allowed rotation.
     #[error("a piece needs at least one allowed rotation")]
     NoRotations,
+    /// A stretch percentage that is negative or not finite.
+    #[error(
+        "fabric {}: a {} stretch of {percent}% is not usable (must be finite and not negative)",
+        .fabric.index(), direction_name(*.direction)
+    )]
+    BadStretch {
+        /// The fabric.
+        fabric: FabricId,
+        /// Which stretch.
+        direction: StretchDirection,
+        /// The value given.
+        percent: f64,
+    },
+    /// A fabric roll must have a width.
+    #[error("fabric {}: the roll width must be greater than zero", .fabric.index())]
+    ZeroRollWidth {
+        /// The fabric.
+        fabric: FabricId,
+    },
+    /// Zero allowance is only for fabric whose cut edge does not fray.
+    #[error("fabric {}: a fabric that frays needs a seam allowance greater than zero", .fabric.index())]
+    ZeroAllowanceFrays {
+        /// The fabric.
+        fabric: FabricId,
+    },
+    /// Pile with a length lies one way, so it has a nap.
+    #[error("fabric {}: a pile fabric with a pile length has a nap", .fabric.index())]
+    PileWithoutNap {
+        /// The fabric.
+        fabric: FabricId,
+    },
     /// An allowed rotation that is NaN or infinite.
     #[error("rotation {index} is not finite")]
     NonFiniteRotation {
         /// The rotation's index.
         index: usize,
     },
+}
+
+fn direction_name(direction: StretchDirection) -> &'static str {
+    match direction {
+        StretchDirection::Grain => "grain",
+        StretchDirection::Cross => "cross",
+        StretchDirection::Bias => "bias",
+    }
 }

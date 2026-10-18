@@ -1,5 +1,6 @@
 //! Pattern pieces: allowance, notches, labels, grain, piece dedupe.
 
+mod cut;
 mod error;
 mod fabric;
 mod outline;
@@ -7,6 +8,7 @@ pub mod parity;
 mod piece;
 pub mod scale;
 
+pub use cut::CutCount;
 pub use error::PatternError;
 pub use fabric::{Fabric, FabricCategory, FabricSpec, StretchDirection};
 pub use outline::Outline;

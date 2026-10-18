@@ -1,7 +1,7 @@
-//! `PatternPiece::new`: a cut quantity from 1 to 100 and a usable rotation set.
+//! `PatternPiece::new`: a cut count and a usable rotation set.
 
 use openplush_geom::DVec2;
-use openplush_pattern::{Outline, PatternError, PatternPiece, PieceId};
+use openplush_pattern::{CutCount, Outline, PatternError, PatternPiece, PieceId};
 
 fn square(side: f64) -> Result<Outline, PatternError> {
     Outline::new(vec![
@@ -12,12 +12,12 @@ fn square(side: f64) -> Result<Outline, PatternError> {
     ])
 }
 
-fn piece(cuts: u32, rotations: Vec<f64>) -> Result<PatternPiece, PatternError> {
+fn piece(as_printed: u32, rotations: Vec<f64>) -> Result<PatternPiece, PatternError> {
     PatternPiece::new(
         PieceId::new(4),
         square(8.0)?,
         square(10.0)?,
-        cuts,
+        CutCount::new(as_printed, 1)?,
         rotations,
     )
 }
@@ -28,33 +28,13 @@ fn a_piece_reports_what_it_was_built_from() -> Result<(), PatternError> {
     assert_eq!(p.id(), PieceId::new(4));
     assert_eq!(p.sewing_line(), &square(8.0)?);
     assert_eq!(p.cut_line(), &square(10.0)?);
-    assert_eq!(p.cut_quantity(), 2);
+    assert_eq!(p.cuts(), CutCount::new(2, 1)?);
     assert_eq!(p.rotations_deg(), [0.0, 180.0]);
     Ok(())
 }
 
 #[test]
-fn zero_cuts_is_refused() {
-    assert_eq!(piece(0, vec![0.0]), Err(PatternError::ZeroCutQuantity));
-}
-
-#[test]
-fn a_hundred_cuts_is_the_most_allowed() {
-    assert!(piece(100, vec![0.0]).is_ok());
-    assert_eq!(
-        piece(101, vec![0.0]),
-        Err(PatternError::TooManyCuts { cut_quantity: 101 })
-    );
-    assert_eq!(
-        piece(u32::MAX, vec![0.0]),
-        Err(PatternError::TooManyCuts {
-            cut_quantity: u32::MAX
-        })
-    );
-}
-
-#[test]
-fn one_cut_and_one_rotation_is_the_smallest_valid_piece() {
+fn one_rotation_is_the_smallest_valid_set() {
     assert!(piece(1, vec![0.0]).is_ok());
 }
 
@@ -89,14 +69,6 @@ fn the_new_errors_say_what_is_wrong() {
             "outline edges 1 and 3 cross, touch, overlap or fold back",
         ),
         (PatternError::OutlineClockwise, "outline is wound clockwise"),
-        (
-            PatternError::ZeroCutQuantity,
-            "a piece must be cut at least once",
-        ),
-        (
-            PatternError::TooManyCuts { cut_quantity: 101 },
-            "a piece can be cut at most 100 times, got 101",
-        ),
         (
             PatternError::NoRotations,
             "a piece needs at least one allowed rotation",

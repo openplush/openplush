@@ -82,7 +82,7 @@ impl Item {
         }
         Ok(Self {
             piece: piece.id(),
-            cuts: piece.cut_quantity(),
+            cuts: piece.cuts().total(),
             rotation_deg,
             turns,
             mirrored,

@@ -1,4 +1,4 @@
-use crate::{Outline, PatternError, PieceId};
+use crate::{CutCount, Outline, PatternError, PieceId};
 
 /// One pattern template: its two outlines, how many copies to cut, and the rotations layout may use.
 #[derive(Debug, Clone, PartialEq)]
@@ -6,28 +6,19 @@ pub struct PatternPiece {
     id: PieceId,
     sewing_line: Outline,
     cut_line: Outline,
-    cut_quantity: u32,
+    cuts: CutCount,
     rotations_deg: Vec<f64>,
 }
 
 impl PatternPiece {
-    /// The most copies of one piece a pattern may ask for.
-    pub(crate) const MAX_CUT_QUANTITY: u32 = 100;
-
-    /// Refuses a cut quantity outside 1 to 100 and an empty or non-finite rotation set.
+    /// Refuses an empty or non-finite rotation set.
     pub fn new(
         id: PieceId,
         sewing_line: Outline,
         cut_line: Outline,
-        cut_quantity: u32,
+        cuts: CutCount,
         rotations_deg: Vec<f64>,
     ) -> Result<Self, PatternError> {
-        if cut_quantity == 0 {
-            return Err(PatternError::ZeroCutQuantity);
-        }
-        if cut_quantity > Self::MAX_CUT_QUANTITY {
-            return Err(PatternError::TooManyCuts { cut_quantity });
-        }
         if rotations_deg.is_empty() {
             return Err(PatternError::NoRotations);
         }
@@ -38,7 +29,7 @@ impl PatternPiece {
             id,
             sewing_line,
             cut_line,
-            cut_quantity,
+            cuts,
             rotations_deg,
         })
     }
@@ -58,9 +49,9 @@ impl PatternPiece {
         &self.cut_line
     }
 
-    /// How many copies to cut; 1 to 100.
-    pub fn cut_quantity(&self) -> u32 {
-        self.cut_quantity
+    /// How many copies to cut, as printed and flipped.
+    pub fn cuts(&self) -> CutCount {
+        self.cuts
     }
 
     /// The rotations, in degrees, layout may place the piece at; never empty.

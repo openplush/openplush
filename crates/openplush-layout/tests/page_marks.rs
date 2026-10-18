@@ -5,7 +5,7 @@ use openplush_geom::units::Mm;
 use openplush_layout::pages::{Page, PageTiling, Paper, tile};
 use openplush_layout::shelf::pack;
 use openplush_layout::{LayoutError, LayoutOptions};
-use openplush_pattern::{Outline, PatternPiece, PieceId};
+use openplush_pattern::{CutCount, Outline, PatternPiece, PieceId};
 
 type Setup = Box<dyn std::error::Error>;
 
@@ -16,7 +16,13 @@ fn tiling(roll: f64, length: f64, paper: Paper) -> Result<PageTiling, Setup> {
         DVec2::new(10.0, length),
         DVec2::new(0.0, length),
     ])?;
-    let piece = PatternPiece::new(PieceId::new(0), outline.clone(), outline, 1, vec![0.0])?;
+    let piece = PatternPiece::new(
+        PieceId::new(0),
+        outline.clone(),
+        outline,
+        CutCount::new(1, 0)?,
+        vec![0.0],
+    )?;
     let opts = LayoutOptions::new(Mm::try_new(roll)?, Mm::try_new(0.0)?, false)?;
     let sheet = pack(&[piece], &opts)?
         .into_iter()

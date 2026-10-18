@@ -1,8 +1,8 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-14 | **Version**: 0.5 (draft) | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-18 | **Version**: 0.6 (draft) | **Status**: Draft contract
 
-*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes.
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built.
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
@@ -29,7 +29,14 @@ Every stage is a pure function of its inputs. No stage touches the filesystem, t
 
 ```rust
 // ── Import ────────────────────────────────────────────────────────────────
-pub fn import(bytes: &[u8], opts: &ImportOptions) -> StageResult<TriangleSoup>;
+pub fn import(files: &ImportFiles, opts: &ImportOptions) -> StageResult<TriangleSoup>;
+// ImportFiles: the file to read plus every file the shell can supply beside it, by the
+// name the primary refers to them with (a .gltf's `buffers[].uri`, an OBJ's `mtllib`).
+// A reference with no matching entry is `MissingResource { uri }`; an entry nothing
+// refers to is ignored. A name is a relative path with `/` separators; one that escapes
+// the set (`..`, absolute, a scheme other than `data:`) is `Parse`. A GLB or STL/PLY file needs only the primary.
+pub struct ImportFiles { pub primary: ImportFile, pub others: Vec<ImportFile> }
+pub struct ImportFile { pub name: String, pub bytes: Vec<u8> }
 pub fn validate(soup: &TriangleSoup) -> Staged<ValidationReport>;   // never errors: reporting defects is its job
 pub fn repair(soup: &TriangleSoup, plan: &RepairPlan) -> StageResult<(ManifoldMesh, RepairReport)>;
 

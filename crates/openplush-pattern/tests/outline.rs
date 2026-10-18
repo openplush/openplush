@@ -178,3 +178,36 @@ fn scale_and_shift_do_not_change_the_verdict() {
         );
     }
 }
+
+#[test]
+fn the_closing_edge_is_checked_against_every_non_adjacent_edge() {
+    let p = [(0.0, 0.0), (4.0, 0.0), (4.0, 2.0), (8.0, 2.0), (6.0, 1.0)];
+    assert_eq!(refused(&p), not_simple(1, 4));
+}
+
+#[test]
+fn the_orientation_corner_is_the_leftmost_of_several_lowest_points() {
+    let p = [(2.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
+    assert!(refused(&p).is_ok());
+}
+
+#[test]
+fn the_second_point_can_be_the_lowest() {
+    let p = [(2.0, 1.0), (1.0, 0.0), (5.0, 2.0), (5.0, 5.0), (0.0, 5.0)];
+    assert!(refused(&p).is_ok());
+}
+
+#[test]
+fn collinear_disjoint_vertical_edges_are_not_a_touch() {
+    let p = [
+        (0.0, 0.0),
+        (6.0, 0.0),
+        (6.0, 2.0),
+        (4.0, 2.0),
+        (4.0, 3.0),
+        (6.0, 3.0),
+        (6.0, 5.0),
+        (0.0, 5.0),
+    ];
+    assert!(refused(&p).is_ok());
+}

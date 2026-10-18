@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+libm = "0.2.16"
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
 openplush-seams = { path = "../openplush-seams" }

@@ -3,7 +3,7 @@
 //! meet only through a named conversion (AGENTS.md, units).
 
 use openplush_geom::GeomError;
-use openplush_geom::epsilon::{MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity};
+use openplush_geom::epsilon::{MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity, UV_CUT};
 use openplush_geom::units::{Mm, Scale};
 
 fn close(a: f64, b: f64) -> bool {
@@ -147,4 +147,15 @@ fn a_conversion_that_overflows_or_goes_negative_is_an_error() {
         unit.to_mm(f64::NAN),
         Err(GeomError::InvalidLength { .. })
     ));
+}
+
+#[test]
+fn uv_cut_is_1e_minus_5_between_f32_noise_and_the_tightest_measured_cut() {
+    assert_eq!(UV_CUT, 1e-5);
+    // f32 spacing at the top of a UDIM tile row (u near 10) is below the tolerance
+    // by a factor of ten, so bit-level export noise never reads as a cut.
+    let spacing_at_ten = f64::from(f32::from_bits(10.0_f32.to_bits() + 1) - 10.0_f32);
+    assert!(UV_CUT > 10.0 * spacing_at_ten, "{spacing_at_ten}");
+    // Blender 5.2 spike Q1: the tightest real cut, a slit near its tip, was 1.81e-4.
+    assert!(UV_CUT * 18.0 <= 1.81e-4);
 }

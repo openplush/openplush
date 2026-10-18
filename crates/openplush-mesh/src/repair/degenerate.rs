@@ -16,9 +16,11 @@ pub(crate) struct Removed {
 
 /// A face dropped because it repeats the earlier face `of` with the same winding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct DroppedCopy {
-    pub(crate) face: FaceId,
-    pub(crate) of: FaceId,
+pub struct DroppedCopy {
+    /// The face dropped.
+    pub face: FaceId,
+    /// The earlier face it repeats.
+    pub of: FaceId,
 }
 
 /// Drops faces that repeat a vertex and every copy of an earlier face wound the

@@ -10,15 +10,15 @@ use crate::{FaceId, MeshError, TriangleSoup, VertexId};
 
 /// An edge with more than two faces, and how its faces pair up.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct PairedEdge {
+pub struct PairedEdge {
     /// The ends, smaller first.
-    pub(crate) vertices: [VertexId; 2],
+    pub vertices: [VertexId; 2],
     /// Each pair of faces that share their own copy of the edge, the lower face
     /// ID first, sorted by it.
-    pub(crate) pairs: Vec<[FaceId; 2]>,
+    pub pairs: Vec<[FaceId; 2]>,
     /// The face left without a partner when the count is odd; its copy is a
     /// boundary edge.
-    pub(crate) unpaired: Option<FaceId>,
+    pub unpaired: Option<FaceId>,
 }
 
 /// Pairs the faces on every edge with more than two, without changing the soup:

@@ -5,11 +5,11 @@ use crate::{FaceId, TriangleSoup};
 
 /// A set of faces joined through shared vertices.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Component {
+pub struct Component {
     /// Ascending.
-    pub(crate) faces: Vec<FaceId>,
+    pub faces: Vec<FaceId>,
     /// Area under [`DETAIL_AREA_FRACTION`] of the soup's total.
-    pub(crate) detail_candidate: bool,
+    pub detail_candidate: bool,
 }
 
 /// A component with less than this fraction of the total area is a candidate detail part.

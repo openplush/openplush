@@ -5,6 +5,7 @@
 
 mod error;
 mod options;
+pub mod pages;
 mod sheet;
 pub mod shelf;
 

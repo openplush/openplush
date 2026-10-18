@@ -11,6 +11,10 @@ const OVERLAP_MM: f64 = 15.0;
 /// Pages along either side: one row letter per row, and the same cap across so the count stays bounded.
 /// 26 A4 pages reach 4.5 m across and 6.8 m down, far past the 1000 mm largest plush.
 const MAX_PAGES_PER_SIDE: u32 = 26;
+/// Side of the scale-check square, in millimetres: a metric ruler reads it directly.
+pub const SCALE_SQUARE_MM: f64 = 50.0;
+/// Side of the labelled square inside it: one inch, for an imperial ruler. Two inches (50.8 mm) is too close to 50 to tell apart.
+pub const INCH_SQUARE_MM: f64 = 25.4;
 const ROW_LETTERS: &[u8; 26] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 /// Where along a shared edge its two registration marks sit, as fractions of the page's printable length.
 const MARK_AT: [f64; 2] = [0.25, 0.75];
@@ -64,6 +68,12 @@ impl Page {
     /// The highest sheet corner the printable area shows, in millimetres; may lie past the sheet's edge.
     pub fn window_max(&self) -> DVec2 {
         self.window_max
+    }
+
+    /// The scale square's lowest corner in sheet millimetres: inset by the overlap from the page's
+    /// lowest corner, so the bands this page shares with earlier pages never cover it.
+    pub fn scale_square_min(&self) -> DVec2 {
+        self.window_min + DVec2::new(OVERLAP_MM, OVERLAP_MM)
     }
 
     /// Row letter then column number from 1, so the second row's third page is "B3".

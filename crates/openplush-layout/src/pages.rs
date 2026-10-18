@@ -46,7 +46,7 @@ pub struct Page {
 }
 
 impl Page {
-    /// The row, from 0 at the sheet's `y = 0` edge.
+    /// The row, from 0 at the sheet's top edge; sheets are y-up, so that is its highest y.
     pub fn row(&self) -> u32 {
         self.row
     }
@@ -56,7 +56,7 @@ impl Page {
         self.column
     }
 
-    /// The lowest sheet corner the printable area shows, in millimetres.
+    /// The lowest sheet corner the printable area shows, in millimetres; may lie past the sheet's edge.
     pub fn window_min(&self) -> DVec2 {
         self.window_min
     }
@@ -112,7 +112,7 @@ impl PageTiling {
     }
 }
 
-/// Covers the whole sheet with the fewest pages, each repeating 15 mm of its right and bottom neighbours.
+/// Covers the whole sheet with the fewest pages from its top-left corner, each repeating 15 mm of its right and bottom neighbours.
 pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
     let printable = paper.printable_mm();
     let too_many = || LayoutError::TooManyPages {
@@ -125,7 +125,8 @@ pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
     let pages = (0..rows)
         .flat_map(|row| (0..columns).map(move |column| (row, column)))
         .map(|(row, column)| {
-            let window_min = DVec2::new(f64::from(column) * step.x, f64::from(row) * step.y);
+            let top = sheet.length_mm - f64::from(row) * step.y;
+            let window_min = DVec2::new(f64::from(column) * step.x, top - printable.y);
             Page {
                 row,
                 column,

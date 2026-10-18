@@ -32,8 +32,9 @@ fn a_small_sheet_fits_on_one_a4_page() -> Result<(), Setup> {
     assert_eq!((t.rows(), t.columns()), (1, 1));
     let p = &t.pages()[0];
     assert_eq!((p.row(), p.column()), (0, 0));
-    assert_eq!(p.window_min(), DVec2::new(0.0, 0.0));
-    assert_eq!(p.window_max(), DVec2::new(190.0, 277.0));
+    // Row A hangs from the sheet's top edge, 150 mm up.
+    assert_eq!(p.window_min(), DVec2::new(0.0, -127.0));
+    assert_eq!(p.window_max(), DVec2::new(190.0, 150.0));
     Ok(())
 }
 
@@ -57,8 +58,8 @@ fn pages_run_row_by_row_and_overlap_by_15_mm() -> Result<(), Setup> {
     assert_eq!(order, expected);
     let p = &t.pages()[5];
     assert_eq!((p.row(), p.column()), (1, 2));
-    assert_eq!(p.window_min(), DVec2::new(350.0, 262.0));
-    assert_eq!(p.window_max(), DVec2::new(540.0, 539.0));
+    assert_eq!(p.window_min(), DVec2::new(350.0, 61.0));
+    assert_eq!(p.window_max(), DVec2::new(540.0, 338.0));
     Ok(())
 }
 
@@ -85,7 +86,7 @@ fn the_grid_is_the_fewest_pages_that_cover_the_sheet() -> Result<(), Setup> {
         );
         assert_eq!(t.pages().len(), (r * c) as usize);
         let last = &t.pages()[t.pages().len() - 1];
-        assert!(last.window_max().x >= w && last.window_max().y >= l);
+        assert!(last.window_max().x >= w && last.window_min().y <= 0.0);
     }
     Ok(())
 }
@@ -128,6 +129,25 @@ fn too_many_pages_says_what_is_wrong() {
 fn a_wide_short_sheet_is_one_row_of_pages() -> Result<(), Setup> {
     let t = tile(&sheet(400.0, 150.0)?, Paper::A4)?;
     assert_eq!((t.rows(), t.columns()), (1, 3));
-    assert_eq!(t.pages()[2].window_min(), DVec2::new(350.0, 0.0));
+    assert_eq!(t.pages()[2].window_min(), DVec2::new(350.0, -127.0));
     Ok(())
+}
+
+#[test]
+fn rows_run_down_from_the_top_edge_each_repeating_15_mm_at_its_bottom() -> Result<(), Setup> {
+    // Sheets are y-up, so the top edge is the highest y and row A starts there.
+    let t = tiling_columns(&sheet(100.0, 600.0)?)?;
+    assert_eq!(t[0].window_max().y, 600.0);
+    for pair in t.windows(2) {
+        assert_eq!(pair[1].window_max().y, pair[0].window_min().y + 15.0);
+        assert!(pair[1].window_min().y < pair[0].window_min().y);
+    }
+    Ok(())
+}
+
+/// The pages of a one-column tiling on A4, top row first.
+fn tiling_columns(s: &Sheet) -> Result<Vec<openplush_layout::pages::Page>, Setup> {
+    let t = tile(s, Paper::A4)?;
+    assert_eq!(t.columns(), 1);
+    Ok(t.pages().to_vec())
 }

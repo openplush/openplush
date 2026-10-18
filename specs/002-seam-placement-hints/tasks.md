@@ -18,7 +18,7 @@ description: "Task list for 002 seam-placement hints"
 
 ## PR packaging
 
-Same policy as 001: one intent per PR, each task a test commit then its implementation, one story per PR ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md)). See [`AGENTS.md`](../../AGENTS.md#commits-and-prs) and [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md).
+Same policy as 001: one intent per PR, each task a test commit then its implementation, interdependent intents stacked ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md)). See [`AGENTS.md`](../../AGENTS.md#commits-and-prs) and [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md).
 
 This feature packages more cleanly than 001, because each detector is independently testable.
 

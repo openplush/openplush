@@ -10,7 +10,9 @@ A line budget cut capabilities into pieces that could not be judged alone. Bound
 
 ## What an intent is
 
-**One finishable outcome toward a user story**, stated in one sentence without joining unrelated results by "and":
+**What the PR brings in toward an epic (a feature, or a bigger issue), and why**, in one sentence, with the PR title saying the same. The test comes later: someone runs `git blame` on a line, lands on the PR, and has to learn what brought it in and the idea behind it. A line count never answered that; an intent does.
+
+Tasks and issues collect toward an epic. Before opening PRs, group them by intent, not by size and not one PR per task:
 
 > The flattener lays a chart's boundary flat with every edge at its 3D length. *(T079)*
 > A chart flattens end to end: SLIM interior, fallback when the boundary cannot close, and step-wise progress for the worker. *(T080, T082, T083: one outcome, "a chart flattens")*
@@ -58,9 +60,23 @@ chore/workspace-config     Tasks: T009, T010, T011, T012
 
 `T087` is the seam-parity assertion, the last line of defence against the failure this project exists to prevent. It gets a PR of its own, however small the diff, because blast radius, not size, decides isolation. `tasks.md` lists these.
 
+### Stacked intents
+
+Intents often depend on each other: X must land first, then bug Y is fixed, then feature Z is built on both. Each is its own PR, stacked on the one before, so each keeps a clear "what and why":
+
+```
+001/120-chart-provenance      X: charts keep their 3D provenance          base: main
+001/121-weld-tie-break-fix    Y: weld ties break by vertex ID, not order   base: 120
+001/122-grain-on-pieces       Z: grain arrows follow the 3D direction      base: 121
+```
+
+At the merge gate the stack sometimes turns out to make sense only as a whole: Z is the reason X and Y exist, and nobody would review X alone. Then fold it: merge 122 into 121 and 121 into 120 (merge commits, so each intent's commits keep their history), retitle 120 and list all three intents, in order, in its `Intent` section, and close 121 and 122 with a link to 120. `git blame` still lands on each intent's own commits, and the PR explains all three.
+
+Never fold a change `tasks.md` isolates for blast radius, or a decision the maintainer must accept into the code that implements it.
+
 ### Never together
 
-Two user stories; a spec or decision change and the code that implements it (the decision is reviewed on its own first); a refactor and a behaviour change; chores and feature work.
+Two unrelated intents; chores and feature work. Inside one PR, a refactor, a fix and a feature are separate commits, so each reads as what it is.
 
 ## PR description
 
@@ -122,7 +138,7 @@ chore/pr-policy
 
 ### Why stack
 
-Stacks are rare now that a PR carries a whole intent; they remain for work that genuinely depends on an unmerged PR.
+Stack whenever one intent depends on another that has not merged (see Stacked intents above).
 
 Spec Kit work is a chain: the plan cites the research, the data model implements the plan, the tasks cite all of them. Code is the same: the weld step needs the mesh types.
 

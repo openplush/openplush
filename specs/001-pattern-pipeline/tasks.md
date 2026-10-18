@@ -18,7 +18,7 @@ description: "Task list for 001 pattern pipeline"
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 179 tasks do not mean 179 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: one intent per PR, a finishable outcome toward a user story with every task it touches finished and ticked in it; each task a test commit then its implementation; one story per PR ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md), 2026-10-18, which retired the 400-line budget).
+**A task is a unit of work, not a unit of review.** 179 tasks do not mean 179 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: one intent per PR, what it brings in toward an epic and why, with every task it touches finished and ticked in it; each task a test commit then its implementation; interdependent intents stacked ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md), 2026-10-18, which retired the 400-line budget).
 
 ### Batch these — several tasks, one PR
 

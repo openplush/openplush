@@ -24,9 +24,10 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Stacks
 
-- Stacks are rare once PRs are sized by intent. When one exists, merge a fix to a lower PR upward only after that PR merges, unless a child needs the change to build or to make sense. GitHub retargets the child when its parent merges, and merging `main` then carries every fix up in one push.
+- Stack interdependent intents rather than merging them into one diff early. Merge a fix to a lower PR upward only after that PR merges, unless a child needs the change to build or to make sense. GitHub retargets the child when its parent merges, and merging `main` then carries every fix up in one push.
 - Before every push: `git grep -n '^<<<<<<< \|^>>>>>>> '` finds nothing.
 - Merge commits only, bottom-up, with the expected head SHA. Never force-push.
+- Folding a stack at the merge gate (AGENTS.md): merge each child into its parent upward, update the remaining PR's title and `Intent` to list every intent, close each folded PR with a link to it. Never fold a blast-radius PR or a decision into its code.
 
 ## Waiting
 

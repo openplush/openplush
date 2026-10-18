@@ -24,9 +24,9 @@ OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spe
 ## Pull requests carry one intent
 `main` is the trunk and everything arrives by PR ([ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)):
 
-- **One intent per PR**: one finishable outcome toward a user story, stated in one sentence. Every task it touches is finished, and ticked, in that PR. There is no line budget.
+- **One intent per PR**: what it brings in toward an epic (a feature or a bigger issue) and why, in one sentence and in its title, so tracing a line back to its PR explains it. Every task it touches is finished, and ticked, in that PR. There is no line budget.
 - **Each task is a test commit, then the implementation that makes it pass.** A large PR is reviewed commit by commit, so name the reading order in the description.
-- **Never in one PR**: two user stories, a spec change and the code that implements it, a refactor and a behaviour change, or chores mixed with features.
+- **Never in one PR**: two unrelated intents, or chores mixed with features. A decision the maintainer accepts lands before the code that implements it. Interdependent intents are **stacked** (X, then a fix, then the feature on both), and may be folded into one PR at the merge gate.
 - Branch names: `NNN/NN-slug` for feature work (`001/42-obj-import`: feature, position, intent; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#commits-and-prs).
 
 Why intent and not size: this project's worst outcome is a pattern that looks right and is wrong, discovered after the fabric is cut. A reviewer catches that by checking a stated outcome against its tests, which needs the whole capability in view. Test-first commits keep a large PR readable one step at a time.

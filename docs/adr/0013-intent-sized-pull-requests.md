@@ -12,14 +12,15 @@ Since 2026-10-13 a pull request has been "one reviewable slice": at most 400 cha
 
 Review runs cost the maintainer's subscription. They were spent twice on one PR within ten minutes, because the PR steward skill told agents to add the `rereview` label after fixing a 🔴 finding, sometimes with `mutation-audit` beside it, and each label is a separate trigger.
 
-The maintainer asked, 2026-10-18: "modify our entire approach to allow for ambiguously large prs. instead of splitting up work by the ~400 line counts, lets move to switching it up more by intents and clearly finishable sets of tasks that can be reviewed to help meet our epic features … I also need the amount of review agent runs to decrease more".
+The maintainer asked, 2026-10-18: "modify our entire approach to allow for ambiguously large prs. instead of splitting up work by the ~400 line counts, lets move to switching it up more by intents and clearly finishable sets of tasks that can be reviewed to help meet our epic features … I also need the amount of review agent runs to decrease more". And, on what an intent is: "a pr is solving an epic and has an intent … when i go digging for 'what brought this in' and 'what was the idea behind this' that needs to click … first X needs to happen, that Y bug get fixed, then you can implement feature Z with X and Y having gone first, but sometimes all of that gets pulled into a big PR when the merge gate is attempted".
 
 ## Decision drivers
 
 * The defect this project fears most is plausible-looking wrong geometry, so review must still be able to check what a PR claims.
 * A reviewer judges a change by whether it does what it says, which needs the whole capability in view, not a third of it.
 * Fewer review runs, CI runs and merges per finished task.
-* Traceability from task to PR stays.
+* A change traced back to its PR explains itself: what brought it in, and why.
+* Interdependent work lands in order without forcing it into one diff early.
 
 ## Considered options
 
@@ -31,16 +32,18 @@ The maintainer asked, 2026-10-18: "modify our entire approach to allow for ambig
 
 Chosen option: **3**, because it is the only one that stops splitting a capability across PRs, and because a reviewer checks a stated intent against its tests, which a line count never measured. Option 1 keeps the splitting cost; option 2 moves the line without removing it.
 
-* **An intent PR** finishes one outcome toward a user story: one or more tasks that, merged, leave something done end to end, stated in one sentence without joining unrelated results with "and". Every task it touches is finished, and ticked, in the same PR. There is no line budget.
+* **An intent PR** brings in one thing toward an epic (a feature, or a bigger issue) and says why: one or more tasks that, merged, leave something done end to end, stated in one sentence. The test is traceability: someone who follows `git blame` to the PR, months later, must find what brought the change in and the idea behind it. The PR title states the intent, so the merge commit carries it. Every task the PR touches is finished, and ticked, in it. There is no line budget.
+* **Agents formulate the intents.** Tasks and issues collect toward an epic; before opening PRs the agent groups them by intent, rather than by size or by task.
 * **Readable by commit.** Each task is a test commit followed by the implementation commit that makes it pass, so a large PR is reviewed commit by commit. The PR body names the tasks and a reading order.
-* **Still never in one PR**: two user stories; a spec or decision change and the code that implements it; a refactor and a behaviour change; chores and feature work. Crossing crates is allowed when the intent needs it (the crate DAG still holds).
-* **Still isolated**: the changes `tasks.md` lists for their blast radius get a PR of their own.
+* **Stacked intents** carry interdependencies: X must land, then bug Y is fixed, then feature Z builds on both. Each is a PR stacked on the one before. At the merge gate, a stack whose intents only make sense together may be folded into one PR: merge each child into its parent upward (merge commits, so every intent's commits keep their history), list every intent in the remaining PR's `Intent` section, and close the folded PRs with a link to it.
+* **Never in one PR**: two unrelated intents, or chores mixed with feature work. A decision the maintainer must accept (a ledger entry, an ADR) is its own intent, merged before the code that implements it; it is never folded into that code. Inside one PR, a refactor, a fix and a feature stay separate commits.
+* **Still isolated**: the changes `tasks.md` lists for their blast radius get a PR of their own and are never folded.
 * **One automated review per PR**, on opening. Agents never add `rereview` or `mutation-audit`: they fix findings, verify the fix locally (tests, and re-running a mutation the fix was meant to kill) and answer the thread. Only the maintainer requests a rerun, with `rereview`, or `mutation-audit` alone for one that includes the mutation auditor. When both labels are added in one operation, the workflow runs once.
 * **Ticks ride along**: a PR ticks the tasks it finishes; no separate tick PR.
 
 ### Consequences
 
-* Good, because a capability lands and is reviewed whole, with one review, one CI run and one merge.
+* Good, because a capability lands and is reviewed whole, with one review, one CI run and one merge, and its PR explains it to whoever traces it later.
 * Good, because review runs drop to one per PR unless the maintainer asks for more.
 * Bad, because a large PR is harder to review in one sitting; the commit order and the reading order in its body are the mitigation, and a PR whose intent needs "and" is split.
 * Bad, because a defect a rerun would have caught after a fix is now caught only by the agent's local verification and CI. Every 🔴 fix must still be shown to work before pushing.

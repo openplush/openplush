@@ -2,6 +2,8 @@ use std::str::SplitWhitespace;
 
 use openplush_geom::{DVec2, DVec3};
 
+use crate::triangulate::MAX_POLYGON_CORNERS;
+
 /// One face corner: a position index, and a texture-coordinate index if the face gave one.
 #[derive(Debug, Clone, Copy)]
 pub(super) struct Corner {
@@ -200,6 +202,15 @@ fn face(
         .collect::<Result<Vec<_>, _>>()?;
     if corners.len() < 3 {
         return refuse(line, "a face needs at least three vertices");
+    }
+    if corners.len() > MAX_POLYGON_CORNERS {
+        return refuse(
+            line,
+            format!(
+                "a face has {} corners, over the {MAX_POLYGON_CORNERS} the reader triangulates",
+                corners.len()
+            ),
+        );
     }
     Ok(corners)
 }

@@ -6,7 +6,7 @@ use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
 use openplush_layout::shelf::pack;
 use openplush_layout::{LayoutError, LayoutOptions, Sheet};
-use openplush_pattern::{Outline, PatternPiece, PieceId};
+use openplush_pattern::{CutCount, Outline, PatternPiece, PieceId};
 
 type Setup = Box<dyn std::error::Error>;
 
@@ -40,7 +40,7 @@ fn piece(id: u32, cuts: u32, rotation: f64) -> Result<PatternPiece, Setup> {
         PieceId::new(id),
         sewing,
         ell(20.0)?,
-        cuts,
+        CutCount::new(cuts, 0)?,
         vec![rotation],
     )?)
 }

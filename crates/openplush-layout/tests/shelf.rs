@@ -4,7 +4,7 @@ use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
 use openplush_layout::shelf::pack;
 use openplush_layout::{LayoutError, LayoutOptions, Placement, Sheet};
-use openplush_pattern::{Outline, PatternError, PatternPiece, PieceId};
+use openplush_pattern::{CutCount, Outline, PatternError, PatternPiece, PieceId};
 
 type Setup = Box<dyn std::error::Error>;
 
@@ -25,7 +25,13 @@ fn piece(
     rot: &[f64],
 ) -> Result<PatternPiece, PatternError> {
     let cut = rect(o.0, o.1, o.2, o.3)?;
-    PatternPiece::new(PieceId::new(id), cut.clone(), cut, cuts, rot.to_vec())
+    PatternPiece::new(
+        PieceId::new(id),
+        cut.clone(),
+        cut,
+        CutCount::new(cuts, 0)?,
+        rot.to_vec(),
+    )
 }
 
 fn opts(roll: f64, gap: f64, mirrored: bool) -> Result<LayoutOptions, Setup> {
@@ -274,7 +280,7 @@ fn a_varied_set_never_overlaps_and_stays_inside_the_roll() -> Result<(), Setup> 
         boxes.len(),
         pieces
             .iter()
-            .map(|p| p.cut_quantity() as usize)
+            .map(|p| p.cuts().total() as usize)
             .sum::<usize>()
     );
     for (i, a) in boxes.iter().enumerate() {
@@ -385,7 +391,7 @@ fn the_cut_line_decides_the_size_not_the_sewing_line() -> Result<(), Setup> {
         PieceId::new(1),
         rect(0.0, 0.0, 10.0, 10.0)?,
         rect(0.0, 0.0, 14.0, 14.0)?,
-        2,
+        CutCount::new(2, 0)?,
         vec![0.0],
     )?;
     let s = only(pack(&[pc], &opts(100.0, 0.0, false)?)?)?;

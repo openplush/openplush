@@ -4,7 +4,7 @@ use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
 use openplush_layout::shelf::pack;
 use openplush_layout::{LayoutError, LayoutOptions, Placement};
-use openplush_pattern::{Outline, PatternPiece, PieceId};
+use openplush_pattern::{CutCount, Outline, PatternPiece, PieceId};
 
 type Setup = Box<dyn std::error::Error>;
 
@@ -21,7 +21,13 @@ fn ell() -> Result<Outline, Setup> {
 }
 
 fn placed(rotation: f64, mirrored: bool) -> Result<Placement, Setup> {
-    let piece = PatternPiece::new(PieceId::new(0), ell()?, ell()?, 1, vec![rotation])?;
+    let piece = PatternPiece::new(
+        PieceId::new(0),
+        ell()?,
+        ell()?,
+        CutCount::new(1, 0)?,
+        vec![rotation],
+    )?;
     let opts = LayoutOptions::new(Mm::try_new(500.0)?, Mm::try_new(0.0)?, mirrored)?;
     let sheet = pack(&[piece], &opts)?
         .into_iter()

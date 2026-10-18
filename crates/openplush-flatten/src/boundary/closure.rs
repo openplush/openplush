@@ -6,8 +6,8 @@ use openplush_geom::DVec2;
 
 use super::BoundaryError;
 
-/// Each step solves the closure conditions linearised at the last angles, quadratic near a
-/// closed polygon; the slowest start tried, 0.5 rad of noise on every angle, took about 90.
+/// Each step solves the closure conditions linearised at the last angles, so convergence is
+/// quadratic near a closed polygon; the limit only stops a system with no nearby solution.
 const MAX_STEPS: usize = 100;
 /// A step that does not shrink the closure error is halved up to this many times, down to
 /// about one part in a billion of the full step, before the solve gives up.

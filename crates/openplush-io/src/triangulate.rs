@@ -3,6 +3,10 @@
 use openplush_geom::predicates::orient2d;
 use openplush_geom::{DVec2, DVec3, Sign};
 
+/// Ear clipping is quadratic in a polygon's corners, so a file's polygons are capped here to
+/// keep it from making a reader run for minutes.
+pub(crate) const MAX_POLYGON_CORNERS: usize = 1000;
+
 /// Splits a polygon into `points.len() - 2` triangles, as corner indices in the
 /// polygon's winding. Quads split on the shorter diagonal that keeps both triangles
 /// turning the polygon's way; larger polygons are ear-clipped on the plane their

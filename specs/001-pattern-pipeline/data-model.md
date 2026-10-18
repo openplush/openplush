@@ -81,9 +81,31 @@ Order matters; each step records entries in `RepairReport`.
 | 4 | **Non-manifold vertices** (bowtie) | Vertex whose faces form > 1 fan | Split into one vertex per fan | Usually separates components (e.g., two cones touching at a tip); reported, no seam |
 | 5 | Orientation | Inconsistent winding | BFS per component from the largest face, flipping to agree; component orientation chosen so signed volume > 0 when closed | Non-orientable (Möbius-like) conflict edge ⇒ forced seam. Only edges with exactly two faces are walked; faces joined across a paired copy (D-037) are judged by the half-edge build, which refuses a same-way pair |
 | 6 | Components | Multiple connected components | Each processed independently. Components with area < 1% of total (or user choice) ⇒ candidate **detail parts** (eyes, noses, buttons) | Detail parts produce placement marks, not pieces (FR-005, FR-042) |
-| 7 | Holes | Boundary loops | Classify: user marks as *opening* (keep; hem allowance) or *accidental* (fill: Liepa 2003 minimal-area triangulation + fairing) | Openings are unsewn edges, not seams |
+| 7 | Holes | Boundary loops | Classify (§3a): a loop in `RepairPlan.fill_holes` is *accidental* (fill: Liepa 2003 minimal-area triangulation + fairing) | Openings are unsewn edges, not seams |
 | 8 | Self-intersections | BVH triangle-triangle tests | **Warn only.** Disk charts flatten regardless; intersecting limbs in 3D usually need separate pieces anyway | Suggest seams along intersection curves |
 | — | Last resort | Hopeless input | Not in v0.1 (D-024: `baby_shark` fails the dependency gates). If it returns: opt-in voxel remesh, which destroys UVs and sharp features → explicit warning | All seams/decals must be redrawn |
+
+### 3a. RepairPlan and RepairReport (D-043)
+
+`RepairPlan` is what the maker chose; it is stored in the project (`contracts/project.schema.json` `repairPlan`) and replayed on load, so its fields follow that schema and nothing in it may depend on the repaired mesh's numbering.
+
+```rust
+pub struct RepairPlan {
+    pub weld: bool, pub drop_degenerates: bool, pub split_non_manifold_edges: bool,
+    pub split_bowties: bool, pub fix_orientation: bool,   // all default true (steps 1-5)
+    /// Loops to fill (step 7). A loop not listed stays an opening: filling is opt-in.
+    pub fill_holes: BTreeSet<LoopRef>,
+}
+/// A boundary loop, named by the lowest `SourceCorner` (primitive, vertex) among its vertices,
+/// so the name is the same on every replay whatever the repaired numbering is.
+pub struct LoopRef(SourceCorner);
+```
+
+`voxelRemesh` in the schema is reserved: not in v0.1 (D-024). The maker's detail-part marking is stored in the project's `detailParts` (by component index), not in the plan; step 6's 1% rule gives the default and the report lists each component's flag.
+
+`RepairReport` lists everything repair did or found, so nothing is silent (Constitution VII, FR-004): the welded vertex groups; faces dropped as repeated-index or duplicate; the double-sided sheets; stitched caps and the faces re-triangulated with them; every paired non-manifold edge (pairs and unpaired face); every added vertex copy (bowtie); every flipped face; every orientation-conflict edge; every component with its detail flag; every boundary loop by `LoopRef` with whether the plan filled it and the faces a fill added; and the mandatory seams the above create. Removals, flips and pairings name faces and vertices of the soup given to repair; additions (vertex copies, hole faces) name those of the repaired mesh.
+
+A fill is never silent: it appears in the report. A `fill_holes` entry naming a loop the mesh does not have (the source changed) is a typed error naming it, not a skipped entry.
 
 ## 4. Seams, Charts, and Sewing Correspondence
 

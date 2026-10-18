@@ -140,22 +140,23 @@ pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
         rows,
         columns,
         pages,
-        marks: marks(rows, columns, printable, step),
+        marks: marks(sheet.length_mm, rows, columns, printable, step),
     })
 }
 
 /// Two marks on each shared edge, centred across its overlap band and placed along it by `MARK_AT`.
-fn marks(rows: u32, columns: u32, printable: DVec2, step: DVec2) -> Vec<DVec2> {
+fn marks(top: f64, rows: u32, columns: u32, printable: DVec2, step: DVec2) -> Vec<DVec2> {
     let mid_band = OVERLAP_MM / 2.0;
-    let between_columns = (0..rows).flat_map(|row| {
+    let row_top = move |row: u32| top - f64::from(row) * step.y;
+    let between_columns = (0..rows).flat_map(move |row| {
         (1..columns).flat_map(move |column| {
             let x = f64::from(column) * step.x + mid_band;
-            MARK_AT.map(|at| DVec2::new(x, f64::from(row) * step.y + at * printable.y))
+            MARK_AT.map(|at| DVec2::new(x, row_top(row) - at * printable.y))
         })
     });
-    let between_rows = (1..rows).flat_map(|row| {
+    let between_rows = (1..rows).flat_map(move |row| {
         (0..columns).flat_map(move |column| {
-            let y = f64::from(row) * step.y + mid_band;
+            let y = row_top(row) - mid_band;
             MARK_AT.map(|at| DVec2::new(f64::from(column) * step.x + at * printable.x, y))
         })
     });

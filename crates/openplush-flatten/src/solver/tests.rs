@@ -170,3 +170,22 @@ fn a_matrix_that_is_not_positive_definite_is_refused() -> Result<(), SolveError>
     ));
     Ok(())
 }
+
+#[test]
+fn a_missing_diagonal_entry_is_not_positive_definite() -> Result<(), SolveError> {
+    let pattern = analyse(2, &[(0, 0), (1, 0)])?;
+    assert!(matches!(
+        pattern.factor(&[1.0, 0.5]),
+        Err(SolveError::NotPositiveDefinite)
+    ));
+    Ok(())
+}
+
+#[test]
+fn a_solution_that_overflows_is_refused() {
+    // 1e300 / 1e-300 is past f64's range, so the exact answer has no finite value.
+    assert_eq!(
+        solve(1, &vec![(0, 0, 1e-300)], &[1e300]),
+        Err(SolveError::NotFinite)
+    );
+}

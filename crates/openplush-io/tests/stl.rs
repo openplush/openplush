@@ -199,3 +199,60 @@ fn ascii_after_a_byte_order_mark_is_read() {
         stl::read(&binary(&SQUARE)).unwrap()
     );
 }
+
+#[test]
+fn a_vertex_with_fewer_than_three_coordinates_is_refused() {
+    let text = "solid a\nfacet normal 0 0 1\nouter loop\nvertex 1 2\n";
+    let detail = parse_detail(text.as_bytes()).unwrap();
+    assert_eq!(detail, "line 4: a vertex needs three coordinates");
+}
+
+#[test]
+fn a_non_finite_coordinate_is_found_on_every_axis() {
+    for axis in 0..3 {
+        let mut tris = SQUARE;
+        tris[1][1][axis] = f32::NAN;
+        let named = |bytes: &[u8]| match stl::read(bytes) {
+            Err(IoError::NonFiniteInput { vertices }) => vertices,
+            other => panic!("{other:?}"),
+        };
+        assert_eq!(named(&binary(&tris)), [src(0, 4)], "binary axis {axis}");
+        let text = ascii(&[&tris]).replace("NaN", "nan");
+        assert_eq!(named(text.as_bytes()), [src(0, 4)], "ascii axis {axis}");
+    }
+}
+
+#[test]
+fn ascii_statements_out_of_order_are_refused_at_their_line() {
+    let cases = [
+        ("solid a\nendsolid a\nfoo\n", "line 3: unexpected `foo`"),
+        ("solid a\nfacet\nfoo loop\n", "line 3: unexpected `foo`"),
+        (
+            "solid a\nfacet\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendloop\n",
+            "line 8: unexpected `endloop`",
+        ),
+    ];
+    for (text, want) in cases {
+        assert_eq!(parse_detail(text.as_bytes()).unwrap(), want, "{text}");
+    }
+}
+
+#[test]
+fn ascii_may_start_after_blank_lines_and_a_byte_order_mark() {
+    let want = stl::read(&binary(&SQUARE)).unwrap();
+    for lead in ["\n  \n  ", "\u{feff}\n  ", "  "] {
+        let text = format!("{lead}{}", ascii(&[&SQUARE]));
+        assert_eq!(stl::read(text.as_bytes()).unwrap(), want, "{lead:?}");
+    }
+}
+
+#[test]
+fn a_file_that_ends_inside_a_solid_names_the_line_after_the_last() {
+    let open = ascii(&[&SQUARE]).replace("endsolid part0\n", "");
+    let lines = open.lines().count();
+    let detail = parse_detail(open.as_bytes()).unwrap();
+    assert_eq!(
+        detail,
+        format!("line {}: the file ends inside a solid", lines + 1)
+    );
+}

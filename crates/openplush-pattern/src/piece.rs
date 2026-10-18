@@ -11,7 +11,10 @@ pub struct PatternPiece {
 }
 
 impl PatternPiece {
-    /// Refuses a zero cut quantity and an empty or non-finite rotation set.
+    /// The most copies of one piece a pattern may ask for.
+    pub(crate) const MAX_CUT_QUANTITY: u32 = 100;
+
+    /// Refuses a cut quantity outside 1 to 100 and an empty or non-finite rotation set.
     pub fn new(
         id: PieceId,
         sewing_line: Outline,
@@ -21,6 +24,9 @@ impl PatternPiece {
     ) -> Result<Self, PatternError> {
         if cut_quantity == 0 {
             return Err(PatternError::ZeroCutQuantity);
+        }
+        if cut_quantity > Self::MAX_CUT_QUANTITY {
+            return Err(PatternError::TooManyCuts { cut_quantity });
         }
         if rotations_deg.is_empty() {
             return Err(PatternError::NoRotations);
@@ -52,7 +58,7 @@ impl PatternPiece {
         &self.cut_line
     }
 
-    /// How many copies to cut; at least 1.
+    /// How many copies to cut; 1 to 100.
     pub fn cut_quantity(&self) -> u32 {
         self.cut_quantity
     }

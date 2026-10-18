@@ -40,10 +40,6 @@ type OnEdge = BTreeMap<[u32; 2], Vec<(u32, SourceCorner)>>;
 /// repeat a vertex pass through; `degenerate::remove` drops them first. Within a
 /// few weld distances of a face's corner, a vertex can land on two of its edges
 /// or leave a zero-area triangle; the half-edge build refuses either, naming it.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "called by into_manifold, not yet written")
-)]
 pub(crate) fn stitch(soup: &TriangleSoup, tol: &ModelTolerances) -> (TriangleSoup, Stitched) {
     let tris = soup.triangle_indices();
     let caps: Vec<bool> = tris

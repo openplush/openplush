@@ -20,6 +20,7 @@ pub use ids::{ComponentId, EdgeId, FaceId, HalfEdgeId, MaterialIndex, MeshElemen
 pub use repair::bowtie::VertexCopy;
 pub use repair::components::Component;
 pub use repair::degenerate::DroppedCopy;
+pub use repair::into_manifold;
 pub use repair::nonmanifold_edge::PairedEdge;
 pub use repair::plan::{HoleReport, LoopRef, RepairPlan, RepairReport};
 pub use soup::{SourceCorner, SourceMaterials, TriangleSoup};

@@ -370,5 +370,7 @@ fn corner_slot(f: FaceId, corner: usize) -> Option<usize> {
         .checked_add(corner)
 }
 
+mod compact;
+
 #[cfg(test)]
 mod tests;

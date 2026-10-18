@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::{FaceId, MeshElement, VertexId};
+use crate::{FaceId, LoopRef, MeshElement, VertexId};
 
 /// Every structural refusal in this crate. Each variant names the element at
 /// fault, so the UI can highlight it (crates/AGENTS.md).
@@ -97,6 +97,24 @@ pub enum MeshError {
         a: VertexId,
         /// The edge's higher-indexed endpoint.
         b: VertexId,
+    },
+    /// The soup has no triangles, so repair has nothing to build.
+    #[error("the soup has no triangles")]
+    NoTriangles,
+    /// The soup's extent is zero or too large to derive tolerances from.
+    #[error("the soup's extent is zero or too large to derive tolerances from")]
+    UnusableExtent,
+    /// `RepairPlan::fill_holes` names a loop the repaired mesh does not have.
+    #[error("the plan fills the loop {loop_ref:?}, which the mesh does not have")]
+    UnknownHoleLoop {
+        /// The loop named.
+        loop_ref: LoopRef,
+    },
+    /// `RepairPlan::fill_holes` names a loop, and filling is not built yet.
+    #[error("the plan fills the loop {loop_ref:?}, and hole filling is not available")]
+    HoleFillUnavailable {
+        /// The loop named.
+        loop_ref: LoopRef,
     },
     /// A pairing names a face that does not use the edge it pairs, or names a face twice.
     #[error("a pairing on the edge between {a:?} and {b:?} names triangle {face:?} wrongly")]

@@ -12,10 +12,12 @@ use crate::{FaceId, MeshError, TriangleSoup, VertexId};
 #[derive(Debug, Default)]
 pub(crate) struct Oriented {
     /// Faces whose corners were reversed, sorted.
-    #[cfg_attr(not(test), expect(dead_code, reason = "read by into_manifold"))]
     pub(crate) flipped: Vec<FaceId>,
     /// Edges, smaller end first and sorted, whose two faces no flips make agree.
-    #[cfg_attr(not(test), expect(dead_code, reason = "read by into_manifold"))]
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "only tests read the conflict edges")
+    )]
     pub(crate) conflicts: Vec<[VertexId; 2]>,
 }
 
@@ -25,7 +27,6 @@ pub(crate) struct Oriented {
 /// inside to judge and keeps the walk's result. Edges with more than two faces are
 /// not walked, so a sheet's layers, which share every edge, keep their winding. A
 /// face that repeats a vertex is refused (`degenerate::remove` drops them first).
-#[cfg_attr(not(test), expect(dead_code, reason = "called by into_manifold"))]
 pub(crate) fn orient(
     soup: &TriangleSoup,
     tol: &ModelTolerances,

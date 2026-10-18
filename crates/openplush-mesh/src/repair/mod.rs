@@ -8,3 +8,9 @@ pub(crate) mod nonmanifold_edge;
 pub(crate) mod orientation;
 pub(crate) mod plan;
 pub(crate) mod weld;
+
+mod pipeline;
+pub use pipeline::into_manifold;
+
+#[cfg(test)]
+mod tests;

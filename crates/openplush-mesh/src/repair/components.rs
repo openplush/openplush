@@ -17,7 +17,6 @@ pub(crate) const DETAIL_AREA_FRACTION: f64 = 0.01;
 
 /// The soup's components in order of their first face. A sheet's two layers both count
 /// towards a component's area.
-#[cfg_attr(not(test), expect(dead_code, reason = "called by into_manifold"))]
 pub(crate) fn split(soup: &TriangleSoup) -> Vec<Component> {
     let tris = soup.triangle_indices();
     // Lossless: the face count fits in u32 (`TriangleSoup::new`).

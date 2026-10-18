@@ -9,10 +9,6 @@ use crate::{Counted, FaceId, MeshError, PairedEdge, TriangleSoup, VertexId};
 #[derive(Debug, Default)]
 pub(crate) struct Split {
     /// Each added vertex, sorted by the copy.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by into_manifold, not yet written")
-    )]
     pub(crate) copies: Vec<VertexCopy>,
 }
 
@@ -33,10 +29,6 @@ pub struct VertexCopy {
 /// vertex they are stale: pair the returned soup again before building from it. Faces, their order and their corners
 /// are unchanged and no vertex moves. A face that repeats a vertex is refused
 /// (`degenerate::remove` drops them first).
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "called by into_manifold, not yet written")
-)]
 pub(crate) fn split(
     soup: &TriangleSoup,
     pairings: &[PairedEdge],

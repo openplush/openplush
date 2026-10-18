@@ -9,6 +9,8 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+# No default features: they pull in rayon, which neither wasm32 nor `deny.toml` allows.
+faer = { version = "0.24.4", default-features = false, features = ["sparse-linalg"] }
 libm = "0.2.16"
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }

@@ -42,6 +42,12 @@ allow-wildcard-paths = true
 
 [advisories]
 yanked = "deny"
+ignore = [
+  # paste is unmaintained with no safe upgrade. It is a proc-macro under faer's gemm and pulp,
+  # so it runs at build time and ships no code in the engine or the wasm module.
+  # Remove this when gemm and pulp stop depending on it.
+  { id = "RUSTSEC-2024-0436", reason = "build-time proc-macro only; no safe upgrade upstream" },
+]
 
 [sources]
 unknown-registry = "deny"

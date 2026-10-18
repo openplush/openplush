@@ -60,7 +60,7 @@ fn split_at_repeats(walk: &[u32], loops: &mut Vec<Vec<VertexId>>) {
 }
 
 /// Kept faces grouped by shared vertices, components in order of their first face.
-pub(super) fn components(vertex_count: usize, tris: &[[u32; 3]], kept: &[u32]) -> Vec<Vec<FaceId>> {
+pub(crate) fn components(vertex_count: usize, tris: &[[u32; 3]], kept: &[u32]) -> Vec<Vec<FaceId>> {
     let mut set = DisjointSet::new(vertex_count);
     for &face in kept {
         // INVARIANT: kept faces index `tris`, and their vertices are below `vertex_count`.

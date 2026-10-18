@@ -211,3 +211,28 @@ fn collinear_disjoint_vertical_edges_are_not_a_touch() {
     ];
     assert!(refused(&p).is_ok());
 }
+
+#[test]
+fn edges_meeting_only_on_a_bounding_box_boundary_are_not_simple() {
+    let pinch = [
+        (0.0, 0.0),
+        (4.0, 0.0),
+        (2.0, 2.0),
+        (4.0, 4.0),
+        (0.0, 4.0),
+        (2.0, 2.0),
+    ];
+    let flips: [fn((f64, f64)) -> (f64, f64); 4] = [
+        |(x, y)| (x, y),
+        |(x, y)| (-x, y),
+        |(x, y)| (y, x),
+        |(x, y)| (-y, x),
+    ];
+    for flip in flips {
+        let p: Vec<_> = pinch.iter().copied().map(flip).collect();
+        assert!(
+            matches!(refused(&p), Err(PatternError::OutlineNotSimple { .. })),
+            "{p:?}"
+        );
+    }
+}

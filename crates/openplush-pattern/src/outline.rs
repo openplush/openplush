@@ -10,7 +10,7 @@ pub struct Outline {
 }
 
 impl Outline {
-    /// Refuses an outline that is too short, non-finite, self-touching, folded or clockwise.
+    /// Refuses an outline that is too short, non-finite, self-touching, folded or clockwise. Cost is quadratic in the point count.
     pub fn new(points: Vec<DVec2>) -> Result<Self, PatternError> {
         if points.len() < 3 {
             return Err(PatternError::OutlineTooShort {
@@ -101,6 +101,14 @@ fn turns_cleanly(p: DVec2, q: DVec2, next: DVec2) -> Result<bool, GeomError> {
 
 /// Closed segments `pq` and `rs` share at least one point.
 fn segments_meet(p: DVec2, q: DVec2, r: DVec2, s: DVec2) -> Result<bool, GeomError> {
+    // Exact, and skips four exact predicate calls for the vast majority of edge pairs.
+    if p.x.min(q.x) > r.x.max(s.x)
+        || r.x.min(s.x) > p.x.max(q.x)
+        || p.y.min(q.y) > r.y.max(s.y)
+        || r.y.min(s.y) > p.y.max(q.y)
+    {
+        return Ok(false);
+    }
     let (o1, o2) = (orient2d(p, q, r)?, orient2d(p, q, s)?);
     let (o3, o4) = (orient2d(r, s, p)?, orient2d(r, s, q)?);
     let opposite = |x: Sign, y: Sign| x != Sign::Zero && y != Sign::Zero && x != y;

@@ -65,11 +65,11 @@ fn every_mark_prints_on_exactly_two_pages_inside_their_shared_band() -> Result<(
             let on: Vec<&Page> = t.pages().iter().filter(|p| inside(m, p)).collect();
             assert_eq!(on.len(), 2, "{m:?} on {paper:?}");
             let (a, b) = (on[0], on[1]);
-            // Within the band: no further than 15 mm from the edge of the page that ends there.
+            // Within the band: no further than 15 mm in from the right or bottom edge of the earlier page.
             let band = if a.row() == b.row() {
                 a.window_max().x - m.x
             } else {
-                a.window_max().y - m.y
+                m.y - a.window_min().y
             };
             assert!(
                 (0.0..=15.0).contains(&band),
@@ -82,16 +82,16 @@ fn every_mark_prints_on_exactly_two_pages_inside_their_shared_band() -> Result<(
 
 #[test]
 fn marks_sit_mid_band_a_quarter_and_three_quarters_along_the_edge() -> Result<(), Setup> {
-    // A4 prints 190 by 277 mm with a 175 by 262 mm step.
+    // A4 prints 190 by 277 mm with a 175 by 262 mm step; rows hang down from the sheet's top edge.
     let t = tiling(300.0, 150.0, Paper::A4)?;
     assert_eq!(
         t.marks(),
-        [DVec2::new(182.5, 69.25), DVec2::new(182.5, 207.75)]
+        [DVec2::new(182.5, 80.75), DVec2::new(182.5, -57.75)]
     );
     let t = tiling(100.0, 400.0, Paper::A4)?;
     assert_eq!(
         t.marks(),
-        [DVec2::new(47.5, 269.5), DVec2::new(142.5, 269.5)]
+        [DVec2::new(47.5, 130.5), DVec2::new(142.5, 130.5)]
     );
     Ok(())
 }
@@ -100,14 +100,14 @@ fn marks_sit_mid_band_a_quarter_and_three_quarters_along_the_edge() -> Result<()
 fn marks_list_the_edges_between_columns_row_by_row_then_those_between_rows() -> Result<(), Setup> {
     let t = tiling(300.0, 400.0, Paper::A4)?;
     let expected = [
-        (182.5, 69.25),
-        (182.5, 207.75),
-        (182.5, 331.25),
-        (182.5, 469.75),
-        (47.5, 269.5),
-        (142.5, 269.5),
-        (222.5, 269.5),
-        (317.5, 269.5),
+        (182.5, 330.75),
+        (182.5, 192.25),
+        (182.5, 68.75),
+        (182.5, -69.75),
+        (47.5, 130.5),
+        (142.5, 130.5),
+        (222.5, 130.5),
+        (317.5, 130.5),
     ]
     .map(|(x, y)| DVec2::new(x, y));
     assert_eq!(t.marks(), expected);

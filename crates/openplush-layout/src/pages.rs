@@ -50,7 +50,7 @@ pub struct Page {
 }
 
 impl Page {
-    /// The row, from 0 at the sheet's `y = 0` edge.
+    /// The row, from 0 at the sheet's top edge; sheets are y-up, so that is its highest y.
     pub fn row(&self) -> u32 {
         self.row
     }
@@ -60,7 +60,7 @@ impl Page {
         self.column
     }
 
-    /// The lowest sheet corner the printable area shows, in millimetres.
+    /// The lowest sheet corner the printable area shows, in millimetres; may lie past the sheet's edge.
     pub fn window_min(&self) -> DVec2 {
         self.window_min
     }
@@ -122,7 +122,7 @@ impl PageTiling {
     }
 }
 
-/// Covers the whole sheet with the fewest pages, each repeating 15 mm of its right and bottom neighbours.
+/// Covers the whole sheet with the fewest pages from its top-left corner, each repeating 15 mm of its right and bottom neighbours.
 pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
     let printable = paper.printable_mm();
     let too_many = || LayoutError::TooManyPages {
@@ -135,7 +135,8 @@ pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
     let pages = (0..rows)
         .flat_map(|row| (0..columns).map(move |column| (row, column)))
         .map(|(row, column)| {
-            let window_min = DVec2::new(f64::from(column) * step.x, f64::from(row) * step.y);
+            let top = sheet.length_mm - f64::from(row) * step.y;
+            let window_min = DVec2::new(f64::from(column) * step.x, top - printable.y);
             Page {
                 row,
                 column,
@@ -149,22 +150,23 @@ pub fn tile(sheet: &Sheet, paper: Paper) -> Result<PageTiling, LayoutError> {
         rows,
         columns,
         pages,
-        marks: marks(rows, columns, printable, step),
+        marks: marks(sheet.length_mm, rows, columns, printable, step),
     })
 }
 
 /// Two marks on each shared edge, centred across its overlap band and placed along it by `MARK_AT`.
-fn marks(rows: u32, columns: u32, printable: DVec2, step: DVec2) -> Vec<DVec2> {
+fn marks(top: f64, rows: u32, columns: u32, printable: DVec2, step: DVec2) -> Vec<DVec2> {
     let mid_band = OVERLAP_MM / 2.0;
-    let between_columns = (0..rows).flat_map(|row| {
+    let row_top = move |row: u32| top - f64::from(row) * step.y;
+    let between_columns = (0..rows).flat_map(move |row| {
         (1..columns).flat_map(move |column| {
             let x = f64::from(column) * step.x + mid_band;
-            MARK_AT.map(|at| DVec2::new(x, f64::from(row) * step.y + at * printable.y))
+            MARK_AT.map(|at| DVec2::new(x, row_top(row) - at * printable.y))
         })
     });
-    let between_rows = (1..rows).flat_map(|row| {
+    let between_rows = (1..rows).flat_map(move |row| {
         (0..columns).flat_map(move |column| {
-            let y = f64::from(row) * step.y + mid_band;
+            let y = row_top(row) - mid_band;
             MARK_AT.map(|at| DVec2::new(f64::from(column) * step.x + at * printable.x, y))
         })
     });

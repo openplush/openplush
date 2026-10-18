@@ -17,5 +17,8 @@ openplush-mesh = { path = "../openplush-mesh" }
 openplush-seams = { path = "../openplush-seams" }
 thiserror = "2.0.21"
 
+[dev-dependencies]
+openplush-testkit = { path = "../openplush-testkit" }
+
 [lints]
 workspace = true

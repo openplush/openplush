@@ -4,7 +4,7 @@
 mod closure;
 mod curvature;
 #[cfg(test)]
-mod fixtures;
+pub(crate) mod fixtures;
 mod topology;
 
 use openplush_geom::{DVec2, DVec3};

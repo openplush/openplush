@@ -29,7 +29,8 @@ pub struct VertexCopy {
 /// corner) a copy of the vertex. Faces are fans when they share an edge at the
 /// vertex; on an edge `pairings` resolve, only the faces of one pair do, and an
 /// unpaired face is a fan of its own there. Faces `pairings` do not name share the
-/// edge as one group. Faces, their order and their corners
+/// edge as one group. The pairings name the soup given, so after a split that copied a
+/// vertex they are stale: pair the returned soup again before building from it. Faces, their order and their corners
 /// are unchanged and no vertex moves. A face that repeats a vertex is refused
 /// (`degenerate::remove` drops them first).
 #[cfg_attr(

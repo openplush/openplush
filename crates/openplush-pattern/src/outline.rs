@@ -75,7 +75,8 @@ fn check_counter_clockwise(points: &[DVec2]) -> Result<(), PatternError> {
     let n = points.len();
     let lowest = |i: usize, j: usize| {
         let (pi, pj) = (points[i], points[j]);
-        pi.y.total_cmp(&pj.y).then(pi.x.total_cmp(&pj.x)).is_lt()
+        // Plain comparison, not `total_cmp`, which orders -0.0 below 0.0; every coordinate is finite here.
+        pi.y < pj.y || (pi.y == pj.y && pi.x < pj.x)
     };
     let v = (1..n).fold(0, |best, i| if lowest(i, best) { i } else { best });
     let prev = (v + n - 1) % n;

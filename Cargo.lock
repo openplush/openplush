@@ -404,7 +404,10 @@ dependencies = [
 name = "openplush-pattern"
 version = "0.0.0"
 dependencies = [
+ "openplush-geom",
  "openplush-mesh",
+ "openplush-seams",
+ "thiserror",
 ]
 
 [[package]]

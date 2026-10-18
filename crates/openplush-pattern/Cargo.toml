@@ -9,7 +9,10 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
+openplush-seams = { path = "../openplush-seams" }
+thiserror = "2.0.21"
 
 [lints]
 workspace = true

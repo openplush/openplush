@@ -211,6 +211,8 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [x] T181 [US1] `crates/openplush-mesh/src/halfedge/` — the build takes the pairings `pair_edges` returns and holds parallel edges: one twin pair per paired copy of an edge, a boundary copy for an unpaired face, `InconsistentOrientation` for a pair that traverses the edge the same way, same-vertex duplicate faces still refused unless paired (D-037). Tests first: a double-sided sheet builds with its rim copies; an odd fan leaves a boundary copy for the unpaired face; a same-way pair is `InconsistentOrientation`; a parallel edge without a pairing is still refused. *Added 2026-10-18; ID out of phase order; T067 needs it* — *merged in #164 as `ManifoldMesh::from_paired_triangles`; a pairing must name every face of an edge with more than two (`PairingMismatch`); an unpaired face needs T184's vertex split first*
 - [x] T182 [US1] `crates/openplush-pattern/src/outline.rs` and `src/piece.rs` — `Outline` (validating constructor, typed error for a crossing, repeated, zero-area or clockwise outline) and `PatternPiece` with the fields data-model §7a lists (D-039). Tests first: each invalid outline is refused with its own error; a square passes; a clockwise square is refused, not reversed. *Added 2026-10-18; ID out of phase order; T088 needs it. Builds on Proposed D-039: reworked if the maintainer amends it* — *merged in #161 as `Outline::new` (in `src/outline.rs`) and `PatternPiece::new` (in `src/piece.rs`); both refuse bad input with `PatternError`*
 - [x] T186 [US1] `crates/openplush-pattern/src/piece.rs` — `PatternPiece::new` refuses a `cut_quantity` over 100 with a typed error, beside the zero check (D-047). Tests first: 100 builds, 101 is refused. *Added 2026-10-18; ID out of phase order* — *merged in #174: `PatternError::TooManyCuts { cut_quantity }` above 100*
+- [ ] T187 [US1] `crates/openplush-pattern/src/piece.rs` — replace `cut_quantity` with `as_printed` and `flipped` (D-048); `PatternPiece::new` keeps the 1 to 100 rule on their total, as `TooManyCuts { total }`. Until dedupe (T116) exists, the pattern stage makes every piece 1 as printed, 0 flipped. A separate thin-wiring commit, after the pattern change, makes `openplush-layout`'s `shelf::pack` place `as_printed + flipped` copies so the build stays green; per-copy flipping is T188. Updates `docs/reference/crates.md`. Tests first: 1 + 1 builds, 0 + 0 and 60 + 41 are refused. *Added 2026-10-18; ID out of phase order*
+- [ ] T188 [US1] `crates/openplush-layout/src/` — two layouts from one piece list (D-048): print places one template per piece; fabric places `as_printed` copies plus `flipped` copies flipped, per copy, separate from the export-time pile mirroring, which stays `LayoutOptions::mirrored`. Needs T187. *Added 2026-10-18; ID out of phase order*
 - [x] T064 [US1] `crates/openplush-mesh/src/repair/orientation.rs` — step 5, BFS per component from the largest face; signed volume positive when closed. Edges with more than two faces and the copies a pairing makes are not walked (D-037) — *merged in #142 as `orientation::orient`: conflict edges are returned for T067 to make seams*
 - [x] T065 [US1] `crates/openplush-mesh/src/repair/components.rs` — step 6; components under 1% of total area become candidate detail parts (FR-005) — *merged in #148 as `components::split`*
 - [x] T183 [US1] `crates/openplush-mesh/src/repair/plan.rs` — `RepairPlan` and `RepairReport` as data-model §3a defines them (the plan's fields are the schema's), with the report's accessors; no repair logic. Tests first: the plan's defaults and loop order, a report lists every field empty by default. *Added 2026-10-18 (D-043); ID out of phase order; T066 and T067 need it* — *merged in #162; the plan has plain `pub` fields (no combination is invalid), and the round-trip test belongs to `openplush-project`, which serializes it*
@@ -296,22 +298,22 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ## Phase 5: US3 — Sewing marks that make assembly unambiguous (Priority: P2)
 
-**Goal**: Pieces carry match notches, partner labels, cut counts, mirror flags, and a marked stuffing opening.
+**Goal**: Pieces carry match notches, partner labels, cut counts as printed and flipped, and a marked stuffing opening.
 
 **Independent Test**: For every seam in the capsule fixture, both sides carry matching notch codes at equal arc-length positions.
 
 ### Tests for US3
 
 - [ ] T110 [P] [US3] `crates/openplush-pattern/tests/notches.rs` — paired notches sit at the same fractional arc length on both sides of every chain
-- [ ] T111 [P] [US3] `crates/openplush-pattern/tests/dedupe.rs` — a symmetric model yields one template labelled cut 2 mirrored, not two identical pieces
+- [ ] T111 [P] [US3] `crates/openplush-pattern/tests/dedupe.rs` — a symmetric model yields one template labelled "cut 2 (1 + 1 flipped)", not two identical pieces; a near match, or a pair whose markings or grain differ, stays two templates
 - [ ] T112 [P] [US3] `crates/openplush-pattern/tests/clip_marks.rs` — tight concave curves get clip marks, tight convex curves get notch-out marks, and zero-allowance edges get neither
 
 ### Implementation
 
 - [ ] T113 [US3] `crates/openplush-pattern/src/notches.rs` — notches at chain ends plus every 50 mm (provisional); side B placed at the same fractional arc length as side A
 - [ ] T114 [US3] `crates/openplush-pattern/src/pairing.rs` — unambiguous pairing codes. Notch multiplicity differs between adjacent chains on the same piece, so a sewist cannot rotate a piece and match the wrong edge. **The whole point is that a wrong match must be impossible, not merely unlikely**
-- [ ] T115 [US3] `crates/openplush-pattern/src/labels.rs` — piece label block: ID, name, cut quantity, mirror flag, fabric, grain and nap arrows, seam-partner labels (FR-033)
-- [ ] T116 [US3] `crates/openplush-pattern/src/dedupe.rs` — identical and mirror-image pieces collapse to one template (FR-034)
+- [ ] T115 [US3] `crates/openplush-pattern/src/labels.rs` — piece label block: ID, name, cut counts ("Cut 2 (1 + 1 flipped)", D-048), fabric, grain and nap arrows, seam-partner labels (FR-033)
+- [ ] T116 [US3] `crates/openplush-pattern/src/dedupe.rs` — identical and mirror-image pieces collapse to one template (FR-034) *2026-10-18: D-048: fills `as_printed` and `flipped`; merges only when fabric, nap, seam partners, markings and grain arrows match through the mirror and every seam is within seam-parity tolerance; a near match is never merged: the maker sees its largest difference in mm and is offered seam mirroring (FR-010), else the pieces stay separate; the question's type and where the answer is saved are open in D-048*
 - [ ] T117 [US3] `crates/openplush-pattern/src/marks.rs` — clip marks on tight concave curves, notch-out marks on tight convex curves, spacing proportional to curvature (FR-035)
 - [ ] T118 [US3] `crates/openplush-pattern/src/opening.rs` — the opening chain is labelled and uses the opening allowance (FR-012)
 - [ ] T119 [US3] `apps/web/src/pieces/` — piece inspector showing labels, notches, and partners

@@ -66,13 +66,13 @@ The maker sees, before cutting, where fabric would stretch, pucker, or not fit, 
 2. **Given** a region over the fabric's tolerance, **When** the user requests suggestions, **Then** the system proposes darts or seams, previews the improvement, and applies them only on acceptance.
 
 ### US3 — Sewing marks that make assembly unambiguous (Priority: P2)
-Pieces carry match notches, partner labels ("A3 → C1"), cut counts, mirror flags, and a marked stuffing opening.
+Pieces carry match notches, partner labels ("A3 → C1"), cut counts as printed and flipped, and a marked stuffing opening.
 
 **Why P2**: The difference between a shape and a usable pattern.
 **Independent test**: For every seam in the capsule fixture, both sides carry matching notch codes at equal arc-length positions.
 
 **Acceptance scenarios**
-1. **Given** a left/right symmetric model with mirrored seams, **When** the pattern is generated, **Then** mirror-image pieces appear once, labeled "cut 2 (mirrored)".
+1. **Given** a left/right symmetric model with mirrored seams, **When** the pattern is generated, **Then** mirror-image pieces appear once, labeled "cut 2 (1 + 1 flipped)".
 2. **Given** a seam segment marked as the opening, **When** exported, **Then** that segment is labeled and its allowance uses the opening allowance.
 3. **Given** a tight concave curve, **When** exported, **Then** clip marks are drawn in its allowance; tight convex curves get notch-out marks.
 
@@ -151,8 +151,8 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-030**: Seam allowance outside the sewing line: global default, per-seam override, separate opening allowance, hem allowance for unsewn edges. [NEEDS CLARIFICATION: default — 6 mm vs. ¼ in, locale-dependent?]
 - **FR-031**: Sewing line and cut line drawn distinctly.
 - **FR-032**: Match notches on paired seams with unambiguous pairing codes, at matching arc-length positions.
-- **FR-033**: Piece labels: ID, name, cut quantity, mirror flag, fabric, grain and nap arrows, seam-partner labels.
-- **FR-034**: Identical and mirror-image pieces deduplicated into one template ("cut N", "cut N mirrored").
+- **FR-033**: Piece labels: ID, name, how many to cut as printed and how many flipped, fabric, grain and nap arrows, seam-partner labels.
+- **FR-034**: Identical and mirror-image pieces deduplicated into one template, labelled with how many to cut as printed and how many flipped ("cut 4", "cut 2 (1 + 1 flipped)"). Pieces that only nearly match are never merged: the maker is told how far apart they are and offered seam mirroring, and otherwise they stay separate (D-048).
 - **FR-035**: Clip marks on tight concave curves; notch-out marks on tight convex curves.
 - **FR-036**: Assembly order hints. (P3)
 

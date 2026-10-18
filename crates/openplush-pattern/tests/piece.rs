@@ -1,4 +1,4 @@
-//! `PatternPiece::new`: a cut quantity of at least one and a usable rotation set.
+//! `PatternPiece::new`: a cut quantity from 1 to 100 and a usable rotation set.
 
 use openplush_geom::DVec2;
 use openplush_pattern::{Outline, PatternError, PatternPiece, PieceId};
@@ -36,6 +36,21 @@ fn a_piece_reports_what_it_was_built_from() -> Result<(), PatternError> {
 #[test]
 fn zero_cuts_is_refused() {
     assert_eq!(piece(0, vec![0.0]), Err(PatternError::ZeroCutQuantity));
+}
+
+#[test]
+fn a_hundred_cuts_is_the_most_allowed() {
+    assert!(piece(100, vec![0.0]).is_ok());
+    assert_eq!(
+        piece(101, vec![0.0]),
+        Err(PatternError::TooManyCuts { cut_quantity: 101 })
+    );
+    assert_eq!(
+        piece(u32::MAX, vec![0.0]),
+        Err(PatternError::TooManyCuts {
+            cut_quantity: u32::MAX
+        })
+    );
 }
 
 #[test]
@@ -77,6 +92,10 @@ fn the_new_errors_say_what_is_wrong() {
         (
             PatternError::ZeroCutQuantity,
             "a piece must be cut at least once",
+        ),
+        (
+            PatternError::TooManyCuts { cut_quantity: 101 },
+            "a piece can be cut at most 100 times, got 101",
         ),
         (
             PatternError::NoRotations,

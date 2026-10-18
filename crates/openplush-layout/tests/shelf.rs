@@ -329,3 +329,67 @@ fn the_errors_say_what_is_wrong() {
         assert_eq!(err.to_string(), text);
     }
 }
+
+#[test]
+fn a_piece_exactly_as_wide_as_the_roll_fits_on_an_empty_shelf_without_the_gap() -> Result<(), Setup>
+{
+    let pc = piece(1, (0.0, 0.0, 10.0, 10.0), 1, &[0.0])?;
+    let s = only(pack(&[pc], &opts(10.0, 5.0, false)?)?)?;
+    assert_eq!(s.placements()[0].offset(), DVec2::new(0.0, 0.0));
+    assert_eq!(s.length_mm(), 10.0);
+    Ok(())
+}
+
+#[test]
+fn a_new_shelf_starts_with_the_height_of_its_own_pieces() -> Result<(), Setup> {
+    let (a, b) = (
+        piece(1, (0.0, 0.0, 10.0, 20.0), 1, &[0.0])?,
+        piece(2, (0.0, 0.0, 10.0, 10.0), 1, &[0.0])?,
+    );
+    let s = only(pack(&[a, b], &opts(10.0, 0.0, false)?)?)?;
+    assert_eq!(s.placements()[1].offset(), DVec2::new(0.0, 20.0));
+    assert_eq!(s.length_mm(), 30.0);
+    Ok(())
+}
+
+#[test]
+fn a_rotation_outside_zero_to_359_is_the_same_turn_it_names() -> Result<(), Setup> {
+    for (deg, turn) in [(-90.0, 270.0), (360.0, 0.0), (450.0, 90.0)] {
+        let given = piece(1, (2.0, 3.0, 20.0, 5.0), 1, &[deg])?;
+        let named = piece(1, (2.0, 3.0, 20.0, 5.0), 1, &[turn])?;
+        let o = opts(100.0, 0.0, false)?;
+        let (g, n) = (only(pack(&[given], &o)?)?, only(pack(&[named], &o)?)?);
+        assert_eq!(g.placements()[0].rotation_deg(), deg);
+        assert_eq!(
+            g.placements()[0].offset(),
+            n.placements()[0].offset(),
+            "{deg}"
+        );
+        assert_eq!(g.length_mm(), n.length_mm(), "{deg}");
+    }
+    Ok(())
+}
+
+#[test]
+fn a_mirrored_piece_lies_at_negative_x_and_still_packs_by_its_real_width() -> Result<(), Setup> {
+    let pc = piece(1, (4.0, 4.0, 10.0, 6.0), 2, &[0.0])?;
+    let s = only(pack(std::slice::from_ref(&pc), &opts(100.0, 0.0, true)?)?)?;
+    let second = bounds(&placed(pc.cut_line(), &s.placements()[1]));
+    assert_eq!(second, (10.0, 0.0, 20.0, 6.0));
+    Ok(())
+}
+
+#[test]
+fn the_cut_line_decides_the_size_not_the_sewing_line() -> Result<(), Setup> {
+    let pc = PatternPiece::new(
+        PieceId::new(1),
+        rect(0.0, 0.0, 10.0, 10.0)?,
+        rect(0.0, 0.0, 14.0, 14.0)?,
+        2,
+        vec![0.0],
+    )?;
+    let s = only(pack(&[pc], &opts(100.0, 0.0, false)?)?)?;
+    assert_eq!(s.placements()[1].offset(), DVec2::new(14.0, 0.0));
+    assert_eq!(s.length_mm(), 14.0);
+    Ok(())
+}

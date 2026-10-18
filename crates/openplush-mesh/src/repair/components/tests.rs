@@ -101,3 +101,53 @@ fn every_part_is_a_candidate_when_each_is_under_one_percent() {
     assert_eq!(parts.len(), 150);
     assert!(parts.into_iter().all(|c| c));
 }
+
+#[test]
+fn a_components_area_is_the_sum_over_all_its_faces() {
+    // A: two faces of area 0.6 sharing vertex 2 (1.2 in all, 1.19% of 101.2);
+    // its first face alone would be 0.6% of the total and flagged.
+    let positions = vec![
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.2, 0.0, 0.0),
+        DVec3::new(0.0, 1.0, 0.0),
+        DVec3::new(0.0, 2.0, 0.0),
+        DVec3::new(1.2, 2.0, 0.0),
+        DVec3::new(50.0, 0.0, 0.0),
+        DVec3::new(70.0, 0.0, 0.0),
+        DVec3::new(50.0, 10.0, 0.0),
+    ];
+    let s = soup(positions, &[[0, 1, 2], [2, 3, 4], [5, 6, 7]]);
+    assert_eq!(flags(&split(&s)), [false, false]);
+}
+
+#[test]
+fn area_is_the_true_area_of_a_skewed_triangle_in_any_plane() {
+    // Big: area 100 in the xz plane. Small: a sliver of area 0.5 in the xy plane whose
+    // edge lengths multiply to about 100, so only the true area flags it.
+    let positions = vec![
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(20.0, 0.0, 0.0),
+        DVec3::new(0.0, 0.0, 10.0),
+        DVec3::new(50.0, 0.0, 0.0),
+        DVec3::new(60.0, 0.0, 0.0),
+        DVec3::new(60.0, 0.1, 0.0),
+    ];
+    let s = soup(positions, &[[0, 1, 2], [3, 4, 5]]);
+    assert_eq!(flags(&split(&s)), [false, true]);
+}
+
+#[test]
+fn both_layers_of_a_sheet_count_towards_its_area() {
+    // Sheet: two coincident opposite-wound triangles, area 1 each (2 in all, 1.96% of
+    // 102): not a candidate. One layer alone (0.99%) would be.
+    let positions = vec![
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.0, 0.0, 0.0),
+        DVec3::new(0.0, 2.0, 0.0),
+        DVec3::new(50.0, 0.0, 0.0),
+        DVec3::new(70.0, 0.0, 0.0),
+        DVec3::new(50.0, 10.0, 0.0),
+    ];
+    let s = soup(positions, &[[0, 1, 2], [0, 2, 1], [3, 4, 5]]);
+    assert_eq!(flags(&split(&s)), [false, false]);
+}

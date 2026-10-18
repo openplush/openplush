@@ -16,7 +16,7 @@ pub(super) struct Intrinsic {
     angle_sum: BTreeMap<u32, f64>,
     /// Each edge's cotangent weight (half the cotangents of the angles opposite it), keyed
     /// smaller vertex first; with them the cotangent Laplacian is positive semidefinite.
-    weight: BTreeMap<(u32, u32), f64>,
+    pub(super) weight: BTreeMap<(u32, u32), f64>,
 }
 
 /// Corner angles and cotangent weights. Refuses a face naming a vertex outside `xyz` and a

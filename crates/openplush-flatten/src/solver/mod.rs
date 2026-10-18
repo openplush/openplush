@@ -17,7 +17,7 @@ pub(crate) enum SolveError {
     BadEntry { row: usize, col: usize },
     /// A value or right-hand side list of the wrong length.
     Length { expected: usize, got: usize },
-    /// A NaN or infinite value or right-hand side.
+    /// A NaN or infinite value, right-hand side, or solution.
     NotFinite,
     /// A matrix with a non-positive pivot: not symmetric positive definite.
     NotPositiveDefinite,
@@ -89,7 +89,7 @@ pub(crate) struct Factor {
 }
 
 impl Factor {
-    /// Solves `A x = rhs`.
+    /// Solves `A x = rhs`; an `x` that overflows is `NotFinite`.
     pub(crate) fn solve(&self, rhs: &[f64]) -> Result<Vec<f64>, SolveError> {
         if rhs.len() != self.n {
             return Err(SolveError::Length {
@@ -102,7 +102,11 @@ impl Factor {
         }
         let b = Mat::<f64>::from_fn(self.n, 1, |r, _| rhs[r]);
         let x = self.llt.solve(&b);
-        Ok((0..self.n).map(|r| x[(r, 0)]).collect())
+        let x: Vec<f64> = (0..self.n).map(|r| x[(r, 0)]).collect();
+        if !x.iter().all(|v| v.is_finite()) {
+            return Err(SolveError::NotFinite);
+        }
+        Ok(x)
     }
 }
 

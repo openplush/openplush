@@ -18,7 +18,7 @@ use openplush_seams::{
 fn map(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<Result<SewingMap, SeamsError>, Setup> {
     let graph = SeamGraph::new(mesh, seams)?;
     let charts = charts(mesh, seams)?;
-    let map = SewingMap::new(mesh, &graph, &charts);
+    let map = SewingMap::new(mesh, seams, &graph);
     if let Ok(map) = &map {
         well_formed(mesh, &graph, &charts, map);
     }
@@ -40,9 +40,8 @@ fn well_formed(mesh: &ManifoldMesh, graph: &SeamGraph, charts: &[Chart], map: &S
     for (bundle, chain) in map.bundles().iter().zip(graph.chains()) {
         assert_eq!(bundle.chain(), chain.id());
         assert_eq!(map.bundle(chain.id()), Some(bundle));
-        let [along, against] = bundle.sides() else {
-            panic!("{bundle:?}: two sides");
-        };
+        assert_eq!(bundle.sides().len(), 2, "{bundle:?}: two sides");
+        let (along, against) = (&bundle.sides()[0], &bundle.sides()[1]);
         let (edges, vertices) = (chain.edges(), chain.vertices());
         assert_eq!(along.half_edges().len(), edges.len(), "{bundle:?}");
         assert_eq!(against.half_edges().len(), edges.len(), "{bundle:?}");
@@ -56,8 +55,10 @@ fn well_formed(mesh: &ManifoldMesh, graph: &SeamGraph, charts: &[Chart], map: &S
             assert_eq!(mesh.origin(h), vertices[i], "{bundle:?} at {i}");
             assert_eq!(g, h.twin(), "{bundle:?} at {i}");
             for (side, s) in [(along, h), (against, g)] {
-                let f = mesh.face(s).unwrap_or_else(|| panic!("{bundle:?} at {i}: no face"));
-                assert_eq!(chart_of(charts, f), Some(side.chart()), "{bundle:?} at {i}");
+                let f = mesh.face(s);
+                assert!(f.is_some(), "{bundle:?} at {i}: no face");
+                let chart = f.and_then(|f| chart_of(charts, f));
+                assert_eq!(chart, Some(side.chart()), "{bundle:?} at {i}");
             }
         }
     }
@@ -125,7 +126,10 @@ fn an_opening_along_a_seam_is_its_own_bundle_between_the_same_charts() -> Result
         c
     };
     assert_eq!(charts_of(sewn.sides()), charts_of(open.sides()));
-    assert_eq!(sewn.sides()[0].half_edges().len() + open.sides()[0].half_edges().len(), 4);
+    assert_eq!(
+        sewn.sides()[0].half_edges().len() + open.sides()[0].half_edges().len(),
+        4
+    );
     Ok(())
 }
 

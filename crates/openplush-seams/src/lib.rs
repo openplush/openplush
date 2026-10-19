@@ -11,6 +11,7 @@ mod paths;
 mod proposal;
 mod proposals;
 mod set;
+mod sewing_map;
 mod topology;
 
 pub use chart::{Chart, charts};
@@ -23,4 +24,5 @@ pub use opening::mark_opening;
 pub use proposal::{Proposal, ProposalId, ProposalKind, SeamReason};
 pub use proposals::close_chart;
 pub use set::SeamSet;
+pub use sewing_map::{ChainSide, SeamBundle, SewingMap};
 pub use topology::check_disk;

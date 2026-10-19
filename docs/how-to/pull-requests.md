@@ -176,8 +176,8 @@ The repo uses **merge commits only**:
 
 Steps:
 
-1. Merge the bottom PR (the only one whose base is `main`).
-2. Its branch is deleted on merge, and GitHub retargets the next PR to `main`.
+1. Merge the bottom PR (the only one whose base is `main`): the maintainer for tier C, the merge gate for A and B.
+2. Its branch is deleted on merge, and GitHub retargets the next PR to `main`; the gate judges the retargeted PR on its next event or within 30 minutes.
 3. Repeat.
 
 Never merge a PR whose base is another PR's branch. That merges it into the parent's branch, not into `main`, and the stack falls apart quietly.
@@ -203,6 +203,7 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 
 - [`.github/pull_request_template.md`](../../.github/pull_request_template.md) pre-fills the description with the required sections as HTML comments, so an unfilled section is visibly empty rather than silently absent.
 - No CI job judges whether a PR is one intent; reviewers do. A PR whose `Intent` needs "and" is split.
+- [`.github/workflows/merge-gate.yml`](../../.github/workflows/merge-gate.yml) ([ADR 0015](../adr/0015-merge-gate.md)) computes the PR's tier from its diff ([ADR 0014](../adr/0014-auto-merge-tiers.md)), judges every merge condition on the current head, keeps one comment per PR saying which fail, and applies `merge:ready` and auto-merge when all hold. Tier C waits for the maintainer. Nobody enables auto-merge by hand.
 
 ## Checklist before opening
 

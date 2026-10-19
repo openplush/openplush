@@ -31,7 +31,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Merging
 
-[ADR 0014](../../../docs/adr/0014-auto-merge-tiers.md) sets who merges. A PR's tier is the highest any of its paths or tasks reaches. Label it `tier:A`, `tier:B` or `tier:C` on opening, relabel it when a push changes the tier, and never lower a tier the maintainer set.
+[ADR 0014](../../../docs/adr/0014-auto-merge-tiers.md) sets who merges; the merge gate ([ADR 0015](../../../docs/adr/0015-merge-gate.md), `.github/workflows/merge-gate.yml`) computes the tier from the diff and enables auto-merge. A PR's tier is the highest any of its paths or tasks reaches. Label it `tier:A`, `tier:B` or `tier:C` on opening as your reading of the diff; the gate raises a label that is too low and never lowers one.
 
 | Tier | When | Who merges |
 |---|---|---|
@@ -39,9 +39,9 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 | B | `fixtures/golden/`, `*.snap`, or an expected SVG or PDF fixture | Auto-merge, enabled 24 h after the head's CI went green |
 | A | Everything else, and a `docs(tasks): tick …` PR whose diff touches only `specs/*/tasks.md` with ticks and as-built notes | Auto-merge, enabled once ready |
 
-- Enable auto-merge, merge commit, on a tier A or B PR only when: its base is `main`; CI is green on the head with no conflict; the review found no 🔴 that is not fixed and proven, or it skipped the PR; every 🟡 is fixed or answered; no review thread is open. For B, also 24 h since the head's CI went green.
-- Disable auto-merge before pushing to a PR that has it, and enable it again when the conditions hold on the new head.
-- Never merge a PR yourself, and never enable auto-merge on tier C.
+- Read the gate's comment on the PR (it starts "Merge gate"): it lists the tier and each condition as pass or fail, and `merge:ready` is its verdict. Never enable auto-merge yourself, on any tier, and never apply `merge:ready`: the gate removes what it did not set.
+- On a stall, fix what the comment names: a failing check, an open thread (answer it, then resolve it: an unresolved thread is an unanswered finding to the gate), a conflict, or a base that is not `main`. A push revokes the verdict; the gate judges the new head when its CI completes.
+- Never merge a PR yourself. Tier C waits for the maintainer; the comment says so.
 
 ## Waiting
 

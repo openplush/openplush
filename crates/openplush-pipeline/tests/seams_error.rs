@@ -38,6 +38,10 @@ fn seams_error_messages_are_pinned() {
         .to_string(),
         "a seam is on edge EdgeId(9), which the mesh does not have"
     );
+}
+
+#[test]
+fn chart_chain_and_pick_error_messages_are_pinned() {
     assert_eq!(
         SeamsError::ChartNotClosed {
             chart: ChartId::new(3)

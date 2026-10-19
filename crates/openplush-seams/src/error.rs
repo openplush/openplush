@@ -1,4 +1,4 @@
-use openplush_mesh::EdgeId;
+use openplush_mesh::{EdgeId, VertexId};
 
 use crate::{ChartId, SeamChainId};
 use thiserror::Error;
@@ -57,5 +57,19 @@ pub enum SeamsError {
     UnpairedBoundarySeam {
         /// The chain.
         chain: SeamChainId,
+    },
+    /// A picked vertex the mesh does not have.
+    #[error("vertex {vertex:?} is not one of the mesh's")]
+    UnknownVertex {
+        /// The vertex.
+        vertex: VertexId,
+    },
+    /// No edge walk joins the two picks: they are on separate pieces of the mesh.
+    #[error("no path of edges joins vertex {from:?} to vertex {to:?}")]
+    NoPath {
+        /// The first pick.
+        from: VertexId,
+        /// The second pick.
+        to: VertexId,
     },
 }

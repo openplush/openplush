@@ -74,7 +74,10 @@ fn every_pair_on_a_sheet_gets_a_shortest_walk_from_pick_to_pick() -> Result<(), 
             let path = shortest_path(mesh, a, b)?;
             let total = walked(mesh, &path, a, b);
             let want = oracle[a.index() as usize][b.index() as usize];
-            assert!((total - want).abs() < 1e-9, "{a:?} to {b:?}: {total} vs {want}");
+            assert!(
+                (total - want).abs() < 1e-9,
+                "{a:?} to {b:?}: {total} vs {want}"
+            );
         }
     }
     Ok(())
@@ -147,7 +150,10 @@ fn picks_on_separate_pieces_of_mesh_have_no_path() -> Result<(), Setup> {
             .find(|&v| mesh.position(v) == p)
             .ok_or_else(|| "no vertex there".into())
     };
-    let (from, to) = (at(DVec3::new(0.0, 0.0, 0.0))?, at(DVec3::new(60.0, 0.0, 0.0))?);
+    let (from, to) = (
+        at(DVec3::new(0.0, 0.0, 0.0))?,
+        at(DVec3::new(60.0, 0.0, 0.0))?,
+    );
     assert_eq!(
         shortest_path(&mesh, from, to),
         Err(SeamsError::NoPath { from, to })

@@ -6,7 +6,7 @@
 )]
 mod common;
 
-use common::{Setup, pages};
+use common::{Setup, tiles};
 use openplush_export::ExportError;
 use openplush_export::pdf::write;
 use openplush_geom::DVec2;
@@ -71,7 +71,7 @@ fn each_page_is_its_paper_size() -> Result<(), Setup> {
         (Paper::A4, DVec2::new(210.0, 297.0)),
         (Paper::Letter, DVec2::new(215.9, 279.4)),
     ] {
-        let read = pages(&write(&s, &pieces, &tile(&s, paper)?)?)?;
+        let read = tiles(&write(&s, &pieces, &tile(&s, paper)?)?)?;
         assert_eq!(read.len(), 1);
         assert!(close(read[0].size, size), "{:?}", read[0].size);
     }
@@ -82,7 +82,7 @@ fn each_page_is_its_paper_size() -> Result<(), Setup> {
 fn a_page_shows_only_its_printable_area() -> Result<(), Setup> {
     let pieces = [piece(0, 1)?];
     let s = sheet(&pieces, 150.0)?;
-    let read = pages(&write(&s, &pieces, &tile(&s, Paper::A4)?)?)?;
+    let read = tiles(&write(&s, &pieces, &tile(&s, Paper::A4)?)?)?;
     let [clip] = &read[0].clips[..] else {
         return Err(format!("not one clip: {:?}", read[0].clips).into());
     };
@@ -123,7 +123,7 @@ fn every_copy_is_drawn_where_the_sheet_puts_it_cut_line_first() -> Result<(), Se
     let pieces = [piece(0, 2)?, piece(1, 1)?];
     let s = sheet(&pieces, 150.0)?;
     let tiling = tile(&s, Paper::A4)?;
-    let read = pages(&write(&s, &pieces, &tiling)?)?;
+    let read = tiles(&write(&s, &pieces, &tiling)?)?;
     let want = expected(&s, &pieces, tiling.pages()[0].window_min());
     // Two outlines per copy, then the two squares.
     let outlines = &read[0].strokes[..want.len()];
@@ -142,7 +142,7 @@ fn every_copy_is_drawn_where_the_sheet_puts_it_cut_line_first() -> Result<(), Se
 fn cut_lines_are_solid_and_sewing_lines_dashed() -> Result<(), Setup> {
     let pieces = [piece(0, 1)?];
     let s = sheet(&pieces, 150.0)?;
-    let read = pages(&write(&s, &pieces, &tile(&s, Paper::A4)?)?)?;
+    let read = tiles(&write(&s, &pieces, &tile(&s, Paper::A4)?)?)?;
     let [cut, sew, ..] = &read[0].strokes[..] else {
         return Err("too few strokes".into());
     };
@@ -178,7 +178,7 @@ fn a_page_further_down_shows_the_sheet_further_down() -> Result<(), Setup> {
     )?];
     let s = sheet(&pieces, 320.0)?;
     let tiling = tile(&s, Paper::A4)?;
-    let read = pages(&write(&s, &pieces, &tiling)?)?;
+    let read = tiles(&write(&s, &pieces, &tiling)?)?;
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let want = expected(&s, &pieces, tile.window_min());
         assert!(

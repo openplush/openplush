@@ -43,7 +43,7 @@ openplush-cli pattern fixtures/meshes/capsule.obj \
 
 # What landed in out/
 #   pattern.svg          true scale, 1 user unit = 1 mm
-#   pattern.pdf          tiled for A4, registration marks, page map, scale square
+#   pattern.pdf          cover page with the page map, then A4 tiles with registration marks; scale square on every page
 #   pieces.json          geometry + metadata (FR-063)
 #   metrics.json         per-piece distortion summary (FR-021)
 #   warnings.json        everything unresolved, with its remedy (FR-064, FR-065)

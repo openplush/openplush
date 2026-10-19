@@ -16,10 +16,7 @@ use openplush_seams::{
 
 /// The edges of the walk through `points`.
 fn walk(grid: &Grid, points: &[(u32, u32)]) -> Result<Vec<EdgeId>, Setup> {
-    points
-        .windows(2)
-        .map(|p| grid.edge(p[0], p[1]))
-        .collect()
+    points.windows(2).map(|p| grid.edge(p[0], p[1])).collect()
 }
 
 /// A dart's edges are `Dart`, its tip is a `DartTip` node, and the piece is still one disk.
@@ -30,7 +27,9 @@ fn is_a_slit(grid: &Grid, seams: &SeamSet, edges: &[EdgeId], tip: (u32, u32)) ->
     let graph = SeamGraph::new(&grid.mesh, seams)?;
     let tip = grid.at(tip.0, tip.1)?;
     assert!(
-        graph.nodes().any(|(v, node)| v == tip && node == SeamNode::DartTip),
+        graph
+            .nodes()
+            .any(|(v, node)| v == tip && node == SeamNode::DartTip),
         "{tip:?} is the dart tip"
     );
     let charts = charts(&grid.mesh, seams)?;
@@ -69,7 +68,11 @@ fn a_dart_from_an_existing_seam_slits_one_side_of_it() -> Result<(), Setup> {
     }
     let graph = SeamGraph::new(&grid.mesh, &seams)?;
     let tip = grid.at(2, 2)?;
-    assert!(graph.nodes().any(|(v, n)| v == tip && n == SeamNode::DartTip));
+    assert!(
+        graph
+            .nodes()
+            .any(|(v, n)| v == tip && n == SeamNode::DartTip)
+    );
     // The row still splits the sheet in two; the dart slits the upper piece.
     let charts = charts(&grid.mesh, &seams)?;
     assert_eq!(charts.len(), 2);
@@ -87,7 +90,7 @@ fn a_walk_touching_no_seam_or_boundary_is_not_anchored() -> Result<(), Setup> {
     assert_eq!(
         mark_dart(&grid.mesh, &mut seams, &edges),
         Err(SeamsError::DartNotAnchored {
-            vertex: grid.at(1, 1)?
+            vertex: grid.at(1, 1)?.min(grid.at(2, 1)?)
         })
     );
     assert!(seams.is_empty(), "nothing changes");

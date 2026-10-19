@@ -72,4 +72,27 @@ pub enum SeamsError {
         /// The second pick.
         to: VertexId,
     },
+    /// A dart with no edges.
+    #[error("a dart needs at least one edge")]
+    EmptyDart,
+    /// An edge that does not share a vertex with the edge before it, or returns to a vertex the
+    /// walk already has.
+    #[error("edge {edge:?} does not continue the walk")]
+    NotAWalk {
+        /// The edge.
+        edge: EdgeId,
+    },
+    /// Neither end of the walk is on a seam or the mesh boundary, so it is not a dart.
+    #[error("a dart starts on a seam or the mesh boundary; neither end does (vertex {vertex:?})")]
+    DartNotAnchored {
+        /// The walk's first vertex.
+        vertex: VertexId,
+    },
+    /// A vertex past the base lies on a seam or the mesh boundary, so the dart would split the
+    /// piece or cross a seam.
+    #[error("a dart's tip and inner vertices touch no seam or boundary; vertex {vertex:?} does")]
+    DartTouchesSeam {
+        /// The first such vertex along the walk.
+        vertex: VertexId,
+    },
 }

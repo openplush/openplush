@@ -2,6 +2,7 @@
 
 mod chart;
 mod chart_mesh;
+mod dart;
 mod dijkstra;
 mod error;
 mod fold;
@@ -19,6 +20,7 @@ mod topology;
 
 pub use chart::{Chart, charts};
 pub use chart_mesh::ChartMesh;
+pub use dart::mark_dart;
 pub use error::SeamsError;
 pub use fold::check_fold;
 pub use graph::{SeamChain, SeamGraph, SeamNode};

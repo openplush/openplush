@@ -4,7 +4,8 @@ use openplush_geom::DVec3;
 
 use super::into_manifold;
 use crate::{
-    FaceId, ManifoldMesh, MeshError, RepairPlan, RepairReport, SourceCorner, TriangleSoup, VertexId,
+    EdgeId, FaceId, ManifoldMesh, MeshError, RepairPlan, RepairReport, SourceCorner, TriangleSoup,
+    VertexId,
 };
 
 fn f(i: u32) -> FaceId {
@@ -54,6 +55,7 @@ fn nothing_to_report(r: &RepairReport) -> bool {
         && r.orientation_conflicts().is_empty()
         && r.holes().is_empty()
         && r.mandatory_seams().is_empty()
+        && r.edge_copies().is_empty()
 }
 
 #[test]
@@ -152,6 +154,15 @@ fn a_double_sided_sheet_builds_with_its_pairings_and_sheets_listed() {
     assert_eq!(report.sheets(), [[f(0), f(3)], [f(1), f(2)]]);
     assert_eq!(report.paired_edges().len(), 1);
     assert!(report.mandatory_seams().is_empty());
+    // The diagonal's two copies are one group, both interior.
+    let [group] = report.edge_copies() else {
+        panic!("{:?}", report.edge_copies());
+    };
+    assert_eq!(group.len(), 2);
+    for &e in group {
+        let h = e.half_edge();
+        assert!(mesh.face(h).is_some() && mesh.face(h.twin()).is_some(), "{e:?}");
+    }
 }
 
 #[test]
@@ -186,10 +197,21 @@ fn a_fin_on_a_body_becomes_boundary_edges_that_are_mandatory_seams() {
     assert_eq!(report.paired_edges().len(), 1);
     assert!(!report.mandatory_seams().is_empty());
     assert!(!mesh.boundary_loops().is_empty());
+    // One group: the body pair's interior copy and the fin's boundary copy, ascending.
+    let [group] = report.edge_copies() else {
+        panic!("{:?}", report.edge_copies());
+    };
+    let boundary = |e: &EdgeId| {
+        let h = e.half_edge();
+        mesh.face(h).is_none() || mesh.face(h.twin()).is_none()
+    };
+    assert_eq!(group.len(), 2);
+    assert!(group[0] < group[1]);
+    assert_eq!(group.iter().filter(|e| boundary(e)).count(), 1);
 }
 
-#[test]
-fn a_twisted_ring_is_refused_at_its_conflict_edge_not_built_or_cut() {
+/// Five triangles round a ring whose last one joins back twisted: no winding agrees on edge 2-3.
+fn twisted_ring() -> TriangleSoup {
     let radii = [3.0, 1.0, 2.0, 1.0, 1.0];
     let positions = radii
         .iter()
@@ -199,14 +221,44 @@ fn a_twisted_ring_is_refused_at_its_conflict_edge_not_built_or_cut() {
             p(r * a.cos(), r * a.sin(), 0.0)
         })
         .collect();
-    let s = soup(
+    soup(
         positions,
         &[[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 0], [4, 0, 1]],
-    );
-    assert_eq!(
-        repair(&s).unwrap_err(),
-        MeshError::InconsistentOrientation { a: v(2), b: v(3) }
-    );
+    )
+}
+
+#[test]
+fn a_twisted_ring_is_cut_at_its_conflict_edge_into_an_open_strip_with_a_forced_seam() {
+    let (mesh, report) = repair(&twisted_ring()).unwrap();
+    assert_eq!(mesh.face_count(), 5);
+    // The cut edge's two ends each split into two fans, so the strip has seven vertices and
+    // one boundary loop.
+    assert_eq!(mesh.vertex_count(), 7);
+    assert_eq!(mesh.boundary_loops().len(), 1);
+    assert_eq!(report.orientation_conflicts().len(), 1);
+    assert_eq!(report.flipped_faces(), [f(1), f(3)]);
+    // The two copies of the cut edge are both boundaries, both mandatory seams, one group.
+    let [group] = report.edge_copies() else {
+        panic!("{:?}", report.edge_copies());
+    };
+    assert_eq!(group.len(), 2);
+    for &e in group {
+        let h = e.half_edge();
+        assert!(mesh.face(h).is_none() || mesh.face(h.twin()).is_none(), "{e:?} is a boundary");
+        let mut ends = [mesh.origin(h), mesh.dest(h)];
+        ends.sort();
+        assert!(report.mandatory_seams().contains(&ends), "{e:?} is a seam");
+    }
+    assert_eq!(report.mandatory_seams().len(), 2);
+}
+
+#[test]
+fn a_twisted_ring_is_still_refused_when_the_plan_does_not_orient() {
+    let plan = without(|p| p.fix_orientation = false);
+    assert!(matches!(
+        into_manifold(&twisted_ring(), &plan).unwrap_err(),
+        MeshError::InconsistentOrientation { .. }
+    ));
 }
 
 #[test]

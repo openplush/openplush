@@ -212,8 +212,9 @@ def write_all(root: Path) -> None:
     from source_dead_end import dead_end_files  # imported here: these modules build on this one's shapes
     from source_reshaped import reshaped_files
     from source_seams import source_seam_files
+    from source_symmetry import symmetry_files
 
-    data |= source_seam_files() | dead_end_files() | reshaped_files()
+    data |= source_seam_files() | dead_end_files() | reshaped_files() | symmetry_files()
     for rel, blob in sorted(data.items()):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         (root / rel).write_bytes(blob)

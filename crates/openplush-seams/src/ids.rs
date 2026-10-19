@@ -7,7 +7,7 @@ id_newtype! {
 }
 
 id_newtype! {
-    /// A seam chain: a maximal path of seam edges between non-chain
-    /// nodes, numbered by its lowest `EdgeId`. Stable for one `SeamSet`.
+    /// A seam chain: a maximal path of seam edges between nodes, or a closed
+    /// loop with none, numbered by its lowest `EdgeId`. Stable for one `SeamSet`.
     SeamChainId
 }

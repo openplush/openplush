@@ -160,3 +160,42 @@ fn picks_on_separate_pieces_of_mesh_have_no_path() -> Result<(), Setup> {
     );
     Ok(())
 }
+
+#[test]
+fn a_long_edge_beats_a_detour_that_is_shorter_only_when_squared() -> Result<(), Setup> {
+    // |AC| = 30 < |AB| + |BC| ≈ 39.7, but 30² = 900 > 2 · 394: a squared metric takes the detour.
+    let mesh = repaired(
+        vec![
+            DVec3::new(0.0, 0.0, 0.0),
+            DVec3::new(30.0, 0.0, 0.0),
+            DVec3::new(15.0, 13.0, 0.0),
+        ],
+        vec![[0, 1, 2]],
+    )?;
+    let at = |p: DVec3| -> Result<VertexId, Setup> {
+        (0..u32::try_from(mesh.vertex_count())?)
+            .map(VertexId::new)
+            .find(|&v| mesh.position(v) == p)
+            .ok_or_else(|| "no vertex there".into())
+    };
+    let (a, c) = (
+        at(DVec3::new(0.0, 0.0, 0.0))?,
+        at(DVec3::new(30.0, 0.0, 0.0))?,
+    );
+    let path = shortest_path(&mesh, a, c)?;
+    assert_eq!(path.len(), 1, "{path:?}");
+    assert!((walked(&mesh, &path, a, c) - 30.0).abs() < 1e-9);
+    Ok(())
+}
+
+#[test]
+fn among_equal_walks_the_lower_vertex_is_taken() -> Result<(), Setup> {
+    // (0, 2) is reached only through (0, 1) or (1, 2), both 10 from (1, 1).
+    let grid = Grid::sheet(4, 2)?;
+    let (from, to) = (grid.at(0, 2)?, grid.at(1, 1)?);
+    let (left, up) = (grid.at(0, 1)?, grid.at(1, 2)?);
+    let mid = if left < up { (0, 1) } else { (1, 2) };
+    let want = [grid.edge((0, 2), mid)?, grid.edge(mid, (1, 1))?];
+    assert_eq!(shortest_path(&grid.mesh, from, to)?, want);
+    Ok(())
+}

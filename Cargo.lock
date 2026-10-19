@@ -680,6 +680,7 @@ dependencies = [
  "openplush-pattern",
  "pdf-writer",
  "thiserror",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

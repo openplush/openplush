@@ -17,6 +17,12 @@ pub enum SeamsError {
         /// The edge.
         edge: EdgeId,
     },
+    /// A seam on an edge the mesh does not have.
+    #[error("a seam is on edge {edge:?}, which the mesh does not have")]
+    UnknownEdge {
+        /// The edge.
+        edge: EdgeId,
+    },
     /// Text that is not a proposal ID: exactly 16 lowercase hex digits.
     #[error("{text:?} is not a proposal id (16 lowercase hex digits)")]
     BadProposalId {

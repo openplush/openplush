@@ -22,3 +22,7 @@ openplush-testkit = { path = "../openplush-testkit" }
 
 [lints]
 workspace = true
+
+# Only the wasm32 test build needs the harness; native tests use plain #[test].
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test.workspace = true

@@ -697,6 +697,7 @@ dependencies = [
  "openplush-seams",
  "openplush-testkit",
  "thiserror",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

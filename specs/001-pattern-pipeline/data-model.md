@@ -127,12 +127,13 @@ Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its sea
 A **seam chain** is a maximal path between nodes; a cycle of chain vertices with no node is one **closed chain**. Chains are the unit of notching, labeling ("A3"), and length parity. Numbering and walking order are D-052's (4).
 
 ### ChartMesh (virtual cut)
-Charts = flood fill of faces across non-seam edges. For each chart, build a local half-edge mesh by **duplicating vertices along seam edges inside the chart** — except dart tips, which stay single (a slit, not a separation). Provenance maps:
+Charts = flood fill of faces across non-seam edges. Each chart is cut open into flat arrays shaped like the flattener's input (D-054), **duplicating vertices along seam edges inside the chart** — except dart tips, which stay single (a slit, not a separation). Provenance maps back to the global mesh:
 ```rust
 pub struct ChartMesh {
-    mesh: LocalHalfEdgeMesh,
+    chart: ChartId,
+    xyz: Vec<DVec3>,                       // one per local vertex, model units
+    faces: Vec<(FaceId, [VertexId; 3])>,   // global face, local corners in the face's order
     vtx_to_global: Vec<VertexId>,
-    he_to_global: Vec<HalfEdgeId>,
 }
 ```
 
@@ -149,11 +150,13 @@ MVP UI exposes `k = 2`; the model supports `k > 2` from day one so FR-016 isn't 
 ### Chart topology check (pre-flatten)
 χ = V − E + F; for a connected surface with genus g and b boundary loops, χ = 2 − 2g − b. Flattenable ⇔ **g = 0, b = 1** (disk, χ = 1). Darts don't change this — a slit extends the single boundary loop.
 
-| Failure | Cause | Auto-proposal (requires user approval — Constitution VII) |
+| Failure | Cause | Auto-proposal (requires user approval — Constitution VII; D-055) |
 |---|---|---|
-| b = 0, g = 0 | Closed sphere-like region, no seam | One cut along the max-distortion geodesic, or a dart pair at highest angle defect |
-| b > 1 | Annulus (e.g., a sleeve with both ends cut) | Shortest path connecting boundary loops (Dijkstra; edge cost = length × visibility × concavity weight) |
+| b = 0, g = 0 | Closed sphere-like region, no seam | Shortest path between the two vertices of largest angle defect |
+| b > 1 | Annulus (e.g., a sleeve with both ends cut) | Shortest paths joining the boundary loops, greedily (Dijkstra; edge cost = 3D length) |
 | g > 0 | Handle (e.g., a mug handle, arm touching body) | Tree-cotree generators shortened greedily (Eppstein 2003; Erickson & Whittlesey 2005) |
+
+One proposal per chart covers every failure it has, and is checked to leave a disk before it is offered.
 
 ## 5. Seam Optimization
 
@@ -352,7 +355,7 @@ pub enum Remedy {
 
 **Persistence**: acknowledged warnings and their codes+targets are stored in the project (§12), keyed by **source provenance** like seams are, so an acknowledgement survives re-repair and reopening. Unacknowledged warnings are recomputed, never stored.
 
-**Export** (FR-064): `export` takes the `WarningSet`. Unresolved entries render as a summary block on the pattern's first page — code, location, explanation, remedy. Export is never refused. The summary is part of the golden snapshot, so a warning silently vanishing from the printed page is a test failure.
+**Export** (FR-064): the pipeline's export stage takes the `WarningSet` and renders each unresolved entry as a row of text — code, location, explanation, remedy — which `openplush-export` prints as a summary block on the pattern's first page (D-056). Export is never refused. The summary is part of the golden snapshot, so a warning silently vanishing from the printed page is a test failure.
 
 ## 13a. Proposals, Locations, and Warning Codes (D-022)
 

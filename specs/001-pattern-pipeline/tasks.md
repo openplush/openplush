@@ -420,7 +420,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T156 [P] `crates/openplush-pipeline/tests/warning_flow.rs` — a warning raised at any stage reaches export intact, with its remedy
 - [ ] T157 [P] `crates/openplush-export/tests/warning_page.rs` — unresolved warnings appear in the first-page summary, and the summary is part of the golden snapshot so a warning silently vanishing from the printed page is a test failure
 - [ ] T158 `crates/openplush-pipeline/src/warning_flow.rs` — accumulate `WarningSet` across stages, deterministically ordered
-- [ ] T159 `crates/openplush-export/src/warning_summary.rs` — render the first-page block: code, location, explanation, remedy (FR-064)
+- [ ] T159 `crates/openplush-export/src/warning_summary.rs` — render the first-page block from rows of text, code, location, explanation, remedy, that the pipeline renders from its `WarningSet` (FR-064, D-056)
 - [ ] T160 `crates/openplush-project/src/ack.rs` — persist acknowledgements keyed by code plus provenance target, so they survive re-repair and reopening
 - [ ] T161 `apps/web/src/warnings/` — warning panel, one-time acknowledgement before first export, and remedy actions. **Export is never blocked** (FR-064)
 

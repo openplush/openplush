@@ -30,8 +30,11 @@ jobs:
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The same entry point contributors run. "engine" is boundary (every
-      # self-test, then the boundary check, before any build), hygiene, fmt, clippy, test, types.
-      - run: scripts/check.sh engine
+      # self-test, then the boundary check, before any build), hygiene, fmt,
+      # clippy, test, types, workflows; --setup first installs the pinned
+      # actionlint the workflows step needs, checksummed, with the same code
+      # contributors use.
+      - run: scripts/check.sh --setup engine
 
   deny:
     name: licenses and advisories

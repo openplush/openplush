@@ -26,7 +26,7 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 ## One firing
 
 1. Check `main`, the open PRs, and the next free slice number once (`steward`, Sessions).
-2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and enable auto-merge on any tier A or B PR that is ready (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone.
+2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and fix whatever the merge gate's comment names on a tier A or B PR that is not `merge:ready` (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone; the gate enables auto-merge on its own.
 3. Pick up to four ready tasks that touch different crates and share no file. One task runs inline; two or more run through the Workflow tool, one agent per task, each in its own worktree, and nothing else runs while they do.
 4. Per task: branch `NNN/NN-<ID>-slug` from its parent (`main`, or the open PR it depends on); the failing test commit; the implementation commit; `scripts/check.sh <lane>` green; `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; label its tier; remove the attribution footer the server adds; subscribe.
 5. Scope each PR by intent (ADR 0013): one task is one PR unless it carries two intents, and the `Intent` section says what it brings in and why. Never split by size, and never a reason to stop.
@@ -34,11 +34,11 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 
 ## What a firing decides alone
 
-Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, labelling its tier, enabling auto-merge on a tier A or B PR when `steward` (Merging) allows it, resolving a merge conflict with `main` or its parent, answering 🟡 findings, and fixing 🔴 findings with the proof `steward` asks for.
+Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, labelling its tier, resolving a merge conflict with `main` or its parent, answering 🟡 findings and resolving their threads, and fixing 🔴 findings with the proof `steward` asks for.
 
 ## What it never does
 
-Merge a PR itself, or enable auto-merge on a tier C one; force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
+Merge a PR itself, enable auto-merge, or apply `merge:ready` (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
 
 ## Stop conditions
 

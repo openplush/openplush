@@ -77,11 +77,23 @@ else
   bad "engine.yml installs cargo-deny $deny, as check.sh pins" "$(grep -n 'cargo-deny@' "$here/../../.github/workflows/engine.yml")"
 fi
 
-if grep -q "tool: actionlint@$actionlint\b" "$here/../../.github/workflows/engine.yml"; then
-  ok "engine.yml installs actionlint $actionlint, as check.sh pins"
+# CI installs actionlint through the same installer contributors use.
+if grep -q 'scripts/check.sh --setup engine' "$here/../../.github/workflows/engine.yml"; then
+  ok "engine.yml installs the engine tools with check.sh --setup engine"
 else
-  bad "engine.yml installs actionlint $actionlint, as check.sh pins" "$(grep -n 'actionlint@' "$here/../../.github/workflows/engine.yml")"
+  bad "engine.yml installs the engine tools with check.sh --setup engine" "$(grep -n 'check.sh' "$here/../../.github/workflows/engine.yml")"
 fi
+# With steps named, --setup installs only what they need.
+expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="
+out=$("$check" --dry-run --setup engine 2>&1)
+if [[ $out != *"cargo install cargo-deny"* && $out != *"wasm-bindgen-cli"* ]]; then
+  ok "setup for the engine group installs nothing for deny or wasm"
+else
+  bad "setup for the engine group installs nothing for deny or wasm" "$out"
+fi
+expect_plan "setup for deny installs only cargo-deny" "--setup deny" "cargo install cargo-deny --version"
+out=$("$check" --dry-run --setup deny 2>&1)
+if [[ $out != *"actionlint_"* ]]; then ok "setup for deny skips actionlint"; else bad "setup for deny skips actionlint" "$out"; fi
 
 out=$("$check" --dry-run engine 2>&1)
 if [[ $out != *"cargo deny"* && $out != *"pnpm"* ]]; then

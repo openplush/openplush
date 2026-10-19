@@ -26,8 +26,9 @@ const SQUARE_LABEL_MM: f32 = 3.0;
 /// Helvetica is one of the PDF standard fonts, so the viewer supplies it and nothing is embedded.
 const FONT: Name<'static> = Name(b"F1");
 
-/// The sheet tiled as `tiling` says, which must have been made from this sheet: every placed copy's
-/// solid cut line then dashed sewing line, and the scale-check squares, on every page.
+/// The sheet tiled as `tiling` says, which must have been made from this sheet: on every page,
+/// every placed copy's solid cut line then dashed sewing line, a crosshair at each registration
+/// mark the page shows, the labelled scale-check squares and the page's label.
 pub fn write(
     sheet: &Sheet,
     pieces: &[PatternPiece],
@@ -124,7 +125,7 @@ fn crosshair(c: &mut Content, at: DVec2) {
 }
 
 /// The 50 mm square with the inch square in its top-left corner, each labelled inside, and the
-/// page's label to the right with its cap height level with the square's top.
+/// page's label 5 mm to the right, its baseline one label size below the square's top.
 fn squares(c: &mut Content, page: &Page) {
     c.set_line_width(SQUARE_LINE_MM);
     let corner = page.scale_square_min();

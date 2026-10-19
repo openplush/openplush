@@ -5,7 +5,7 @@ use openplush_geom::DVec2;
 use crate::{LayoutError, Sheet};
 
 /// Unprinted border on every page edge, in millimetres.
-const MARGIN_MM: f64 = 10.0;
+pub const MARGIN_MM: f64 = 10.0;
 /// How far each page repeats its right and bottom neighbour's edge, in millimetres.
 const OVERLAP_MM: f64 = 15.0;
 /// Pages along either side: one row letter per row, and the same cap across so the count stays bounded.
@@ -30,13 +30,18 @@ pub enum Paper {
 }
 
 impl Paper {
+    /// Width and height of the sheet of paper, in millimetres.
+    pub fn size_mm(self) -> DVec2 {
+        match self {
+            Self::Letter => DVec2::new(215.9, 279.4),
+            Self::A4 => DVec2::new(210.0, 297.0),
+        }
+    }
+
     /// Width and height of the printable area inside the margin, in millimetres.
     fn printable_mm(self) -> DVec2 {
-        let (w, h) = match self {
-            Self::Letter => (215.9, 279.4),
-            Self::A4 => (210.0, 297.0),
-        };
-        DVec2::new(w - 2.0 * MARGIN_MM, h - 2.0 * MARGIN_MM)
+        let size = self.size_mm();
+        DVec2::new(size.x - 2.0 * MARGIN_MM, size.y - 2.0 * MARGIN_MM)
     }
 }
 

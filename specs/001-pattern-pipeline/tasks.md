@@ -279,13 +279,13 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 ### Tests for US2
 
-- [ ] T100 [P] [US2] `crates/openplush-flatten/tests/metrics.rs` — singular-value metrics on a known-stretched fixture match hand-computed values
+- [x] T100 [P] [US2] `crates/openplush-flatten/tests/metrics.rs` — singular-value metrics on a known-stretched fixture match hand-computed values — *merged in #207*
 - [ ] T101 [P] [US2] `crates/openplush-seams/tests/dart_suggestion.rs` — sphere with one seam: suggestions cluster at the poles, and applying one measurably lowers distortion
 - [ ] T102 [P] [US2] `apps/web/tests/heatmap.spec.ts` — the heatmap palette is color-blind-safe and identical between the 3D and 2D views (FR-083)
 
 ### Implementation
 
-- [ ] T103 [US2] `crates/openplush-flatten/src/metrics.rs` — per-triangle Jacobian singular values: max stretch, max compression, area ratio, conformal ratio. Interpreted against the active fabric's tolerances, not fixed constants
+- [x] T103 [US2] `crates/openplush-flatten/src/metrics.rs` — per-triangle Jacobian singular values: max stretch, max compression, area ratio, conformal ratio. Interpreted against the active fabric's tolerances, not fixed constants — *merged in #207 as the public `metrics::distortion(chart, xyz, faces, uv) -> Vec<(FaceId, Distortion)>` (stretch σ₁, compression σ₂, area ratio, conformal ratio), `uv` dense and indexed like `xyz`; refusals are `EmptyChart`, `Degenerate`, and `Flip` naming every det J ≤ 0 face. Raw values only: tolerances stay the fabric's*
 - [ ] T104 [US2] `crates/openplush-flatten/src/summary.rs` — numeric per-piece summary (FR-021)
 - [ ] T105 [US2] `crates/openplush-seams/src/suggest_dart.rs` — the four-step MVP algorithm from data-model section 5: cluster over-tolerance faces, find the max angle-defect vertex, propose a dart from the nearest boundary toward that cone point, accept for display only if distortion drops by the threshold
 - [ ] T106 [US2] `crates/openplush-seams/src/concavity.rs` — warn when a concave region has no seam through it, with an `Actionable` remedy proposing a seam along the crease (FR-025). **This is the warning that matters most for a plush**: stuffing pushes an unsupported concavity open and the shape is simply lost

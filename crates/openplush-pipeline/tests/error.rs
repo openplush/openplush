@@ -121,7 +121,10 @@ fn folded_chart_names_the_chart_and_the_edge_it_folds_across() {
         EngineError::FoldedChart { chart, edge }
             if *chart == ChartId::new(2) && *edge == EdgeId::new(17)
     ));
-    assert_eq!(e.to_string(), "chart 2 lies back over itself across edge 17");
+    assert_eq!(
+        e.to_string(),
+        "chart 2 lies back over itself across edge 17"
+    );
 }
 
 #[test]

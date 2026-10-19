@@ -3,6 +3,7 @@
 mod chart;
 mod chart_mesh;
 mod error;
+mod fold;
 mod graph;
 mod ids;
 mod kind;
@@ -16,6 +17,7 @@ mod topology;
 pub use chart::{Chart, charts};
 pub use chart_mesh::ChartMesh;
 pub use error::SeamsError;
+pub use fold::check_fold;
 pub use graph::{SeamChain, SeamGraph, SeamNode};
 pub use ids::{ChartId, SeamChainId};
 pub use kind::{ChartFailure, SeamKind};

@@ -25,8 +25,8 @@ pub(crate) fn not_realizable(chart: ChartId, xyz: &[DVec3], faces: Faces<'_>) ->
     }
 }
 
-/// The shortest edge path from the rim to the interior vertex with the most angle defect
-/// (the smallest vertex number on a tie), rim end first.
+/// The shortest edge path from the rim to the interior vertex with the least angle sum, that
+/// is the most angle defect (the smallest vertex number on a tie), rim end first.
 fn dart(xyz: &[DVec3], faces: Faces<'_>, open: &Open) -> Option<Vec<VertexId>> {
     let rim: BTreeSet<u32> = open.ring.iter().copied().collect();
     let tip = open

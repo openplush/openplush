@@ -11,7 +11,7 @@ mod common;
 use common::{Grid, ROW_1, Setup};
 use openplush_mesh::{FaceId, ManifoldMesh};
 use openplush_seams::{
-    Chart, ChartId, SeamGraph, SeamKind, SeamSet, SeamsError, SewingMap, charts,
+    Chart, ChartId, SeamChainId, SeamGraph, SeamKind, SeamSet, SeamsError, SewingMap, charts,
 };
 
 /// The map, after checking what must hold for any seam set (see `well_formed`).
@@ -69,6 +69,27 @@ fn no_seams_give_an_empty_map() -> Result<(), Setup> {
     let grid = Grid::sheet(4, 2)?;
     let map = map(&grid.mesh, &SeamSet::new())??;
     assert!(map.bundles().is_empty());
+    assert_eq!(map.bundle(SeamChainId::new(0)), None);
+    Ok(())
+}
+
+#[test]
+fn a_chain_the_map_does_not_have_finds_no_bundle() -> Result<(), Setup> {
+    let grid = Grid::sheet(4, 2)?;
+    let mut seams = SeamSet::new();
+    grid.seam(&mut seams, SeamKind::Cut, &ROW_1)?;
+    let map = map(&grid.mesh, &seams)??;
+    let [bundle] = map.bundles() else {
+        panic!("one chain: {:?}", map.bundles());
+    };
+    // The row's edges are numbered after the bottom row's, so there is room on both sides.
+    assert!(bundle.chain().index() > 0, "{bundle:?}");
+    for absent in [
+        SeamChainId::new(0),
+        SeamChainId::new(bundle.chain().index() + 1),
+    ] {
+        assert_eq!(map.bundle(absent), None, "{absent:?}");
+    }
     Ok(())
 }
 
@@ -157,12 +178,14 @@ fn a_ring_seam_and_a_lengthwise_cut_on_a_tube_each_have_two_sides() -> Result<()
     Ok(())
 }
 
-#[test]
-fn a_seam_along_the_mesh_boundary_has_no_partner_and_is_refused() -> Result<(), Setup> {
+/// A seam along one rim of a sheet, beside an interior seam, is refused naming the rim's chain.
+/// On the bottom rim the faceless half-edges are on the side running against the walk; on the
+/// top rim they are on the side running with it.
+fn rim_is_refused(rim: &[(u32, u32)]) -> Result<(), Setup> {
     let grid = Grid::sheet(4, 2)?;
     let mut seams = SeamSet::new();
     grid.seam(&mut seams, SeamKind::Cut, &ROW_1)?;
-    grid.seam(&mut seams, SeamKind::Mandatory, &[(0, 0), (1, 0), (2, 0)])?;
+    grid.seam(&mut seams, SeamKind::Mandatory, rim)?;
     let graph = SeamGraph::new(&grid.mesh, &seams)?;
     let rim = graph
         .chains()
@@ -175,4 +198,10 @@ fn a_seam_along_the_mesh_boundary_has_no_partner_and_is_refused() -> Result<(), 
         Err(SeamsError::UnpairedBoundarySeam { chain: rim })
     );
     Ok(())
+}
+
+#[test]
+fn a_seam_along_the_mesh_boundary_has_no_partner_and_is_refused() -> Result<(), Setup> {
+    rim_is_refused(&[(0, 0), (1, 0), (2, 0)])?;
+    rim_is_refused(&[(0, 2), (1, 2), (2, 2)])
 }

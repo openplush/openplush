@@ -54,10 +54,7 @@ fn well_formed(mesh: &ManifoldMesh, seams: &SeamSet, cut: &ChartMesh) {
             continue;
         }
         // The far face's corner at this side's origin starts the half-edge after `across`.
-        if let (Some(_), Some(&far)) = (
-            local_of.get(&across),
-            local_of.get(&mesh.next(across)),
-        ) {
+        if let (Some(_), Some(&far)) = (local_of.get(&across), local_of.get(&mesh.next(across))) {
             assert_eq!(l, far, "no seam on {:?}, so one vertex", side.edge());
         }
     }
@@ -103,7 +100,11 @@ fn a_dart_from_the_edge_splits_its_mouth_and_keeps_its_tip() -> Result<(), Setup
     let mut seams = SeamSet::new();
     grid.seam(&mut seams, SeamKind::Dart, &[(2, 0), (2, 1)])?;
     let cuts = cut_open(&grid.mesh, &seams)?;
-    assert_eq!(copies(&cuts, grid.at(2, 0)?), 2, "the mouth, on the boundary");
+    assert_eq!(
+        copies(&cuts, grid.at(2, 0)?),
+        2,
+        "the mouth, on the boundary"
+    );
     assert_eq!(copies(&cuts, grid.at(2, 1)?), 1, "the tip");
     assert_eq!(total(&cuts), grid.mesh.vertex_count() + 1);
     Ok(())
@@ -154,6 +155,9 @@ fn a_slit_octahedron_keeps_six_vertices_and_its_equator_cut_copies_four() -> Res
         seams.insert(solid.edge(i, (i + 1) % 4)?, SeamKind::Cut)?;
     }
     let cuts = cut_open(&solid.mesh, &seams)?;
-    assert_eq!(cuts.iter().map(|c| c.xyz().len()).collect::<Vec<_>>(), [5, 5]);
+    assert_eq!(
+        cuts.iter().map(|c| c.xyz().len()).collect::<Vec<_>>(),
+        [5, 5]
+    );
     Ok(())
 }

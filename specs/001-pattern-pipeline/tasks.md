@@ -437,7 +437,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [ ] T168 [P] `docs/reference/` — fabric profiles, warning codes with their meanings and remedies, CLI reference. *2026-10-14: written incrementally, not here ([ADR 0003](../../docs/adr/0003-as-built-docs.md)): each PR whose change AGENTS.md (Specs and docs) lists documents it. T168 is the closing pass: an index of those pages and a check that they match the code*
 - [ ] T169 [P] `docs/adr/` — write up every spike outcome and any decision that changed a principle or public contract
 - [ ] T170 Run the full [quickstart.md](./quickstart.md) walkthrough end to end and fix what does not work. **Including printing on paper and measuring the scale square with a ruler** — a pattern that prints at 97% is a ruined project and nothing on screen reveals it
-- [ ] T171 SC-004 usability test: five or more first-time makers, prepared model, printable pattern within 15 minutes. Needs recruiting and a written protocol; gates the release claim, not the build
+- [ ] T171 human:recruiting SC-004 usability test: five or more first-time makers, prepared model, printable pattern within 15 minutes. Needs recruiting and a written protocol; gates the release claim, not the build
 
 ---
 

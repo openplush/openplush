@@ -209,16 +209,12 @@ impl Walk<'_> {
     }
 }
 
-/// A chain between nodes, turned to run from its lower-numbered end, or, when both ends are
-/// the same node, to leave it along the lower-numbered end edge.
+/// A chain between nodes, turned when both its ends are the same node to leave it along the
+/// lower-numbered end edge. A chain between two different nodes is already right: nodes are
+/// walked from in ascending order, so it was walked from its lower end.
 fn normalized(mut chain: SeamChain) -> SeamChain {
     let (first, last) = (chain.vertices[0], chain.vertices[chain.vertices.len() - 1]);
-    let backwards = if first == last {
-        chain.edges.last() < chain.edges.first()
-    } else {
-        last < first
-    };
-    if backwards {
+    if first == last && chain.edges.last() < chain.edges.first() {
         chain.edges.reverse();
         chain.vertices.reverse();
     }

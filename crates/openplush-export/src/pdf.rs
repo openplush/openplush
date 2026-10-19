@@ -1,4 +1,5 @@
-//! One sheet as a tiled PDF at true scale: a page per tile, each showing its window of the sheet.
+//! One sheet as a tiled PDF at true scale: a cover page, then a page per tile, each showing its
+//! window of the sheet.
 //!
 //! Geometry stays in sheet millimetres under one `cm` per page, which maps the page's window onto
 //! its printable area at 72 / 25.4 points per millimetre. Sheets and PDF are both y-up, so nothing
@@ -13,6 +14,8 @@ use pdf_writer::{Content, Name, Pdf, Rect, Ref, Str};
 use crate::ExportError;
 use crate::svg::index;
 
+mod cover;
+
 const PT_PER_MM: f64 = 72.0 / 25.4;
 const CUT_MM: f32 = 0.5;
 const SEW_MM: f32 = 0.3;
@@ -26,7 +29,8 @@ const SQUARE_LABEL_MM: f32 = 3.0;
 /// Helvetica is one of the PDF standard fonts, so the viewer supplies it and nothing is embedded.
 const FONT: Name<'static> = Name(b"F1");
 
-/// The sheet tiled as `tiling` says, which must have been made from this sheet: on every page,
+/// The sheet tiled as `tiling` says, which must have been made from this sheet. First a cover
+/// page with the labelled scale-check squares and a map of the tiles; then on every tile's page,
 /// every placed copy's solid cut line then dashed sewing line, a crosshair at each registration
 /// mark the page shows, the labelled scale-check squares and the page's label.
 pub fn write(
@@ -47,15 +51,21 @@ pub fn write(
         .collect::<Result<Vec<_>, ExportError>>()?;
     let size = tiling.paper().size_mm();
     let (catalog, tree, font) = (Ref::new(1), Ref::new(2), Ref::new(3));
-    // INVARIANT: `tile` caps a tiling at 26 × 26 pages, so every reference fits in an i32.
+    // INVARIANT: `tile` caps a tiling at 26 × 26 pages, so with the cover every reference fits
+    // in an i32.
     let page_ref = |i: usize| Ref::new(4 + 2 * i as i32);
-    let count = tiling.pages().len();
+    let count = tiling.pages().len() + 1;
     let mut pdf = Pdf::new();
     pdf.catalog(catalog).pages(tree);
     pdf.pages(tree)
         .kids((0..count).map(page_ref))
         .count(count as i32);
-    for (i, page) in tiling.pages().iter().enumerate() {
+    let cover = cover::draw(sheet, &placed, tiling);
+    let tiles = tiling
+        .pages()
+        .iter()
+        .map(|p| draw(p, &placed, tiling.marks()));
+    for (i, stream) in std::iter::once(cover).chain(tiles).enumerate() {
         let (id, content) = (page_ref(i), Ref::new(page_ref(i).get() + 1));
         let mut writer = pdf.page(id);
         writer.media_box(Rect::new(0.0, 0.0, pt(size.x), pt(size.y)));
@@ -63,7 +73,7 @@ pub fn write(
         writer.contents(content);
         writer.resources().fonts().pair(FONT, font);
         drop(writer);
-        pdf.stream(content, &draw(page, &placed, tiling.marks()));
+        pdf.stream(content, &stream);
     }
     pdf.type1_font(font)
         .base_font(Name(b"Helvetica"))
@@ -97,7 +107,7 @@ fn draw(page: &Page, placed: &[(&Placement, &PatternPiece)], marks: &[DVec2]) ->
     for &mark in marks.iter().filter(shown) {
         crosshair(&mut c, mark);
     }
-    squares(&mut c, page);
+    squares(&mut c, page.scale_square_min(), &page.label());
     c.restore_state();
     c.finish().to_vec()
 }
@@ -124,11 +134,10 @@ fn crosshair(c: &mut Content, at: DVec2) {
     c.stroke();
 }
 
-/// The 50 mm square with the inch square in its top-left corner, each labelled inside, and the
-/// page's label 5 mm to the right, its baseline one label size below the square's top.
-fn squares(c: &mut Content, page: &Page) {
+/// The 50 mm square from `corner` with the inch square in its top-left corner, each labelled
+/// inside, and `label` 5 mm to the right, its baseline one label size below the square's top.
+fn squares(c: &mut Content, corner: DVec2, label: &str) {
     c.set_line_width(SQUARE_LINE_MM);
-    let corner = page.scale_square_min();
     square(c, corner, SCALE_SQUARE_MM);
     let inch = corner + DVec2::new(0.0, SCALE_SQUARE_MM - INCH_SQUARE_MM);
     square(c, inch, INCH_SQUARE_MM);
@@ -140,8 +149,8 @@ fn squares(c: &mut Content, page: &Page) {
         SQUARE_LABEL_MM,
     );
     text(c, "1 in", inch + DVec2::new(3.0, 3.0), SQUARE_LABEL_MM);
-    let label = corner + DVec2::new(side + 5.0, side - f64::from(LABEL_MM));
-    text(c, &page.label(), label, LABEL_MM);
+    let at = corner + DVec2::new(side + 5.0, side - f64::from(LABEL_MM));
+    text(c, label, at, LABEL_MM);
 }
 
 /// ASCII only: Helvetica's WinAnsi encoding is ASCII's superset, and every label here is ASCII.

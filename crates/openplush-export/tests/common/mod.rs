@@ -5,6 +5,10 @@
 use std::collections::BTreeMap;
 
 use openplush_geom::DVec2;
+use openplush_geom::units::Mm;
+use openplush_layout::shelf::pack;
+use openplush_layout::{LayoutError, LayoutOptions, Sheet};
+use openplush_pattern::{CutCount, Outline, PatternPiece, PieceId};
 
 pub(crate) type Setup = Box<dyn std::error::Error>;
 
@@ -39,6 +43,41 @@ pub(crate) struct Stroke {
     pub(crate) width: f64,
     /// Dash lengths in page millimetres; empty for a solid line.
     pub(crate) dash: Vec<f64>,
+    /// Stroke gray level: 0 is black.
+    pub(crate) gray: f64,
+}
+
+/// One `w` × `h` mm rectangle, cut and sewn on the same line, packed alone on a roll 20 mm wider.
+pub(crate) fn rectangle(w: f64, h: f64) -> Result<(Sheet, Vec<PatternPiece>), Setup> {
+    let outline = Outline::new(vec![
+        DVec2::new(0.0, 0.0),
+        DVec2::new(w, 0.0),
+        DVec2::new(w, h),
+        DVec2::new(0.0, h),
+    ])?;
+    let pieces = vec![PatternPiece::new(
+        PieceId::new(0),
+        outline.clone(),
+        outline,
+        CutCount::new(1, 0)?,
+        vec![0.0],
+    )?];
+    let opts = LayoutOptions::new(Mm::try_new(w + 20.0)?, Mm::try_new(0.0)?, false)?;
+    let sheet = pack(&pieces, &opts)?
+        .into_iter()
+        .next()
+        .ok_or(LayoutError::NoPieces)?;
+    Ok((sheet, pieces))
+}
+
+/// Every page after the cover, in page-tree order.
+pub(crate) fn tiles(pdf: &[u8]) -> Result<Vec<Page>, Setup> {
+    let mut all = pages(pdf)?;
+    if all.is_empty() {
+        return Err("no cover".into());
+    }
+    all.remove(0);
+    Ok(all)
 }
 
 /// Every page in page-tree order.
@@ -130,6 +169,7 @@ struct State {
     ctm: Matrix,
     width: f64,
     dash: Vec<f64>,
+    gray: f64,
 }
 
 enum Token<'a> {
@@ -191,6 +231,7 @@ fn interpret(stream: &str) -> Result<Page, Setup> {
             ctm: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
             width: 1.0,
             dash: Vec::new(),
+            gray: 0.0,
         },
         saved: Vec::new(),
         path: Vec::new(),
@@ -251,6 +292,7 @@ impl Run {
             "Q" => self.state = self.saved.pop().ok_or("unbalanced Q")?,
             "cm" => self.state.ctm = concat(&[o[0], o[1], o[2], o[3], o[4], o[5]], &self.state.ctm),
             "w" => self.state.width = o[0] * scale(&self.state.ctm),
+            "G" => self.state.gray = o[0],
             "d" => {
                 let k = scale(&self.state.ctm);
                 self.state.dash = array.iter().map(|v| v * k).collect();
@@ -273,6 +315,7 @@ impl Run {
                         points,
                         width: self.state.width,
                         dash: self.state.dash.clone(),
+                        gray: self.state.gray,
                     });
                 }
             }

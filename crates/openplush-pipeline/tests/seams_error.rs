@@ -31,4 +31,11 @@ fn seams_error_messages_are_pinned() {
         .to_string(),
         "a mandatory seam cannot be removed, replaced, or placed over another seam (edge EdgeId(4))"
     );
+    assert_eq!(
+        SeamsError::UnknownEdge {
+            edge: EdgeId::new(9)
+        }
+        .to_string(),
+        "a seam is on edge EdgeId(9), which the mesh does not have"
+    );
 }

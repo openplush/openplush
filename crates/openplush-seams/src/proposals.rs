@@ -26,22 +26,22 @@ pub fn close_chart(
     let Err(failure) = check_disk(mesh, seams, chart) else {
         return Ok(None);
     };
-    let not_closed = SeamsError::ChartNotClosed { chart: chart.id() };
+    let not_closed = || SeamsError::ChartNotClosed { chart: chart.id() };
     let mut working = seams.clone();
     let mut add = BTreeMap::new();
     if failure == ChartFailure::Closed {
         let found = CutOpen::new(mesh, &working, chart).between_sharpest();
-        cut(&mut working, &mut add, found.ok_or(not_closed.clone())?)?;
+        cut(&mut working, &mut add, found.ok_or_else(not_closed)?)?;
     } else {
         let found = CutOpen::new(mesh, &working, chart).joining_loops();
-        cut(&mut working, &mut add, found.ok_or(not_closed.clone())?)?;
+        cut(&mut working, &mut add, found.ok_or_else(not_closed)?)?;
         if let Err(ChartFailure::PositiveGenus { .. }) = check_disk(mesh, &working, chart) {
             let found = CutOpen::new(mesh, &working, chart).handle_loops();
-            cut(&mut working, &mut add, found.ok_or(not_closed.clone())?)?;
+            cut(&mut working, &mut add, found.ok_or_else(not_closed)?)?;
         }
     }
     if !leaves_disk(mesh, &working, chart)? {
-        return Err(not_closed);
+        return Err(not_closed());
     }
     let explanation = explain(failure, add.len());
     let kind = ProposalKind::CloseChart {

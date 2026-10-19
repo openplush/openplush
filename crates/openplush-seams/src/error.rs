@@ -37,4 +37,10 @@ pub enum SeamsError {
         /// The chart.
         chart: ChartId,
     },
+    /// An edge to mark has no seam, as when its chain comes from an older seam graph.
+    #[error("edge {edge:?} has no seam to mark")]
+    NotASeam {
+        /// The edge.
+        edge: EdgeId,
+    },
 }

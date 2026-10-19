@@ -96,7 +96,8 @@ fn measure(rest: &Rest, uv: &[DVec2], t: &[VertexId; 3]) -> Option<Measure> {
     let stretch = q + r;
     // det / σ₁ rather than q − r, which cancels when the face is nearly collapsed.
     let compression = det / stretch;
-    (stretch.is_finite() && compression > 0.0).then_some(Measure::Kept(Distortion {
+    // An overflowing det or stretch, or an underflowing quotient, leaves nothing measurable.
+    (compression.is_finite() && compression > 0.0).then_some(Measure::Kept(Distortion {
         stretch,
         compression,
     }))

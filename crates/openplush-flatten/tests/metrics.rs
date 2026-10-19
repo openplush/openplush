@@ -253,3 +253,59 @@ fn a_face_whose_flat_scale_overflows_is_degenerate() {
         })
     );
 }
+
+#[test]
+fn a_thin_face_keeps_its_compression_exact() -> Result<(), FlattenError> {
+    let (xyz, faces) = right_triangle();
+    let flat = uv(&[(0.0, 0.0), (1e8, 0.0), (0.0, 1e-9)]);
+    assert_values(one(&xyz, &faces, &flat)?, [1e8, 1e-9, 0.1, 1e17]);
+    Ok(())
+}
+
+#[test]
+fn a_face_with_no_finite_singular_values_is_degenerate_not_flipped() {
+    let (xyz, faces) = right_triangle();
+    for flat in [
+        // det J overflows while σ₁ stays finite.
+        uv(&[(0.0, 0.0), (1e200, 0.0), (0.0, 1e200)]),
+        // σ₂ underflows to zero.
+        uv(&[(0.0, 0.0), (1.0, 0.0), (1e10, 5e-324)]),
+    ] {
+        assert_eq!(
+            distortion(CHART, &xyz, &faces, &flat),
+            Err(FlattenError::Degenerate {
+                chart: CHART,
+                face: FaceId::new(0),
+            })
+        );
+    }
+}
+
+#[test]
+fn an_infinite_jacobian_is_degenerate_even_when_its_det_is_negative() {
+    // A skewed rest shape, so no Jacobian entry is ∞ · 0: det J is -∞, not NaN.
+    let xyz = vec![DVec3::ZERO, DVec3::X, DVec3::new(1.0, 1.0, 0.0)];
+    let flat = uv(&[(0.0, 0.0), (f64::INFINITY, -1.0), (0.0, -3.0)]);
+    assert_eq!(
+        distortion(CHART, &xyz, &[face(0, [0, 1, 2])], &flat),
+        Err(FlattenError::Degenerate {
+            chart: CHART,
+            face: FaceId::new(0),
+        })
+    );
+}
+
+#[test]
+fn a_degenerate_face_is_reported_over_an_earlier_flip() {
+    let xyz = vec![DVec3::ZERO, DVec3::X, DVec3::Y, DVec3::new(1.0, 1.0, 0.0)];
+    // Face 1 mirrored; face 2 has a 3D shape but vertex 3 has no flat position.
+    let flat = uv(&[(0.0, 0.0), (1.0, 0.0), (0.0, -1.0)]);
+    let faces = vec![face(1, [0, 1, 2]), face(2, [1, 3, 2])];
+    assert_eq!(
+        distortion(CHART, &xyz, &faces, &flat),
+        Err(FlattenError::Degenerate {
+            chart: CHART,
+            face: FaceId::new(2),
+        })
+    );
+}

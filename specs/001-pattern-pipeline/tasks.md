@@ -58,7 +58,7 @@ Tasks that will exceed the budget on their own. Split by capability, each with i
 | T073 chart construction | Flood fill, vertex duplication, and provenance mapping |
 | T080 SLIM interior | Energy and line search may land before the convergence and iteration policy |
 | T085 allowance strips | Strip construction, then corner joins, then the tight-curve union |
-| T089 page tiling | Tiling geometry, then registration marks and page map, then the scale square (landed as #175 tiling, #179 rows from the top edge, #178 labels and marks, #181 scale square) |
+| T089 page tiling | Tiling geometry, then registration marks and labels, then the scale square (landed as #175 tiling, #179 rows from the top edge, #178 labels and marks, #181 scale square) |
 | T105 dart suggestion | Four distinct steps, each independently checkable |
 
 ### Isolate these — own PR regardless of size

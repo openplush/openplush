@@ -53,7 +53,7 @@ Gaussian curvature is the right signal because it *is* the obstruction to flatte
 
 This is the approach 001's data-model section 5 already names for mirroring seams, so this feature *supplies* that plane rather than inventing a second mechanism.
 
-**Multiple planes**: a sphere or any radially symmetric shape has infinitely many. FR-005 caps the output at one dominant plane. Picking the best-scoring plane on a sphere is arbitrary but harmless; picking one on a *nearly* radially symmetric animal would be actively misleading. Mitigation: when two or more candidates score within a small margin of each other, report none and say why. Ambiguous is closer to the truth than arbitrary.
+**Multiple planes**: a sphere or any radially symmetric shape has infinitely many. FR-005 caps the output at one dominant plane. Picking the best-scoring plane on a sphere is arbitrary but harmless; picking one on a *nearly* radially symmetric animal would be actively misleading. Mitigation: when a second distinct candidate plane also scores within the acceptance threshold, report none and say why; the gap between two fitting planes ranks how exactly each mirrors the shape, not which one the maker sews by (H-010, spike H4). Ambiguous is closer to the truth than arbitrary.
 
 ## R2. Sensitivity, and the monotonicity requirement
 

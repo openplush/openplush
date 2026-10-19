@@ -1,6 +1,6 @@
 # Spike H4: the symmetry ambiguity margin (H-006)
 
-**Status (2026-10-19): a proposal, not a decision.** The recommended rule is a Proposed entry in the 002 plan's Decision Ledger; the maintainer accepts or rejects it there. Nothing here ships.
+**Status (2026-10-19): the recommendation below was accepted as H-010 in the 002 plan's Decision Ledger the same day.** Nothing here ships; H030 implements the rule.
 
 Non-shipping research code (research/AGENTS.md). Standard library only; `requirements.txt` is empty on purpose.
 

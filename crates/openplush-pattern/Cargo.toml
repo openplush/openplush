@@ -9,6 +9,8 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+# Exact pin: the version research/s3_i_overlay_fuzz audited; re-run it before bumping.
+i_overlay = { version = "=9.0.1", default-features = false }
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
 openplush-seams = { path = "../openplush-seams" }

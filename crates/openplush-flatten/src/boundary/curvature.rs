@@ -13,7 +13,7 @@ use crate::solver;
 /// The intrinsic quantities the curvature step needs.
 pub(super) struct Intrinsic {
     /// Each used vertex's sum of corner angles.
-    angle_sum: BTreeMap<u32, f64>,
+    pub(super) angle_sum: BTreeMap<u32, f64>,
     /// Each edge's cotangent weight (half the cotangents of the angles opposite it), keyed
     /// smaller vertex first; with them the cotangent Laplacian is positive semidefinite.
     pub(super) weight: BTreeMap<(u32, u32), f64>,

@@ -5,7 +5,7 @@ use openplush_mesh::{FaceId, VertexId};
 use openplush_testkit::oracles::outline_simple;
 
 use super::fixtures::{Faces, faces, grid};
-use super::{BoundaryError, curvature, prescribe, topology};
+use super::{BoundaryError, curvature, open_polygon, prescribe, topology};
 
 /// `fixtures::grid`'s faces with vertex `row * (cols + 1) + col` at `place(col, row)`.
 fn surface(cols: u32, rows: u32, place: impl Fn(f64, f64) -> DVec3) -> (Vec<DVec3>, Faces) {
@@ -217,4 +217,39 @@ fn a_chart_that_is_not_a_disk_is_refused() {
         .filter(|(f, _)| f.index() / 2 != 4)
         .collect();
     assert_eq!(prescribe(&xyz, &annulus), Err(BoundaryError::NotADisk));
+}
+
+/// `cap` with one rim vertex pulled off its symmetric place, so the natural turning no longer
+/// closes the boundary by itself.
+fn lopsided() -> (Vec<DVec3>, Faces) {
+    let (mut xyz, f) = cap();
+    xyz[3] += DVec3::new(0.08, 0.0, 0.0);
+    (xyz, f)
+}
+
+#[test]
+fn the_open_polygon_misses_closing_by_the_natural_gap() -> Result<(), BoundaryError> {
+    let step = std::f64::consts::PI / 8.0;
+    let (xyz, f) = surface(8, 3, |c, r| {
+        DVec3::new((c * step).cos(), (c * step).sin(), 0.4 * r)
+    });
+    // Developable: the natural turning already closes.
+    assert!(open_polygon(&xyz, &f)?.gap <= 1e-12);
+    let (xyz, f) = lopsided();
+    let open = open_polygon(&xyz, &f)?;
+    assert!(open.gap > 1e-6, "{}", open.gap);
+    let big: Vec<DVec3> = xyz.iter().map(|&p| p * 1000.0).collect();
+    assert!((open_polygon(&big, &f)?.gap / 1000.0 - open.gap).abs() <= 1e-9 * open.gap);
+    Ok(())
+}
+
+#[test]
+fn the_open_polygon_lists_the_rim_and_every_vertex_angle_sum() -> Result<(), BoundaryError> {
+    let (xyz, f) = cap();
+    let open = open_polygon(&xyz, &f)?;
+    assert_eq!(open.ring, topology::boundary_loop(&f)?);
+    assert_eq!(open.angle_sum.len(), xyz.len());
+    // A flat vertex sums to 2π; the cap's interior vertices fall short of it.
+    assert!(open.angle_sum[&24] < TAU);
+    Ok(())
 }

@@ -5,6 +5,7 @@
 
 mod boundary;
 mod error;
+mod fallback;
 pub mod injectivity;
 mod interior;
 mod session;

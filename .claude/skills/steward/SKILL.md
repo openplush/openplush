@@ -20,7 +20,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 - Don't run `pr-reviewer`, `spec-reviewer` or `docs-reviewer` locally: the review on opening runs them, and a rerun reviews only what changed since.
 - Run `mutation-auditor` once before opening a PR that adds checks to Rust under `crates/` or `bindings/`, in its own worktree (`isolation: "worktree"`) so it never shares a checkout with other work. Close each real survivor with a test and re-run that mutation to prove the test bites.
-- At most two subagents at a time.
+- At most two subagents at a time. A `factory` firing may run up to four through the Workflow tool, one task each in its own worktree, with nothing else running beside them.
 
 ## Stacks
 
@@ -44,6 +44,6 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Sessions
 
-- One intent per session. When it merges or the context grows long, write a short handoff for a fresh session (merged PRs, open PRs with their heads, next steps, these rules) rather than carrying on.
+- One intent per session, or one `factory` firing. When it merges or the context grows long, write a short handoff for a fresh session (merged PRs, open PRs with their heads, next steps, these rules) rather than carrying on.
 - Read only the files a step needs: grep `tasks.md` and the plan's ledger for the IDs in hand instead of reading them whole. Ask GitHub for one thread or the latest summary, not every thread on the PR.
 - Check `main`, the open PRs and the next free branch position, decision and task numbers once, at the start of a session.

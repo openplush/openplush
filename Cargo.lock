@@ -775,6 +775,7 @@ version = "0.0.0"
 name = "openplush-seams"
 version = "0.0.0"
 dependencies = [
+ "libm",
  "openplush-geom",
  "openplush-mesh",
  "thiserror",

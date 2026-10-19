@@ -1,4 +1,6 @@
 use openplush_mesh::EdgeId;
+
+use crate::ChartId;
 use thiserror::Error;
 
 /// Every way `openplush-seams` refuses its input.
@@ -28,5 +30,11 @@ pub enum SeamsError {
     BadProposalId {
         /// The rejected text.
         text: String,
+    },
+    /// The cuts found to close a chart do not leave it one disk, so none is offered.
+    #[error("the cuts found for chart {chart:?} do not leave it one disk")]
+    ChartNotClosed {
+        /// The chart.
+        chart: ChartId,
     },
 }

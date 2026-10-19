@@ -1,5 +1,6 @@
 //! A chart's flatten as a series of bounded steps, so a single-threaded worker can yield
-//! between them, report progress and give up without ever holding a half-flattened layout.
+//! between them, report progress and give up (by dropping the session) without ever holding a
+//! half-flattened layout.
 
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
@@ -57,9 +58,6 @@ impl<'a> FlattenSession<'a> {
             }
         })
     }
-
-    /// Gives the work up; nothing of it survives.
-    pub fn cancel(self) {}
 
     /// Every vertex of the chart with its flat position, in vertex order; `None` until a step
     /// has returned `Done`, so a half-flattened layout is never handed out.

@@ -1,6 +1,6 @@
 //! A shell names the error a proposal-ID parse returns through this crate alone.
 
-use openplush_pipeline::{ChartId, EdgeId, ProposalId, SeamsError};
+use openplush_pipeline::{ChartId, EdgeId, ProposalId, SeamChainId, SeamsError};
 
 #[test]
 fn a_bad_proposal_id_is_a_pipeline_nameable_error() {
@@ -51,5 +51,12 @@ fn seams_error_messages_are_pinned() {
         }
         .to_string(),
         "edge EdgeId(7) has no seam to mark"
+    );
+    assert_eq!(
+        SeamsError::UnpairedBoundarySeam {
+            chain: SeamChainId::new(5)
+        }
+        .to_string(),
+        "seam chain SeamChainId(5) runs along the mesh boundary with no recorded partner"
     );
 }

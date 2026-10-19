@@ -53,6 +53,11 @@ f fixtures/expected/cube.pdf | files | pr "$a_title" 001/10-x '[]' | expect "an 
 { f apps/web/src/main.ts; f fixtures/golden/cube.svg; } | files | pr "$a_title" 001/10-x '[]' | expect "a mixed A+B PR is B" '.tier == "B"'
 { f fixtures/golden/cube.svg; f crates/openplush-geom/src/lib.rs; } | files | pr "$a_title" 001/10-x '[]' | expect "a mixed B+C PR is C" '.tier == "C"'
 f apps/AGENTS.md | files | pr "$a_title" 001/10-x '[]' | expect "any AGENTS.md is C" '.tier == "C"'
+f clippy.toml | files | pr "chore: relax a lint" chore/lints '[]' | expect "clippy.toml is C (the determinism lints)" '.tier == "C"'
+f rustfmt.toml | files | pr "chore: fmt" chore/fmt '[]' | expect "rustfmt.toml is C" '.tier == "C"'
+f .gitattributes | files | pr "chore: attributes" chore/attrs '[]' | expect ".gitattributes is C (eol and binary keep fixtures byte-identical)" '.tier == "C"'
+f LICENSE-MIT | files | pr "chore: license" chore/license '[]' | expect "a LICENSE-* file is C" '.tier == "C"'
+f docs/LICENSE-NOTES.md | files | pr "docs: license notes" 001/10-x '[]' | expect "a LICENSE-* name below the root is not the project's terms" '.tier == "A"'
 
 # Tick PRs: the patch is what GitHub's files API returns (hunks only).
 tasks=specs/001-pattern-pipeline/tasks.md

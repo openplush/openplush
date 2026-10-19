@@ -5,6 +5,7 @@
 # Usage:
 #   scripts/check.sh --setup          install the pinned tools (cargo-deny, the
 #                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
+#   scripts/check.sh --setup <steps>  install only what those steps need, then run them
 #   scripts/check.sh                  run every gate
 #   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows deny wasm shell,
 #                                     or engine (= boundary hygiene fmt clippy test types workflows), or all
@@ -108,19 +109,25 @@ install_actionlint() {
   rm -rf "$tmp"
 }
 
+# needs <step>: whether setup must install that step's tool (every tool when no
+# step is named).
+needs() { ((${#steps[@]} == 0)) || [[ " ${steps[*]} " == *" $1 "* ]]; }
+
 if ((setup)); then
   group setup
   run rustup toolchain install
-  if ((dry)) || [[ $(installed_version cargo-deny) != "$DENY_VERSION" ]]; then
+  if needs deny && { ((dry)) || [[ $(installed_version cargo-deny) != "$DENY_VERSION" ]]; }; then
     run cargo install cargo-deny --version "$DENY_VERSION" --locked
   fi
-  wb=$(wasm_bindgen_version)
-  if [[ -z $wb ]]; then
-    echo "check: no wasm-bindgen in Cargo.lock yet; skipping wasm-bindgen-cli"
-  elif ((dry)) || [[ $(installed_version wasm-bindgen-test-runner) != "$wb" ]]; then
-    run cargo install wasm-bindgen-cli --version "$wb" --locked
+  if needs wasm; then
+    wb=$(wasm_bindgen_version)
+    if [[ -z $wb ]]; then
+      echo "check: no wasm-bindgen in Cargo.lock yet; skipping wasm-bindgen-cli"
+    elif ((dry)) || [[ $(installed_version wasm-bindgen-test-runner) != "$wb" ]]; then
+      run cargo install wasm-bindgen-cli --version "$wb" --locked
+    fi
   fi
-  if ((dry)) || [[ $(actionlint_version) != "$ACTIONLINT_VERSION" ]]; then
+  if needs workflows && { ((dry)) || [[ $(actionlint_version) != "$ACTIONLINT_VERSION" ]]; }; then
     install_actionlint
   fi
   endgroup

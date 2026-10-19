@@ -1,6 +1,6 @@
 use openplush_mesh::EdgeId;
 
-use crate::ChartId;
+use crate::{ChartId, SeamChainId};
 use thiserror::Error;
 
 /// Every way `openplush-seams` refuses its input.
@@ -50,5 +50,12 @@ pub enum SeamsError {
         chart: ChartId,
         /// The lowest edge it folds across.
         edge: EdgeId,
+    },
+    /// A seam chain along mesh-boundary edges with no record of which boundary copy it pairs
+    /// with; it has one side and is never paired with itself.
+    #[error("seam chain {chain:?} runs along the mesh boundary with no recorded partner")]
+    UnpairedBoundarySeam {
+        /// The chain.
+        chain: SeamChainId,
     },
 }

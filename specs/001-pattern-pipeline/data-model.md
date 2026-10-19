@@ -141,6 +141,9 @@ pub struct ChartMesh {
 ```
 
 ### SewingMap — generalized to N sides
+
+> **As built**: [`docs/reference/crates.md`](../../docs/reference/crates.md) (`openplush-seams`, `SewingMap`) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
+
 Each global seam edge has `k ≥ 2` sides. Standard seams: `k = 2`. **Inserted pieces** (ear sandwiched into a head seam, from step 3 non-manifold edges or user construction): `k = 4` (head-left, ear-front, ear-back, head-right).
 ```rust
 pub struct SeamBundle {

@@ -11,6 +11,7 @@ publish = false
 [dependencies]
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
+libm = "0.2.16"
 thiserror = "2.0.21"
 
 [lints]

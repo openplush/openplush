@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use openplush_mesh::EdgeId;
+use openplush_mesh::{EdgeId, ManifoldMesh};
 
 use crate::{SeamKind, SeamsError};
 
@@ -54,6 +54,19 @@ impl SeamSet {
             return Err(SeamsError::MandatorySeam { edge });
         }
         Ok(self.kind.insert(edge, kind))
+    }
+
+    /// Errors with [`SeamsError::UnknownEdge`], naming the lowest, when a seam is on an edge
+    /// `mesh` does not have.
+    pub(crate) fn check_edges(&self, mesh: &ManifoldMesh) -> Result<(), SeamsError> {
+        match self
+            .kind
+            .keys()
+            .find(|e| e.index() as usize >= mesh.edge_count())
+        {
+            Some(&edge) => Err(SeamsError::UnknownEdge { edge }),
+            None => Ok(()),
+        }
     }
 
     /// Removes `edge`'s seam and returns its kind, or `None` if it had none. Errors

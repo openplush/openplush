@@ -104,3 +104,15 @@ fn a_chart_that_cannot_start_is_refused_up_front() {
         Err(FlattenError::NotADisk { chart }) if chart == CHART
     ));
 }
+
+#[test]
+fn the_reported_energy_is_the_solves_own() -> Result<(), FlattenError> {
+    let (xyz, f) = hemisphere();
+    let mut reference = Solve::start(CHART, &xyz, &f)?;
+    let mut session = FlattenSession::new(CHART, &xyz, &f)?;
+    while let Progress::Working { energy, .. } = session.step()? {
+        assert_eq!(reference.iterate()?, Step::Improved);
+        assert_eq!(energy.to_bits(), reference.energy().to_bits());
+    }
+    Ok(())
+}

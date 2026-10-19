@@ -1,6 +1,6 @@
 # Spike S5: `svg2pdf` under WASM vs. writing PDF directly
 
-**Status (2026-10-15): closed.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Proposed).
+**Status (2026-10-15): closed.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted).
 
 This is non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/` imports it. It is a standalone Cargo project with its own `[workspace]` table and `Cargo.lock`, so the root workspace (`members = ["crates/*"]`) and `scripts/check.sh` never see it.
 

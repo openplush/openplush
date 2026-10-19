@@ -1,0 +1,1 @@
+bpy==5.2.2  # GPL-3.0; allowed only here, by ADR 0011. export_models.py needs it; measure.py and the tests do not

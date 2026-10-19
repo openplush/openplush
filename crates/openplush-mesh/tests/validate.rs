@@ -1,5 +1,6 @@
 //! `validate`: every defect of a soup located, judged as repair will see the mesh:
-//! coincident vertices welded and duplicate faces dropped first, nothing changed.
+//! coincident vertices welded, same-wound copies dropped and both layers of a
+//! double-sided sheet kept, nothing changed.
 
 use openplush_geom::DVec3;
 use openplush_mesh::{
@@ -126,7 +127,7 @@ fn reports_zero_area_and_repeated_index_faces() -> Result<(), MeshError> {
 }
 
 #[test]
-fn reports_duplicates_with_their_orientation_and_drops_them_from_topology() -> Result<(), MeshError>
+fn reports_duplicates_with_their_orientation_and_drops_same_wound_copies() -> Result<(), MeshError>
 {
     let report = validate(&soup(&CUBE_POSITIONS, &cube_with(&[[2, 1, 0]]))?);
     let same = Duplicate {
@@ -136,12 +137,29 @@ fn reports_duplicates_with_their_orientation_and_drops_them_from_topology() -> R
     };
     assert_eq!(report.duplicates(), [same]);
     assert_eq!(defects(&report), ["duplicates"]);
+    Ok(())
+}
 
+#[test]
+fn an_opposite_copy_on_a_closed_cube_stays_in_topology() -> Result<(), MeshError> {
     let report = validate(&soup(&CUBE_POSITIONS, &cube_with(&[[0, 1, 2]]))?);
     assert_eq!(
         report.duplicates()[0].orientation,
         DuplicateOrientation::Opposite
     );
+    let edge = |a, b, faces: &[u32]| NonManifoldEdge {
+        vertices: [v(a), v(b)],
+        faces: faces.iter().map(|&i| f(i)).collect(),
+    };
+    assert_eq!(
+        report.non_manifold_edges(),
+        [
+            edge(0, 1, &[0, 4, 12]),
+            edge(0, 2, &[0, 1, 12]),
+            edge(1, 2, &[0, 6, 12])
+        ]
+    );
+    assert_eq!(defects(&report), ["duplicates", "non_manifold_edges"]);
     Ok(())
 }
 
@@ -679,5 +697,84 @@ fn does_not_report_a_face_resting_edge_on_against_another() -> Result<(), MeshEr
             "turn {turn}: {report:?}"
         );
     }
+    Ok(())
+}
+
+const SQUARE: [[f64; 3]; 4] = [
+    [0.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0],
+    [1.0, 1.0, 0.0],
+    [0.0, 1.0, 0.0],
+];
+
+#[test]
+fn judges_both_layers_of_a_double_sided_sheet_as_repair_keeps_them() -> Result<(), MeshError> {
+    let report = validate(&soup(
+        &SQUARE,
+        &[[0, 1, 2], [0, 2, 3], [0, 3, 2], [2, 1, 0]],
+    )?);
+    let opposite = |face, of| Duplicate {
+        face: f(face),
+        of: f(of),
+        orientation: DuplicateOrientation::Opposite,
+    };
+    assert_eq!(report.duplicates(), [opposite(2, 1), opposite(3, 0)]);
+    // The layers meet along the rim, so nothing is open; inside, each layer
+    // brings its two faces to the diagonal.
+    assert!(report.boundary_loops().is_empty());
+    let diagonal = NonManifoldEdge {
+        vertices: [v(0), v(2)],
+        faces: vec![f(0), f(1), f(2), f(3)],
+    };
+    assert_eq!(report.non_manifold_edges(), [diagonal]);
+    // Closed but flat: repair leaves a sheet's winding as it is, so it is not
+    // inside out.
+    assert_eq!(defects(&report), ["duplicates", "non_manifold_edges"]);
+    Ok(())
+}
+
+#[test]
+fn a_one_triangle_sheet_is_only_a_duplicate() -> Result<(), MeshError> {
+    let report = validate(&soup(&SQUARE, &[[0, 1, 2], [2, 1, 0]])?);
+    assert_eq!(defects(&report), ["duplicates"]);
+    Ok(())
+}
+
+#[test]
+fn a_copy_of_a_sheets_second_layer_repeats_that_layer() -> Result<(), MeshError> {
+    let report = validate(&soup(&SQUARE, &[[0, 1, 2], [2, 1, 0], [1, 0, 2]])?);
+    let dup = |face, of, orientation| Duplicate {
+        face: f(face),
+        of: f(of),
+        orientation,
+    };
+    assert_eq!(
+        report.duplicates(),
+        [
+            dup(1, 0, DuplicateOrientation::Opposite),
+            dup(2, 1, DuplicateOrientation::Same)
+        ]
+    );
+    assert_eq!(defects(&report), ["duplicates"]);
+    Ok(())
+}
+
+#[test]
+fn a_dropped_copy_takes_no_part_in_orientation() -> Result<(), MeshError> {
+    let mut tris = cube_with(&[CUBE[0]]);
+    tris[1] = [0, 2, 3];
+    let report = validate(&soup(&CUBE_POSITIONS, &tris)?);
+    assert!(report.non_orientable().is_empty());
+    assert!(!report.winding_conflicts().is_empty());
+    Ok(())
+}
+
+#[test]
+fn a_repeated_index_face_joins_no_component() -> Result<(), MeshError> {
+    let mut positions = CUBE_POSITIONS.to_vec();
+    positions.push([5.0, 5.0, 5.0]);
+    let report = validate(&soup(&positions, &cube_with(&[[0, 0, 8]]))?);
+    assert_eq!(report.repeated_index(), [f(12)]);
+    assert_eq!(report.components(), [(0..12).map(f).collect::<Vec<_>>()]);
     Ok(())
 }

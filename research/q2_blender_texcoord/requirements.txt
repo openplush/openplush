@@ -1,0 +1,1 @@
+bpy==5.2.2  # GPL-3.0; allowed only here, by ADR 0011. export_texcoord.py needs it; read_exports.py and the tests do not

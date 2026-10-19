@@ -8,7 +8,7 @@ deciders: maintainer (proposed by the implementing agent from spike S4, T004)
 
 ## Context and problem statement
 
-Research R2 picked `jagua-rs` as the v0.2 layout engine and `sparrow` (same author) as its optimizer. Data-model §6 passes layout one rotation set per fabric ({0°} napped, {0°, 180°} non-napped, {45°, 225°} bias) and a mirror axis for mirrored copies. FR-053 says layout honours those sets, and FR-062 defers optimised nesting past v0.1. S6 found that jagua-rs 1.1.0 and sparrow both pull `rayon`, which `deny.toml` bans.
+Research R2 picked `jagua-rs` as the v0.2 layout engine and `sparrow` (same author) as its optimizer. Data-model §6 passes layout one rotation set per fabric ({0°} napped, {0°, 180°} non-napped, {45°, 225°} bias; D-046 later dropped bias and gave felt any quarter turn) and a mirror axis for mirrored copies. FR-053 says layout honours those sets, and FR-062 defers optimised nesting past v0.1. S6 found that jagua-rs 1.1.0 and sparrow both pull `rayon`, which `deny.toml` bans.
 
 T004 (spike S4) asks: how big is jagua-rs on wasm32, and does it support discrete rotation sets? A size surprise would change the v0.1 layout design even though nesting is v0.2. This ADR records the answer, what v0.2 nesting will be built from, and what v0.1 must keep open. Evidence: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md).
 

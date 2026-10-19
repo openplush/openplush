@@ -1,7 +1,7 @@
 ---
-status: Proposed
+status: Accepted
 date: 2026-10-15
-deciders: maintainer (proposed by the implementing agent from spike S3, T003)
+deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent from spike S3, T003
 ---
 
 # Build allowances as one `i_overlay` boolean of per-edge strips on the `i64` engine, validated before and after

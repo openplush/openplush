@@ -26,6 +26,9 @@ Builds on feature 001 (`specs/001-pattern-pipeline/`): import, repair, seam draw
 ### Session 2026-10-17
 
 - Q: Spike Q1 found that the usual way to unwrap a sphere in Blender, a seam from pole to equator, ends inside the surface: under the earlier answer it would fail import, yet Blender's unwrap opens it into exactly the wedge a dart closes. What happens to a UV cut that ends inside the surface? → A: It is offered as a **dart proposal**, highlighted in the preview and explained, never applied without the maker's acceptance. It replaces the 2026-10-16 answers that imported cuts never become darts and that a dead end is an error. Other UV cuts stay ordinary seams.
+- Q: Spike Q1 found that a UV map made by automatic projection, without marked seams, gives every face around a sphere's pole its own texture coordinate there, so the pole reads as many short cuts and import would offer many darts nobody meant. What does import do? → A: It reads the cuts exactly as the file says, and the import report adds a hint that the texture coordinates look like an automatic projection rather than marked seams, naming where, and suggesting the maker mark seams and unwrap. The proposals are unchanged.
+- Q: Spike Q2 found that Blender's glTF export carries every UV map in its list order, and import reads the first, while Blender's OBJ export carries only the map that was active. A maker who marked seams on a later map and exported glTF would get the wrong map's cuts. Other modelling tools may differ. Does import warn? → A: Yes. When a model carries more than one set of texture coordinates, the import report warns that only the first was read, that it is the first map in the modelling tool's list, and that seams marked on another map are not the ones shown.
+- Q: Spike Q4 found that a loop cut on an edited limb splits old seam edges in two, so position matching loses them, and that moving or smoothing the whole model loses every old seam. What does re-import do? → A: An old seam edge whose new mesh has split it, with every new vertex lying on the old edge, is re-placed as its pieces. A whole-model move is not detected, because that would be a guess; when no old seam re-places at all, the difference says the model may have been moved, scaled or smoothed as a whole. Seams lost to any other edit stay listed as not placeable.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -113,6 +116,7 @@ The maker left a UV cut that stops partway across the surface. Often that is del
 - Faces added by repair (a filled hole) carry no texture coordinates or material of their own.
 - Edges that repair turned into mandatory seams (non-manifold splits) coinciding with an imported cut.
 - A model with more than one set of texture coordinates.
+- Texture coordinates from an automatic projection, with no marked seams: every face around a pole has its own texture coordinate there. The cuts are read as the file says, and the report adds a hint (FR-006).
 - Mirrored UV islands, or several islands stacked on the same texture area: the layout doesn't matter, only the cuts.
 - The imported cuts leave a closed surface uncut: the extra-seam proposal must still make at least one cut.
 - A model already in a project with hand-drawn seams, imported again after editing in the modelling tool.
@@ -126,8 +130,9 @@ The maker left a UV cut that stops partway across the surface. Often that is del
 - **FR-001**: An edge is a **UV cut** when, at either of its endpoints, the texture coordinates on its two sides differ by more than a documented tolerance. Differences in normals or other attributes alone never make an edge a UV cut.
 - **FR-002**: An edge is a **material boundary** when its two sides belong to different materials.
 - **FR-003**: Edges on the surface's boundary (holes kept as openings) are never imported seams; they are already unsewn edges.
-- **FR-004**: Only the first set of texture coordinates is read. When a model has more than one set, the import report says which set was used and that the others were ignored.
+- **FR-004**: Only the first set of texture coordinates is read. When a model has more than one set, the import report warns, before acceptance, that only the first was read, that it may not be the map the seams were marked on, and how many others were ignored, and says how to import a different map.
 - **FR-005**: A model with no texture coordinates or no materials imports normally. The import report states which of the two sources was absent. With no texture coordinates, no UV-cut seams are proposed. With no material on any face, no regions or material-boundary seams are proposed.
+- **FR-006**: When the texture coordinates look like an automatic projection rather than marked seams (an interior point where every one of at least a documented number of surrounding faces has its own texture coordinate), the import report says in plain language that they may come from an automatic projection, locates each such point, and suggests marking seams and unwrapping in the modelling tool. The hint changes no proposal: the cuts are still read exactly as FR-001 defines.
 
 #### Seams from UV cuts
 
@@ -164,7 +169,7 @@ The maker left a UV cut that stops partway across the surface. Often that is del
 #### Re-import
 
 - **FR-050**: When a model is imported into a project that already has seams or regions, the import preview asks the maker to choose, for that import, between **Replace** (the imported seams and regions take the place of all existing ones) and **Merge** (imported seams and regions are added to the existing ones; an imported seam on an edge that is already a seam is not duplicated). Neither is preselected.
-- **FR-051**: Before the maker commits either choice, the preview shows the difference against the project: seams and regions that would be added, and, for Replace, those that would be removed. Hand-drawn seams that Replace would remove are called out by count. Under Merge, existing seams and regions that cannot be placed on the newly imported model are listed and located on the previous model; none is dropped silently or moved to a nearby edge.
+- **FR-051**: Before the maker commits either choice, the preview shows the difference against the project: seams and regions that would be added, and, for Replace, those that would be removed. Hand-drawn seams that Replace would remove are called out by count. Under Merge, existing seams and regions that cannot be placed on the newly imported model are listed and located on the previous model; none is dropped silently or moved to a nearby edge. An old seam edge that the new model has split into several edges, every new vertex lying on the old edge within the documented weld tolerance, is re-placed as those edges. When no existing seam can be placed at all, the preview says the model may have been moved, scaled or smoothed as a whole.
 - **FR-052**: Replace and Merge are each a single undoable step, and declining leaves the project unchanged.
 
 #### Platform
@@ -180,7 +185,7 @@ The maker left a UV cut that stops partway across the surface. Often that is del
 - **Import Proposal**: The set of imported seams, imported regions, new fabric profiles, and extra seams awaiting the maker's decision.
 - **Dead-End Cut**: An imported seam endpoint inside the surface that touches no other seam. The chain ending there is proposed as a dart.
 - **Re-import Choice**: The maker's per-import decision to replace or merge with existing seams and regions, with the difference shown before it is applied.
-- **Import Report**: What was found and proposed. It records which UV set was read, how many seams came from each source, regions and their matched or new profiles, extra seams, repair-filled areas and the region each joined, and any errors with their locations.
+- **Import Report**: What was found and proposed. It records which UV set was read, how many seams came from each source, regions and their matched or new profiles, extra seams, repair-filled areas and the region each joined, any projection hint (FR-006) with its locations, and any errors with their locations.
 
 ## Success Criteria *(mandatory)*
 

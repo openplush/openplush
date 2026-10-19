@@ -1,28 +1,36 @@
 ## Stack
 
-<!-- Fill in for every feature slice. Branch: NNN/NN-slug (e.g. 002/03-plan) or chore/slug.
-     Position: 3 of 5 in feature 002
-     Parent: #9 (002/02-research) - this PR's base branch. "main" if it depends on nothing unmerged.
-     Child: #11 (002/04-data-model-quickstart), or "none yet". Update this when you open the child.
+<!-- Branch: NNN/NN-slug (e.g. 001/115-slim-interior) or chore/slug. The slug names the intent.
+     Parent: "main", or the intent this one is stacked on (its base branch). Stack
+     interdependent intents: X, then fix Y, then feature Z. Child: the PR stacked on this one,
+     or "none". A folded stack lists here the PRs it absorbed.
      Merge: merge commit only, and only once this PR's base is main. -->
 
 - **Branch**: 
-- **Position**: 
 - **Parent**: 
 - **Child**: 
 
-## What
+## Intent
 
-<!-- One or two sentences. What changed, not how. -->
+<!-- One sentence: what this PR brings in toward which epic, and why. Someone following
+     git blame here later must learn what brought the change in and the idea behind it.
+     Unrelated results joined by "and" are two PRs (ADR 0013). A folded stack lists each
+     intent, in merge order. -->
+
+## Tasks
+
+<!-- Every task this PR finishes, each ticked in tasks.md in this PR:
+     T080, T082 (specs/001-pattern-pipeline/tasks.md)
+     Or: "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
+
+## Reading order
+
+<!-- How to review it: the commits in order (each task is a test commit, then the
+     implementation that makes it pass), or the files to start from. -->
 
 ## Why
 
-<!-- The task, and what it unblocks. -->
-
-## Task
-
-<!-- Task: T050 (specs/001-pattern-pipeline/tasks.md)
-     Or: "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
+<!-- What this unblocks. -->
 
 ## Edge cases
 
@@ -36,8 +44,7 @@
 
 ## Tests
 
-<!-- Added or changed, and what each proves. Name the oracle if there is one.
-     The test commit should come BEFORE the implementation commit. -->
+<!-- Added or changed, and what each proves. Name the oracle if there is one. -->
 
 ## Skipped
 
@@ -49,20 +56,14 @@
 <!-- The as-built docs this PR updates (rustdoc, docs/reference/, docs/explanation/),
      or "n/a: no public change". See AGENTS.md, Specs and docs. -->
 
-## Size
-
-<!-- Only if over the 400-line budget. Name what makes the change indivisible.
-     "Easier to land together" is not a justification. -->
-
 ---
 
 <!-- Before requesting review:
-     - [ ] Under 400 changed lines of hand-written source, or Size explains why not
-     - [ ] Test commit precedes implementation commit
+     - [ ] Title and Intent say what this brings in and why; every task it touches finished and ticked here
+     - [ ] Each task's test commit precedes its implementation commit
      - [ ] CI green at the tip, and not green because a test was weakened
-     - [ ] One story, one crate, one concern
-     - [ ] Branch named NNN/NN-slug or chore/slug; base is the parent slice if this depends on unmerged work
-     - [ ] Stack section filled in, and the parent PR links to this one
+     - [ ] No unrelated intent or chore mixed in; refactor, fix and feature in separate commits
+     - [ ] Branch named NNN/NN-slug or chore/slug; base is the parent if this depends on unmerged work
      - [ ] No golden snapshot updated to make a test pass
      - [ ] Skipped section filled in honestly
      - [ ] Public changes have their as-built docs, or Docs says n/a

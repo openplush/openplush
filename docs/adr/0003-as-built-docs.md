@@ -6,6 +6,8 @@ deciders: maintainer, on mentor feedback (reviewed in the PR that adds this ADR)
 
 # Once code lands, the code and `docs/` are the source of truth
 
+> Amended 2026-10-18: the PR-budget clause in Decision outcome item 1 is superseded by [ADR 0013](0013-intent-sized-pull-requests.md), which retired the budget. Docs still ship with the change.
+
 ## Context and problem statement
 
 `docs/` redirected readers to `specs/`, so agents and contributors learned the system from plans written before the code. The plans had drifted: after T028–T031 were built, #61 had to correct `tasks.md`: a stale path, a task narrowed to what could be built, and a test task that could no longer compile as written, and the engine API contract still says "signatures here are the contract" for sections the code has since settled. The question: when a spec and the built system disagree, which one is authoritative, and where does a reader find what exists?

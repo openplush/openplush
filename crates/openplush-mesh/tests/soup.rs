@@ -3,7 +3,10 @@
 //! and it carries defects through untouched: reporting them is validation's job.
 
 use openplush_geom::{DVec2, DVec3};
-use openplush_mesh::{CornerArray, FaceId, MeshError, SourceCorner, TriangleSoup, VertexId};
+use openplush_mesh::{
+    CornerArray, FaceId, MaterialFault, MaterialIndex, MeshError, SourceCorner, SourceMaterials,
+    TriangleSoup, VertexId,
+};
 
 fn corner(primitive: u32, vertex: u32) -> SourceCorner {
     SourceCorner { primitive, vertex }
@@ -225,4 +228,145 @@ fn errors_are_reported_in_a_documented_order() {
         TriangleSoup::new(p, t, c, None),
         Err(MeshError::IndexOutOfRange { .. })
     ));
+}
+
+/// A quad whose two triangles come from primitives `a` and `b`.
+fn quad_from(a: u32, b: u32) -> Result<TriangleSoup, MeshError> {
+    let (p, t, mut c) = quad();
+    for (i, corner) in c.iter_mut().enumerate() {
+        corner.primitive = if i < 3 { a } else { b };
+    }
+    TriangleSoup::new(p, t, c, None)
+}
+
+fn materials(names: &[&str], by_primitive: &[Option<u32>]) -> SourceMaterials {
+    SourceMaterials::new(
+        names.iter().map(|n| (*n).to_owned()).collect(),
+        by_primitive
+            .iter()
+            .map(|m| m.map(MaterialIndex::new))
+            .collect(),
+    )
+}
+
+#[test]
+fn a_soup_without_materials_has_none_and_no_extra_uv_sets() -> Result<(), MeshError> {
+    let soup = quad_from(0, 2)?;
+    assert!(soup.materials().names().is_empty());
+    assert!(soup.materials().by_primitive().is_empty());
+    assert_eq!(soup.materials().material(2), None);
+    assert_eq!(soup.extra_uv_sets(), 0);
+    Ok(())
+}
+
+#[test]
+fn valid_materials_and_extra_uv_sets_come_back_unchanged() -> Result<(), MeshError> {
+    let m = materials(&["red", " red"], &[Some(1), None, Some(0)]);
+    let soup = quad_from(0, 2)?.with_materials(m.clone(), 3)?;
+    assert_eq!(soup.materials(), &m);
+    assert_eq!(soup.extra_uv_sets(), 3);
+    Ok(())
+}
+
+#[test]
+fn materials_shorter_than_the_highest_primitive_name_the_lowest_one_missing()
+-> Result<(), MeshError> {
+    // Primitives 0 and 5 are used; the table covers 0..2, so 5 is the offender.
+    let err = quad_from(0, 5)?
+        .with_materials(materials(&["a"], &[Some(0), None]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 5,
+            fault: MaterialFault::Missing
+        }
+    );
+    // The lowest used primitive past the end, not the end itself.
+    let err = quad_from(4, 7)?
+        .with_materials(materials(&[], &[None, None, None]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 4,
+            fault: MaterialFault::Missing
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn a_material_index_past_the_names_names_the_lowest_primitive() -> Result<(), MeshError> {
+    let err = quad_from(0, 2)?
+        .with_materials(materials(&["a"], &[Some(0), Some(1), Some(2)]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 1,
+            fault: MaterialFault::OutOfRange
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn an_unused_primitive_with_a_bad_material_is_still_refused() -> Result<(), MeshError> {
+    // Primitive 1 draws no triangle, but its entry points past `names`.
+    let err = quad_from(0, 2)?
+        .with_materials(materials(&["a"], &[None, Some(1), None]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 1,
+            fault: MaterialFault::OutOfRange
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn a_missing_entry_is_reported_before_an_out_of_range_one() -> Result<(), MeshError> {
+    let err = quad_from(0, 3)?
+        .with_materials(materials(&["a"], &[Some(4), None]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 3,
+            fault: MaterialFault::Missing
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn the_primitive_one_past_the_table_is_missing() -> Result<(), MeshError> {
+    let err = quad_from(0, 2)?
+        .with_materials(materials(&["a"], &[Some(0), None]), 0)
+        .unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 2,
+            fault: MaterialFault::Missing
+        }
+    );
+    Ok(())
+}
+
+#[test]
+fn a_huge_primitive_number_is_a_typed_error_not_an_allocation() -> Result<(), MeshError> {
+    let soup = quad_from(0, u32::MAX)?;
+    let err = soup.with_materials(materials(&[], &[]), 0).unwrap_err();
+    assert_eq!(
+        err,
+        MeshError::InvalidMaterial {
+            primitive: 0,
+            fault: MaterialFault::Missing
+        }
+    );
+    Ok(())
 }

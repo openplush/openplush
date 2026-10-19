@@ -1,5 +1,20 @@
 //! Pattern pieces: allowance, notches, labels, grain, piece dedupe.
 
+pub mod allowance;
+mod cut;
+mod error;
+mod fabric;
+mod outline;
+pub mod parity;
+mod piece;
+pub mod scale;
+
+pub use cut::CutCount;
+pub use error::PatternError;
+pub use fabric::{Fabric, FabricCategory, FabricSpec, StretchDirection};
+pub use outline::Outline;
+pub use piece::PatternPiece;
+
 use openplush_mesh::id_newtype;
 
 id_newtype! {
@@ -7,4 +22,9 @@ id_newtype! {
     /// pieces collapse into one template, the template lists its member `PieceId`s
     /// and is named by the lowest. Stable for one `SeamSet`.
     PieceId
+}
+
+id_newtype! {
+    /// A fabric profile within one project.
+    FabricId
 }

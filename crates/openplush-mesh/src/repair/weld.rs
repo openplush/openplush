@@ -73,10 +73,6 @@ pub(crate) fn weld(soup: &TriangleSoup, distance: f64) -> Weld {
 /// Points every corner of a weld group at the group's smallest vertex ID, which
 /// keeps its own position. Corner sources and UVs, and faces the weld collapses,
 /// are left as they are. Returns the welded soup and each group merged.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "called by into_manifold, not yet written")
-)]
 pub(crate) fn merge(
     soup: &TriangleSoup,
     tol: &ModelTolerances,

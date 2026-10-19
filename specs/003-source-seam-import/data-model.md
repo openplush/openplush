@@ -20,7 +20,7 @@ pub struct SourceMaterials {
 ```
 
 - **Invariant (new)**: every source primitive has at most one material. The importer owns primitive numbering (`SourceCorner` docs), so it splits primitives at each material change. glTF already does this; OBJ needs spike Q3.
-- **Validation**: `TriangleSoup::new` refuses, with a typed `MeshError`, a `by_primitive` shorter than the highest primitive index used, and a `MaterialIndex` not below `names.len()`. A material is a function of provenance, so no per-face array is needed: a face's material is its first corner's primitive's material.
+- **Validation**: `TriangleSoup::with_materials` (not `new`, decision S-019) refuses, with a typed `MeshError`, a `by_primitive` shorter than the highest primitive index used, and a `MaterialIndex` not below `names.len()`. As built: [docs/reference/crates.md](../../docs/reference/crates.md). A material is a function of provenance, so no per-face array is needed: a face's material is its first corner's primitive's material.
 - **Carried through repair**: `SourceMaterials` and `extra_uv_sets` are file-level, not per-element, so repair moves them unchanged from the soup onto `ManifoldMesh`. `ManifoldMesh` gains the same two fields and read accessors, and repair's output type is unchanged. This changes 001's `ManifoldMesh` (decision S-011).
 - **Faces added by repair** (hole fill, T066) have no source primitive: their `corner_src` entries are `None` in the merged `ManifoldMesh` (`Vec<Option<SourceCorner>>`). That is distinct from a source face whose primitive has no material, so a face's material state has three values: a material, no material in the file, or repair-filled. Spec FR-024 assigns repair-filled faces to a region (§3).
 - `MaterialIndex` is a `u32` newtype from `id_newtype!` in `openplush-mesh`.
@@ -31,6 +31,7 @@ pub struct SourceMaterials {
 |---|---|---|
 | UV cut | Interior edge, UVs on both sides, endpoint UVs differ by more than `UV_CUT` at either end (research R2) | `openplush-seams::source` |
 | Material boundary | Interior edge whose two faces both come from the source file (neither is repair-filled) and differ in `Option<MaterialIndex>`. A source face with no material next to one with a material is a boundary; a repair-filled face never is (spec FR-024) | `openplush-seams::source` |
+| Projection point | Interior vertex with at least `PROJECTION_MIN_FACES = 5` incident faces, all with UVs, whose corner UVs at that vertex are pairwise more than `UV_CUT` apart (research R2, spec FR-006). Reported only; changes no proposal | `openplush-seams::source` |
 | Dead-end tip | Interior vertex of seam-valence 1 in the graph over UV cuts ∪ material boundaries ∪ mandatory seams, excluding seams already in the project (research R3, spec FR-013) | 001's seam graph (T070) |
 
 `UV_CUT = 1e-5` lives in `openplush_geom::epsilon` beside the other tolerances, as the first tolerance that is neither model-relative nor physical. Its doc comment says why it is absolute.
@@ -57,11 +58,12 @@ pub struct SourceRegion {
 
 pub struct SourceReport {
     uv_set_read: Option<u32>,         // None = model had no UVs
-    extra_uv_sets: u32,
+    extra_uv_sets: u32,               // > 0: the report presents FR-004's warning, derived from this count (S-016)
     uv_cut_edges: u32,
     material_boundary_edges: u32,
     shared_edges: u32,                // edges that are both, counted once (FR-021)
     faces_without_uv: u32,
+    projection_points: Vec<VertexId>, // ascending; FR-006's hint is shown when non-empty
     filled_areas: Vec<(ComponentId, FabricId)>,  // FR-024: which region each repair-filled area joined
     matched: Vec<(MaterialIndex, FabricId)>,
     created: Vec<(MaterialIndex, FabricId)>,
@@ -98,6 +100,7 @@ pub enum OnExisting { Replace, Merge }
 
 pub struct ReimportDiff {
     added_seams: u32,
+    placed_seams: u32,                // both modes; old seam edges re-placed, one per old edge however many pieces; 0 with old seams present raises FR-051's hint (S-018)
     removed_seams: u32,               // Replace only
     removed_hand_drawn: u32,          // FR-051's callout; seams not from a prior import
     unplaceable_seams: Vec<ProvenanceEdge>,  // Merge only; located on the OLD mesh (research R5)
@@ -105,7 +108,7 @@ pub struct ReimportDiff {
 }
 ```
 
-- Old seams and faces are re-placed by **position** against the new mesh within the weld tolerance (research R5), never by provenance key and never by nearest-edge snapping.
+- Old seams and faces are re-placed by **position** against the new mesh within the weld tolerance (research R5), never by provenance key and never by nearest-edge snapping. An old seam edge also re-places as a path of new edges whose interior vertices lie on it within the tolerance (S-017); a split face does not. The path is walked from the old edge's first endpoint: each step takes the neighbour on the segment that is strictly closer to the far endpoint and nearest the current vertex, ties to the lower `VertexId`, so the result is deterministic. The difference is computed before the maker chooses, so `placed_seams` and the hint are the same under Replace and Merge.
 - "Hand-drawn" needs the project to know where a seam came from. **Schema addition**: an optional `origin: "drawn" | "imported" | "proposed"` on each `seams[]` item in `project.schema.json`, defaulting to `drawn`. It is additive, so v1 files stay valid with no migration.
 
 ## 6. Persistence

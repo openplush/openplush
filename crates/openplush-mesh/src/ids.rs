@@ -64,6 +64,11 @@ impl EdgeId {
     }
 }
 
+id_newtype! {
+    /// An index into a file's material names (`SourceMaterials::names`).
+    MaterialIndex
+}
+
 /// Any mesh element, for errors that can point at more than one kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MeshElement {

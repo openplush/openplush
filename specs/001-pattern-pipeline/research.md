@@ -142,7 +142,7 @@ Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_
 
 ### S3 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
 
-Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Proposed).
+Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
 
 - **No panics** [solid for the corpus].
   - The corpus: 10,000 seeded near-degenerate outlines × 4 methods, plus six invalid inputs. The release and debug-assert builds gave byte-identical output.
@@ -195,7 +195,7 @@ Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md)
 
 ### S5 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
 
-**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Proposed). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
+**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
 
 The spike wrote one A3 pattern page (a 400-vertex outline, the 50.00 mm square, and three labels) two ways: through `svg2pdf` 0.13, and directly with `pdf-writer` 0.15. Both ran natively and on wasm32. An independent pypdf interpreter measured the scale.
 
@@ -294,7 +294,7 @@ The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) 
 
 Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
 
-> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike S8 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker.
+> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike S8 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker. Per D-046, fleece, minky and long faux fur ship first, with the maintainer's measured values replacing these rows; the other four wait for their own measurements.
 
 | Preset | Category | Stretch grain / cross / bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
 |---|---|---|---|---|---|---|---|---|
@@ -308,9 +308,9 @@ Seven shipped presets, all editable, all persisted in the project. The schema is
 
 ### Why these fields and not others
 
-- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, mirrored printing (FR-054), and pile-scaled allowance (FR-055).
+- **Category** drives the rotation set (FR-053) and which warnings even apply. `pile` implies nap, the export-time mirroring question (FR-054), and pile-scaled allowance (FR-055).
 - **Per-direction stretch** is recorded but does **not** steer flattening (D-014). Its only job in 001 is FR-058's cross-seam mismatch warning. Knit-backed fur stretching ~30% crosswise against a 0% woven is exactly the seam that fights back while sewing.
-- **Pile length** scales the default allowance and triggers the small-part warning (FR-055). The provisional 3× rule means long faux fur (30 mm) warns on any piece or detail under 90 mm — which is most plush faces. That is informative, not a bug, but it is the strongest argument for making the multiple configurable.
+- **Pile length** scales the default allowance and triggers the small-part warning (FR-055). The 2× rule (D-046) means long faux fur (30 mm) warns on any piece or detail under 60 mm. That is informative, not a bug, but it is the strongest argument for making the multiple configurable.
 - **Thickness** is recorded for the "thick backing on a small plush" edge case and for future thickness compensation, which is explicitly out of scope here. It drives no geometry in 001.
 - **Frays** gates FR-057's zero-allowance option. Felt is the case that motivates it: edge-stitched or appliqué felt pieces need no allowance at all, and adding one makes the piece wrong.
 - **Roll width** bounds FR-062's layout. Note that pile fabrics are commonly sold at 1500 mm while quilting cotton is ~1120 mm, so the same pattern can fit one and not the other.

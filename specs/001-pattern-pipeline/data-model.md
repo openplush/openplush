@@ -17,7 +17,7 @@ Covers: representations per stage, the half-edge structure, non-manifold handlin
 | Pattern | `PatternPiece` ×N | param + fabric + scale | Simple polygons in mm; seam parity within max(1.0 mm, 0.5%) — hard (D-013) |
 | Layout | `Sheet` ×N | pieces + layout options | No overlaps; rotation sets honored |
 
-**Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>`. Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
+**Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>` (as built: `openplush_mesh::into_manifold`, which returns `MeshError`; see `docs/reference/crates.md`). Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
 
 ## 2. Half-Edge Structure
 
@@ -77,13 +77,35 @@ Order matters; each step records entries in `RepairReport`.
 | 0 | Normalize (**at import**, not in repair; D-021) | n-gons, NaN/∞ | Quads split on shorter diagonal; n-gons ear-clipped on best-fit plane (lossless: no position changes). A NaN/∞ coordinate is **not** repaired: import fails with `EngineError::NonFiniteInput`, naming every non-finite source vertex by provenance, so the maker can fix the file. Dropping faces would be fixed-up geometry without confirmation (Constitution III, FR-004). Repair starts at step 1 | — |
 | 1 | **Weld** | Coincident vertices | Merge within `ε_weld = 1e-6 × bbox diagonal` via sorted spatial hash (deterministic tie-break by source index). Corner UVs untouched | **Critical for glTF**: exporters split vertices at UV/normal discontinuities; unwelded, the model is topologically shredded into UV islands [solid] |
 | 2 | Degenerates & duplicates | Zero-area faces, repeated indices, duplicate faces | Drop repeated-index faces (needles, already collapsed by the weld). A zero-area cap (area within `ε_area`, §11) puts its middle vertex on its longest edge; each face given such vertices is re-triangulated with them, and the caps are dropped, so no crack opens and no vertex moves (D-036). Keep the lowest-ID copy of same-orientation duplicates; keep both opposite-orientation duplicates and flag them "double-sided sheet"; step 3 pairs a sheet's interior edges within each layer (D-036) | — |
-| 3 | **Non-manifold edges** (> 2 incident faces) | Edge fans | Sort incident faces by dihedral angle around the edge axis; pair angular neighbors with compatible orientation; give each pair its own edge copy (Guéziec et al. 2001) | New boundary edges become **mandatory seams**. Often *intentional*: an ear or fin sandwiched into a body seam → see §4 inserted pieces |
-| 4 | **Non-manifold vertices** (bowtie) | Vertex whose faces form > 1 fan | Split into one vertex per fan | Usually separates components (e.g., two cones touching at a tip); reported, no seam |
-| 5 | Orientation | Inconsistent winding | BFS per component from the largest face, flipping to agree; component orientation chosen so signed volume > 0 when closed | Non-orientable (Möbius-like) conflict edge ⇒ forced seam |
+| 3 | **Non-manifold edges** (> 2 incident faces) | Edge fans | Sort incident faces by dihedral angle around the edge axis; pair angular neighbors, preferring opposite traversal; the pairings are returned as data and the half-edge build gives each pair its own edge copy (Guéziec et al. 2001, D-037) | New boundary edges become **mandatory seams**. Often *intentional*: an ear or fin sandwiched into a body seam → see §4 inserted pieces |
+| 4 | **Non-manifold vertices** (bowtie) | Vertex whose faces form > 1 fan | Split into one vertex per fan. Faces are one fan when they share an edge; on an edge with more than two faces, only the faces of one pairing pair do (D-037), so a face left unpaired is its own fan | Usually separates components (e.g., two cones touching at a tip); reported, no seam |
+| 5 | Orientation | Inconsistent winding | BFS per component from the largest face, flipping to agree; component orientation chosen so signed volume > 0 when closed | Non-orientable (Möbius-like) conflict edge ⇒ forced seam. Only edges with exactly two faces are walked; faces joined across a paired copy (D-037) are judged by the half-edge build, which refuses a same-way pair |
 | 6 | Components | Multiple connected components | Each processed independently. Components with area < 1% of total (or user choice) ⇒ candidate **detail parts** (eyes, noses, buttons) | Detail parts produce placement marks, not pieces (FR-005, FR-042) |
-| 7 | Holes | Boundary loops | Classify: user marks as *opening* (keep; hem allowance) or *accidental* (fill: Liepa 2003 minimal-area triangulation + fairing) | Openings are unsewn edges, not seams |
+| 7 | Holes | Boundary loops | Classify (§3a): a loop in `RepairPlan.fill_holes` is *accidental* (fill: Liepa 2003 minimal-area triangulation + fairing) | Openings are unsewn edges, not seams |
 | 8 | Self-intersections | BVH triangle-triangle tests | **Warn only.** Disk charts flatten regardless; intersecting limbs in 3D usually need separate pieces anyway | Suggest seams along intersection curves |
 | — | Last resort | Hopeless input | Not in v0.1 (D-024: `baby_shark` fails the dependency gates). If it returns: opt-in voxel remesh, which destroys UVs and sharp features → explicit warning | All seams/decals must be redrawn |
+
+### 3a. RepairPlan and RepairReport (D-043)
+
+`RepairPlan` is what the maker chose; it is stored in the project (`contracts/project.schema.json` `repairPlan`) and replayed on load, so its fields follow that schema and nothing in it may depend on the repaired mesh's numbering.
+
+```rust
+pub struct RepairPlan {
+    pub weld: bool, pub drop_degenerates: bool, pub split_non_manifold_edges: bool,
+    pub split_bowties: bool, pub fix_orientation: bool,   // all default true (steps 1-5)
+    /// Loops to fill (step 7). A loop not listed stays an opening: filling is opt-in.
+    pub fill_holes: BTreeSet<LoopRef>,
+}
+/// A boundary loop, named by the lowest `SourceCorner` (primitive, vertex) among its vertices,
+/// so the name is the same on every replay whatever the repaired numbering is.
+pub struct LoopRef(SourceCorner);
+```
+
+`voxelRemesh` in the schema is reserved: not in v0.1 (D-024). The maker's detail-part marking is stored in the project's `detailParts` (by component index), not in the plan; step 6's 1% rule gives the default and the report lists each component's flag.
+
+`RepairReport` lists everything repair did or found, so nothing is silent (Constitution VII, FR-004): the welded vertex groups; faces dropped as repeated-index or duplicate; the double-sided sheets; stitched caps and the faces re-triangulated with them; every paired non-manifold edge (pairs and unpaired face); every added vertex copy (bowtie); every flipped face; every orientation-conflict edge; every component with its detail flag; every boundary loop by `LoopRef` with whether the plan filled it and the faces a fill added; and the mandatory seams the above create. Removals, flips and pairings name faces and vertices of the soup given to repair; additions (vertex copies, hole faces) name those of the repaired mesh.
+
+A fill is never silent: it appears in the report. A `fill_holes` entry naming a loop the mesh does not have (the source changed) is a typed error naming it, not a skipped entry.
 
 ## 4. Seams, Charts, and Sewing Correspondence
 
@@ -95,13 +117,14 @@ pub struct SeamSet { kind: BTreeMap<EdgeId, SeamKind> }
 The mesh never changes when seams change. Undo/redo is a `SeamSet` diff.
 
 ### Seam graph nodes
-Seam edges form a graph on mesh vertices. Node classes:
+Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its seam edges of every kind. Node classes (D-052), of which a vertex takes the first that fits, so a junction on a boundary is a junction:
 - **Junction**: seam-valence ≥ 3 (three or more seam edges meet).
-- **Endpoint on boundary**: seam meets a hole/opening.
-- **Free endpoint** (seam-valence 1, interior): **dart tip**.
-- **Chain vertex**: seam-valence 2.
+- **Endpoint on boundary**: on a seam and on a mesh-boundary edge that is not itself a seam, so the seam meets a hole/opening there.
+- **Free endpoint** (seam-valence 1, otherwise): **dart tip**.
+- **Kind change**: seam-valence 2, its two seam edges of different `SeamKind`, so an `Opening` stretch of a seam is a chain of its own.
+- **Chain vertex**: seam-valence 2, both seam edges of the same kind.
 
-A **seam chain** is a maximal path between non-chain nodes. Chains are the unit of notching, labeling ("A3"), and length parity.
+A **seam chain** is a maximal path between nodes; a cycle of chain vertices with no node is one **closed chain**. Chains are the unit of notching, labeling ("A3"), and length parity. Numbering and walking order are D-052's (4).
 
 ### ChartMesh (virtual cut)
 Charts = flood fill of faces across non-seam edges. For each chart, build a local half-edge mesh by **duplicating vertices along seam edges inside the chart** — except dart tips, which stay single (a slit, not a separation). Provenance maps:
@@ -190,7 +213,9 @@ At every seam bundle, compare the mapped nap directions on each side at matched 
 |---|---|---|
 | Napped (faux fur, velvet, minky with pile) | {0°} (± small tolerance, provisional 3°) | Reflect across the axis **parallel** to the nap — preserves nap direction |
 | Non-napped, no directional print | {0°, 180°} | Either axis |
-| Bias-cut woven | {45°, 225°} | Parallel to grain |
+| Felt (no grain) | {0°, 90°, 180°, 270°} | Either axis |
+
+No piece is placed on the bias in this feature (D-046).
 
 `jagua-rs` supports reflection about specified local axes, which maps directly to mirrored pieces (S4 confirms discrete rotation sets).
 
@@ -219,8 +244,8 @@ pub struct Fabric {
 }
 ```
 
-- **Presets** (research R7) ship as data, not code: seven `Fabric` values the user can edit or delete. An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
-- **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether mirrored printing applies (FR-054: `category == Pile`), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
+- **Presets** (research R7) ship as data, not code: `Fabric` values the user can edit or delete, each added once a sewist has measured it (D-046). An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
+- **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether export must ask about mirrored printing (FR-054: `category == Pile`; the answer is the maker's, never a stored default), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
 - **Invariants**: `pile_len_mm > 0 ⇒ nap` for `Pile`; all stretch percentages ≥ 0; `roll_width_mm > 0`; `default_allowance_mm ≥ 0` (zero is legal only when `!frays`, FR-057).
 - **Per-piece assignment** comes from painted fabric regions (FR-041). A piece spanning two fabrics is impossible by construction, because region boundaries are seams.
 
@@ -228,9 +253,9 @@ pub struct Fabric {
 
 | Warning | Condition | Remedy kind |
 |---|---|---|
-| `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, provisional `k = 3` | `Advisory` — shorter-pile fabric, or scale the toy up |
+| `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, `k = 2` (D-046) | `Advisory` — shorter-pile fabric, or scale the toy up |
 | `CurveTighterThanPile` (FR-055) | seam-curve radius < `k × pile_len_mm` | `Advisory` — same |
-| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, provisional 20 percentage points, compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
+| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, 20 percentage points (D-046), compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
 | `LowNapCoherence` (FR-052) | R < 0.85 (warn), R < 0.7 (suggest split) | `Actionable` — proposed split curve |
 | `UnsupportedConcavity` (FR-025) | concave crease with no seam along it | `Actionable` — proposed seam along the crease |
 
@@ -245,12 +270,35 @@ pub struct Fabric {
 - **Tight curves**: where sewing-line curvature radius < allowance, the offset self-intersects; the union resolves it, and the piece gets **clip marks** (concave) or **notch-out marks** (convex) at a spacing proportional to curvature (FR-035).
 - **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (S3). *Superseded 2026-10-15 by [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md): a panic cannot be caught on wasm32, so it is a crash on both targets and nothing catches it.*
 
+## 7a. Pieces, Outlines, and Sheets (D-039)
+
+```rust
+pub struct Outline { /* private: closed, simple, counter-clockwise, millimetres */ }
+impl Outline { pub fn new(points: Vec<DVec2>) -> Result<Self, PatternError>; }
+
+pub struct PatternPiece {
+    pub id: PieceId,
+    pub sewing_line: Outline,
+    pub cut_line: Outline,
+    pub as_printed: u32,          // copies cut as the template is printed
+    pub flipped: u32,             // copies cut from the template flipped; as_printed + flipped is 1 to 100 (D-047, D-048)
+    pub rotations_deg: Vec<f64>,  // computed from the fabric by the pattern stage on every run; not part of the saved project document (§12, §6a, ADR 0007)
+}
+
+pub struct Placement { pub piece: PieceId, pub copy: u32, pub rotation_deg: f64, pub offset: DVec2, pub mirrored: bool }
+pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Placement> }
+```
+
+- `Outline::new` is the only constructor, so an outline that crosses itself, repeats a point, has zero area or is wound clockwise is a typed error, never repaired. It uses the exact predicates in `openplush-geom`; the testkit's `outline_simple` oracle checks the same properties independently.
+- Marks, labels, grain and notches join `PatternPiece` in the tasks that produce them. The label block's cut counts (§8) are read from `as_printed` and `flipped`, relative to the paper as printed (D-048); the maker's export-time choice to print pile mirrored (FR-054, D-046) is a separate, whole-pattern setting.
+- A `Sheet` is a rectangle of fabric: its width is the roll width (or the piece extent when none is set) and its length is what the placements use. `PageTiling` (FR-061) is a layout output derived from one `Sheet`; both live in `openplush-layout`, and `openplush-export` reads them (ADR 0012).
+
 ## 8. Notches and Labels
 
 - Parametrize each chain side by arc length. Notches at both chain ends (junctions) plus every `Δ` mm (provisional 50 mm) along the chain.
 - Place side B's notches at the **same fractional arc length** as side A. If lengths differ within tolerance, label the chain "ease" and distribute proportionally.
 - **Pairing codes** must be unambiguous: chain label (A3) printed at the midpoint on both sides; notch multiplicity (single/double/triple) differs between adjacent chains on the same piece, so a sewist can't rotate a piece and match the wrong edge.
-- Piece label block: ID, name, cut quantity, mirror flag, fabric, grain arrow, nap arrow, scale reference.
+- Piece label block: ID, name, cut counts as printed and flipped (D-048), fabric, grain arrow, nap arrow, scale reference.
 
 ## 9. Markings, Detail Parts, Texture
 
@@ -262,7 +310,7 @@ pub struct Fabric {
 ## 10. Units and Scale
 - `ImportOptions.units` declared or inferred (heuristic on bbox size) and confirmed by the user.
 - `Scale` is a single uniform factor applied at the pattern stage. Flattening output is in model units × scale; physical constraints (allowance, min piece size, min curvature radius) are evaluated in mm after scaling.
-- **Supported range** (FR-006): keychain to roughly 1 m in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
+- **Supported range** (FR-006, D-040): 75 mm to 1000 mm in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
 - **Shrink compensation** (FR-056, D-012): an optional uniform percentage `shrink_pct`, applied as a second uniform factor at the pattern stage, so a stretch fabric sewn and stuffed lands nearer the model's size. It is **uniform only** — one number, every direction, every piece. Direction-dependent compensation is out of scope (D-014), and so is any attempt to predict the stuffed shape (D-012). The maker sets this from experience with their fabric; the tool does not infer it.
 - Because both `Scale` and `shrink_pct` are uniform factors at the same stage, flattening never re-runs when either changes — only `pattern` onward. That is the practical payoff of keeping compensation uniform.
 

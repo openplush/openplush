@@ -2,6 +2,8 @@
 
 mod error;
 pub mod obj;
+pub mod ply;
+pub mod stl;
 mod triangulate;
 
 pub use error::IoError;

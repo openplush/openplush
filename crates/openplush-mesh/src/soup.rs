@@ -1,6 +1,6 @@
 use openplush_geom::{DVec2, DVec3};
 
-use crate::{CornerArray, Counted, FaceId, MeshError, VertexId};
+use crate::{CornerArray, Counted, FaceId, MaterialFault, MaterialIndex, MeshError, VertexId};
 
 /// Where a triangle corner came from in the source file. Provenance survives
 /// repair, so a saved project can find the same corner again after re-import
@@ -19,6 +19,44 @@ pub struct SourceCorner {
     pub vertex: u32,
 }
 
+/// The materials a file names and which one each source primitive uses.
+///
+/// **Invariant**: every source primitive has at most one material, so a face's
+/// material is its first corner's primitive's material. The importer splits
+/// primitives at each material change to keep this true.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceMaterials {
+    names: Vec<String>,
+    by_primitive: Vec<Option<MaterialIndex>>,
+}
+
+impl SourceMaterials {
+    /// Material `names` as written in the file, and for each primitive its material
+    /// (`None`: the file gives it none). Checked by [`TriangleSoup::with_materials`].
+    pub fn new(names: Vec<String>, by_primitive: Vec<Option<MaterialIndex>>) -> Self {
+        Self {
+            names,
+            by_primitive,
+        }
+    }
+
+    /// Material names as written in the file, indexed by [`MaterialIndex`].
+    pub fn names(&self) -> &[String] {
+        &self.names
+    }
+
+    /// The material of `primitive`; `None` if it has none or the table has no entry,
+    /// as in a soup that never had materials set.
+    pub fn material(&self, primitive: u32) -> Option<MaterialIndex> {
+        self.by_primitive.get(primitive as usize).copied().flatten()
+    }
+
+    /// Each source primitive's material, indexed by `SourceCorner::primitive`.
+    pub fn by_primitive(&self) -> &[Option<MaterialIndex>] {
+        &self.by_primitive
+    }
+}
+
 /// Indexed triangles as imported, before any repair.
 ///
 /// **Guarantees**: every coordinate is finite, every index is
@@ -32,6 +70,9 @@ pub struct TriangleSoup {
     triangles: Vec<[u32; 3]>,
     corner_src: Vec<SourceCorner>,
     corner_uv: Option<Vec<Option<DVec2>>>,
+    materials: SourceMaterials,
+    /// UV sets the file has beyond the one read.
+    extra_uv_sets: u32,
 }
 
 impl TriangleSoup {
@@ -105,9 +146,69 @@ impl TriangleSoup {
         Ok(Self {
             positions,
             triangles,
+            materials: SourceMaterials::new(Vec::new(), Vec::new()),
+            extra_uv_sets: 0,
             corner_src,
             corner_uv,
         })
+    }
+
+    /// This soup with the file's `materials` and the count of UV sets it did not
+    /// read. [`MeshError::InvalidMaterial`] names the lowest offending primitive:
+    /// first one a triangle uses with no table entry, then one whose entry is not
+    /// below `materials.names().len()` (used or not).
+    pub fn with_materials(
+        self,
+        materials: SourceMaterials,
+        extra_uv_sets: u32,
+    ) -> Result<Self, MeshError> {
+        let covered = materials.by_primitive.len();
+        if u32::try_from(covered).is_err() {
+            return Err(MeshError::TooLarge {
+                what: Counted::Primitives,
+                count: covered,
+            });
+        }
+        let uncovered = self
+            .corner_src
+            .iter()
+            .map(|c| c.primitive)
+            .filter(|&p| p as usize >= covered)
+            .min();
+        if let Some(primitive) = uncovered {
+            return Err(MeshError::InvalidMaterial {
+                primitive,
+                fault: MaterialFault::Missing,
+            });
+        }
+        let names = materials.names.len();
+        if let Some(i) = materials
+            .by_primitive
+            .iter()
+            .position(|m| m.is_some_and(|m| m.index() as usize >= names))
+        {
+            return Err(MeshError::InvalidMaterial {
+                // Lossless: the table length fits in u32 (checked above).
+                primitive: i as u32,
+                fault: MaterialFault::OutOfRange,
+            });
+        }
+        Ok(Self {
+            materials,
+            extra_uv_sets,
+            ..self
+        })
+    }
+
+    /// The file's materials; empty names and an empty table unless
+    /// set by [`TriangleSoup::with_materials`].
+    pub fn materials(&self) -> &SourceMaterials {
+        &self.materials
+    }
+
+    /// UV sets the file has beyond the one read.
+    pub fn extra_uv_sets(&self) -> u32 {
+        self.extra_uv_sets
     }
 
     /// Number of vertices.
@@ -178,6 +279,38 @@ impl TriangleSoup {
                 .collect(),
             corner_src: self.corner_src.clone(),
             corner_uv: self.corner_uv.clone(),
+            materials: self.materials.clone(),
+            extra_uv_sets: self.extra_uv_sets,
+        }
+    }
+
+    /// This soup with a copy of each listed vertex appended, in that order.
+    // INVARIANT: every entry of `of` is a vertex of this soup.
+    pub(crate) fn with_vertex_copies(&self, of: &[u32]) -> Self {
+        let mut positions = self.positions.clone();
+        positions.extend(of.iter().map(|&v| self.positions[v as usize]));
+        Self {
+            positions,
+            ..self.clone()
+        }
+    }
+
+    /// This soup's positions with new faces and corner records.
+    // INVARIANT: the faces index this soup's vertices, with three corner records
+    // (and, if this soup has UVs, three UVs) each.
+    pub(crate) fn with_faces(
+        &self,
+        triangles: Vec<[u32; 3]>,
+        corner_src: Vec<SourceCorner>,
+        corner_uv: Option<Vec<Option<DVec2>>>,
+    ) -> Self {
+        Self {
+            positions: self.positions.clone(),
+            triangles,
+            corner_src,
+            corner_uv,
+            materials: self.materials.clone(),
+            extra_uv_sets: self.extra_uv_sets,
         }
     }
 
@@ -197,6 +330,8 @@ impl TriangleSoup {
                 .corner_uv
                 .as_ref()
                 .map(|uv| slots().map(|i| uv[i]).collect()),
+            materials: self.materials.clone(),
+            extra_uv_sets: self.extra_uv_sets,
         }
     }
 
@@ -234,3 +369,8 @@ fn corner_slot(f: FaceId, corner: usize) -> Option<usize> {
         .checked_mul(3)?
         .checked_add(corner)
 }
+
+mod compact;
+
+#[cfg(test)]
+mod tests;

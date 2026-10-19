@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::{FaceId, MeshElement, VertexId};
+use crate::{FaceId, LoopRef, MeshElement, VertexId};
 
 /// Every structural refusal in this crate. Each variant names the element at
 /// fault, so the UI can highlight it (crates/AGENTS.md).
@@ -42,6 +42,14 @@ pub enum MeshError {
         what: Counted,
         /// The element count.
         count: usize,
+    },
+    /// A source primitive's material entry is missing or names no material.
+    #[error("source primitive {primitive}'s material entry is invalid: {fault:?}")]
+    InvalidMaterial {
+        /// The lowest offending primitive.
+        primitive: u32,
+        /// What is wrong with its entry.
+        fault: MaterialFault,
     },
     /// A triangle uses the same vertex twice. Repair removes these; a manifold
     /// mesh cannot contain one.
@@ -90,6 +98,34 @@ pub enum MeshError {
         /// The edge's higher-indexed endpoint.
         b: VertexId,
     },
+    /// The soup has no triangles, so repair has nothing to build.
+    #[error("the soup has no triangles")]
+    NoTriangles,
+    /// The soup's extent is zero or too large to derive tolerances from.
+    #[error("the soup's extent is zero or too large to derive tolerances from")]
+    UnusableExtent,
+    /// `RepairPlan::fill_holes` names a loop the repaired mesh does not have.
+    #[error("the plan fills the loop {loop_ref:?}, which the mesh does not have")]
+    UnknownHoleLoop {
+        /// The loop named.
+        loop_ref: LoopRef,
+    },
+    /// `RepairPlan::fill_holes` names a loop, and filling is not built yet.
+    #[error("the plan fills the loop {loop_ref:?}, and hole filling is not available")]
+    HoleFillUnavailable {
+        /// The loop named.
+        loop_ref: LoopRef,
+    },
+    /// A pairing names a face that does not use the edge it pairs, or names a face twice.
+    #[error("a pairing on the edge between {a:?} and {b:?} names triangle {face:?} wrongly")]
+    PairingMismatch {
+        /// The face named wrongly.
+        face: FaceId,
+        /// The edge's lower-indexed endpoint.
+        a: VertexId,
+        /// The edge's higher-indexed endpoint.
+        b: VertexId,
+    },
     /// A vertex's triangles do not form a single fan (disk or half-disk): for
     /// example two cones touching at their tips, or a bowtie.
     #[error("vertex {vertex:?} is non-manifold (its triangles form more than one fan)")]
@@ -118,6 +154,15 @@ pub enum CornerArray {
     Uvs,
 }
 
+/// What is wrong with a primitive's entry in `SourceMaterials`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MaterialFault {
+    /// A triangle uses the primitive, but the table has no entry for it.
+    Missing,
+    /// The entry is a `MaterialIndex` not below the number of names.
+    OutOfRange,
+}
+
 /// What a [`MeshError::TooLarge`] counted.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Counted {
@@ -127,4 +172,6 @@ pub enum Counted {
     Triangles,
     /// Half-edges (twice the edge count).
     HalfEdges,
+    /// Entries in a `SourceMaterials` table.
+    Primitives,
 }

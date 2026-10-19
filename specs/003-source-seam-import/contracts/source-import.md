@@ -26,7 +26,7 @@ pub fn reimport_diff(
 - `source_import` is a pure read (Constitution VII). It takes `&ManifoldMesh` and `&SeamSet`, and its only output is the proposal. Accepting goes through 001's existing proposal application (T107) plus `set_fabrics`, as one undo step (T128).
 - `existing` is there so the proposal never contains an edge that is already a seam (`Proposal::new`'s invariant), and so `closing` is computed against what the project will actually hold.
 - Errors: none of its own. A dead-ended cut is a dart proposal (data-model §4), and an unflattenable chart is a `ChartNotDisk` *proposal*: the stage asks `propose_cuts` for remedies and does not fail on them.
-- Warnings: none. Missing UVs, missing materials, extra UV sets and created profiles are facts for the report, not problems (spec FR-005).
+- Warnings: no pattern `WarningCode`. Missing UVs, missing materials, created profiles and projection points are facts for the report (spec FR-005, FR-006). Extra UV sets are the report's one warning, shown before acceptance and derived from `extra_uv_sets > 0` (spec FR-004, plan S-016). The plain-language text of that warning and of the projection hint is engine-supplied and belongs in `docs/reference/` when it lands.
 
 ## 2. Errors
 

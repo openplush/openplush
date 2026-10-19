@@ -2,6 +2,8 @@ use std::str::SplitWhitespace;
 
 use openplush_geom::{DVec2, DVec3};
 
+use crate::triangulate::MAX_POLYGON_CORNERS;
+
 /// One face corner: a position index, and a texture-coordinate index if the face gave one.
 #[derive(Debug, Clone, Copy)]
 pub(super) struct Corner {
@@ -25,6 +27,10 @@ pub(super) struct Statements {
     pub(super) position_primitives: Vec<u32>,
     pub(super) uvs: Vec<DVec2>,
     pub(super) faces: Vec<Face>,
+    /// `usemtl` names as written, in first-use order, each once.
+    pub(super) material_names: Vec<String>,
+    /// Each primitive's index into `material_names`, for primitives that have faces.
+    pub(super) primitive_materials: Vec<Option<usize>>,
 }
 
 /// Why a line was refused, with its 1-based line number.
@@ -47,6 +53,8 @@ fn refuse<T>(line: usize, reason: impl Into<String>) -> Result<T, LineError> {
 struct Primitives {
     current: u32,
     has_faces: bool,
+    /// Set by `usemtl` and, as in the format, kept across `o` and `g`.
+    material: Option<usize>,
 }
 
 impl Primitives {
@@ -85,9 +93,16 @@ pub(super) fn statements(text: &str) -> Result<Statements, LineError> {
                     primitive,
                     corners,
                 });
+                if !primitives.has_faces {
+                    out.primitive_materials.push(primitives.material);
+                }
                 primitives.has_faces = true;
             }
-            "o" | "g" | "usemtl" => primitives.split(line)?,
+            "o" | "g" => primitives.split(line)?,
+            "usemtl" => {
+                primitives.split(line)?;
+                primitives.material = Some(material(&statement, line, &mut out.material_names)?);
+            }
             // Free-form surfaces would vanish from the model if skipped.
             "cstype" | "curv" | "curv2" | "surf" => {
                 return refuse(
@@ -101,17 +116,32 @@ pub(super) fn statements(text: &str) -> Result<Statements, LineError> {
     Ok(out)
 }
 
+/// The index of the name `usemtl` gives, added if new. The name is the rest of the line
+/// as written, trailing blanks included; only the blanks after the keyword are dropped.
+fn material(statement: &str, line: usize, names: &mut Vec<String>) -> Result<usize, LineError> {
+    let name = statement
+        .trim_start()
+        .strip_prefix("usemtl")
+        .map_or("", str::trim_start);
+    if name.is_empty() {
+        return refuse(line, "usemtl needs a material name");
+    }
+    if let Some(i) = names.iter().position(|n| n == name) {
+        return Ok(i);
+    }
+    names.push(name.to_owned());
+    Ok(names.len() - 1)
+}
+
 /// Statements with comments removed and `\`-continued lines joined, each with the
 /// number of the line it starts on.
 fn logical_lines(text: &str) -> Vec<(usize, String)> {
     let mut out = Vec::new();
     let mut pending: Option<(usize, String)> = None;
     for (i, raw) in text.lines().enumerate() {
-        let content = raw
-            .split_once('#')
-            .map_or(raw, |(before, _)| before)
-            .trim_end();
-        let (body, continues) = match content.strip_suffix('\\') {
+        let content = raw.split_once('#').map_or(raw, |(before, _)| before);
+        // Trailing blanks stay on a finished line, because `usemtl` names keep them.
+        let (body, continues) = match content.trim_end().strip_suffix('\\') {
             Some(body) => (body, true),
             None => (content, false),
         };
@@ -172,6 +202,15 @@ fn face(
         .collect::<Result<Vec<_>, _>>()?;
     if corners.len() < 3 {
         return refuse(line, "a face needs at least three vertices");
+    }
+    if corners.len() > MAX_POLYGON_CORNERS {
+        return refuse(
+            line,
+            format!(
+                "a face has {} corners, over the {MAX_POLYGON_CORNERS} the reader triangulates",
+                corners.len()
+            ),
+        );
     }
     Ok(corners)
 }

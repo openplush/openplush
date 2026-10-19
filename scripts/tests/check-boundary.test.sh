@@ -97,10 +97,17 @@ expect fail "upward edge geom -> mesh" "$r" "openplush-geom -> openplush-mesh"
 
 # 3. Sideways edge between siblings.
 r=$(new_case sideways)
+workspace "$r" crates/openplush-layout crates/openplush-decal
+crate "$r" crates/openplush-layout openplush-layout
+crate "$r" crates/openplush-decal openplush-decal 'openplush-layout = { path = "../openplush-layout" }'
+expect fail "sideways edge decal -> layout" "$r" "openplush-decal -> openplush-layout"
+
+# 3a. Export reads layout's output (ADR 0012), so that edge is downward.
+r=$(new_case export-layout)
 workspace "$r" crates/openplush-layout crates/openplush-export
 crate "$r" crates/openplush-layout openplush-layout
 crate "$r" crates/openplush-export openplush-export 'openplush-layout = { path = "../openplush-layout" }'
-expect fail "sideways edge export -> layout" "$r" "openplush-export -> openplush-layout"
+expect pass "export -> layout (ADR 0012)" "$r"
 
 # 4. A crate the DAG table doesn't know.
 r=$(new_case unknown)

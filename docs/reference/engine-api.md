@@ -17,7 +17,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
-| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what `ProposalId::from_hex` and `Proposal::new` return. Variants below |
+| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`) return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
 No stage function exists yet; each lands with the task that builds its stage.
@@ -47,11 +47,13 @@ Three methods read an error the way the shell needs it. Each matches every varia
 - **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
 - **`proposals() -> &[Proposal]`**: the fixes `ChartNotDisk` and `BoundaryNotRealizable` carry; empty for every other variant.
 
-`SeamsError` is the error of building a proposal or parsing its ID, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:
+`SeamsError` is the error of building a proposal, parsing its ID, changing a `SeamSet` or building a `SeamGraph`, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:
 
 | Variant | Carries | Message |
 |---|---|---|
 | `EmptyProposal` | nothing | `a proposal must add at least one seam edge` |
+| `MandatorySeam` | the `edge`, printed in Rust `{:?}` (Debug) form: `EdgeId(4)` | `a mandatory seam cannot be removed, replaced, or placed over another seam (edge {edge:?})` |
+| `UnknownEdge` | the `edge`, printed in Rust `{:?}` (Debug) form: `EdgeId(9)` | `a seam is on edge {edge:?}, which the mesh does not have` |
 | `BadProposalId` | the rejected `text`, printed in Rust `{:?}` (Debug) form: double-quoted, with escapes | `{text:?} is not a proposal id (16 lowercase hex digits)` |
 
 ## Warnings

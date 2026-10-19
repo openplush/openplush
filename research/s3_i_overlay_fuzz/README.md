@@ -1,6 +1,6 @@
 # Spike S3: is `i_overlay` robust enough for per-edge seam allowances?
 
-**Status (2026-10-15): closed.** Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Proposed).
+**Status (2026-10-15): closed.** Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
 
 This is non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/` imports it. It is a standalone Cargo project with its own `[workspace]` table and `Cargo.lock`, so the root workspace (`members = ["crates/*"]`) and `scripts/check.sh` never see it.
 

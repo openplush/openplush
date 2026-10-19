@@ -4,6 +4,7 @@
 //! `crates/AGENTS.md`.
 
 mod error;
+pub mod pdf;
 pub mod svg;
 
 pub use error::ExportError;

@@ -16,5 +16,11 @@ openplush-mesh = { path = "../openplush-mesh" }
 openplush-seams = { path = "../openplush-seams" }
 thiserror = "2.0.21"
 
+[dev-dependencies]
+# The S3 corpus generator's trigonometry, identical on every target; the version i_float pulls in.
+libm = "=0.2.16"
+# The S3 oracle's exact orientation, independent of the engine; the version openplush-geom uses.
+robust = "=1.2.0"
+
 [lints]
 workspace = true

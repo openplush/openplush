@@ -744,9 +744,11 @@ name = "openplush-pattern"
 version = "0.0.0"
 dependencies = [
  "i_overlay",
+ "libm",
  "openplush-geom",
  "openplush-mesh",
  "openplush-seams",
+ "robust",
  "thiserror",
 ]
 

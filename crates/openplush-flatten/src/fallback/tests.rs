@@ -24,9 +24,7 @@ fn edge_length(xyz: &[DVec3], a: VertexId, b: VertexId) -> f64 {
 
 fn parts(error: FlattenError) -> Option<(f64, Option<Vec<VertexId>>)> {
     match error {
-        FlattenError::BoundaryNotRealizable {
-            residual, dart, ..
-        } => Some((residual, dart)),
+        FlattenError::BoundaryNotRealizable { residual, dart, .. } => Some((residual, dart)),
         _ => None,
     }
 }
@@ -34,8 +32,6 @@ fn parts(error: FlattenError) -> Option<(f64, Option<Vec<VertexId>>)> {
 /// Shortest edge-path length from any rim vertex to vertex 0, by plain Bellman–Ford.
 fn shortest_from_rim(xyz: &[DVec3], faces: &Faces) -> f64 {
     let mut dist = vec![f64::INFINITY; xyz.len()];
-    let rim_start = 1 + 3 * (RINGS - 1) * (RINGS - 2) + 6 * (RINGS - 1) + 3 * 0;
-    let _ = rim_start;
     let first_rim = (1 + 3 * RINGS * (RINGS - 1)) as usize;
     dist[first_rim..].fill(0.0);
     for _ in 0..xyz.len() {
@@ -82,7 +78,10 @@ fn the_dart_heads_for_the_vertex_with_the_most_angle_defect() {
     let (mut xyz, faces) = rings(RINGS, |r, a| DVec3::new(r * a.cos(), r * a.sin(), 0.0));
     xyz[10].z = 0.3;
     let (_, dart) = parts(not_realizable(CHART, &xyz, &faces)).expect("BoundaryNotRealizable");
-    assert_eq!(dart.and_then(|p| p.last().copied()), Some(VertexId::new(10)));
+    assert_eq!(
+        dart.and_then(|p| p.last().copied()),
+        Some(VertexId::new(10))
+    );
 }
 
 #[test]
@@ -103,7 +102,10 @@ fn the_residual_is_the_natural_gap_in_model_units_and_repeats_bit_for_bit() {
     xyz[3].x += 0.08;
     let first = parts(not_realizable(CHART, &xyz, &faces)).expect("BoundaryNotRealizable");
     assert!(first.0 > 1e-4);
-    assert_eq!(first, parts(not_realizable(CHART, &xyz, &faces)).expect("again"));
+    assert_eq!(
+        first,
+        parts(not_realizable(CHART, &xyz, &faces)).expect("again")
+    );
     let big: Vec<DVec3> = xyz.iter().map(|&p| p * 1000.0).collect();
     let (scaled, _) = parts(not_realizable(CHART, &big, &faces)).expect("scaled");
     assert!((scaled / 1000.0 - first.0).abs() <= 1e-9 * first.0);

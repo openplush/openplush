@@ -49,22 +49,69 @@ pub(crate) fn cotangent_weights(
     Ok(curvature::intrinsic(xyz, faces)?.weight)
 }
 
+/// A chart's boundary as the interior curvature would turn it, before any closing.
+pub(crate) struct Open {
+    /// The boundary loop, from its lowest vertex in the faces' winding.
+    pub(crate) ring: Vec<u32>,
+    /// How far that polygon ends from where it starts, in the chart's units.
+    pub(crate) gap: f64,
+    /// Each used vertex's sum of corner angles.
+    pub(crate) angle_sum: BTreeMap<u32, f64>,
+}
+
+/// Everything `prescribe` and `open_polygon` share: the loop, its 3D edge lengths and the
+/// turning the interior asks for.
+struct Setup {
+    geometry: curvature::Intrinsic,
+    ring: Vec<u32>,
+    lengths: Vec<f64>,
+    target: Vec<f64>,
+}
+
+fn setup(xyz: &[DVec3], faces: &[(FaceId, [VertexId; 3])]) -> Result<Setup, BoundaryError> {
+    let geometry = curvature::intrinsic(xyz, faces)?;
+    let ring = topology::boundary_loop(faces)?;
+    let target = curvature::turning(&geometry, &ring)?;
+    // INVARIANT: `intrinsic` found every vertex of every face in `xyz`.
+    let at = |v: u32| xyz[v as usize];
+    let lengths = ring
+        .iter()
+        .zip(ring.iter().cycle().skip(1))
+        .map(|(&a, &b)| (at(b) - at(a)).length())
+        .collect();
+    Ok(Setup {
+        geometry,
+        ring,
+        lengths,
+        target,
+    })
+}
+
+/// The boundary polygon at the interior's own turning, with how far it misses closing.
+pub(crate) fn open_polygon(
+    xyz: &[DVec3],
+    faces: &[(FaceId, [VertexId; 3])],
+) -> Result<Open, BoundaryError> {
+    let s = setup(xyz, faces)?;
+    Ok(Open {
+        gap: closure::gap(&s.lengths, &s.target),
+        angle_sum: s.geometry.angle_sum,
+        ring: s.ring,
+    })
+}
+
 /// The chart's boundary corners laid flat, from its lowest vertex in the faces' winding
 /// (counter-clockwise), each edge exactly its 3D length. `faces` index `xyz`.
 pub(crate) fn prescribe(
     xyz: &[DVec3],
     faces: &[(FaceId, [VertexId; 3])],
 ) -> Result<Vec<(VertexId, DVec2)>, BoundaryError> {
-    let geometry = curvature::intrinsic(xyz, faces)?;
-    let ring = topology::boundary_loop(faces)?;
-    let target = curvature::turning(&geometry, &ring)?;
-    // INVARIANT: `intrinsic` found every vertex of every face in `xyz`.
-    let at = |v: u32| xyz[v as usize];
-    let lengths: Vec<f64> = ring
-        .iter()
-        .zip(ring.iter().cycle().skip(1))
-        .map(|(&a, &b)| (at(b) - at(a)).length())
-        .collect();
+    let Setup {
+        ring,
+        lengths,
+        target,
+        ..
+    } = setup(xyz, faces)?;
     let kappa = closure::close(&lengths, &target)?;
     let corners = closure::walk(&lengths, &kappa);
     Ok(ring.into_iter().map(VertexId::new).zip(corners).collect())

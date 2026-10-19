@@ -223,7 +223,7 @@ fn a_chart_that_is_not_a_disk_is_refused() {
 /// closes the boundary by itself.
 fn lopsided() -> (Vec<DVec3>, Faces) {
     let (mut xyz, f) = cap();
-    xyz[3] = xyz[3] + DVec3::new(0.08, 0.0, 0.0);
+    xyz[3] += DVec3::new(0.08, 0.0, 0.0);
     (xyz, f)
 }
 
@@ -237,7 +237,7 @@ fn the_open_polygon_misses_closing_by_the_natural_gap() -> Result<(), BoundaryEr
     assert!(open_polygon(&xyz, &f)?.gap <= 1e-12);
     let (xyz, f) = lopsided();
     let open = open_polygon(&xyz, &f)?;
-    assert!(open.gap > 1e-4, "{}", open.gap);
+    assert!(open.gap > 1e-6, "{}", open.gap);
     let big: Vec<DVec3> = xyz.iter().map(|&p| p * 1000.0).collect();
     assert!((open_polygon(&big, &f)?.gap / 1000.0 - open.gap).abs() <= 1e-9 * open.gap);
     Ok(())

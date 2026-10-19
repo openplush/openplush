@@ -55,6 +55,14 @@ pub(super) fn walk(lengths: &[f64], kappa: &[f64]) -> Vec<DVec2> {
         .collect()
 }
 
+/// How far the last edge ends from the first edge's start, turning by `kappa`.
+pub(super) fn gap(lengths: &[f64], kappa: &[f64]) -> f64 {
+    headings(kappa)
+        .zip(lengths)
+        .fold(DVec2::ZERO, |end, (phi, &l)| end + direction(phi) * l)
+        .length()
+}
+
 /// Edge `i`'s heading: the sum of the turns at corners 1 to `i`. Corner 0's turn only closes the loop.
 fn headings(kappa: &[f64]) -> impl Iterator<Item = f64> + '_ {
     kappa.iter().enumerate().scan(0.0, |phi, (i, &k)| {

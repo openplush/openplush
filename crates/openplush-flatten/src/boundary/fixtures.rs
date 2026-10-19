@@ -55,7 +55,10 @@ pub(crate) fn rings(
         let first = 1 + 3 * k * (k - 1);
         for j in 0..6 * k {
             let turn = f64::from(j) / f64::from(6 * k);
-            xyz.push(place(f64::from(k) / f64::from(count), std::f64::consts::TAU * turn));
+            xyz.push(place(
+                f64::from(k) / f64::from(count),
+                std::f64::consts::TAU * turn,
+            ));
         }
         ids.push((first..first + 6 * k).collect());
     }

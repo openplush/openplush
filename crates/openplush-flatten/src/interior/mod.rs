@@ -58,7 +58,7 @@ impl<'a> Solve<'a> {
         xyz: &[DVec3],
         faces: Faces<'a>,
     ) -> Result<Self, FlattenError> {
-        let ring = boundary::prescribe(xyz, faces).map_err(|e| refuse(chart, e))?;
+        let ring = boundary::prescribe(xyz, faces).map_err(|e| refuse(chart, xyz, faces, e))?;
         let rest =
             rest_shapes(xyz, faces).map_err(|face| FlattenError::Degenerate { chart, face })?;
         let pinned: Vec<VertexId> = ring.iter().map(|&(v, _)| v).collect();
@@ -68,7 +68,8 @@ impl<'a> Solve<'a> {
             // INVARIANT: `prescribe` accepted the faces, so every ring vertex is in `xyz`.
             uv[v.index() as usize] = p;
         }
-        let cotangent = boundary::cotangent_weights(xyz, faces).map_err(|e| refuse(chart, e))?;
+        let cotangent =
+            boundary::cotangent_weights(xyz, faces).map_err(|e| refuse(chart, xyz, faces, e))?;
         let uv = start::fill(chart, faces, &free, &cotangent, &uv)?;
         let energy = energy(&rest, faces, &uv).ok_or(FlattenError::SolveFailed { chart })?;
         let system = (free.count > 0)
@@ -143,8 +144,23 @@ pub(crate) fn flatten(
 }
 
 /// The `FlattenError` for a boundary refusal. A face naming a missing vertex is reported as
-/// unmeasurable, since it has no rest shape.
-fn refuse(chart: ChartId, error: BoundaryError) -> FlattenError {
+/// unmeasurable, since it has no rest shape; a boundary that will not close is measured.
+pub(crate) fn refuse(
+    chart: ChartId,
+    xyz: &[DVec3],
+    faces: Faces<'_>,
+    error: BoundaryError,
+) -> FlattenError {
+    match error {
+        BoundaryError::BadInput | BoundaryError::NotClosed => {
+            crate::fallback::not_realizable(chart, xyz, faces)
+        }
+        other => refuse_measurement(chart, other),
+    }
+}
+
+/// The refusals that need nothing but the chart.
+pub(crate) fn refuse_measurement(chart: ChartId, error: BoundaryError) -> FlattenError {
     match error {
         BoundaryError::Empty => FlattenError::EmptyChart { chart },
         BoundaryError::BadVertex { face } | BoundaryError::Degenerate { face } => {
@@ -152,9 +168,8 @@ fn refuse(chart: ChartId, error: BoundaryError) -> FlattenError {
         }
         BoundaryError::NotADisk => FlattenError::NotADisk { chart },
         BoundaryError::Solve(e) => solve_failed(chart, e),
-        BoundaryError::BadInput | BoundaryError::NotClosed => {
-            FlattenError::BoundaryNotRealizable { chart }
-        }
+        // A boundary that will not close has its own report.
+        BoundaryError::BadInput | BoundaryError::NotClosed => FlattenError::SolveFailed { chart },
     }
 }
 

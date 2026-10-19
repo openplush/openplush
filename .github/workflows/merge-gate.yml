@@ -1,0 +1,221 @@
+# The merge gate (ADR 0015). Decides, with no LLM in the path, whether a PR may
+# auto-merge: it computes the tier from the diff (scripts/pr-tier.py), judges
+# every condition on the current head (scripts/merge-gate.py), keeps one
+# comment per PR saying which conditions fail, applies `merge:ready` as its
+# verdict and enables auto-merge. Tier C is never labelled or merged.
+#
+# It never checks out or runs the PR's code: pull_request_target, workflow_run
+# and schedule all take this file from the base branch, the PR is read through
+# the API, and only scripts/ is checked out, from main. The schedule is the
+# backstop for what sends no event: a thread resolved by hand, the tier-B hold
+# expiring, and comments posted with GITHUB_TOKEN.
+#
+# Acts with a GitHub App's token (secrets MERGE_GATE_APP_ID and
+# MERGE_GATE_PRIVATE_KEY), not GITHUB_TOKEN: a merge made with GITHUB_TOKEN
+# starts no `push` workflow, so main's CI would silently stop running.
+#
+# The repository variable MERGE_GATE_MODE is the kill switch: unset or `off`
+# runs nothing; `dry-run` comments and labels but never touches auto-merge;
+# `on` enables auto-merge too.
+name: merge gate
+
+on:
+  workflow_run:
+    workflows: [engine, shell, wasm, review]
+    types: [completed]
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  schedule:
+    - cron: '*/30 * * * *'
+
+# GITHUB_TOKEN only lists PRs and checks out scripts/; the App token acts.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # Which PRs this event is about. A label event counts only when a person
+  # changes a tier: label; the gate's own label changes come back as events
+  # and would judge again for nothing.
+  targets:
+    name: pull requests to judge
+    if: >-
+      (vars.MERGE_GATE_MODE == 'dry-run' || vars.MERGE_GATE_MODE == 'on') &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.event == 'pull_request') &&
+      (github.event_name != 'pull_request_target' ||
+       (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+       (startsWith(github.event.label.name, 'tier:') && github.event.sender.type != 'Bot'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      numbers: ${{ steps.list.outputs.numbers }}
+    steps:
+      - id: list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          case $EVENT in
+            pull_request_target) numbers="[$PR]" ;;
+            workflow_run)
+              numbers=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/pulls" \
+                --jq '[.[] | select(.state == "open") | .number]') ;;
+            schedule)
+              numbers=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" \
+                --jq '[.[].number]' | jq -sc add) ;;
+            *) echo "::error::unexpected event $EVENT"; exit 1 ;;
+          esac
+          echo "numbers=$numbers" >> "$GITHUB_OUTPUT"
+          echo "judging PRs $numbers"
+
+  gate:
+    name: merge gate
+    needs: targets
+    if: needs.targets.outputs.numbers != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        pr: ${{ fromJSON(needs.targets.outputs.numbers) }}
+    # One judgement per PR at a time; a newer event supersedes a running one.
+    concurrency:
+      group: merge-gate-${{ matrix.pr }}
+      cancel-in-progress: true
+    env:
+      HAS_APP: ${{ secrets.MERGE_GATE_APP_ID != '' && secrets.MERGE_GATE_PRIVATE_KEY != '' }}
+      PR: ${{ matrix.pr }}
+      MODE: ${{ vars.MERGE_GATE_MODE }}
+    steps:
+      - name: skip without the App
+        if: env.HAS_APP != 'true'
+        run: echo "::notice::No MERGE_GATE_APP_ID / MERGE_GATE_PRIVATE_KEY secrets; merge gate skipped."
+      # Fetched state lives outside the checkout.
+      - run: echo "WORK=$RUNNER_TEMP/gate" >> "$GITHUB_ENV"
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        id: app
+        if: env.HAS_APP == 'true'
+        with:
+          app-id: ${{ secrets.MERGE_GATE_APP_ID }}
+          private-key: ${{ secrets.MERGE_GATE_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-checks: read
+      # A push revokes the verdict before anything else runs, so a new head can
+      # never merge on the old head's judgement.
+      - name: revoke on push
+        if: env.HAS_APP == 'true' && github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          state=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json labels,autoMergeRequest)
+          if jq -e '.labels[] | select(.name == "merge:ready")' <<<"$state" >/dev/null; then
+            gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label merge:ready
+          fi
+          if jq -e '.autoMergeRequest != null' <<<"$state" >/dev/null; then
+            gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --disable-auto
+          fi
+      # The scripts come from main, whatever the PR changed under scripts/.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.HAS_APP == 'true'
+        with:
+          ref: main
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: fetch the PR
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          mkdir -p "$WORK"
+          api="repos/$GITHUB_REPOSITORY"
+          # GitHub computes mergeability lazily; ask again for a few seconds.
+          for _ in 1 2 3 4 5 6; do
+            gh api "$api/pulls/$PR" > "$WORK/pr.json"
+            [[ $(jq .mergeable "$WORK/pr.json") != null ]] && break
+            sleep 5
+          done
+          sha=$(jq -r .head.sha "$WORK/pr.json")
+          echo "HEAD_SHA=$sha" >> "$GITHUB_ENV"
+          gh api --paginate "$api/pulls/$PR/files?per_page=100" | jq -s add > "$WORK/files.json"
+          gh api --paginate "$api/commits/$sha/check-runs?per_page=100" --jq '.check_runs' | jq -s add > "$WORK/checks.json"
+          gh api --paginate "$api/issues/$PR/comments?per_page=100" | jq -s add > "$WORK/comments.json"
+          gh api graphql --paginate -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" -F pr="$PR" \
+            -f query='query($owner: String!, $name: String!, $pr: Int!, $endCursor: String) {
+              repository(owner: $owner, name: $name) { pullRequest(number: $pr) {
+                reviewThreads(first: 100, after: $endCursor) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes { isResolved comments(first: 100) { nodes { body } } } } } } }' \
+            --jq '.data.repository.pullRequest.reviewThreads.nodes' |
+            jq -s 'add | map({isResolved, comments: .comments.nodes})' > "$WORK/threads.json"
+      - name: judge
+        if: env.HAS_APP == 'true'
+        run: |
+          jq -c '{title, head_ref: .head.ref, labels: [.labels[].name], changed_files}' "$WORK/pr.json" |
+            jq -c --slurpfile files "$WORK/files.json" '. + {files: $files[0]}' |
+            python3 scripts/pr-tier.py > "$WORK/tier.json"
+          jq -n --arg mode "$MODE" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg repo "$GITHUB_REPOSITORY" \
+            --slurpfile pr "$WORK/pr.json" --slurpfile tier "$WORK/tier.json" --slurpfile checks "$WORK/checks.json" \
+            --slurpfile comments "$WORK/comments.json" --slurpfile threads "$WORK/threads.json" \
+            '{mode: $mode, now: $now, repository: $repo, pr: $pr[0], tier: $tier[0],
+              check_runs: $checks[0], comments: $comments[0], threads: $threads[0]}' |
+            python3 scripts/merge-gate.py > "$WORK/verdict.json"
+          jq -r .comment "$WORK/verdict.json" | tee -a "$GITHUB_STEP_SUMMARY" > "$WORK/comment.md"
+      # The tier label is never lowered; a higher computed tier relabels, once.
+      - name: label the tier
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          [[ $(jq -r .relabel "$WORK/tier.json") == true ]] || exit 0
+          tier=$(jq -r .tier "$WORK/tier.json")
+          args=(--add-label "tier:$tier")
+          for old in $(jq -r '.labels[].name | select(startswith("tier:"))' "$WORK/pr.json"); do
+            [[ $old == "tier:$tier" ]] || args+=(--remove-label "$old")
+          done
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" "${args[@]}"
+          reasons=$(jq -r '.reasons | join("; ")' "$WORK/tier.json")
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "The merge gate computed tier $tier from the diff and labelled the PR \`tier:$tier\`: $reasons"
+      # One comment per PR, updated in place, so a stalled PR explains itself.
+      - name: post the verdict
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          AUTHOR: ${{ steps.app.outputs.app-slug }}[bot]
+        run: |
+          id=$(jq -r --arg author "$AUTHOR" \
+            '[.[] | select(.user.login == $author and (.body | startswith("<!-- merge-gate -->")))] | last | .id // ""' "$WORK/comments.json")
+          if [[ -n $id ]]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$WORK/comment.md" > /dev/null
+          else
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$WORK/comment.md"
+          fi
+      - name: apply the verdict
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          AUTHOR: ${{ steps.app.outputs.app-slug }}[bot]
+        run: |
+          ready=$(jq -r .ready "$WORK/verdict.json")
+          labelled=$(jq -r '[.labels[].name] | index("merge:ready") != null' "$WORK/pr.json")
+          auto=$(jq -r '.auto_merge != null' "$WORK/pr.json")
+          if [[ $ready == true ]]; then
+            [[ $labelled == true ]] || gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label merge:ready
+            if [[ $MODE == on && $auto != true ]]; then
+              if ! err=$(gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --auto --merge --match-head-commit "$HEAD_SHA" 2>&1); then
+                printf '\n**Auto-merge could not be enabled**: %s\n' "$err" | tee -a "$GITHUB_STEP_SUMMARY" >> "$WORK/comment.md"
+                id=$(jq -r --arg author "$AUTHOR" \
+                  '[.[] | select(.user.login == $author and (.body | startswith("<!-- merge-gate -->")))] | last | .id // ""' "$WORK/comments.json")
+                [[ -z $id ]] || gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$WORK/comment.md" > /dev/null
+                echo "::error::$err"
+                exit 1
+              fi
+              echo "auto-merge enabled on $HEAD_SHA"
+            fi
+          else
+            [[ $labelled != true ]] || gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label merge:ready
+            [[ $auto != true ]] || gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --disable-auto
+          fi

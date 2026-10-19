@@ -12,5 +12,6 @@
   { "name": "factory",       "color": "c5def5", "description": "Ledger issue for unattended factory firings on one feature" },
   { "name": "tier:A",        "color": "0e8a16", "description": "Agent enables auto-merge once CI is green and no 🔴 is open (ADR 0014)" },
   { "name": "tier:B",        "color": "fbca04", "description": "Expected output changed: auto-merge 24 h after CI is green (ADR 0014)" },
-  { "name": "tier:C",        "color": "b60205", "description": "The maintainer merges: engine, specs, decisions, gates, dependencies (ADR 0014)" }
+  { "name": "tier:C",        "color": "b60205", "description": "The maintainer merges: engine, specs, decisions, gates, dependencies (ADR 0014)" },
+  { "name": "merge:ready",   "color": "0e8a16", "description": "The merge gate's verdict: every condition holds on the current head (ADR 0015). Set by the gate only" }
 ]

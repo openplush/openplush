@@ -7,8 +7,9 @@ mod boundary;
 mod error;
 mod fallback;
 pub mod injectivity;
-#[cfg_attr(not(test), expect(dead_code, reason = "no caller outside tests"))]
 mod interior;
+mod session;
 mod solver;
 
 pub use error::FlattenError;
+pub use session::{FlattenSession, Progress};

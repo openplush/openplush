@@ -6,7 +6,7 @@ use openplush_seams::ChartId;
 use openplush_testkit::oracles::{Chart, developable, injective};
 
 use super::energy::{energy, rest_shapes};
-use super::{Solve, Step, flatten, refuse, solve_failed};
+use super::{Solve, Step, refuse, solve_failed};
 use crate::FlattenError;
 use crate::boundary::BoundaryError;
 use crate::boundary::fixtures::{Faces, faces, grid, rings};
@@ -14,6 +14,17 @@ use crate::injectivity;
 use crate::solver::SolveError;
 
 const CHART: ChartId = ChartId::new(3);
+
+/// The chart's layout once the iteration settles.
+fn flatten(
+    chart: ChartId,
+    xyz: &[DVec3],
+    faces: &[(FaceId, [VertexId; 3])],
+) -> Result<Vec<(VertexId, DVec2)>, FlattenError> {
+    let mut solve = Solve::start(chart, xyz, faces)?;
+    while solve.iterate()? == Step::Improved {}
+    Ok(solve.layout())
+}
 
 fn half_cylinder() -> (Vec<DVec3>, Faces) {
     let step = PI / 8.0;

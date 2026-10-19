@@ -158,6 +158,16 @@ fn well_formed(mesh: &ManifoldMesh, seams: &SeamSet, graph: &SeamGraph) {
                 "{chain:?}"
             );
         }
+        // The walking order: from the lower end; out along the lower end edge; or, closed, from
+        // the lowest edge's lower end.
+        if first != last {
+            assert!(first < last, "{chain:?}");
+        } else if nodes.contains_key(&first) {
+            assert!(edges[0] < edges[edges.len() - 1], "{chain:?}");
+        } else {
+            assert_eq!(edges.iter().min(), edges.first(), "{chain:?}");
+            assert!(vertices[0] < vertices[1], "{chain:?}");
+        }
         seen.extend_from_slice(edges);
     }
     let ids: Vec<_> = graph.chains().iter().map(SeamChain::id).collect();
@@ -208,6 +218,24 @@ fn a_seam_across_a_sheet_is_one_chain_between_two_boundary_ends() -> Result<(), 
     assert_eq!(chain.edges().len(), 4);
     // Two different ends: the walk starts at the lower-numbered one.
     assert_eq!(ends(chain), (left.min(right), left.max(right)));
+    Ok(())
+}
+
+#[test]
+fn a_chain_runs_from_its_lower_end_whatever_its_edge_numbers() -> Result<(), Setup> {
+    // Walked from its lower end, this seam's last edge has the lowest ID.
+    let grid = Grid::sheet(4, 2)?;
+    let mut seams = SeamSet::new();
+    let path = [(1, 0), (2, 1), (1, 1), (0, 1)];
+    grid.seam(&mut seams, SeamKind::Cut, &path)?;
+    let graph = grid.graph(&seams)?;
+    let [chain] = graph.chains() else {
+        panic!("one chain: {:?}", graph.chains());
+    };
+    let (a, b) = (grid.at(1, 0)?, grid.at(0, 1)?);
+    assert_eq!(ends(chain), (a.min(b), a.max(b)));
+    let edges = chain.edges();
+    assert!(edges[edges.len() - 1] < edges[0], "{chain:?}");
     Ok(())
 }
 

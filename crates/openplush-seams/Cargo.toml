@@ -12,5 +12,8 @@ publish = false
 openplush-mesh = { path = "../openplush-mesh" }
 thiserror = "2.0.21"
 
+[dev-dependencies]
+openplush-geom = { path = "../openplush-geom" }
+
 [lints]
 workspace = true

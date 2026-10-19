@@ -26,19 +26,19 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 ## One firing
 
 1. Check `main`, the open PRs, and the next free slice number once (`steward`, Sessions).
-2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews). Events reach only the session that opened a PR, and that session is gone.
+2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and enable auto-merge on any tier A or B PR that is ready (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone.
 3. Pick up to four ready tasks that touch different crates and share no file. One task runs inline; two or more run through the Workflow tool, one agent per task, each in its own worktree, and nothing else runs while they do.
-4. Per task: branch `NNN/NN-<ID>-slug` from its parent (`main`, or the open PR it depends on); the failing test commit; the implementation commit; `scripts/check.sh <lane>` green; `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; remove the attribution footer the server adds; subscribe.
+4. Per task: branch `NNN/NN-<ID>-slug` from its parent (`main`, or the open PR it depends on); the failing test commit; the implementation commit; `scripts/check.sh <lane>` green; `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; label its tier; remove the attribution footer the server adds; subscribe.
 5. Scope each PR by intent (ADR 0013): one task is one PR unless it carries two intents, and the `Intent` section says what it brings in and why. Never split by size, and never a reason to stop.
 6. Append one comment to the feature's ledger (below) and end the session. Do not wait for CI or review here; the next firing walks the open PRs.
 
 ## What a firing decides alone
 
-Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, resolving a merge conflict with `main` or its parent, answering 🟡 findings, and fixing 🔴 findings with the proof `steward` asks for.
+Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, labelling its tier, enabling auto-merge on a tier A or B PR when `steward` (Merging) allows it, resolving a merge conflict with `main` or its parent, answering 🟡 findings, and fixing 🔴 findings with the proof `steward` asks for.
 
 ## What it never does
 
-Merge; force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
+Merge a PR itself, or enable auto-merge on a tier C one; force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
 
 ## Stop conditions
 
@@ -66,7 +66,7 @@ Stopped: <reason>
 Next ready: <ID> or none
 ```
 
-The maintainer reads the ledger, accepts decisions and ticks `human:` work in `tasks.md`, and merges bottom-up. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
+The maintainer reads the ledger, accepts decisions and ticks `human:` work in `tasks.md`, and merges tier C PRs bottom-up. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
 
 ## Scheduling
 

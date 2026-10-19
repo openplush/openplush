@@ -1,8 +1,8 @@
 # Automated adversarial review, by the agents in .claude/agents/
 # (pr-reviewer always; spec-reviewer when specs change; docs-reviewer when a public
-# surface or docs/ changes; mutation-auditor only on request). Advisory, not a
-# gate: it posts findings as review comments and never approves. The maintainer
-# still merges.
+# surface or docs/ changes; mutation-auditor only on request). Advisory: it posts
+# findings as review comments and never approves. Who merges is set by the PR's
+# tier (ADR 0014).
 #
 # Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
 # opened (or marked ready for review), not on every push. Only the maintainer
@@ -11,8 +11,9 @@
 # the PR as one event sees them (added in one operation), only the
 # `mutation-audit` event runs; added one after the other, both can run. The
 # labels are removed when the run starts, so they can be added again later.
-# A PR titled `docs(tasks): tick …` (checkbox ticks only) is not reviewed on
-# opening; `rereview` still runs it.
+# Not reviewed on opening (ADR 0014): a PR titled `docs(tasks): tick …`
+# (checkbox ticks only), a PR from a `chore/` branch, and a docs-only PR (every
+# changed path under docs/). `rereview` still runs any of them.
 # A rerun reviews only what changed since the last summary's head, and drops
 # findings the author already answered, so it does not repeat the first run.
 #
@@ -45,21 +46,46 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Whether every changed path is under docs/. The event carries no file list.
+  scope:
+    name: changed paths
+    if: github.event.action != 'labeled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.paths.outputs.docs_only }}
+    steps:
+      - id: paths
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Two steps, so a failed listing fails the job instead of counting as docs-only.
+          files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')
+          others=$(grep -cv '^docs/' <<<"$files" || true)
+          echo "docs_only=$([[ $others == 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
   review:
     name: adversarial review
+    needs: scope
     # Same-repo, non-draft PRs only (fork PRs get no secrets; drafts are not
     # ready). A `labeled` event runs only for the two review labels, and a
-    # `rereview` event yields to `mutation-audit` when both are on the PR; a tick
-    # PR runs only on a label.
+    # `rereview` event yields to `mutation-audit` when both are on the PR; a tick,
+    # chore or docs-only PR runs only on a label. `!cancelled()` runs it after a
+    # skipped scope (a label event) and after a failed one, so a scope error
+    # reviews rather than skips.
     if: >-
       github.event.pull_request.draft == false &&
+      !cancelled() &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       (github.event.action != 'labeled' ||
        (github.event.label.name == 'rereview' &&
         !contains(github.event.pull_request.labels.*.name, 'mutation-audit')) ||
        github.event.label.name == 'mutation-audit') &&
       (github.event.action == 'labeled' ||
-       !startsWith(github.event.pull_request.title, 'docs(tasks): tick'))
+       (!startsWith(github.event.pull_request.title, 'docs(tasks): tick') &&
+        !startsWith(github.event.pull_request.head.ref, 'chore/') &&
+        needs.scope.outputs.docs_only != 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:

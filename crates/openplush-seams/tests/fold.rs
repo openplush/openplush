@@ -198,3 +198,50 @@ fn a_flat_sheet_has_no_fold() -> Result<(), Setup> {
     assert_eq!(verdict(&flat)?, Ok(()));
     Ok(())
 }
+
+#[test]
+fn the_folded_chart_is_named_when_it_is_not_the_first() -> Result<(), Setup> {
+    // Face 0 lies flat beside face 1, cut from it by a seam; face 2 is folded back over face 1
+    // about their shared edge from (0, 0, 0) to (5, -10, 0), 2° from antiparallel.
+    let lift = 80.0 * 2.0_f64.to_radians().tan() / 125.0_f64.sqrt();
+    let mesh = repaired(
+        vec![
+            DVec3::new(0.0, 0.0, 0.0),
+            DVec3::new(10.0, 0.0, 0.0),
+            DVec3::new(5.0, 10.0, 0.0),
+            DVec3::new(5.0, -10.0, 0.0),
+            DVec3::new(8.0, 0.0, lift),
+        ],
+        vec![[0, 1, 2], [1, 0, 3], [3, 0, 4]],
+    )?;
+    let mut seams = SeamSet::new();
+    let shared = |mesh: &ManifoldMesh, a: DVec3, b: DVec3| -> Result<EdgeId, Setup> {
+        (0..u32::try_from(mesh.edge_count())?)
+            .map(|e| EdgeId::new(e).half_edge())
+            .find(|&h| {
+                let ends = [mesh.position(mesh.origin(h)), mesh.position(mesh.dest(h))];
+                ends == [a, b] || ends == [b, a]
+            })
+            .map(|h| h.edge())
+            .ok_or_else(|| "no such edge".into())
+    };
+    let cut = shared(&mesh, DVec3::new(0.0, 0.0, 0.0), DVec3::new(10.0, 0.0, 0.0))?;
+    seams.insert(cut, SeamKind::Cut)?;
+    let charts = charts(&mesh, &seams)?;
+    assert_eq!(charts.len(), 2);
+    assert_eq!(check_fold(&mesh, &seams, &charts[0]), Ok(()));
+    let fold = shared(
+        &mesh,
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(5.0, -10.0, 0.0),
+    )?;
+    assert_eq!(
+        check_fold(&mesh, &seams, &charts[1]),
+        Err(SeamsError::FoldedChart {
+            chart: charts[1].id(),
+            edge: fold
+        })
+    );
+    assert_eq!(charts[1].id().index(), 1);
+    Ok(())
+}

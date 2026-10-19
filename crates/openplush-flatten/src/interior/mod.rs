@@ -13,7 +13,9 @@ use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
 use openplush_seams::ChartId;
 
-use self::energy::{Rest, energy, rest_shapes};
+pub(crate) use self::energy::{Rest, rest_shapes};
+
+use self::energy::energy;
 use self::free::Free;
 use self::slim::{System, descend};
 use crate::FlattenError;

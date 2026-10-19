@@ -240,3 +240,16 @@ fn a_face_with_a_non_finite_flat_position_is_degenerate() {
         );
     }
 }
+
+#[test]
+fn a_face_whose_flat_scale_overflows_is_degenerate() {
+    let (xyz, faces) = right_triangle();
+    let flat = uv(&[(0.0, 0.0), (f64::MAX, 0.0), (0.0, f64::MAX)]);
+    assert_eq!(
+        distortion(CHART, &xyz, &faces, &flat),
+        Err(FlattenError::Degenerate {
+            chart: CHART,
+            face: FaceId::new(0),
+        })
+    );
+}

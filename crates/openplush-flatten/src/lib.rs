@@ -8,6 +8,7 @@ mod error;
 mod fallback;
 pub mod injectivity;
 mod interior;
+pub mod metrics;
 mod session;
 mod solver;
 

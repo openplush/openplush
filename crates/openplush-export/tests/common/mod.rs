@@ -19,6 +19,17 @@ pub(crate) struct Page {
     pub(crate) strokes: Vec<Stroke>,
     /// Each clipping path's points.
     pub(crate) clips: Vec<Vec<DVec2>>,
+    /// Each shown string, in drawing order.
+    pub(crate) texts: Vec<Text>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct Text {
+    pub(crate) text: String,
+    /// Where its baseline starts.
+    pub(crate) at: DVec2,
+    /// Font size in page millimetres.
+    pub(crate) size: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -124,14 +135,30 @@ struct State {
 enum Token<'a> {
     Number(f64),
     Array(Vec<f64>),
+    Text(String),
     Operator(&'a str),
 }
 
-/// Numbers, `[…]` arrays of numbers, and everything else as an operator.
+/// Numbers, `[…]` arrays of numbers, `(…)` strings with no escapes, and everything else as an
+/// operator.
 fn tokens(stream: &str) -> Result<Vec<Token<'_>>, Setup> {
     let mut out = Vec::new();
     let mut array: Option<Vec<f64>> = None;
+    let mut text: Option<String> = None;
     for token in stream.split_whitespace() {
+        if let Some(t) = text.as_mut() {
+            t.push(' ');
+            t.push_str(token);
+        } else if token.starts_with('(') {
+            text = Some(token.to_owned());
+        }
+        if let Some(t) = text.as_ref().filter(|t| t.ends_with(')')) {
+            out.push(Token::Text(t[1..t.len() - 1].to_owned()));
+            text = None;
+            continue;
+        } else if text.is_some() {
+            continue;
+        }
         let opens = token.starts_with('[');
         let closes = token.ends_with(']');
         let word = token.trim_start_matches('[').trim_end_matches(']');
@@ -168,12 +195,32 @@ fn interpret(stream: &str) -> Result<Page, Setup> {
         saved: Vec::new(),
         path: Vec::new(),
         clip: false,
+        font: 0.0,
+        text_at: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
     };
-    let (mut operands, mut array) = (Vec::new(), Vec::new());
+    let (mut operands, mut array, mut text) = (Vec::new(), Vec::new(), String::new());
     for token in tokens(stream)? {
         match token {
             Token::Number(v) => operands.push(v),
             Token::Array(a) => array = a,
+            Token::Text(t) => text = t,
+            Token::Operator("Tf") => {
+                run.font = operands[0];
+                operands.clear();
+            }
+            Token::Operator("Tm") => {
+                let o = &operands;
+                run.text_at = [o[0], o[1], o[2], o[3], o[4], o[5]];
+                operands.clear();
+            }
+            Token::Operator("Tj") => {
+                let m = concat(&run.text_at, &run.state.ctm);
+                run.page.texts.push(Text {
+                    text: std::mem::take(&mut text),
+                    at: apply(&m, 0.0, 0.0) * MM_PER_PT,
+                    size: run.font * scale(&m),
+                });
+            }
             Token::Operator(op) => {
                 run.operator(op, &operands, &array)?;
                 operands.clear();
@@ -189,6 +236,8 @@ struct Run {
     saved: Vec<State>,
     path: Vec<Vec<DVec2>>,
     clip: bool,
+    font: f64,
+    text_at: Matrix,
 }
 
 impl Run {

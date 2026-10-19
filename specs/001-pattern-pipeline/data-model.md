@@ -358,7 +358,7 @@ pub enum Remedy {
 
 **Persistence**: acknowledged warnings and their codes+targets are stored in the project (§12), keyed by **source provenance** like seams are, so an acknowledgement survives re-repair and reopening. Unacknowledged warnings are recomputed, never stored.
 
-**Export** (FR-064): the pipeline's export stage takes the `WarningSet` and renders each unresolved entry as a row of text — code, location, explanation, remedy — which `openplush-export` prints as a summary block on the pattern's first page (D-056). Export is never refused. The summary is part of the golden snapshot, so a warning silently vanishing from the printed page is a test failure.
+**Export** (FR-064): the pipeline's export stage takes the `WarningSet` and renders each unresolved entry as a row of text — code, location, explanation, remedy — which `openplush-export` prints as a summary block starting on the pattern's first page, the cover: rows that do not fit continue on pages after the last tile (D-056 (4)). Export is never refused. The summary is part of the golden snapshot, so a warning silently vanishing from the printed page is a test failure.
 
 ## 13a. Proposals, Locations, and Warning Codes (D-022)
 

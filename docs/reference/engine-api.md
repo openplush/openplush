@@ -17,7 +17,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
-| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what `ProposalId::from_hex` and `Proposal::new` return. Variants below |
+| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`) return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
 No stage function exists yet; each lands with the task that builds its stage.

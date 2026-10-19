@@ -2,6 +2,7 @@
 
 mod chart;
 mod chart_mesh;
+mod dijkstra;
 mod error;
 mod fold;
 mod graph;

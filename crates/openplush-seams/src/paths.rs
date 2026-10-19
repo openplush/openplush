@@ -1,12 +1,12 @@
 //! Shortest edge paths over a chart cut open along its seams: the searches that find the cuts
 //! closing a chart into a disk.
 
-use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use openplush_mesh::{EdgeId, HalfEdgeId, ManifoldMesh};
 
 use crate::chart::{cut_test, sides};
+use crate::dijkstra::{self, Tree};
 use crate::{Chart, ChartMesh, SeamSet};
 
 /// An edge of the cut-open chart with a chart face on each side, so cutting along it changes the
@@ -24,12 +24,6 @@ pub(crate) struct CutOpen {
     adjacent: Vec<Vec<(usize, EdgeId)>>,
     /// Each boundary loop's local vertices, the loops in order of their lowest half-edge.
     loops: Vec<Vec<usize>>,
-}
-
-/// Shortest-path distances and the edge each vertex was reached by.
-struct Tree {
-    dist: Vec<f64>,
-    parent: Vec<Option<(usize, EdgeId)>>,
 }
 
 impl CutOpen {
@@ -175,97 +169,11 @@ impl CutOpen {
     }
 
     /// Dijkstra over inner edges from `sources`, each at distance 0, until `stop` holds for the
-    /// vertex taken next, which is returned. Ties go to the lower local vertex, then the lower
-    /// edge.
+    /// vertex taken next, which is returned.
     fn search(&self, sources: &[usize], stop: impl Fn(usize) -> bool) -> (Tree, Option<usize>) {
-        let n = self.adjacent.len();
-        let mut tree = Tree {
-            dist: vec![f64::INFINITY; n],
-            parent: vec![None; n],
-        };
-        let mut heap = BinaryHeap::new();
-        for &s in sources {
-            tree.dist[s] = 0.0;
-            heap.push(Entry {
-                dist: 0.0,
-                vertex: s,
-            });
-        }
-        let mut settled = vec![false; n];
-        while let Some(Entry { dist, vertex }) = heap.pop() {
-            if std::mem::replace(&mut settled[vertex], true) {
-                continue;
-            }
-            if stop(vertex) {
-                return (tree, Some(vertex));
-            }
-            for &(w, edge) in &self.adjacent[vertex] {
-                let d = dist + self.inner[&edge].length;
-                if d < tree.dist[w] {
-                    tree.dist[w] = d;
-                    tree.parent[w] = Some((vertex, edge));
-                    heap.push(Entry { dist: d, vertex: w });
-                }
-            }
-        }
-        (tree, None)
+        dijkstra::search(&self.adjacent, |e| self.inner[&e].length, sources, stop)
     }
 }
-
-impl Tree {
-    /// The vertices from `v` up to its root, `v` first.
-    fn vertices_to(&self, v: usize) -> impl Iterator<Item = usize> + '_ {
-        std::iter::successors(Some(v), |&u| self.parent[u].map(|(p, _)| p))
-    }
-
-    /// The edges from `v` up to its root.
-    fn path_to(&self, v: usize) -> impl Iterator<Item = EdgeId> + '_ {
-        self.vertices_to(v)
-            .filter_map(|u| self.parent[u].map(|(_, e)| e))
-    }
-
-    /// The tree edges of the loop an edge between `ends` closes: each end's path up to where the
-    /// two meet, or to their roots when they never do.
-    fn loop_through(&self, ends: [usize; 2]) -> Vec<EdgeId> {
-        let above: BTreeSet<usize> = self.vertices_to(ends[0]).collect();
-        let meet = self.vertices_to(ends[1]).find(|v| above.contains(v));
-        let up = |v: usize| {
-            self.vertices_to(v)
-                .take_while(move |&u| Some(u) != meet)
-                .filter_map(|u| self.parent[u].map(|(_, e)| e))
-        };
-        up(ends[0]).chain(up(ends[1])).collect()
-    }
-}
-
-/// A heap entry ordered so the nearest vertex, then the lowest, pops first.
-struct Entry {
-    dist: f64,
-    vertex: usize,
-}
-
-impl Ord for Entry {
-    fn cmp(&self, other: &Self) -> Ordering {
-        other
-            .dist
-            .total_cmp(&self.dist)
-            .then(other.vertex.cmp(&self.vertex))
-    }
-}
-
-impl PartialOrd for Entry {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for Entry {
-    fn eq(&self, other: &Self) -> bool {
-        self.cmp(other) == Ordering::Equal
-    }
-}
-
-impl Eq for Entry {}
 
 /// Union-find over a chart's faces, for the dual spanning tree.
 struct Faces(Vec<usize>);

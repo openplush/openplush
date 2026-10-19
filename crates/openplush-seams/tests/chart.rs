@@ -1,6 +1,10 @@
 //! Charts: the faces reachable from each other without crossing a seam, numbered by their lowest
 //! face.
 
+#[allow(
+    dead_code,
+    reason = "each test file uses only some of the shared meshes"
+)]
 mod common;
 
 use common::{Grid, ROW_1, Setup};

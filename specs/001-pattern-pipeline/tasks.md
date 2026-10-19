@@ -21,7 +21,7 @@ description: "Task list for 001 pattern pipeline"
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 179 tasks do not mean 179 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: 400 lines of hand-written source, one test task plus the implementation that satisfies it, one story and one crate per PR.
+**A task is a unit of work, not a unit of review.** 179 tasks do not mean 179 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: one intent per PR, one test task plus the implementation that satisfies it, one story and one crate per PR.
 
 ### Batch these — several tasks, one PR
 
@@ -46,11 +46,11 @@ Small config and scaffolding tasks sharing one concern:
 
 `NN` is the slice's position in feature 001, assigned when the PR is opened (the next unused number). It is not fixed here because it depends on what lands first. Setup tasks (Phase 1) are repo plumbing, so they are `chore/` branches, not 001 slices.
 
-T022–T027 were planned as one batch and landed as one slice per task, because each was over budget on its own: `001/11-T022-geom-core` (#37), `001/12-T023-robust-predicates` (#38), `001/13-T024-triangle-soup` (#39), `001/14-T025-halfedge-mesh` (#40), `001/15-T026-debug-validate` (#41), `001/16-T027-invariant-proptests` (#42).
+T022–T027 were planned as one batch and landed as one slice per task, because each was its own intent: `001/11-T022-geom-core` (#37), `001/12-T023-robust-predicates` (#38), `001/13-T024-triangle-soup` (#39), `001/14-T025-halfedge-mesh` (#40), `001/15-T026-debug-validate` (#41), `001/16-T027-invariant-proptests` (#42).
 
 ### Split these — one task, several PRs
 
-Tasks that will exceed the budget on their own. Split by capability, each with its own test, and record the branch names back in this file so the task stays traceable:
+Tasks that carry several intents. Split by capability, each with its own test, and record the branch names back in this file so the task stays traceable:
 
 | Task | Why it splits |
 |---|---|

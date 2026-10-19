@@ -21,10 +21,10 @@ OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spe
 2. Pick a task, open one small PR for it, and reference it: `Task: T014 (specs/001-pattern-pipeline/tasks.md)`.
 3. **Trivial changes skip the task requirement:** docs or typo fixes, comment fixes, dependency patch bumps, new fixtures with a license entry, and CI changes that don't alter gates.
 
-## Pull requests are small here
-`main` is the trunk and everything arrives by PR. The size rule is not a preference:
+## Pull requests are one intent here
+`main` is the trunk and everything arrives by PR. The scoping rule is not a preference:
 
-- **400 changed lines of hand-written source.** Fixtures, generated types, snapshots, and lock files don't count. Over budget means split it, or justify it in a `**Size**` section.
+- **One intent per PR.** Size follows from intent, not a line count: two intents are two PRs, and a large diff that is one thing says what makes it indivisible in a `**Size**` section.
 - **A PR is one test task plus the implementation that makes it pass**, committed in that order. Test-first stays visible in history and CI is green at the tip.
 - **Never in one PR**: two user stories, two crates, a spec change and an implementation change, a refactor and a behaviour change, or chores mixed with features.
 - Branch names: `NNN/NN-slug` for feature work (`001/42-T050-obj-import`: feature, position, content; numbers here are illustrative), `chore/slug` for repo work. Work that depends on an unmerged PR is **stacked** on it. See [`AGENTS.md`](AGENTS.md#commits-and-prs).

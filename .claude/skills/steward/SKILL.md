@@ -20,7 +20,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 - Don't run `pr-reviewer`, `spec-reviewer` or `docs-reviewer` locally: the review on opening runs them, and a rerun reviews only what changed since.
 - Run `mutation-auditor` once before opening a PR that adds checks to Rust under `crates/` or `bindings/` (CI runs it only on the `mutation-audit` label). Tell it not to edit tracked files while anything else runs; close each real survivor with a test and re-run that mutation to prove the test bites.
-- At most two subagents at a time.
+- At most two subagents at a time. A `factory` firing may run up to four through the Workflow tool, one task each in its own worktree, with nothing else running beside them.
 
 ## Stacks
 

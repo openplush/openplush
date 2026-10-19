@@ -2,17 +2,17 @@
 
 The binding rules are in [`AGENTS.md`](../../AGENTS.md#commits-and-prs). This page explains the reasoning and works through the cases you will actually hit.
 
-## Why small PRs, specifically here
+## Why one intent per PR, specifically here
 
-This project's worst failure mode is a pattern that looks right and is wrong — you find out after cutting fabric. Review is the main defence, and review quality collapses with size. A 2,000-line PR gets approved, not reviewed.
+This project's worst failure mode is a pattern that looks right and is wrong — you find out after cutting fabric. Review is the main defence, and review quality collapses when a reviewer has to hold two unrelated changes in mind at once. A PR that mixes a solver with a renamed error gets approved, not reviewed.
 
-Geometry makes this sharper than usual. A sign error in a dihedral angle, an epsilon compared against the wrong scale, a `HashMap` iteration on an output path — each is a one-line defect that produces plausible-looking output. None survives a focused review of 200 lines. All three survive a sweep through 2,000.
+Geometry makes this sharper than usual. A sign error in a dihedral angle, an epsilon compared against the wrong scale, a `HashMap` iteration on an output path — each is a one-line defect that produces plausible-looking output. None survives a focused review of one capability. All three survive a sweep through a grab-bag.
 
-## The budget
+## The unit
 
-**400 changed lines of hand-written source.**
+**One intent: a test task and the implementation that makes it pass, or one capability of a task that splits.** A line count is not the measure; a reviewer should be able to say in one sentence what the PR brings in and why, and `git blame → PR` should answer the same question later.
 
-Not counted:
+What a diff's size says nothing about:
 
 | Excluded | Why |
 |---|---|
@@ -22,14 +22,14 @@ Not counted:
 | Lock files | Reviewed by `cargo deny` |
 | Docs prose (`docs/**`) | Docs ship with the change they describe, and counting them would push them out of the PR; the docs-reviewer agent checks them instead |
 
-Going over is allowed when the work is genuinely indivisible — one algorithm, one solver, one parser. Say so in a `**Size**` section and name what makes it indivisible. These are real:
+A large diff is fine when it is one thing — one algorithm, one solver, one parser. Say so in a `**Size**` section and name what makes it indivisible. These are real:
 
-> **Size**: 520 lines. The SLIM interior solve is one energy, one line search, and one convergence test; splitting it leaves a half-solver that cannot be tested against the developable oracle.
+> **Size**: the SLIM interior solve is one energy, one line search, and one convergence test; splitting it leaves a half-solver that cannot be tested against the developable oracle.
 
 These are not:
 
-> ~~**Size**: 1,400 lines. Implements US1.~~
-> ~~**Size**: 900 lines. Easier to land together.~~
+> ~~**Size**: implements US1.~~
+> ~~**Size**: easier to land together.~~
 
 ## What goes in one PR
 
@@ -61,7 +61,7 @@ Splitting these into four PRs is ceremony, not review.
 
 ### One task, several PRs
 
-`T060` is the weld step. It is one task and it will exceed the budget, because welding needs a spatial hash, a deterministic tie-break, and the glTF split-vertex handling that is the entire reason it matters. Split by capability, each with its own test:
+`T060` is the weld step. It is one task and several intents, because welding needs a spatial hash, a deterministic tie-break, and the glTF split-vertex handling that is the entire reason it matters. Split by capability, each with its own test:
 
 ```
 001/57-T060a-weld-spatial-hash      the hash and its determinism test
@@ -104,7 +104,7 @@ explicitly — a reviewer cannot see an absence.
 The as-built docs this PR updates, or "n/a: no public change".
 
 ## Size
-Only if over budget. What makes the change indivisible.
+Only for a large diff. What makes the change one intent and indivisible.
 ```
 
 `Skipped` is the section people leave empty because it feels like an admission. It is the most useful one in the template: an unstated gap becomes a surprise later, and `AGENTS.md` requires it precisely so deferral is a decision rather than an oversight.
@@ -192,11 +192,11 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 ## Tooling
 
 - [`.github/pull_request_template.md`](../../.github/pull_request_template.md) pre-fills the description with the required sections as HTML comments, so an unfilled section is visibly empty rather than silently absent.
-- No CI job measures PR size; reviewers enforce the budget. Whether a large PR is justified is a judgement a CI job cannot make, and a check that merely verified a `Size` section exists would be satisfied by typing anything at all.
+- No CI job measures PR scope; reviewers judge it. Whether a diff is one intent is a judgement a CI job cannot make, and a check that merely verified a `Size` section exists would be satisfied by typing anything at all.
 
 ## Checklist before opening
 
-- [ ] Under 400 lines, or `**Size**` explains why not
+- [ ] One intent, or `**Size**` explains what makes a large diff one thing
 - [ ] Test commit precedes implementation commit
 - [ ] CI green at the tip — not green because a test was weakened
 - [ ] One story, one crate, one concern

@@ -51,13 +51,13 @@
 
 ## Size
 
-<!-- Only if over the 400-line budget. Name what makes the change indivisible.
+<!-- Only for a large diff. Name what makes the change one intent and indivisible.
      "Easier to land together" is not a justification. -->
 
 ---
 
 <!-- Before requesting review:
-     - [ ] Under 400 changed lines of hand-written source, or Size explains why not
+     - [ ] One intent, or Size explains what makes a large diff one thing
      - [ ] Test commit precedes implementation commit
      - [ ] CI green at the tip, and not green because a test was weakened
      - [ ] One story, one crate, one concern

@@ -12,9 +12,10 @@ use crate::{Outline, PatternError, PieceId};
 
 type P = [f64; 2];
 
-/// How deep a zero-allowance edge's guard reaches, in multiples of the widest allowance: as far
-/// as any strip or corner join can.
-const GUARD_DEPTH: f64 = 4.0;
+/// A corner whose miter point lies farther than this × its wider allowance from the vertex is
+/// beveled; 4 (the SVG and PostScript default) bevels corners sharper than 2·asin(1/4) ≈ 29°.
+/// A zero-allowance edge's guard reaches as far, since no join goes farther.
+const MITER_LIMIT: f64 = 4.0;
 
 /// The cut line around `sewing`; `allowances[i]` is edge `i`'s, the edge from point `i` to the
 /// next. All zero gives the sewing line itself.
@@ -47,7 +48,7 @@ pub fn cut_line(
     Outline::new(edges.iter().map(|e| e.start).collect()).map_err(|_| not_simple.clone())?;
     let outline: Vec<P> = edges.iter().map(|e| array(e.start)).collect();
     // Every edge has a direction: the merged outline has no repeated point.
-    let guards = guards(&edges, GUARD_DEPTH * widest).ok_or(not_simple.clone())?;
+    let guards = guards(&edges, MITER_LIMIT * widest).ok_or(not_simple.clone())?;
     // A guard that only touches the piece overlaps it by rounding alone.
     let touching = WELD_RELATIVE * diagonal * diagonal;
     if let Some((edge, _)) = guards
@@ -57,8 +58,10 @@ pub fn cut_line(
         return Err(PatternError::FoldConflict { piece, edge: *edge });
     }
     let strips: Option<Vec<Vec<P>>> = edges.iter().zip(next(&edges)).filter_map(strip).collect();
+    let joins = joins(&edges);
     let mut subject = vec![outline];
     subject.extend(strips.ok_or(not_simple.clone())?);
+    subject.extend(joins);
     let clip: Vec<Vec<P>> = guards.into_iter().map(|(_, g)| g).collect();
     // One overlay, so every input shares one integer grid: two would leave slivers along folds.
     let shapes = FloatOverlay::<P, i64>::from_subj_and_clip(&subject, &clip)
@@ -123,6 +126,49 @@ fn strip((edge, end): (&Edge, &Edge)) -> Option<Option<Vec<P>>> {
     (edge.width > 0.0).then(|| rectangle(edge.start, end.start, edge.width))
 }
 
+/// The join at every corner. Only convex corners get one: at a reflex corner the strips overlap
+/// instead, and its wedge comes out with no area.
+fn joins(edges: &[Edge]) -> Vec<Vec<P>> {
+    edges
+        .iter()
+        .zip(next(edges))
+        .zip(next(edges).skip(1))
+        .filter_map(|((edge, out), end)| {
+            join(edge.start, out.start, end.start, edge.width, out.width)
+        })
+        .collect()
+}
+
+/// The wedge at corner `v` between the offset of `v0 → v` (`a` deep) and of `v → v2` (`b` deep):
+/// a miter to where the offset lines meet, or a bevel when that point is past the miter limit or
+/// behind either offset's end at `v`, where the quad would cross itself. `None` when it has no
+/// area: at a reflex corner, or between two zero allowances.
+fn join(v0: DVec2, v: DVec2, v2: DVec2, a: f64, b: f64) -> Option<Vec<P>> {
+    let (di, dj) = ((v - v0).normalize()?, (v2 - v).normalize()?);
+    let (pa, pb) = (v + outward(di) * a, v + outward(dj) * b);
+    let cross = di.perp_dot(dj);
+    let gap = pb - pa;
+    // `pa + di·t` is the miter point; `pb + dj·s` the same point from the other side. Parallel
+    // edges make it infinite or NaN, which fails the limit, so they are beveled.
+    let (t, s) = (gap.perp_dot(dj) / cross, gap.perp_dot(di) / cross);
+    let miter = pa + di * t;
+    let fits = t >= 0.0 && s <= 0.0 && (miter - v).length() <= MITER_LIMIT * a.max(b);
+    let wedge = points(&if fits {
+        vec![v, pa, miter, pb]
+    } else {
+        vec![v, pa, pb]
+    });
+    (signed_area(&wedge) > 0.0).then_some(wedge)
+}
+
+fn outward(d: DVec2) -> DVec2 {
+    DVec2::new(d.y, -d.x)
+}
+
+fn points(ps: &[DVec2]) -> Vec<P> {
+    ps.iter().copied().map(array).collect()
+}
+
 /// A rectangle on the outer side of every zero-allowance edge, `depth` deep, with that edge's
 /// index in the sewing line: no fabric may lie there.
 fn guards(edges: &[Edge], depth: f64) -> Option<Vec<(usize, Vec<P>)>> {
@@ -137,9 +183,8 @@ fn guards(edges: &[Edge], depth: f64) -> Option<Vec<(usize, Vec<P>)>> {
 /// `a`, `b`, and the two points `depth` out from them on the right of `a → b`, which is the
 /// outside of a counter-clockwise outline. Counter-clockwise itself; `None` when `a == b`.
 fn rectangle(a: DVec2, b: DVec2, depth: f64) -> Option<Vec<P>> {
-    let d = (b - a).normalize()?;
-    let out = DVec2::new(d.y, -d.x) * depth;
-    Some([a, a + out, b + out, b].into_iter().map(array).collect())
+    let out = outward((b - a).normalize()?) * depth;
+    Some(points(&[a, a + out, b + out, b]))
 }
 
 fn array(p: DVec2) -> P {

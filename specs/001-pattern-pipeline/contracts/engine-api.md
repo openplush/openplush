@@ -120,6 +120,7 @@ pub enum EngineError {
     NonFiniteInput { vertices: Vec<SourceCorner> },
     NotManifold  { edges: Vec<EdgeId>, vertices: Vec<VertexId> },
     ChartNotDisk { chart: ChartId, failure: ChartFailure, proposals: Vec<Proposal> },
+    FoldedChart  { chart: ChartId, edge: EdgeId },
     Flip         { chart: ChartId, faces: Vec<FaceId> },
     BoundaryNotRealizable { chart: ChartId, residual_mm: f64, proposals: Vec<Proposal> },
     SeamParity   { chain: SeamChainId, a_mm: f64, b_mm: f64, tolerance_mm: f64 },
@@ -137,6 +138,7 @@ Every variant **locates** the problem — an ID the UI can highlight in 3D. An e
 
 - `NonFiniteInput` names every source vertex (by provenance, `SourceCorner`) with a NaN or infinite coordinate, used or not. Import refuses rather than drops: removing faces would hand back fixed-up geometry (section 1, FR-004). The maker fixes the file (D-021).
 - `ChartNotDisk` carries `proposals` so the UI can offer the minimal extra seams immediately (FR-013). The error *is* the suggestion.
+- `FoldedChart` names a chart whose surface lies back over itself (two faces within `FOLD_ANGLE` of antiparallel across an uncut edge, D-059) and the lowest such edge. It is raised before flattening: a folded chart flattens to garbage, and `Flip` would blame the flattener for the input.
 - `BoundaryNotRealizable` is specific to the boundary-pinned solve (D-013): the prescribed lengths cannot close into a flat polygon. It carries the dart proposals that fix it; parity is never relaxed to escape it.
 - `ProposalNotOffered` means `apply` was asked for a `ProposalId` the current state does not offer (the edit is no longer proposed, or the mesh was re-repaired). Nothing is applied.
 - `SeamParity` should be unreachable by construction. It exists as a last-line assertion because a silently mismatched seam is the exact failure mode Constitution III names as worse than a crash. If it ever fires, that is a bug in the flattener, not bad user input.

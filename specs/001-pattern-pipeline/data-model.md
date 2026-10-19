@@ -327,7 +327,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 
 ## 11. Determinism and Tolerances
 - Arenas iterate in index order; maps are `BTreeMap`; sorts are stable with total-order tie-breaks.
-- All epsilons are **relative to bbox diagonal** unless physical: `ε_weld = 1e-6`, `ε_area = 1e-12` (relative², area), flip threshold det J > 1e-10 (relative). Physical tolerances (seam parity, allowance) are absolute mm.
+- All epsilons are **relative to bbox diagonal** unless physical: `ε_weld = 1e-6`, `ε_area = 1e-12` (relative², area), flip threshold det J > 1e-10 (relative). Physical tolerances (seam parity, allowance) are absolute mm; `FOLD_ANGLE = 5°` (D-059) is an angle, so it scales with nothing: two adjacent faces whose normals are within it of antiparallel across an uncut edge make a folded chart, refused before flattening.
 - Solver: fixed ordering for the symbolic factorization; fixed iteration caps and convergence tests.
 
 ## 12. Persistence (project file)

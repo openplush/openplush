@@ -43,6 +43,14 @@ pub enum SeamsError {
         /// The edge.
         edge: EdgeId,
     },
+    /// Two faces of a chart lie back over each other across an edge no seam cuts.
+    #[error("chart {chart:?} lies back over itself across edge {edge:?}")]
+    FoldedChart {
+        /// The chart.
+        chart: ChartId,
+        /// The lowest edge it folds across.
+        edge: EdgeId,
+    },
     /// A seam chain along mesh-boundary edges with no record of which boundary copy it pairs
     /// with; it has one side and is never paired with itself.
     #[error("seam chain {chain:?} runs along the mesh boundary with no recorded partner")]

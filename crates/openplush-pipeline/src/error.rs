@@ -47,6 +47,14 @@ pub enum EngineError {
         /// The minimal extra seams that would make it one.
         proposals: Vec<Proposal>,
     },
+    /// A chart lies back over itself, so it cannot flatten; refused before flattening.
+    #[error("chart {} lies back over itself across edge {}", .chart.index(), .edge.index())]
+    FoldedChart {
+        /// The chart.
+        chart: ChartId,
+        /// The lowest edge it folds across.
+        edge: EdgeId,
+    },
     /// Flattening inverted faces (det J ≤ 0).
     #[error("chart {} flattens with {} inverted faces", .chart.index(), .faces.len())]
     Flip {
@@ -111,6 +119,7 @@ impl EngineError {
             Self::NonFiniteInput { .. } => "NonFiniteInput",
             Self::NotManifold { .. } => "NotManifold",
             Self::ChartNotDisk { .. } => "ChartNotDisk",
+            Self::FoldedChart { .. } => "FoldedChart",
             Self::Flip { .. } => "Flip",
             Self::BoundaryNotRealizable { .. } => "BoundaryNotRealizable",
             Self::SeamParity { .. } => "SeamParity",
@@ -142,6 +151,11 @@ impl EngineError {
                     ..none
                 }
             }
+            Self::FoldedChart { chart, edge } => ErrorLocations {
+                edges: vec![*edge],
+                charts: vec![*chart],
+                ..none
+            },
             Self::Flip { chart, faces } => ErrorLocations {
                 faces: sorted(faces),
                 charts: vec![*chart],
@@ -171,6 +185,7 @@ impl EngineError {
             Self::Parse { .. }
             | Self::NonFiniteInput { .. }
             | Self::NotManifold { .. }
+            | Self::FoldedChart { .. }
             | Self::Flip { .. }
             | Self::SeamParity { .. }
             | Self::OffsetFailed { .. }

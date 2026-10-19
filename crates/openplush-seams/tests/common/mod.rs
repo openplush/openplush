@@ -73,7 +73,11 @@ impl Layout {
     }
 }
 
-fn repaired(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> Result<ManifoldMesh, Setup> {
+/// `positions` and `triangles`, each corner its own source vertex, through repair.
+pub(crate) fn repaired(
+    positions: Vec<DVec3>,
+    triangles: Vec<[u32; 3]>,
+) -> Result<ManifoldMesh, Setup> {
     let corners = (0..)
         .take(3 * triangles.len())
         .map(|vertex| SourceCorner {

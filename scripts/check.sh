@@ -4,10 +4,11 @@
 #
 # Usage:
 #   scripts/check.sh --setup          install the pinned tools (cargo-deny, the
-#                                     wasm-bindgen-cli matching Cargo.lock, the toolchain)
+#                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
+#   scripts/check.sh --setup <steps>  install only what those steps need, then run them
 #   scripts/check.sh                  run every gate
-#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types deny wasm shell,
-#                                     or engine (= boundary hygiene fmt clippy test types), or all
+#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows deny wasm shell,
+#                                     or engine (= boundary hygiene fmt clippy test types workflows), or all
 #   --dry-run                         print the commands instead of running them
 #
 # Needs: rustup, Node 22+ with pnpm, bash >= 4.3, jq, python3 >= 3.11.
@@ -16,6 +17,14 @@ set -euo pipefail
 
 # Keep in step with .github/workflows/engine.yml (scripts/tests/check.test.sh checks).
 DENY_VERSION=0.20.2
+ACTIONLINT_VERSION=1.7.9
+# sha256 of each release tarball, from the release's checksums file.
+ACTIONLINT_SHA256=(
+  linux_amd64 233b280d05e100837f4af1433c7b40a5dcb306e3aa68fb4f17f8a7f45a7df7b4
+  linux_arm64 6b82a3b8c808bf1bcd39a95aced22fc1a026eef08ede410f81e274af8deadbbc
+  darwin_amd64 f89a910e90e536f60df7c504160247db01dd67cab6f08c064c1c397b76c91a79
+  darwin_arm64 855e49e823fc68c6371fd6967e359cde11912d8d44fed343283c8e6e943bd789
+)
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
@@ -27,16 +36,16 @@ for arg in "$@"; do
   case $arg in
     --dry-run) dry=1 ;;
     --setup) setup=1 ;;
-    engine) steps+=(boundary hygiene fmt clippy test types) ;;
-    all) steps+=(boundary hygiene fmt clippy test types deny wasm shell) ;;
-    boundary | hygiene | fmt | clippy | test | types | deny | wasm | shell) steps+=("$arg") ;;
+    engine) steps+=(boundary hygiene fmt clippy test types workflows) ;;
+    all) steps+=(boundary hygiene fmt clippy test types workflows deny wasm shell) ;;
+    boundary | hygiene | fmt | clippy | test | types | workflows | deny | wasm | shell) steps+=("$arg") ;;
     *)
-      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types deny wasm shell; groups: engine all)" >&2
+      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows deny wasm shell; groups: engine all)" >&2
       exit 2
       ;;
   esac
 done
-((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test types deny wasm shell)
+((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test types workflows deny wasm shell)
 
 # run <command...>: print it; run it unless --dry-run.
 run() {
@@ -70,18 +79,56 @@ canary_ran() { grep -Eq 'test result: ok\. [1-9][0-9]* passed'; }
 installed_version() { # installed_version <binary> -> second word of `<binary> --version`, or empty
   command -v "$1" >/dev/null && "$1" --version 2>/dev/null | awk '{print $2; exit}' || true
 }
+actionlint_version() { command -v actionlint >/dev/null && actionlint -version 2>/dev/null | head -n 1 || true; }
+
+# actionlint ships as a Go binary, so --setup installs the pinned release into
+# cargo's bin directory (already on PATH here) after checking its checksum.
+install_actionlint() {
+  local os arch platform sha="" i url tmp bin
+  os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  case $(uname -m) in
+    x86_64 | amd64) arch=amd64 ;;
+    aarch64 | arm64) arch=arm64 ;;
+    *) die "no pinned actionlint build for $(uname -m)" ;;
+  esac
+  platform="${os}_${arch}"
+  for ((i = 0; i < ${#ACTIONLINT_SHA256[@]}; i += 2)); do
+    [[ ${ACTIONLINT_SHA256[i]} == "$platform" ]] && sha=${ACTIONLINT_SHA256[i + 1]}
+  done
+  [[ -n $sha ]] || die "no pinned actionlint build for $platform"
+  url="https://github.com/rhysd/actionlint/releases/download/v$ACTIONLINT_VERSION/actionlint_${ACTIONLINT_VERSION}_$platform.tar.gz"
+  bin="${CARGO_HOME:-$HOME/.cargo}/bin"
+  tmp=$(mktemp -d)
+  run curl -fsSL -o "$tmp/actionlint.tar.gz" "$url"
+  if ! ((dry)); then
+    if command -v sha256sum >/dev/null; then got=$(sha256sum "$tmp/actionlint.tar.gz"); else got=$(shasum -a 256 "$tmp/actionlint.tar.gz"); fi
+    [[ ${got%% *} == "$sha" ]] || die "actionlint download checksum mismatch: got ${got%% *}, pinned $sha"
+    mkdir -p "$bin"
+  fi
+  run tar -xzf "$tmp/actionlint.tar.gz" -C "$bin" actionlint
+  rm -rf "$tmp"
+}
+
+# needs <step>: whether setup must install that step's tool (every tool when no
+# step is named).
+needs() { ((${#steps[@]} == 0)) || [[ " ${steps[*]} " == *" $1 "* ]]; }
 
 if ((setup)); then
   group setup
   run rustup toolchain install
-  if ((dry)) || [[ $(installed_version cargo-deny) != "$DENY_VERSION" ]]; then
+  if needs deny && { ((dry)) || [[ $(installed_version cargo-deny) != "$DENY_VERSION" ]]; }; then
     run cargo install cargo-deny --version "$DENY_VERSION" --locked
   fi
-  wb=$(wasm_bindgen_version)
-  if [[ -z $wb ]]; then
-    echo "check: no wasm-bindgen in Cargo.lock yet; skipping wasm-bindgen-cli"
-  elif ((dry)) || [[ $(installed_version wasm-bindgen-test-runner) != "$wb" ]]; then
-    run cargo install wasm-bindgen-cli --version "$wb" --locked
+  if needs wasm; then
+    wb=$(wasm_bindgen_version)
+    if [[ -z $wb ]]; then
+      echo "check: no wasm-bindgen in Cargo.lock yet; skipping wasm-bindgen-cli"
+    elif ((dry)) || [[ $(installed_version wasm-bindgen-test-runner) != "$wb" ]]; then
+      run cargo install wasm-bindgen-cli --version "$wb" --locked
+    fi
+  fi
+  if needs workflows && { ((dry)) || [[ $(actionlint_version) != "$ACTIONLINT_VERSION" ]]; }; then
+    install_actionlint
   fi
   endgroup
 fi
@@ -102,6 +149,15 @@ for step in "${steps[@]}"; do
     clippy) run cargo clippy --workspace --all-targets --locked -- -D warnings ;;
     test) run cargo test --workspace --locked ;;
     types) run scripts/gen-ts-types.sh --check ;;
+    workflows)
+      # Without shellcheck and pyflakes, which CI runners have and most machines do not.
+      if ! ((dry)); then
+        have=$(actionlint_version)
+        [[ $have == "$ACTIONLINT_VERSION" ]] ||
+          die "actionlint ${have:-missing}, check.sh pins $ACTIONLINT_VERSION; run scripts/check.sh --setup"
+      fi
+      run actionlint -shellcheck= -pyflakes= .github/workflows/*.yml
+      ;;
     deny)
       ((dry)) || command -v cargo-deny >/dev/null || die "cargo-deny not installed; run scripts/check.sh --setup"
       run cargo deny --locked check

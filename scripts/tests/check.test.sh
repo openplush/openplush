@@ -48,10 +48,18 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "hygiene step checks every lint opt-out against the allowlist" "hygiene" \
   "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh"
-expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types" "engine" \
+expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows" "engine" \
   "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
-  "scripts/gen-ts-types.sh --check"
+  "scripts/gen-ts-types.sh --check" "actionlint"
+# The lint must give the same answer on every machine, so the optional
+# shellcheck and pyflakes passes (present on CI runners, not everywhere) are off.
+expect_plan "workflows step lints the workflows with actionlint alone" "workflows" \
+  "actionlint -shellcheck= -pyflakes= .github/workflows"
+expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
 expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
+actionlint=$(sed -n 's/^ACTIONLINT_VERSION=//p' "$check")
+expect_plan "setup installs the pinned actionlint release" "--setup" \
+  "actionlint/releases/download/v$actionlint/actionlint_${actionlint}_" "tar -xzf"
 # The runner must match Cargo.lock exactly; with no wasm-bindgen locked, say so.
 locked=$(cd "$here/../.." && cargo metadata --format-version 1 --locked |
   jq -r '[.packages[] | select(.name == "wasm-bindgen") | .version][0] // ""')
@@ -68,6 +76,24 @@ if grep -q "tool: cargo-deny@$deny\b" "$here/../../.github/workflows/engine.yml"
 else
   bad "engine.yml installs cargo-deny $deny, as check.sh pins" "$(grep -n 'cargo-deny@' "$here/../../.github/workflows/engine.yml")"
 fi
+
+# CI installs actionlint through the same installer contributors use.
+if grep -q 'scripts/check.sh --setup engine' "$here/../../.github/workflows/engine.yml"; then
+  ok "engine.yml installs the engine tools with check.sh --setup engine"
+else
+  bad "engine.yml installs the engine tools with check.sh --setup engine" "$(grep -n 'check.sh' "$here/../../.github/workflows/engine.yml")"
+fi
+# With steps named, --setup installs only what they need.
+expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="
+out=$("$check" --dry-run --setup engine 2>&1)
+if [[ $out != *"cargo install cargo-deny"* && $out != *"wasm-bindgen-cli"* ]]; then
+  ok "setup for the engine group installs nothing for deny or wasm"
+else
+  bad "setup for the engine group installs nothing for deny or wasm" "$out"
+fi
+expect_plan "setup for deny installs only cargo-deny" "--setup deny" "cargo install cargo-deny --version"
+out=$("$check" --dry-run --setup deny 2>&1)
+if [[ $out != *"actionlint_"* ]]; then ok "setup for deny skips actionlint"; else bad "setup for deny skips actionlint" "$out"; fi
 
 out=$("$check" --dry-run engine 2>&1)
 if [[ $out != *"cargo deny"* && $out != *"pnpm"* ]]; then

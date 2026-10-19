@@ -85,45 +85,47 @@ fn repaired(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> Result<ManifoldM
     Ok(openplush_mesh::into_manifold(&soup, &RepairPlan::default())?.0)
 }
 
-/// The closed octahedron on the unit points of the axes: +x, +y, -x, -y round the equator, then
-/// +z and -z.
+/// A closed octahedron: four points round the equator, then the top and the bottom.
 pub(crate) struct Octahedron {
     pub(crate) mesh: ManifoldMesh,
+    points: [DVec3; 6],
 }
 
 impl Octahedron {
-    const POINTS: [(f64, f64, f64); 6] = [
-        (10.0, 0.0, 0.0),
-        (0.0, 10.0, 0.0),
-        (-10.0, 0.0, 0.0),
-        (0.0, -10.0, 0.0),
-        (0.0, 0.0, 10.0),
-        (0.0, 0.0, -10.0),
-    ];
-
+    /// On the axes: +x, +y, -x, -y round the equator, then +z and -z.
     pub(crate) fn new() -> Result<Self, Setup> {
-        let positions = Self::POINTS
-            .iter()
-            .map(|&(x, y, z)| DVec3::new(x, y, z))
-            .collect();
+        Self::with_points([
+            DVec3::new(10.0, 0.0, 0.0),
+            DVec3::new(0.0, 10.0, 0.0),
+            DVec3::new(-10.0, 0.0, 0.0),
+            DVec3::new(0.0, -10.0, 0.0),
+            DVec3::new(0.0, 0.0, 10.0),
+            DVec3::new(0.0, 0.0, -10.0),
+        ])
+    }
+
+    /// Equator points 0 to 3 in counter-clockwise order seen from point 4, the top.
+    pub(crate) fn with_points(points: [DVec3; 6]) -> Result<Self, Setup> {
         let triangles = (0..4)
             .flat_map(|i| [[i, (i + 1) % 4, 4], [(i + 1) % 4, i, 5]])
             .collect();
         Ok(Self {
-            mesh: repaired(positions, triangles)?,
+            mesh: repaired(points.to_vec(), triangles)?,
+            points,
         })
     }
 
-    /// The edge between points `a` and `b` of `POINTS`.
+    /// The vertex at point `i`, found by position so repair's numbering is not assumed.
+    pub(crate) fn at(&self, i: usize) -> Result<VertexId, Setup> {
+        (0..u32::try_from(self.mesh.vertex_count())?)
+            .map(VertexId::new)
+            .find(|&v| self.mesh.position(v) == self.points[i])
+            .ok_or_else(|| format!("no point {i}").into())
+    }
+
+    /// The edge between points `a` and `b`.
     pub(crate) fn edge(&self, a: usize, b: usize) -> Result<EdgeId, Setup> {
-        let find = |i: usize| {
-            let (x, y, z) = Self::POINTS[i];
-            (0..u32::try_from(self.mesh.vertex_count())?)
-                .map(VertexId::new)
-                .find(|&v| self.mesh.position(v) == DVec3::new(x, y, z))
-                .ok_or_else(|| Setup::from(format!("no point {i}")))
-        };
-        let (from, to) = (find(a)?, find(b)?);
+        let (from, to) = (self.at(a)?, self.at(b)?);
         self.mesh
             .outgoing(from)
             .find(|&h| self.mesh.dest(h) == to)

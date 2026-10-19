@@ -32,6 +32,11 @@ pub const MIN_DET_J: f64 = 1e-10;
 /// u = 10), where an exporter's bit-identical uncut UVs live, and well below the
 /// tightest cut measured on a Blender UV sphere (18 times smaller).
 pub const UV_CUT: f64 = 1e-5;
+/// Two adjacent faces whose unit normals are within this angle (radians) of antiparallel lie
+/// back over each other: the surface is folded, and no chart containing both flattens. Physical:
+/// an angle does not scale with the model. 5° is well under the ~10° a closed dart edge leaves
+/// between its faces and far above a wrapped surface's fraction of a degree.
+pub const FOLD_ANGLE: f64 = 5.0 * core::f64::consts::PI / 180.0;
 
 /// Model-space tolerances for one model, derived from its bounding-box diagonal.
 #[derive(Debug, Clone, Copy, PartialEq)]

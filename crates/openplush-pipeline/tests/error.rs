@@ -111,6 +111,23 @@ fn flip_names_the_chart_and_its_inverted_faces() {
 }
 
 #[test]
+fn folded_chart_names_the_chart_and_the_edge_it_folds_across() {
+    let e = EngineError::FoldedChart {
+        chart: ChartId::new(2),
+        edge: EdgeId::new(17),
+    };
+    assert!(matches!(
+        &e,
+        EngineError::FoldedChart { chart, edge }
+            if *chart == ChartId::new(2) && *edge == EdgeId::new(17)
+    ));
+    assert_eq!(
+        e.to_string(),
+        "chart 2 lies back over itself across edge 17"
+    );
+}
+
+#[test]
 fn boundary_not_realizable_names_the_chart_and_carries_its_darts() -> Result<(), Box<dyn Error>> {
     let fix = dart(6, 2)?;
     let e = EngineError::BoundaryNotRealizable {

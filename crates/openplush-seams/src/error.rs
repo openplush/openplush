@@ -43,4 +43,12 @@ pub enum SeamsError {
         /// The edge.
         edge: EdgeId,
     },
+    /// Two faces of a chart lie back over each other across an edge no seam cuts.
+    #[error("chart {chart:?} lies back over itself across edge {edge:?}")]
+    FoldedChart {
+        /// The chart.
+        chart: ChartId,
+        /// The lowest edge it folds across.
+        edge: EdgeId,
+    },
 }

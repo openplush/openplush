@@ -60,6 +60,13 @@ fn import_and_seam_variants() -> Result<Vec<(EngineError, &'static str)>, Box<dy
             },
             "ChartNotDisk",
         ),
+        (
+            EngineError::FoldedChart {
+                chart: ChartId::new(3),
+                edge: EdgeId::new(7),
+            },
+            "FoldedChart",
+        ),
     ])
 }
 
@@ -194,6 +201,20 @@ fn chart_not_disk_locates_its_chart_not_its_proposals_edges() -> Result<(), Box<
     };
     assert_eq!(e.locations(), expected);
     Ok(())
+}
+
+#[test]
+fn folded_chart_locates_its_chart_and_edge() {
+    let e = EngineError::FoldedChart {
+        chart: ChartId::new(3),
+        edge: EdgeId::new(7),
+    };
+    let expected = ErrorLocations {
+        edges: vec![EdgeId::new(7)],
+        charts: vec![ChartId::new(3)],
+        ..ErrorLocations::default()
+    };
+    assert_eq!(e.locations(), expected);
 }
 
 #[test]

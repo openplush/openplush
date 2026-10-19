@@ -7,7 +7,7 @@ use openplush_mesh::{FaceId, VertexId};
 /// A face's 3D shape in its own plane: the inverse of the 2×2 matrix whose columns are its two
 /// edges from corner 0 (the first along +x), and its area.
 #[derive(Debug, Clone, Copy)]
-pub(super) struct Rest {
+pub(crate) struct Rest {
     inv: [[f64; 2]; 2],
     area: f64,
 }
@@ -18,7 +18,7 @@ impl Rest {
     }
 
     /// The Jacobian of the map taking this face's rest shape to the layout.
-    pub(super) fn jacobian(&self, uv: &[DVec2], t: &[VertexId; 3]) -> [[f64; 2]; 2] {
+    pub(crate) fn jacobian(&self, uv: &[DVec2], t: &[VertexId; 3]) -> [[f64; 2]; 2] {
         let (d1, d2) = edges(uv, t);
         [
             [
@@ -42,7 +42,7 @@ impl Rest {
 
 /// Each face's rest shape, or the first face naming a missing vertex or with zero or
 /// non-finite area.
-pub(super) fn rest_shapes(
+pub(crate) fn rest_shapes(
     xyz: &[DVec3],
     faces: &[(FaceId, [VertexId; 3])],
 ) -> Result<Vec<Rest>, FaceId> {

@@ -26,8 +26,22 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 - Stack interdependent intents rather than merging them into one diff early. Merge a fix to a lower PR upward only after that PR merges, unless a child needs the change to build or to make sense. GitHub retargets the child when its parent merges, and merging `main` then carries every fix up in one push.
 - Before every push: `git grep -n '^<<<<<<< \|^>>>>>>> '` finds nothing.
-- Merge commits only, bottom-up, with the expected head SHA. Never force-push.
+- Merge commits only, bottom-up, with the expected head SHA; auto-merge only on a PR whose base is `main` (Merging). Never force-push.
 - Folding a stack at the merge gate (AGENTS.md): merge each child into its parent upward, update the remaining PR's title and `Intent` to list every intent, close each folded PR with a link to it. Never fold a blast-radius PR or a decision into its code.
+
+## Merging
+
+[ADR 0014](../../../docs/adr/0014-auto-merge-tiers.md) sets who merges. A PR's tier is the highest any of its paths or tasks reaches. Label it `tier:A`, `tier:B` or `tier:C` on opening, relabel it when a push changes the tier, and never lower a tier the maintainer set.
+
+| Tier | When | Who merges |
+|---|---|---|
+| C | `crates/`, `bindings/`, `specs/`, `.specify/`, `docs/adr/`, `.github/`, `.claude/`, `scripts/`; any `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT.md`; any `Cargo.toml`, `Cargo.lock`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `deny.toml`, `rust-toolchain.toml`, `.cargo/`; an ADR or Decision Ledger entry; a `human:` task; labelled `tier:C` by the maintainer | The maintainer |
+| B | `fixtures/golden/`, `*.snap`, or an expected SVG or PDF fixture | Auto-merge, enabled 24 h after the head's CI went green |
+| A | Everything else, and a `docs(tasks): tick …` PR whose diff touches only `specs/*/tasks.md` with ticks and as-built notes | Auto-merge, enabled once ready |
+
+- Enable auto-merge, merge commit, on a tier A or B PR only when: its base is `main`; CI is green on the head with no conflict; the review found no 🔴 that is not fixed and proven, or it skipped the PR; every 🟡 is fixed or answered; no review thread is open. For B, also 24 h since the head's CI went green.
+- Disable auto-merge before pushing to a PR that has it, and enable it again when the conditions hold on the new head.
+- Never merge a PR yourself, and never enable auto-merge on tier C.
 
 ## Waiting
 

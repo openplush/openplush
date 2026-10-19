@@ -26,3 +26,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0011](0011-blender-research-tool.md) | Blender's Python module may be used as a research-only tool, in GPL-licensed spike directories that nothing else imports | Accepted |
 | [0012](0012-export-reads-layout.md) | `openplush-export` may depend on `openplush-layout` | Accepted |
 | [0013](0013-intent-sized-pull-requests.md) | Size pull requests by intent, not by line count, and review each one once | Accepted |
+| [0014](0014-auto-merge-tiers.md) | Merge by tier: agents enable auto-merge on low-risk PRs, the maintainer merges the rest | Proposed |

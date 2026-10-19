@@ -150,6 +150,8 @@ pub struct SeamBundle {
 ```
 MVP UI exposes `k = 2`; the model supports `k > 2` from day one so FR-016 isn't a migration later.
 
+A chain on interior seam edges has its two sides from the faces across them. A chain on mesh-boundary edges is one side of a bundle only through repair's record of the split that made it (D-058); a boundary chain with no recorded partner is a hole's rim and is refused, never self-paired.
+
 ### Chart topology check (pre-flatten)
 χ = V − E + F; for a connected surface with genus g and b boundary loops, χ = 2 − 2g − b. Flattenable ⇔ **g = 0, b = 1** (disk, χ = 1). Darts don't change this — a slit extends the single boundary loop.
 

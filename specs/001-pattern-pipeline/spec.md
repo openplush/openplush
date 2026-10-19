@@ -132,7 +132,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 ### Seams
 - **FR-010**: Draw and erase seams along the surface in 3D (point-to-point with automatic shortest path), with an optional symmetry-mirroring mode.
 - **FR-011**: Support darts (seams that end inside a piece).
-- **FR-012**: Mark any seam segment as the stuffing/turning opening.
+- **FR-012**: Mark any seam segment the maker drew or accepted as the stuffing/turning opening. A seam repair placed (D-057) is never the opening.
 - **FR-013**: Validate that seams split the surface into flattenable pieces; otherwise propose the minimal additional seams, highlighted for approval.
 - **FR-014**: Piece previews update incrementally as seams change (only affected pieces recompute).
 - **FR-015**: Generate an automatic starting seam layout, fully editable afterwards. Deferred past v0.1 — the first release ships manual seam drawing with validation (FR-013) and dart suggestions (FR-022), which an automatic layout is expected to build on.

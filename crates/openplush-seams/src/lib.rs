@@ -1,6 +1,7 @@
 //! `SeamSet`, cut-graph completion, darts, symmetry.
 
 mod chart;
+mod chart_mesh;
 mod error;
 mod graph;
 mod ids;
@@ -10,6 +11,7 @@ mod set;
 mod topology;
 
 pub use chart::{Chart, charts};
+pub use chart_mesh::ChartMesh;
 pub use error::SeamsError;
 pub use graph::{SeamChain, SeamGraph, SeamNode};
 pub use ids::{ChartId, SeamChainId};

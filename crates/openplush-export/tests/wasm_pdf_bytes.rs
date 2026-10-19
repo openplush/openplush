@@ -44,7 +44,7 @@ fn pdf() -> Result<Vec<u8>, Setup> {
         .into_iter()
         .next()
         .ok_or(LayoutError::NoPieces)?;
-    Ok(write(&sheet, &pieces, &tile(&sheet, Paper::A4)?)?)
+    Ok(write(&sheet, &pieces, &tile(&sheet, Paper::A4)?, &[])?)
 }
 
 /// 64-bit FNV-1a.

@@ -7,6 +7,7 @@ use openplush_layout::{Placement, Sheet};
 use openplush_pattern::PatternPiece;
 use pdf_writer::Content;
 
+use super::summary::{self, Split};
 use super::{PT_PER_MM, outline, squares, text};
 
 const COVER_LABEL: &str = "Page map";
@@ -21,11 +22,18 @@ const TILE_LABEL_MM: f64 = 4.0;
 /// How far a tile's label sits in from its window's top-left corner.
 const TILE_LABEL_INSET_MM: f64 = 2.0;
 
-/// The cover's content, for the sheet tiled as `tiling` says.
+/// How high the cover's room under the scale squares is, on paper `size`.
+pub(super) fn room(size: DVec2) -> f64 {
+    size.y - 2.0 * MARGIN_MM - SCALE_SQUARE_MM - MAP_GAP_MM
+}
+
+/// The cover's content, for the sheet tiled as `tiling` says, with `summary`'s cover lines under
+/// the map.
 pub(super) fn draw(
     sheet: &Sheet,
     placed: &[(&Placement, &PatternPiece)],
     tiling: &PageTiling,
+    summary: &Split,
 ) -> Vec<u8> {
     let paper = tiling.paper().size_mm();
     let corner = DVec2::new(MARGIN_MM, paper.y - MARGIN_MM - SCALE_SQUARE_MM);
@@ -34,9 +42,12 @@ pub(super) fn draw(
     c.save_state();
     c.transform([k, 0.0, 0.0, k, 0.0, 0.0]);
     squares(&mut c, corner, COVER_LABEL);
+    if !summary.cover.is_empty() {
+        summary::draw_cover(&mut c, summary);
+    }
     c.restore_state();
     let room_top = corner.y - MAP_GAP_MM;
-    let room = DVec2::new(paper.x - 2.0 * MARGIN_MM, room_top - MARGIN_MM);
+    let room = DVec2::new(paper.x - 2.0 * MARGIN_MM, room(paper) - summary.height);
     let fit = Fit::new(tiling.pages(), DVec2::new(MARGIN_MM, room_top), room);
     c.save_state();
     let (s, at) = ((fit.scale * PT_PER_MM) as f32, fit.offset * PT_PER_MM);

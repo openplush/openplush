@@ -56,7 +56,7 @@ fn on_page(sheet_point: DVec2, window_min: DVec2) -> DVec2 {
 fn every_mark_is_a_crosshair_on_each_page_whose_window_holds_it() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(300.0, 500.0)?;
     assert!(!tiling.marks().is_empty());
-    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling, &[])?)?;
     let mut seen = vec![0; tiling.marks().len()];
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let drawn = crosshairs(page);
@@ -85,7 +85,7 @@ fn every_mark_is_a_crosshair_on_each_page_whose_window_holds_it() -> Result<(), 
 #[test]
 fn a_single_page_has_no_crosshairs() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(100.0, 100.0)?;
-    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling, &[])?)?;
     assert_eq!(read.len(), 1);
     assert!(crosshairs(&read[0]).is_empty());
     Ok(())
@@ -94,7 +94,7 @@ fn a_single_page_has_no_crosshairs() -> Result<(), Setup> {
 #[test]
 fn every_page_is_labelled_right_of_its_scale_square() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(300.0, 500.0)?;
-    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling, &[])?)?;
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let square = on_page(tile.scale_square_min(), tile.window_min());
         let labels: Vec<_> = page
@@ -116,7 +116,7 @@ fn every_page_is_labelled_right_of_its_scale_square() -> Result<(), Setup> {
 #[test]
 fn the_squares_say_what_they_measure() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(300.0, 500.0)?;
-    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling, &[])?)?;
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let square = on_page(tile.scale_square_min(), tile.window_min());
         let find = |text: &str| page.texts.iter().find(|t| t.text == text);

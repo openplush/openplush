@@ -11,10 +11,12 @@ use openplush_layout::{Placement, Sheet};
 use openplush_pattern::{Outline, PatternPiece};
 use pdf_writer::{Content, Name, Pdf, Rect, Ref, Str};
 
-use crate::ExportError;
 use crate::svg::index;
+use crate::warning_summary::lines;
+use crate::{ExportError, SummaryRow};
 
 mod cover;
+mod summary;
 
 const PT_PER_MM: f64 = 72.0 / 25.4;
 const CUT_MM: f32 = 0.5;
@@ -30,13 +32,18 @@ const SQUARE_LABEL_MM: f32 = 3.0;
 const FONT: Name<'static> = Name(b"F1");
 
 /// The sheet tiled as `tiling` says, which must have been made from this sheet. First a cover
-/// page with the labelled scale-check squares and a map of the tiles; then on every tile's page,
-/// every placed copy's solid cut line then dashed sewing line, a crosshair at each registration
-/// mark the page shows, the labelled scale-check squares and the page's label.
+/// page with the labelled scale-check squares, a map of the tiles and, under it, the `summary` of
+/// unresolved warnings; then on every tile's page, every placed copy's solid cut line then dashed
+/// sewing line, a crosshair at each registration mark the page shows, the labelled scale-check
+/// squares and the page's label; then any summary rows the cover had no room for.
+///
+/// # Errors
+/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary text the fonts cannot print.
 pub fn write(
     sheet: &Sheet,
     pieces: &[PatternPiece],
     tiling: &PageTiling,
+    summary: &[SummaryRow],
 ) -> Result<Vec<u8>, ExportError> {
     let by_id = index(pieces)?;
     let placed = sheet
@@ -50,34 +57,51 @@ pub fn write(
         })
         .collect::<Result<Vec<_>, ExportError>>()?;
     let size = tiling.paper().size_mm();
+    let rows = lines(summary, summary::columns(size))?;
+    let first_after = tiling.pages().len() + 2;
+    let split = summary::split(rows, summary.len(), cover::room(size), size, first_after);
     let (catalog, tree, font) = (Ref::new(1), Ref::new(2), Ref::new(3));
-    // INVARIANT: `tile` caps a tiling at 26 × 26 pages, so with the cover every reference fits
-    // in an i32.
+    // INVARIANT: `tile` caps a tiling at 26 × 26 pages, and summary pages hold dozens of lines
+    // each, so every reference fits in an i32 for any summary that fits in memory.
     let page_ref = |i: usize| Ref::new(4 + 2 * i as i32);
-    let count = tiling.pages().len() + 1;
+    let count = tiling.pages().len() + 1 + split.pages.len();
+    let mono = (!summary.is_empty()).then(|| page_ref(count));
     let mut pdf = Pdf::new();
     pdf.catalog(catalog).pages(tree);
     pdf.pages(tree)
         .kids((0..count).map(page_ref))
         .count(count as i32);
-    let cover = cover::draw(sheet, &placed, tiling);
+    let cover = cover::draw(sheet, &placed, tiling, &split);
     let tiles = tiling
         .pages()
         .iter()
         .map(|p| draw(p, &placed, tiling.marks()));
-    for (i, stream) in std::iter::once(cover).chain(tiles).enumerate() {
+    let after = split.pages.iter().map(|lines| summary::page(lines, size));
+    for (i, stream) in std::iter::once(cover).chain(tiles).chain(after).enumerate() {
         let (id, content) = (page_ref(i), Ref::new(page_ref(i).get() + 1));
         let mut writer = pdf.page(id);
         writer.media_box(Rect::new(0.0, 0.0, pt(size.x), pt(size.y)));
         writer.parent(tree);
         writer.contents(content);
-        writer.resources().fonts().pair(FONT, font);
+        let mut resources = writer.resources();
+        let mut fonts = resources.fonts();
+        fonts.pair(FONT, font);
+        if let Some(mono) = mono {
+            fonts.pair(summary::MONO, mono);
+        }
+        drop(fonts);
+        drop(resources);
         drop(writer);
         pdf.stream(content, &stream);
     }
     pdf.type1_font(font)
         .base_font(Name(b"Helvetica"))
         .encoding_predefined(Name(b"WinAnsiEncoding"));
+    if let Some(mono) = mono {
+        pdf.type1_font(mono)
+            .base_font(Name(b"Courier"))
+            .encoding_predefined(Name(b"WinAnsiEncoding"));
+    }
     Ok(pdf.finish())
 }
 

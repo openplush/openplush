@@ -6,5 +6,7 @@
 mod error;
 pub mod pdf;
 pub mod svg;
+mod warning_summary;
 
 pub use error::ExportError;
+pub use warning_summary::SummaryRow;

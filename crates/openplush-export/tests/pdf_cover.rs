@@ -36,7 +36,7 @@ struct Case {
 fn case(w: f64, h: f64, paper: Paper) -> Result<Case, Setup> {
     let (sheet, pieces) = rectangle(w, h)?;
     let tiling = tile(&sheet, paper)?;
-    let mut read = pages(&write(&sheet, &pieces, &tiling)?)?;
+    let mut read = pages(&write(&sheet, &pieces, &tiling, &[])?)?;
     let tiles = read.len().checked_sub(1).ok_or("no pages")?;
     let cover = read.remove(0);
     Ok(Case {

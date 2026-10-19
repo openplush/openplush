@@ -11,7 +11,7 @@ use fuzz::generate::case;
 use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
 use openplush_pattern::allowance::cut_line;
-use openplush_pattern::{Outline, PatternError, PieceId};
+use openplush_pattern::{Outline, PieceId};
 
 /// S3's corpus seed.
 const SEED: u64 = 0x0057_3F00_2026_1015;
@@ -40,24 +40,17 @@ fn corpus_hash() -> Result<u64, String> {
             Ok(cut) => cut.points().iter().fold(fnv(hash, 0), |h, p| {
                 fnv(fnv(h, p.x.to_bits()), p.y.to_bits())
             }),
-            Err(e) => fnv(hash, 1 + refusal(&e)),
+            // The whole refusal, its variant and fields, so a change of either is seen.
+            Err(e) => format!("{e:?}")
+                .bytes()
+                .fold(fnv(hash, 1), |h, b| fnv(h, u64::from(b))),
         };
     }
     Ok(hash)
 }
 
-fn refusal(e: &PatternError) -> u64 {
-    match e {
-        PatternError::FoldConflict { edge, .. } => 10 + *edge as u64,
-        PatternError::AllowanceSplitsPiece { .. } => 1,
-        PatternError::AllowanceEnclosesGap { .. } => 2,
-        PatternError::AllowanceNotSimple { .. } => 3,
-        _ => 4,
-    }
-}
-
 #[cfg_attr(not(target_arch = "wasm32"), test)]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
 fn the_cut_lines_are_the_same_on_every_target() {
-    assert_eq!(corpus_hash(), Ok(0x3e40_a53a_50ee_01ba));
+    assert_eq!(corpus_hash(), Ok(0xb2bc_f159_0c8b_f71f));
 }

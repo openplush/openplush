@@ -127,6 +127,9 @@ Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its sea
 A **seam chain** is a maximal path between nodes; a cycle of chain vertices with no node is one **closed chain**. Chains are the unit of notching, labeling ("A3"), and length parity. Numbering and walking order are D-052's (4).
 
 ### ChartMesh (virtual cut)
+
+> **As built**: [`docs/reference/crates.md`](../../docs/reference/crates.md) (`openplush-seams`, `ChartMesh`) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
+
 Charts = flood fill of faces across non-seam edges. Each chart is cut open into flat arrays shaped like the flattener's input (D-054), **duplicating vertices along seam edges inside the chart** — except dart tips, which stay single (a slit, not a separation). Provenance maps back to the global mesh:
 ```rust
 pub struct ChartMesh {

@@ -8,7 +8,7 @@ deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementi
 
 ## Context and problem statement
 
-FR-061 puts PDF print export in v0.1 because browsers print SVG at unreliable scale: tiled Letter and A4 with overlap, registration marks, a page map, and a 50 mm scale-check square on every page, plus the FR-064 warning summary on the first page. T091 (`crates/openplush-export/src/pdf.rs`) writes it. Research R2 listed `svg2pdf` for this with WASM support `[verify]`.
+FR-061 puts PDF print export in v0.1 because browsers print SVG at unreliable scale: tiled Letter and A4 with overlap, registration marks, a page map, and a 50 mm scale-check square on every page, plus the FR-064 warning summary on the first page (D-053 later moved the page map and the summary to a cover page before the tiles). T091 (`crates/openplush-export/src/pdf.rs`) writes it. Research R2 listed `svg2pdf` for this with WASM support `[verify]`.
 
 T005 (spike S5) asks whether `svg2pdf` works under WASM or whether T091 should write PDF directly. Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
 

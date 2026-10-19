@@ -117,7 +117,7 @@ pub struct SeamSet { kind: BTreeMap<EdgeId, SeamKind> }
 The mesh never changes when seams change. Undo/redo is a `SeamSet` diff.
 
 ### Seam graph nodes
-Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its seam edges of every kind. Node classes (D-052):
+Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its seam edges of every kind. Node classes (D-052), of which a vertex takes the first that fits, so a junction on a boundary is a junction:
 - **Junction**: seam-valence ≥ 3 (three or more seam edges meet).
 - **Endpoint on boundary**: on a seam and on a mesh-boundary edge that is not itself a seam, so the seam meets a hole/opening there.
 - **Free endpoint** (seam-valence 1, otherwise): **dart tip**.

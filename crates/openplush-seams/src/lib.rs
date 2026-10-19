@@ -2,12 +2,14 @@
 
 mod chart;
 mod chart_mesh;
+mod dijkstra;
 mod error;
 mod fold;
 mod graph;
 mod ids;
 mod kind;
 mod opening;
+mod path;
 mod paths;
 mod proposal;
 mod proposals;
@@ -23,6 +25,7 @@ pub use graph::{SeamChain, SeamGraph, SeamNode};
 pub use ids::{ChartId, SeamChainId};
 pub use kind::{ChartFailure, SeamKind};
 pub use opening::mark_opening;
+pub use path::shortest_path;
 pub use proposal::{Proposal, ProposalId, ProposalKind, SeamReason};
 pub use proposals::close_chart;
 pub use set::SeamSet;

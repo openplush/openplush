@@ -1,6 +1,6 @@
 //! A shell names the error a proposal-ID parse returns through this crate alone.
 
-use openplush_pipeline::{ChartId, EdgeId, ProposalId, SeamChainId, SeamsError};
+use openplush_pipeline::{ChartId, EdgeId, ProposalId, SeamChainId, SeamsError, VertexId};
 
 #[test]
 fn a_bad_proposal_id_is_a_pipeline_nameable_error() {
@@ -38,6 +38,10 @@ fn seams_error_messages_are_pinned() {
         .to_string(),
         "a seam is on edge EdgeId(9), which the mesh does not have"
     );
+}
+
+#[test]
+fn chart_chain_and_pick_error_messages_are_pinned() {
     assert_eq!(
         SeamsError::ChartNotClosed {
             chart: ChartId::new(3)
@@ -66,5 +70,20 @@ fn seams_error_messages_are_pinned() {
         }
         .to_string(),
         "seam chain SeamChainId(5) runs along the mesh boundary with no recorded partner"
+    );
+    assert_eq!(
+        SeamsError::UnknownVertex {
+            vertex: VertexId::new(8)
+        }
+        .to_string(),
+        "vertex VertexId(8) is not one of the mesh's"
+    );
+    assert_eq!(
+        SeamsError::NoPath {
+            from: VertexId::new(1),
+            to: VertexId::new(6)
+        }
+        .to_string(),
+        "no path of edges joins vertex VertexId(1) to vertex VertexId(6)"
     );
 }

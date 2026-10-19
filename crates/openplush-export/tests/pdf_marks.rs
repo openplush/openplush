@@ -7,35 +7,16 @@
 )]
 mod common;
 
-use common::{Page, Setup, pages};
+use common::{Page, Setup, rectangle, tiles};
 use openplush_export::pdf::write;
 use openplush_geom::DVec2;
-use openplush_geom::units::Mm;
+use openplush_layout::Sheet;
 use openplush_layout::pages::{MARGIN_MM, PageTiling, Paper, tile};
-use openplush_layout::shelf::pack;
-use openplush_layout::{LayoutError, LayoutOptions, Sheet};
-use openplush_pattern::{CutCount, Outline, PatternPiece, PieceId};
+use openplush_pattern::PatternPiece;
 
 /// A `w` × `h` mm rectangle on a roll just wider, and its tiling on A4.
 fn tiled(w: f64, h: f64) -> Result<(Sheet, Vec<PatternPiece>, PageTiling), Setup> {
-    let outline = Outline::new(vec![
-        DVec2::new(0.0, 0.0),
-        DVec2::new(w, 0.0),
-        DVec2::new(w, h),
-        DVec2::new(0.0, h),
-    ])?;
-    let pieces = vec![PatternPiece::new(
-        PieceId::new(0),
-        outline.clone(),
-        outline,
-        CutCount::new(1, 0)?,
-        vec![0.0],
-    )?];
-    let opts = LayoutOptions::new(Mm::try_new(w + 20.0)?, Mm::try_new(0.0)?, false)?;
-    let sheet = pack(&pieces, &opts)?
-        .into_iter()
-        .next()
-        .ok_or(LayoutError::NoPieces)?;
+    let (sheet, pieces) = rectangle(w, h)?;
     let tiling = tile(&sheet, Paper::A4)?;
     Ok((sheet, pieces, tiling))
 }
@@ -75,7 +56,7 @@ fn on_page(sheet_point: DVec2, window_min: DVec2) -> DVec2 {
 fn every_mark_is_a_crosshair_on_each_page_whose_window_holds_it() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(300.0, 500.0)?;
     assert!(!tiling.marks().is_empty());
-    let read = pages(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
     let mut seen = vec![0; tiling.marks().len()];
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let drawn = crosshairs(page);
@@ -104,7 +85,7 @@ fn every_mark_is_a_crosshair_on_each_page_whose_window_holds_it() -> Result<(), 
 #[test]
 fn a_single_page_has_no_crosshairs() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(100.0, 100.0)?;
-    let read = pages(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
     assert_eq!(read.len(), 1);
     assert!(crosshairs(&read[0]).is_empty());
     Ok(())
@@ -113,7 +94,7 @@ fn a_single_page_has_no_crosshairs() -> Result<(), Setup> {
 #[test]
 fn every_page_is_labelled_right_of_its_scale_square() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(300.0, 500.0)?;
-    let read = pages(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let square = on_page(tile.scale_square_min(), tile.window_min());
         let labels: Vec<_> = page
@@ -135,7 +116,7 @@ fn every_page_is_labelled_right_of_its_scale_square() -> Result<(), Setup> {
 #[test]
 fn the_squares_say_what_they_measure() -> Result<(), Setup> {
     let (sheet, pieces, tiling) = tiled(300.0, 500.0)?;
-    let read = pages(&write(&sheet, &pieces, &tiling)?)?;
+    let read = tiles(&write(&sheet, &pieces, &tiling)?)?;
     for (page, tile) in read.iter().zip(tiling.pages()) {
         let square = on_page(tile.scale_square_min(), tile.window_min());
         let find = |text: &str| page.texts.iter().find(|t| t.text == text);

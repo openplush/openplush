@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-17
-deciders: maintainer
+deciders: maintainer (accepted 2026-10-17)
 ---
 
 # Blender's Python module may be used as a research-only tool, in GPL-licensed spike directories that nothing else imports

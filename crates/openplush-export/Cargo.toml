@@ -12,6 +12,8 @@ publish = false
 openplush-geom = { path = "../openplush-geom" }
 openplush-layout = { path = "../openplush-layout" }
 openplush-pattern = { path = "../openplush-pattern" }
+# Exact pin: the version research/s5_svg2pdf_wasm measured; re-run it before bumping.
+pdf-writer = "=0.15.0"
 thiserror = "2.0.21"
 
 [lints]

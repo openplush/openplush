@@ -37,7 +37,9 @@ pub fn write(sheet: &Sheet, pieces: &[PatternPiece]) -> Result<Vec<u8>, ExportEr
     Ok(out.into_bytes())
 }
 
-fn index(pieces: &[PatternPiece]) -> Result<BTreeMap<PieceId, &PatternPiece>, ExportError> {
+pub(crate) fn index(
+    pieces: &[PatternPiece],
+) -> Result<BTreeMap<PieceId, &PatternPiece>, ExportError> {
     let mut by_id = BTreeMap::new();
     for piece in pieces {
         if by_id.insert(piece.id(), piece).is_some() {

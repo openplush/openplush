@@ -111,6 +111,11 @@ impl<'a> Solve<'a> {
         })
     }
 
+    /// Iterations taken so far.
+    pub(crate) fn iterations(&self) -> u32 {
+        self.iterations
+    }
+
     /// The area-weighted mean symmetric Dirichlet energy of the current layout.
     pub(crate) fn energy(&self) -> f64 {
         self.energy
@@ -129,17 +134,6 @@ impl<'a> Solve<'a> {
             .map(|v| (VertexId::new(v), self.uv[v as usize]))
             .collect()
     }
-}
-
-/// The chart's layout once the iteration settles.
-pub(crate) fn flatten(
-    chart: ChartId,
-    xyz: &[DVec3],
-    faces: Faces<'_>,
-) -> Result<Vec<(VertexId, DVec2)>, FlattenError> {
-    let mut solve = Solve::start(chart, xyz, faces)?;
-    while solve.iterate()? == Step::Improved {}
-    Ok(solve.layout())
 }
 
 /// The `FlattenError` for a boundary refusal. A face naming a missing vertex is reported as

@@ -18,7 +18,7 @@ description: "Task list for 003 source seam import"
 
 ## PR packaging
 
-Same policy as 001 and 002: at most 400 lines of hand-written source, one test task plus the implementation that makes it pass (test commit first), and one story and one crate per PR. See [`AGENTS.md`](../../AGENTS.md#commits-and-prs) and [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). Branches are `003/NN-Uxxx-slug`; `NN` is the next unused position in feature 003 when the PR opens (01 was the spec and plan, 02 is this task list).
+Same policy as 001 and 002: one intent per PR, each task a test commit then the implementation that makes it pass, and interdependent intents stacked ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md)). See [`AGENTS.md`](../../AGENTS.md#commits-and-prs) and [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). Branches are `003/NN-slug`, the slug naming the intent; `NN` is the next unused position in feature 003 when the PR opens (01 was the spec and plan, 02 is this task list).
 
 ### Batch these
 

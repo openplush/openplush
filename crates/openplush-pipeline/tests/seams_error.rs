@@ -87,3 +87,32 @@ fn chart_chain_and_pick_error_messages_are_pinned() {
         "no path of edges joins vertex VertexId(1) to vertex VertexId(6)"
     );
 }
+
+#[test]
+fn dart_error_messages_are_pinned() {
+    assert_eq!(
+        SeamsError::EmptyDart.to_string(),
+        "a dart needs at least one edge"
+    );
+    assert_eq!(
+        SeamsError::NotAWalk {
+            edge: EdgeId::new(3)
+        }
+        .to_string(),
+        "edge EdgeId(3) does not continue the walk"
+    );
+    assert_eq!(
+        SeamsError::DartNotAnchored {
+            vertex: VertexId::new(4)
+        }
+        .to_string(),
+        "a dart starts on a seam or the mesh boundary; neither end does (vertex VertexId(4))"
+    );
+    assert_eq!(
+        SeamsError::DartTouchesSeam {
+            vertex: VertexId::new(5)
+        }
+        .to_string(),
+        "a dart's tip and inner vertices touch no seam or boundary; vertex VertexId(5) does"
+    );
+}

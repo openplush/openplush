@@ -17,7 +17,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
-| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`) return. Variants below |
+| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`, `mark_dart`) return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
 No stage function exists yet; each lands with the task that builds its stage.
@@ -62,6 +62,10 @@ Three methods read an error the way the shell needs it. Each matches every varia
 | `UnpairedBoundarySeam` | the `chain`, printed in Rust `{:?}` (Debug) form: `SeamChainId(5)` | `seam chain {chain:?} runs along the mesh boundary with no recorded partner` |
 | `UnknownVertex` | the `vertex`, in Debug form: `VertexId(8)` | `vertex {vertex:?} is not one of the mesh's` |
 | `NoPath` | `from` and `to`, in Debug form | `no path of edges joins vertex {from:?} to vertex {to:?}` |
+| `EmptyDart` | nothing | `a dart needs at least one edge` |
+| `NotAWalk` | the `edge`, in Debug form | `edge {edge:?} does not continue the walk` |
+| `DartNotAnchored` | the walk's first `vertex`, in Debug form | `a dart starts on a seam or the mesh boundary; neither end does (vertex {vertex:?})` |
+| `DartTouchesSeam` | the first such `vertex`, in Debug form | `a dart's tip and inner vertices touch no seam or boundary; vertex {vertex:?} does` |
 
 ## Warnings
 

@@ -1,6 +1,6 @@
 //! A shell names the error a proposal-ID parse returns through this crate alone.
 
-use openplush_pipeline::{EdgeId, ProposalId, SeamsError};
+use openplush_pipeline::{ChartId, EdgeId, ProposalId, SeamsError};
 
 #[test]
 fn a_bad_proposal_id_is_a_pipeline_nameable_error() {
@@ -37,5 +37,12 @@ fn seams_error_messages_are_pinned() {
         }
         .to_string(),
         "a seam is on edge EdgeId(9), which the mesh does not have"
+    );
+    assert_eq!(
+        SeamsError::ChartNotClosed {
+            chart: ChartId::new(3)
+        }
+        .to_string(),
+        "the cuts found for chart ChartId(3) do not leave it one disk"
     );
 }

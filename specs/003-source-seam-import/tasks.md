@@ -14,6 +14,9 @@ description: "Task list for 003 source seam import"
 
 - **[P]**: can run in parallel (different files, no dependency on an unfinished task)
 - **[Story]**: which user story it serves (US1 to US4 in spec.md)
+- `needs:ID[,ID]`: unticked tasks this one waits on, where the phase order alone does not say so
+- `blocked:S-0NN`: a proposed decision this one waits on; only the maintainer clears it
+- `human:XX`: needs a person (outside review, measured values); no agent picks it up
 - Task IDs are `U0NN` (for UV), distinct from 001's `T0NN` tasks and `S1`–`S8` spikes and from 002's `H0NN`. This feature's decisions are `S-0NN` and its spikes `Q1`–`Q4`, as in plan.md and research.md.
 
 ## PR packaging
@@ -123,7 +126,7 @@ None. No new crate and no new dependency (S-001).
 Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 so triangulation keeps one primitive's corners under that primitive's number.
 
 - [ ] U014 [P] `crates/openplush-io/tests/source_materials.rs`: failing tests on U004 and U006. glTF: names in file order, one material per primitive, a primitive with no material (glTF's default material) maps to `None`, and `extra_uv_sets` counts `TEXCOORD_1` and up. OBJ: names from `usemtl` exactly as written (no trimming; matching trims later), faces before any `usemtl` map to `None`, and each `usemtl` change starts a new primitive even inside one group. `no-uv.obj` imports with no UVs and one material. The OBJ half can land now that T050 has merged; the glTF half waits for T051 — *OBJ half merged in #139; the glTF half waits for T051*
-- [ ] U015 `crates/openplush-io/src/obj/mod.rs`, `src/obj/parse.rs`, `src/gltf.rs`: fill `SourceMaterials` and `extra_uv_sets`. OBJ: name each primitive after the `usemtl` line that opened it (the reader already splits there, 001 D-034); no MTL file is read, because only the name is used. glTF: one material per primitive, after T051. Makes U014 pass — *OBJ half merged in #139; the glTF half waits for T051*
+- [ ] U015 needs:T051 `crates/openplush-io/src/obj/mod.rs`, `src/obj/parse.rs`, `src/gltf.rs`: fill `SourceMaterials` and `extra_uv_sets`. OBJ: name each primitive after the `usemtl` line that opened it (the reader already splits there, 001 D-034); no MTL file is read, because only the name is used. glTF: one material per primitive, after T051. Makes U014 pass — *OBJ half merged in #139; the glTF half waits for T051*
 
 **Checkpoint**: an imported fixture's `ManifoldMesh` names each face's material.
 
@@ -150,7 +153,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 - [ ] U021 [US1] `crates/openplush-pipeline/src/source.rs` (new) and `src/lib.rs`: the `source_import` stage and the public `SourceImport { seams, report }` / `SourceReport` with only US1's fields; later stories add theirs. The FR-004 warning (S-016) is part of the report whenever `extra_uv_sets > 0`, and its text goes in `docs/reference/` with the stage. The FR-006 projection hint text goes in `docs/reference/` with the stage. Includes rustdoc for every public item and the `source_import` entry in `docs/reference/engine-api.md`. Makes U020 pass. Its spec follow-up is U068
 - [ ] U022 [P] [US1] `bindings/openplush-cli/tests/import_seams.rs`: failing tests for quickstart scenarios 1, 2 and 6. `import-seams <model> --json <out>` writes the proposal and report; the OBJ twin gives the same edge set by position; two runs give byte-identical files
 - [ ] U023 [US1] `bindings/openplush-cli/src/commands/import_seams.rs`: the `import-seams` subcommand (contract §3) and its entry in `docs/reference/cli.md`. Makes U022 pass
-- [ ] U024 [US1] FR-014 (S-013): a closed cut that cuts off a piece below 001's minimum piece size is still proposed, and the preview marks that piece before acceptance using 001's piece-size check on the flattened, scaled proposal. `apps/` reaches that check only through `@openplush/engine-client`, so this depends on 001's check and its worker operation, both still to be tasked (spec gap 1). Playwright test in `apps/web/tests/import-preview.spec.ts` (created by U029), then the implementation in `apps/web/src/import/`. No 003 engine change. **Blocked** on spec gap 1
+- [ ] U024 [US1] blocked:S-013 FR-014 (S-013): a closed cut that cuts off a piece below 001's minimum piece size is still proposed, and the preview marks that piece before acceptance using 001's piece-size check on the flattened, scaled proposal. `apps/` reaches that check only through `@openplush/engine-client`, so this depends on 001's check and its worker operation, both still to be tasked (spec gap 1). Playwright test in `apps/web/tests/import-preview.spec.ts` (created by U029), then the implementation in `apps/web/src/import/`. No 003 engine change. **Blocked** on spec gap 1
 - [ ] U025 [P] [US1] `bindings/openplush-wasm/tests/source_import.rs`: failing DTO tests. `sourceImport` request and response; each `ProposalId` crosses as its 16-hex-digit string; floats are finite; no field is a 64-bit integer (ADR 0010). The response for `capsule-uv.glb` is byte-identical to the native CLI's JSON (SC-007)
 - [ ] U026 [US1] `bindings/openplush-wasm/src/`: the `sourceImport` operation and its DTOs, regenerated TS types via `scripts/check.sh types`, and the operation in `docs/reference/worker-protocol.md`. Makes U025 pass
 - [ ] U027 [P] [US1] `packages/engine-client/src/source-import.test.ts`: failing Vitest tests for the client's `sourceImport` call against the mock worker. A crash in the worker surfaces as a crash (worker-protocol §4), not an empty proposal
@@ -205,7 +208,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 ### Unreviewed-fabric warning (FR-025)
 
 - [ ] U045 [P] [US3] `crates/openplush-project/tests/from_material.rs`: failing tests. Optional `fabrics[].fromMaterial` defaults to `false`; a v1 file without it loads unchanged; a profile created by import has it set; the first edit to that profile clears it
-- [ ] U046 [US3] `crates/openplush-project/src/document.rs` and the project schema page in `docs/reference/`: the field (already in `specs/001-pattern-pipeline/contracts/project.schema.json`) and the clear-on-edit rule. Makes U045 pass. Depends on T124
+- [ ] U046 [US3] needs:T124 `crates/openplush-project/src/document.rs` and the project schema page in `docs/reference/`: the field (already in `specs/001-pattern-pipeline/contracts/project.schema.json`) and the clear-on-edit rule. Makes U045 pass. Depends on T124
 - [ ] U047 [US3] `crates/openplush-pipeline/src/warning/tests.rs`: failing tests. `WarningCode::UnreviewedFabric` (target `Project`, `Remedy::Advisory`, text "Pick a preset for, or edit, the fabric '<name>'") is raised once per fabric with `fromMaterial`, gone after an edit, and present in the warnings printed on the pattern (FR-025)
 - [ ] U048 [US3] `crates/openplush-pipeline/src/warning/mod.rs`: the warning code and its string in `docs/reference/engine-api.md`. Makes U047 pass
 
@@ -276,7 +279,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 - [ ] U065 [P] `.github/workflows/determinism.yml` (T017): add quickstart scenario 8's native-vs-WASM byte comparison for `three-materials.glb` (SC-007)
 - [ ] U066 [P] `docs/how-to/import-seams-from-a-model.md`: what counts as a cut, why a texture-only cut becomes a seam (keep texture cuts on a separate UV map), dead ends and how to fix them, and how names match fabrics
 - [ ] U067 Run quickstart.md scenarios 1 to 9 end to end, and point each implemented spec section to its as-built docs (ADR 0003)
-- [ ] U068 `specs/001-pattern-pipeline/contracts/engine-api.md` and `specs/001-pattern-pipeline/plan.md`: spec-only PR once U021 merges. Bump 001's engine-api version, add the Decision Ledger entry, and add the one-line pointer to this feature's contract (contract preamble). Separate from U021 because spec and implementation never share a PR
+- [ ] U068 needs:U021 `specs/001-pattern-pipeline/contracts/engine-api.md` and `specs/001-pattern-pipeline/plan.md`: spec-only PR once U021 merges. Bump 001's engine-api version, add the Decision Ledger entry, and add the one-line pointer to this feature's contract (contract preamble). Separate from U021 because spec and implementation never share a PR
 
 ---
 

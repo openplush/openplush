@@ -43,6 +43,6 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Sessions
 
-- One task per session. When a task ends or the context grows long, write a short handoff for a fresh session (merged PRs, open PRs with their heads, next steps, these rules) rather than carrying on.
+- One task per session, or one `factory` firing. When a task ends or the context grows long, write a short handoff for a fresh session (merged PRs, open PRs with their heads, next steps, these rules) rather than carrying on.
 - Read only the files a step needs: grep `tasks.md` and the plan's ledger for the IDs in hand instead of reading them whole. Ask GitHub for one thread or the latest summary, not every thread on the PR.
 - Check `main`, the open PRs and the next free slice, decision and task numbers once, at the start of a session.

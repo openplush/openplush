@@ -8,5 +8,6 @@
   { "name": "bug",           "color": "d73a4a", "description": "Something produces wrong output or fails" },
   { "name": "good first issue", "color": "7057ff", "description": "Small, well-scoped, with a task ID" },
   { "name": "rereview",      "color": "bfd4f2", "description": "Run the automated review again on this PR (removed when it starts)" },
-  { "name": "mutation-audit", "color": "bfd4f2", "description": "Also run the mutation auditor in the automated review (removed when it starts)" }
+  { "name": "mutation-audit", "color": "bfd4f2", "description": "Also run the mutation auditor in the automated review (removed when it starts)" },
+  { "name": "factory",       "color": "c5def5", "description": "Ledger issue for unattended factory firings on one feature" }
 ]

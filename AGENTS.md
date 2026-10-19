@@ -67,8 +67,9 @@ All gates for the lane you touched pass locally, any public change has its as-bu
 ## Commits and PRs
 Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 - Driving a PR (CI, review findings, stacks, merges, check-ins): follow [`.claude/skills/steward/SKILL.md`](.claude/skills/steward/SKILL.md).
+- Unattended runs (`/factory <feature>`): follow [`.claude/skills/factory/SKILL.md`](.claude/skills/factory/SKILL.md). It picks ready tasks by the `needs:` / `blocked:` / `human:` tokens in `tasks.md`, opens stacked PRs, and stops at a named condition instead of asking.
 - Conventional Commits (`feat(flatten): …`). Every PR uses `.github/pull_request_template.md`.
-- One reviewable slice: ≤ 400 changed lines of hand-written source (fixtures, generated types, snapshots, lock files, and `docs/` prose excluded). Over → split, or justify in a `Size` section by naming what is indivisible.
+- One reviewable slice: ≤ 400 changed lines of hand-written source (fixtures, generated types, snapshots, lock files, and `docs/` prose excluded). Over → split by capability when each part gets its own test, else justify in a `Size` section by naming what is indivisible. The budget is a splitting rule, never a reason to stop and ask.
 - A PR is a test task plus the implementation that makes it pass, test commit first.
 - Never in one PR: two user stories; two crates (a thin wiring commit excepted); spec and implementation; refactor and behaviour change; chores and feature work.
 - Branches: `NNN/NN-slug` for feature slices (`NN` = position in the feature, never reused; implementation slugs include the task ID) or `chore/slug`. The slug names the content, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.

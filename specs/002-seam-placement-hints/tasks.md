@@ -14,6 +14,9 @@ description: "Task list for 002 seam-placement hints"
 
 - **[P]** — can run in parallel (different files, no dependency)
 - **[Story]** — which user story it serves
+- `needs:ID[,ID]` — unticked tasks this one waits on, where the phase order alone does not say so
+- `blocked:D-0NN` — a proposed decision this one waits on; only the maintainer clears it
+- `human:XX` — needs a person (outside review, measured values); no agent picks it up
 - Task IDs are `H0NN` to keep them distinct from 001's `T0NN` in commit messages and PR titles
 
 ## PR packaging
@@ -79,9 +82,9 @@ That is partway through 001's Phase 3, not after all of 001. H001–H004 (fixtur
 - [ ] H002 [P] `fixtures/meshes/asymmetric.glb` and `near-symmetric.glb` — one with no mirror plane at all, one with a single tilted ear. These prove refusal and the match score respectively; without them SC-005 cannot distinguish "works" from "always says yes"
 - [ ] H003 [P] `fixtures/meshes/faceted.glb` — icosphere or low-poly model for the flood cap (SC-010)
 - [ ] H004 **Fixture call: models with known-good hand-made patterns.** Fixture-lane work, no code. **SC-001 cannot be evaluated at all until this lands**, so the feature's headline claim stays unverified however green the test suite is. Flagged as a release risk, not a task to rush
-- [ ] H005 **H1** — Tune default thresholds (dihedral, concave, curvature, minimum chain length, integration radius) against the corpus so a typical plush yields useful hints with no adjustment. Depends on H001. Box: 1 day
+- [ ] H005 needs:H001 **H1** — Tune default thresholds (dihedral, concave, curvature, minimum chain length, integration radius) against the corpus so a typical plush yields useful hints with no adjustment. Depends on H001. Box: 1 day
 - [ ] H006 [P] **H2** — Confirm the monotonicity guarantee survives chaining and clustering. This is H012's property test, run as a spike first to find out whether the chain-once design actually holds. Box: 0.5 day
-- [ ] H007 [P] **H4** — Symmetry on near-symmetric models: how close must two candidate planes score before reporting none beats reporting the best? Sets the ambiguity margin for H-006. Depends on H002. Box: 0.5 day
+- [ ] H007 [P] needs:H002 **H4** — Symmetry on near-symmetric models: how close must two candidate planes score before reporting none beats reporting the best? Sets the ambiguity margin for H-006. Depends on H002. Box: 0.5 day
 - [ ] H008 [P] **H5** — SC-001 measurement harness: compare a hint set against a hand-made pattern by seam-length coverage within 5 mm. **Blocked on H004.** Write the harness anyway so the measurement is ready the day fixtures arrive. Box: 1 day
 
 **Checkpoint**: thresholds have defensible defaults. H004 and H008 may still be outstanding — they gate the release claim, not the build.
@@ -148,7 +151,7 @@ That is partway through 001's Phase 3, not after all of 001. H001–H004 (fixtur
 ### Pipeline, CLI, and shell
 
 - [ ] H033 [US1] `crates/openplush-pipeline/src/hints.rs` — expose the `hints` stage; cache signals by mesh hash, re-filter on sensitivity change only
-- [ ] H034 [US1] `specs/001-pattern-pipeline/contracts/engine-api.md` — once H033 has merged, give the contract's `hints` entry an "As built" pointer to rustdoc and `docs/reference/engine-api.md`; do not edit the signature. H033's PR documents the built signature itself; this task is the later, spec-only edit, since one PR never mixes spec and implementation ([ADR 0003](../../docs/adr/0003-as-built-docs.md)). *2026-10-14: replaces "reconcile the signature with what was built"*
+- [ ] H034 [US1] needs:H033 `specs/001-pattern-pipeline/contracts/engine-api.md` — once H033 has merged, give the contract's `hints` entry an "As built" pointer to rustdoc and `docs/reference/engine-api.md`; do not edit the signature. H033's PR documents the built signature itself; this task is the later, spec-only edit, since one PR never mixes spec and implementation ([ADR 0003](../../docs/adr/0003-as-built-docs.md)). *2026-10-14: replaces "reconcile the signature with what was built"*
 - [ ] H035 [US1] `bindings/openplush-cli/src/commands/hints.rs` — `hints` subcommand with `--only`, `--sensitivity`, `--json` (FR-050, Constitution II)
 - [ ] H036 [US1] `packages/engine-client/src/ops/hints.ts` — the `hints` op in the typed protocol, with the mock-worker implementation so shell tests need no WASM
 - [ ] H037 [US1] `apps/web/src/hints/overlay.tsx` — 3D overlay, one visually distinct treatment per category, **colour-blind-safe palettes** (FR-020, Constitution accessibility constraint)

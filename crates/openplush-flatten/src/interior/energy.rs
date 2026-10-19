@@ -13,7 +13,7 @@ pub(crate) struct Rest {
 }
 
 impl Rest {
-    pub(super) fn area(&self) -> f64 {
+    pub(crate) fn area(&self) -> f64 {
         self.area
     }
 

@@ -17,4 +17,13 @@ pub enum ExportError {
         /// The piece.
         piece: PieceId,
     },
+    /// Summary text has a character the PDF's standard fonts cannot print: they read WinAnsi, so
+    /// printable ASCII and Latin-1.
+    #[error("{text:?} has {character:?}, which the PDF's fonts cannot print")]
+    Unprintable {
+        /// The text, as given.
+        text: String,
+        /// Its first such character.
+        character: char,
+    },
 }

@@ -11,6 +11,7 @@ mod interior;
 pub mod metrics;
 mod session;
 mod solver;
+pub mod summary;
 
 pub use error::FlattenError;
 pub use session::{FlattenSession, Progress};

@@ -49,6 +49,17 @@ pub fn distortion(
     faces: &[(FaceId, [VertexId; 3])],
     uv: &[DVec2],
 ) -> Result<Vec<(FaceId, Distortion)>, FlattenError> {
+    let measured = distortion_and_area(chart, xyz, faces, uv)?;
+    Ok(measured.into_iter().map(|(face, d, _)| (face, d)).collect())
+}
+
+/// [`distortion`], with each face's 3D area.
+pub(crate) fn distortion_and_area(
+    chart: ChartId,
+    xyz: &[DVec3],
+    faces: &[(FaceId, [VertexId; 3])],
+    uv: &[DVec2],
+) -> Result<Vec<(FaceId, Distortion, f64)>, FlattenError> {
     if faces.is_empty() {
         return Err(FlattenError::EmptyChart { chart });
     }
@@ -57,7 +68,7 @@ pub fn distortion(
     let mut flipped = Vec::new();
     for (r, &(face, t)) in rest.iter().zip(faces) {
         match measure(r, uv, &t) {
-            Some(Measure::Kept(d)) => measured.push((face, d)),
+            Some(Measure::Kept(d)) => measured.push((face, d, r.area())),
             Some(Measure::Flipped) => flipped.push(face),
             None => return Err(FlattenError::Degenerate { chart, face }),
         }

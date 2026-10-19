@@ -45,4 +45,11 @@ fn seams_error_messages_are_pinned() {
         .to_string(),
         "the cuts found for chart ChartId(3) do not leave it one disk"
     );
+    assert_eq!(
+        SeamsError::NotASeam {
+            edge: EdgeId::new(7)
+        }
+        .to_string(),
+        "edge EdgeId(7) has no seam to mark"
+    );
 }

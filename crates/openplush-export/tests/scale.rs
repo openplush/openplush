@@ -45,7 +45,7 @@ fn every_page_has_one_50_mm_square_with_a_one_inch_square_in_its_top_left_corner
     for paper in [Paper::A4, Paper::Letter] {
         let (sheet, pieces) = big()?;
         let tiling = tile(&sheet, paper)?;
-        let read = pages(&write(&sheet, &pieces, &tiling)?)?;
+        let read = pages(&write(&sheet, &pieces, &tiling, &[])?)?;
         assert!(read.len() >= 4, "{} pages", read.len());
         assert_eq!(
             read.len(),

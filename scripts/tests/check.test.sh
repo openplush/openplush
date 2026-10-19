@@ -48,10 +48,18 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "hygiene step checks every lint opt-out against the allowlist" "hygiene" \
   "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh"
-expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types" "engine" \
+expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows" "engine" \
   "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
-  "scripts/gen-ts-types.sh --check"
+  "scripts/gen-ts-types.sh --check" "actionlint"
+# The lint must give the same answer on every machine, so the optional
+# shellcheck and pyflakes passes (present on CI runners, not everywhere) are off.
+expect_plan "workflows step lints the workflows with actionlint alone" "workflows" \
+  "actionlint -shellcheck= -pyflakes= .github/workflows"
+expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
 expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
+actionlint=$(sed -n 's/^ACTIONLINT_VERSION=//p' "$check")
+expect_plan "setup installs the pinned actionlint release" "--setup" \
+  "actionlint/releases/download/v$actionlint/actionlint_${actionlint}_" "tar -xzf"
 # The runner must match Cargo.lock exactly; with no wasm-bindgen locked, say so.
 locked=$(cd "$here/../.." && cargo metadata --format-version 1 --locked |
   jq -r '[.packages[] | select(.name == "wasm-bindgen") | .version][0] // ""')
@@ -67,6 +75,12 @@ if grep -q "tool: cargo-deny@$deny\b" "$here/../../.github/workflows/engine.yml"
   ok "engine.yml installs cargo-deny $deny, as check.sh pins"
 else
   bad "engine.yml installs cargo-deny $deny, as check.sh pins" "$(grep -n 'cargo-deny@' "$here/../../.github/workflows/engine.yml")"
+fi
+
+if grep -q "tool: actionlint@$actionlint\b" "$here/../../.github/workflows/engine.yml"; then
+  ok "engine.yml installs actionlint $actionlint, as check.sh pins"
+else
+  bad "engine.yml installs actionlint $actionlint, as check.sh pins" "$(grep -n 'actionlint@' "$here/../../.github/workflows/engine.yml")"
 fi
 
 out=$("$check" --dry-run engine 2>&1)

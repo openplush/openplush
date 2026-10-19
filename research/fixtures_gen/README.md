@@ -3,7 +3,7 @@
 Non-shipping research code that writes the procedural part of [`fixtures/`](../../fixtures/README.md): the clean base meshes, one model per defect class, and reference seam sets. Every file it writes is committed, and the tests prove the committed files are exactly what it produces.
 
 ```sh
-python3 generate.py            # rewrite fixtures/meshes (including meshes/source-seams and the symmetry models), fixtures/defects, fixtures/seams
+python3 generate.py            # rewrite fixtures/meshes (including meshes/source-seams and the symmetry and faceted models), fixtures/defects, fixtures/seams
 python3 -m unittest -v         # oracles over the committed files, plus a byte-for-byte regeneration check
 ```
 
@@ -28,6 +28,7 @@ All coordinates are millimetres, faces are triangles wound counter-clockwise see
 | `meshes/source-seams/no-uv.obj` | The plain capsule (the same `v` and `f` lines as `meshes/capsule.obj`) as one object in one material, `Body`, with no `vt` lines |
 | `meshes/source-seams/reshaped-v1.glb`, `reshaped-v2.glb` | Written by `source_reshaped.py`. capsule-uv's mesh and UV cuts with a `Head` upper hemisphere and a `Body` rest, so the tube's upper rim is both a UV cut and a material boundary. v2 stretches the lower cap 1.5× deeper below the tube's lower rim and moves nothing else, so 18 of the 21 seams re-place on v2 by position and the 3 touching the cap cannot |
 | `meshes/near-symmetric.glb`, `asymmetric.glb` | Written by `source_symmetry.py`. Two heads, each a radial graph over a 32 × 16 latitude-longitude grid (482 vertices, 960 triangles): an ellipsoid (semi-axes 40, 55, 45 mm) raised by smooth, compactly supported bumps. `near-symmetric` has a snout and two ears and is mirror-symmetric about x = 0, bit for bit, except that its +x ear leans 5° forward. `asymmetric` has its snout turned aside, one ear and two broad lumps, so no plane mirrors it. GLB only, POSITION and indices, for 002's symmetry detector (SC-005) |
+| `meshes/faceted.glb` | Written by `source_faceted.py`. A frequency-2 icosphere, radius 60 mm (42 vertices, 80 triangles): every one of its 120 edges folds 18–22.5° and is 33–37 mm long, so a crease detector sees more hard edges than the 50-hint cap and no chain-length filter can call them noise. A plain icosahedron has only 30 edges, under the cap. GLB only, POSITION and indices, for 002's hint-flood path (SC-010) |
 
 ### Defect fixtures
 
@@ -69,4 +70,5 @@ The repair pipeline handles these, but the corpus has no fixture for them yet:
 - **No UVs**: `no-uv.obj` has one object, one material, no UVs, and exactly the capsule's positions and triangles.
 - **Dead ends** (`test_dead_end.py`): the UV cuts equal the seam set; the opening is one 12-edge loop and the material boundary the tube's upper rim; the tips of the graph over cuts and material boundaries, excluding opening vertices, are exactly the two recorded; ignoring material boundaries adds two tips and ignoring the opening adds one, so both ways a cut may end are exercised; the glTF has the OBJ's two runs as primitives, with their triangles and UVs.
 - **Symmetry** (`test_symmetry.py`): both models pass the clean-mesh detectors. The mirror score of a plane is the RMS distance from each vertex's reflection to the surface (closest point on a triangle), over the bbox diagonal. `near-symmetric`: every vertex mirrors bit-exactly onto a vertex except under 10%, on both ears and nowhere else; its score about x = 0 lies between 0.0005 and 0.005 (0.0035 as committed); a Fibonacci sweep of 60 normals with a bounded pattern search finds that plane from scratch. `asymmetric`: the same search finds no plane scoring under 0.01 (best 0.015), so the search that finds the near-symmetric plane cannot find one here.
+- **Faceted** (`test_faceted.py`): clean under every detector, 42 vertices and 80 triangles on the 60 mm sphere; all 120 interior edges fold more than 15° and are longer than 30 mm, more than the 50-hint cap; the fold measure reads zero on a flat pair, so it cannot pass vacuously.
 - **Re-import** (`test_reshaped.py`): v1's UV cuts, welded by position across its two primitives, are exactly capsule-uv's seam set, and a face is `Head` exactly when all its corners lie at or above the upper rim; v2 has the same faces, materials and UVs, every position at or above the lower rim bit-identical and every one below it moved straight down; by position, exactly 18 of v1's 21 cuts re-place on v2, the other 3 all touch the cap, and the re-placed ones are still cuts in v2.

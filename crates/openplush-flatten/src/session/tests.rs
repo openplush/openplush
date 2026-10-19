@@ -40,19 +40,15 @@ fn stepping_to_done_gives_the_layout_the_solve_settles_on() -> Result<(), Flatte
 }
 
 #[test]
-fn each_working_step_counts_one_iteration_and_never_raises_the_energy() -> Result<(), FlattenError> {
+fn each_working_step_counts_one_iteration_and_never_raises_the_energy() -> Result<(), FlattenError>
+{
     let (xyz, f) = hemisphere();
     let mut session = FlattenSession::new(CHART, &xyz, &f)?;
     let (mut expected, mut last) = (1, f64::INFINITY);
-    loop {
-        match session.step()? {
-            Progress::Working { iteration, energy } => {
-                assert_eq!(iteration, expected);
-                assert!(energy <= last);
-                (expected, last) = (expected + 1, energy);
-            }
-            Progress::Done => break,
-        }
+    while let Progress::Working { iteration, energy } = session.step()? {
+        assert_eq!(iteration, expected);
+        assert!(energy <= last);
+        (expected, last) = (expected + 1, energy);
         assert!(expected <= 200, "the solve must settle");
     }
     assert!(expected > 2, "the hemisphere needs several iterations");

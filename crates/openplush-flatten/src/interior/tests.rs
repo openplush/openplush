@@ -19,7 +19,7 @@ const CHART: ChartId = ChartId::new(3);
 fn flatten(
     chart: ChartId,
     xyz: &[DVec3],
-    faces: &Faces,
+    faces: &[(FaceId, [VertexId; 3])],
 ) -> Result<Vec<(VertexId, DVec2)>, FlattenError> {
     let mut solve = Solve::start(chart, xyz, faces)?;
     while solve.iterate()? == Step::Improved {}

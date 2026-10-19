@@ -29,16 +29,16 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews). Events reach only the session that opened a PR, and that session is gone.
 3. Pick up to four ready tasks that touch different crates and share no file. One task runs inline; two or more run through the Workflow tool, one agent per task, each in its own worktree, and nothing else runs while they do.
 4. Per task: branch `NNN/NN-<ID>-slug` from its parent (`main`, or the open PR it depends on); the failing test commit; the implementation commit; `scripts/check.sh <lane>` green; `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; remove the attribution footer the server adds; subscribe.
-5. Scope each PR by intent: split a task by capability when each part gets its own test; when a large diff is one thing, fill `Size`. Never a reason to stop.
+5. Scope each PR by intent (ADR 0013): one task is one PR unless it carries two intents, and the `Intent` section says what it brings in and why. Never split by size, and never a reason to stop.
 6. Append one comment to the feature's ledger (below) and end the session. Do not wait for CI or review here; the next firing walks the open PRs.
 
 ## What a firing decides alone
 
-Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, resolving a merge conflict with `main` or its parent, answering 🟡 findings, fixing 🔴 findings, and splitting a task into slices (record the slices in `tasks.md`'s split table in the tick PR).
+Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, resolving a merge conflict with `main` or its parent, answering 🟡 findings, and fixing 🔴 findings with the proof `steward` asks for.
 
 ## What it never does
 
-Merge; force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` for anything but a fixed 🔴.
+Merge; force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
 
 ## Stop conditions
 

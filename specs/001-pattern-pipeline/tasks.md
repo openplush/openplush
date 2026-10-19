@@ -17,11 +17,14 @@ description: "Task list for 001 pattern pipeline"
 - `needs:ID[,ID]` — unticked tasks this one waits on, where the phase order alone does not say so
 - `blocked:D-0NN` — a proposed decision this one waits on; only the maintainer clears it
 - `human:XX` — needs a person (outside review, measured values); no agent picks it up
+- `needs:ID[,ID]` — unticked tasks this one waits on, where the phase order alone does not say so
+- `blocked:D-0NN` — a proposed decision this one waits on; only the maintainer clears it
+- `human:XX` — needs a person (outside review, measured values); no agent picks it up
 - Paths are exact and follow [plan.md](./plan.md#project-structure)
 
 ## PR packaging
 
-**A task is a unit of work, not a unit of review.** 179 tasks do not mean 179 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: one intent per PR, one test task plus the implementation that satisfies it, one story and one crate per PR.
+**A task is a unit of work, not a unit of review.** 179 tasks do not mean 179 PRs, and it certainly does not mean one PR per phase. Policy in [`AGENTS.md`](../../AGENTS.md#commits-and-prs), detail in [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). In short: one intent per PR, what it brings in toward an epic and why, with every task it touches finished and ticked in it; each task a test commit then its implementation; interdependent intents stacked ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md), 2026-10-18, which retired the 400-line budget).
 
 ### Batch these — several tasks, one PR
 
@@ -48,9 +51,9 @@ Small config and scaffolding tasks sharing one concern:
 
 T022–T027 were planned as one batch and landed as one slice per task, because each was its own intent: `001/11-T022-geom-core` (#37), `001/12-T023-robust-predicates` (#38), `001/13-T024-triangle-soup` (#39), `001/14-T025-halfedge-mesh` (#40), `001/15-T026-debug-validate` (#41), `001/16-T027-invariant-proptests` (#42).
 
-### Split these — one task, several PRs
+### Split under the old budget — history
 
-Tasks that carry several intents. Split by capability, each with its own test, and record the branch names back in this file so the task stays traceable:
+Until ADR 0013 (2026-10-18) these tasks were planned to split by capability under the 400-line budget. The budget is retired: an unfinished task lands whole, in the PR whose intent it serves. The table keeps every planned split; a row that names PRs records what landed that way, and the rest now land whole:
 
 | Task | Why it splits |
 |---|---|

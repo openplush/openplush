@@ -17,11 +17,14 @@ description: "Task list for 003 source seam import"
 - `needs:ID[,ID]`: unticked tasks this one waits on, where the phase order alone does not say so
 - `blocked:S-0NN`: a proposed decision this one waits on; only the maintainer clears it
 - `human:XX`: needs a person (outside review, measured values); no agent picks it up
+- `needs:ID[,ID]`: unticked tasks this one waits on, where the phase order alone does not say so
+- `blocked:S-0NN`: a proposed decision this one waits on; only the maintainer clears it
+- `human:XX`: needs a person (outside review, measured values); no agent picks it up
 - Task IDs are `U0NN` (for UV), distinct from 001's `T0NN` tasks and `S1`–`S8` spikes and from 002's `H0NN`. This feature's decisions are `S-0NN` and its spikes `Q1`–`Q4`, as in plan.md and research.md.
 
 ## PR packaging
 
-Same policy as 001 and 002: one intent per PR, one test task plus the implementation that makes it pass (test commit first), and one story and one crate per PR. See [`AGENTS.md`](../../AGENTS.md#commits-and-prs) and [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). Branches are `003/NN-Uxxx-slug`; `NN` is the next unused position in feature 003 when the PR opens (01 was the spec and plan, 02 is this task list).
+Same policy as 001 and 002: one intent per PR, each task a test commit then the implementation that makes it pass, and interdependent intents stacked ([ADR 0013](../../docs/adr/0013-intent-sized-pull-requests.md)). See [`AGENTS.md`](../../AGENTS.md#commits-and-prs) and [docs/how-to/pull-requests.md](../../docs/how-to/pull-requests.md). Branches are `003/NN-slug`, the slug naming the intent; `NN` is the next unused position in feature 003 when the PR opens (01 was the spec and plan, 02 is this task list).
 
 ### Batch these
 

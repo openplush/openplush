@@ -1,5 +1,5 @@
-//! Small generated meshes for the seams tests: a grid of quads laid flat or rolled into a tube,
-//! with seams placed by grid coordinates.
+//! Small generated meshes for the seams tests: a grid of quads laid flat, rolled into a tube, or
+//! closed into a torus, with seams placed by grid coordinates; and an octahedron.
 
 use std::f64::consts::TAU;
 
@@ -17,6 +17,8 @@ enum Shape {
     Sheet,
     /// The last column joins the first.
     Tube,
+    /// The last column joins the first, and the last row the first.
+    Torus,
 }
 
 /// Where a grid's vertices are: `cols` by `rows` quads in some shape.
@@ -33,6 +35,7 @@ impl Layout {
         match self.shape {
             Shape::Sheet => (self.cols + 1, self.rows + 1),
             Shape::Tube => (self.cols, self.rows + 1),
+            Shape::Torus => (self.cols, self.rows),
         }
     }
 
@@ -42,6 +45,11 @@ impl Layout {
         match self.shape {
             Shape::Sheet => DVec3::new(10.0 * u, 10.0 * v, 0.0),
             Shape::Tube => DVec3::new(10.0 * around.cos(), 10.0 * around.sin(), 10.0 * v),
+            Shape::Torus => {
+                let tube = TAU * v / f64::from(self.rows);
+                let ring = 20.0 + 8.0 * tube.cos();
+                DVec3::new(ring * around.cos(), ring * around.sin(), 8.0 * tube.sin())
+            }
         }
     }
 
@@ -53,7 +61,7 @@ impl Layout {
             .flat_map(|r| (0..across).map(move |c| (c, r)))
             .map(|(c, r)| self.point(c, r))
             .collect();
-        let id = |c: u32, r: u32| r * across + c % across;
+        let id = |c: u32, r: u32| (r % down) * across + c % across;
         let triangles: Vec<[u32; 3]> = (0..self.rows)
             .flat_map(|r| (0..self.cols).map(move |c| (c, r)))
             .flat_map(|(c, r)| {
@@ -61,15 +69,66 @@ impl Layout {
                 [[a, b, d], [a, d, e]]
             })
             .collect();
-        let corners = (0..)
-            .take(3 * triangles.len())
-            .map(|vertex| SourceCorner {
-                primitive: 0,
-                vertex,
-            })
+        repaired(positions, triangles)
+    }
+}
+
+fn repaired(positions: Vec<DVec3>, triangles: Vec<[u32; 3]>) -> Result<ManifoldMesh, Setup> {
+    let corners = (0..)
+        .take(3 * triangles.len())
+        .map(|vertex| SourceCorner {
+            primitive: 0,
+            vertex,
+        })
+        .collect();
+    let soup = TriangleSoup::new(positions, triangles, corners, None)?;
+    Ok(openplush_mesh::into_manifold(&soup, &RepairPlan::default())?.0)
+}
+
+/// The closed octahedron on the unit points of the axes: +x, +y, -x, -y round the equator, then
+/// +z and -z.
+pub(crate) struct Octahedron {
+    pub(crate) mesh: ManifoldMesh,
+}
+
+impl Octahedron {
+    const POINTS: [(f64, f64, f64); 6] = [
+        (10.0, 0.0, 0.0),
+        (0.0, 10.0, 0.0),
+        (-10.0, 0.0, 0.0),
+        (0.0, -10.0, 0.0),
+        (0.0, 0.0, 10.0),
+        (0.0, 0.0, -10.0),
+    ];
+
+    pub(crate) fn new() -> Result<Self, Setup> {
+        let positions = Self::POINTS
+            .iter()
+            .map(|&(x, y, z)| DVec3::new(x, y, z))
             .collect();
-        let soup = TriangleSoup::new(positions, triangles, corners, None)?;
-        Ok(openplush_mesh::into_manifold(&soup, &RepairPlan::default())?.0)
+        let triangles = (0..4)
+            .flat_map(|i| [[i, (i + 1) % 4, 4], [(i + 1) % 4, i, 5]])
+            .collect();
+        Ok(Self {
+            mesh: repaired(positions, triangles)?,
+        })
+    }
+
+    /// The edge between points `a` and `b` of `POINTS`.
+    pub(crate) fn edge(&self, a: usize, b: usize) -> Result<EdgeId, Setup> {
+        let find = |i: usize| {
+            let (x, y, z) = Self::POINTS[i];
+            (0..u32::try_from(self.mesh.vertex_count())?)
+                .map(VertexId::new)
+                .find(|&v| self.mesh.position(v) == DVec3::new(x, y, z))
+                .ok_or_else(|| Setup::from(format!("no point {i}")))
+        };
+        let (from, to) = (find(a)?, find(b)?);
+        self.mesh
+            .outgoing(from)
+            .find(|&h| self.mesh.dest(h) == to)
+            .map(|h| h.edge())
+            .ok_or_else(|| format!("no edge {a} to {b}").into())
     }
 }
 
@@ -88,6 +147,10 @@ impl Grid {
         Self::build(cols, rows, Shape::Tube)
     }
 
+    pub(crate) fn torus(cols: u32, rows: u32) -> Result<Self, Setup> {
+        Self::build(cols, rows, Shape::Torus)
+    }
+
     fn build(cols: u32, rows: u32, shape: Shape) -> Result<Self, Setup> {
         let layout = Layout { cols, rows, shape };
         Ok(Self {
@@ -102,6 +165,7 @@ impl Grid {
         let (c, r) = match self.layout.shape {
             Shape::Sheet => (c, r),
             Shape::Tube => (c % across, r),
+            Shape::Torus => (c % across, r % down),
         };
         if c >= across || r >= down {
             return Err(format!("({c}, {r}) is off the grid").into());

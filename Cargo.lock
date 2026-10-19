@@ -751,6 +751,7 @@ dependencies = [
  "openplush-seams",
  "robust",
  "thiserror",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

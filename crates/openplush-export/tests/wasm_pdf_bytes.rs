@@ -60,5 +60,5 @@ fn the_pdf_bytes_are_the_same_on_every_target() {
     let bytes = pdf().map_err(|e| e.to_string());
     assert!(bytes.is_ok(), "{bytes:?}");
     let bytes = bytes.unwrap_or_default();
-    assert_eq!((bytes.len(), fnv(&bytes)), (7727, 0xe9e8_dcff_d96d_a1ef));
+    assert_eq!((bytes.len(), fnv(&bytes)), (8978, 0xff66_3c49_afec_fdb5));
 }

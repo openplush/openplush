@@ -117,13 +117,14 @@ pub struct SeamSet { kind: BTreeMap<EdgeId, SeamKind> }
 The mesh never changes when seams change. Undo/redo is a `SeamSet` diff.
 
 ### Seam graph nodes
-Seam edges form a graph on mesh vertices. Node classes:
+Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its seam edges of every kind. Node classes (D-052), of which a vertex takes the first that fits, so a junction on a boundary is a junction:
 - **Junction**: seam-valence ≥ 3 (three or more seam edges meet).
-- **Endpoint on boundary**: seam meets a hole/opening.
-- **Free endpoint** (seam-valence 1, interior): **dart tip**.
-- **Chain vertex**: seam-valence 2.
+- **Endpoint on boundary**: on a seam and on a mesh-boundary edge that is not itself a seam, so the seam meets a hole/opening there.
+- **Free endpoint** (seam-valence 1, otherwise): **dart tip**.
+- **Kind change**: seam-valence 2, its two seam edges of different `SeamKind`, so an `Opening` stretch of a seam is a chain of its own.
+- **Chain vertex**: seam-valence 2, both seam edges of the same kind.
 
-A **seam chain** is a maximal path between non-chain nodes. Chains are the unit of notching, labeling ("A3"), and length parity.
+A **seam chain** is a maximal path between nodes; a cycle of chain vertices with no node is one **closed chain**. Chains are the unit of notching, labeling ("A3"), and length parity. Numbering and walking order are D-052's (4).
 
 ### ChartMesh (virtual cut)
 Charts = flood fill of faces across non-seam edges. For each chart, build a local half-edge mesh by **duplicating vertices along seam edges inside the chart** — except dart tips, which stay single (a slit, not a separation). Provenance maps:

@@ -53,7 +53,7 @@ A maker imports a model, sets its real-world size, draws seams on it, and prints
 2. **Given** a model with health problems, **When** it is imported, **Then** each problem is listed, highlighted in 3D, and offered a repair; nothing changes until the user confirms.
 3. **Given** a closed model, **When** the user draws seams that leave a region unflattenable, **Then** the system highlights the region and proposes the minimal extra seam(s) to fix it.
 4. **Given** valid seams, **When** the user generates the pattern, **Then** each piece shows a sewing line and a cut line offset by the seam allowance.
-5. **Given** a pattern larger than one sheet, **When** the user exports for Letter or A4, **Then** pages tile with overlap, registration marks, a page map, and a scale-check square on every page.
+5. **Given** a pattern larger than one sheet, **When** the user exports for Letter or A4, **Then** a cover page shows the page map, the pages after it tile with overlap and registration marks, and every page has a scale-check square.
 
 ### US2 — See where the pattern will fail (Priority: P1)
 The maker sees, before cutting, where fabric would stretch, pucker, or not fit, and gets concrete suggestions (dart here, seam there).
@@ -175,7 +175,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 
 ### Output
 - **FR-060**: SVG export at true scale (document dimensions in mm; 1 user unit = 1 mm).
-- **FR-061**: Print export tiled for Letter or A4 (the maker picks, defaulting by region) with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. Pages are joined by overlapping without trimming: a 15 mm overlap band carries matching marks and the pattern lines, each page is labeled by row letter and column number, page 1 carries the page map, and the scale-check square is 50 mm with a labeled 1 in square inside it. [verify: the 15 mm overlap on a test print (D-045)] [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
+- **FR-061**: Print export tiled for Letter or A4 (the maker picks, defaulting by region) with overlap, registration marks, page map, and scale-check square; also a single-sheet large-format option. Pages are joined by overlapping without trimming: a 15 mm overlap band carries matching marks and the pattern lines, each tile is labeled by row letter and column number, a cover page before the tiles carries the page map, and the scale-check square is 50 mm with a labeled 1 in square inside it. [verify: the 15 mm overlap on a test print (D-045)] [NEEDS CLARIFICATION: PDF in MVP — recommended yes; browsers print SVG at unreliable scale]
 - **FR-062**: Fabric-saving layout within a given fabric width. v0.1 places pieces by a simple rule and reports the fabric length needed; genuinely optimized nesting is deferred.
 - **FR-063**: Export pattern geometry and metadata as open JSON; DXF for cutting machines. (P3)
 - **FR-064**: A warning never blocks export. Before exporting a pattern that still has unresolved warnings, the maker acknowledges them once, and a summary of each unresolved warning is printed on the pattern's first page — so a printed pattern always carries its own known problems. A violated geometric invariant (e.g. FR-023) is an error, not a warning, and does block export.

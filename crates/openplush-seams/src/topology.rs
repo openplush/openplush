@@ -10,6 +10,7 @@ use std::collections::BTreeSet;
 
 use openplush_mesh::{HalfEdgeId, ManifoldMesh};
 
+use crate::chart::{cut_test, sides};
 use crate::{Chart, ChartFailure, SeamSet};
 
 /// `Ok` when `chart`, from `charts(mesh, seams)`, cut open along `seams` is a disk: χ = 2 − 2g − b
@@ -20,24 +21,8 @@ use crate::{Chart, ChartFailure, SeamSet};
 /// `MultipleBoundaries` describe genus-0 regions; otherwise `Closed` with no boundary, or
 /// `MultipleBoundaries` with more than one.
 pub fn check_disk(mesh: &ManifoldMesh, seams: &SeamSet, chart: &Chart) -> Result<(), ChartFailure> {
-    let mut inside = vec![false; mesh.face_count()];
-    for f in chart.faces() {
-        inside[f.index() as usize] = true;
-    }
-    let cut = |h: HalfEdgeId| {
-        seams.get(h.edge()).is_some()
-            || !mesh
-                .face(h.twin())
-                .is_some_and(|g| inside[g.index() as usize])
-    };
-    let sides: Vec<HalfEdgeId> = chart
-        .faces()
-        .iter()
-        .flat_map(|&f| {
-            let h = mesh.face_half_edge(f);
-            [h, mesh.next(h), mesh.prev(h)]
-        })
-        .collect();
+    let cut = cut_test(mesh, seams, chart);
+    let sides: Vec<HalfEdgeId> = chart.faces().iter().flat_map(|&f| sides(mesh, f)).collect();
     let cuts: Vec<HalfEdgeId> = sides.iter().copied().filter(|&h| cut(h)).collect();
     let vertices: BTreeSet<_> = sides.iter().map(|&h| mesh.origin(h)).collect();
     let on_cut: BTreeSet<_> = cuts.iter().map(|&h| mesh.dest(h)).collect();

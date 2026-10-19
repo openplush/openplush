@@ -63,7 +63,27 @@ pub fn charts(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<Vec<Chart>, SeamsE
     Ok(charts)
 }
 
-fn sides(mesh: &ManifoldMesh, f: FaceId) -> [HalfEdgeId; 3] {
+/// Whether a half-edge of `chart` is cut: a seam runs along it or the face across it is not in
+/// the chart.
+pub(crate) fn cut_test<'a>(
+    mesh: &'a ManifoldMesh,
+    seams: &'a SeamSet,
+    chart: &Chart,
+) -> impl Fn(HalfEdgeId) -> bool + 'a {
+    let mut inside = vec![false; mesh.face_count()];
+    for f in chart.faces() {
+        inside[f.index() as usize] = true;
+    }
+    move |h| {
+        seams.get(h.edge()).is_some()
+            || !mesh
+                .face(h.twin())
+                .is_some_and(|g| inside[g.index() as usize])
+    }
+}
+
+/// `f`'s half-edges in its corner order.
+pub(crate) fn sides(mesh: &ManifoldMesh, f: FaceId) -> [HalfEdgeId; 3] {
     let h = mesh.face_half_edge(f);
     [h, mesh.next(h), mesh.prev(h)]
 }

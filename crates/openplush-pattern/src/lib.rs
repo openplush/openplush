@@ -1,5 +1,6 @@
 //! Pattern pieces: allowance, notches, labels, grain, piece dedupe.
 
+pub mod allowance;
 mod cut;
 mod error;
 mod fabric;

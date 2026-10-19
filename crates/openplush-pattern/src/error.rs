@@ -2,7 +2,7 @@ use openplush_geom::GeomError;
 use openplush_geom::units::Mm;
 use openplush_seams::SeamChainId;
 
-use crate::{FabricId, StretchDirection};
+use crate::{FabricId, PieceId, StretchDirection};
 use thiserror::Error;
 
 /// Every way `openplush-pattern` refuses its input or its own result.
@@ -110,6 +110,43 @@ pub enum PatternError {
     BadScale {
         /// Why the scale or length was refused.
         source: GeomError,
+    },
+    /// Allowances must come one per sewing-line edge.
+    #[error("piece {}: {allowances} allowances for {edges} edges", .piece.index())]
+    AllowanceCount {
+        /// The piece.
+        piece: PieceId,
+        /// Edges on the sewing line.
+        edges: usize,
+        /// Allowances given.
+        allowances: usize,
+    },
+    /// The guard past a zero-allowance edge (a fold or an edge-stitched edge) reaches into the
+    /// piece itself. Edge `i` runs from sewing-line point `i` to the next.
+    #[error("piece {}: the fold or edge-stitched edge {edge} faces another part of the piece too closely", .piece.index())]
+    FoldConflict {
+        /// The piece.
+        piece: PieceId,
+        /// The zero-allowance edge.
+        edge: usize,
+    },
+    /// The allowances leave the cut line in more than one part.
+    #[error("piece {}: the seam allowances split the cut line into separate parts", .piece.index())]
+    AllowanceSplitsPiece {
+        /// The piece.
+        piece: PieceId,
+    },
+    /// The allowances close off a gap inside the cut line, such as a pocket's mouth.
+    #[error("piece {}: the seam allowances close off a gap inside the piece", .piece.index())]
+    AllowanceEnclosesGap {
+        /// The piece.
+        piece: PieceId,
+    },
+    /// The allowances make a cut line that touches or crosses itself.
+    #[error("piece {}: the seam allowances make a cut line that touches itself", .piece.index())]
+    AllowanceNotSimple {
+        /// The piece.
+        piece: PieceId,
     },
     /// An allowed rotation that is NaN or infinite.
     #[error("rotation {index} is not finite")]

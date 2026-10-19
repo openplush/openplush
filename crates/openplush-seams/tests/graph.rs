@@ -1,6 +1,10 @@
 //! The seam graph: nodes where chains must end, and every seam edge in exactly one chain, each
 //! chain numbered and walked the same way every time.
 
+#[allow(
+    dead_code,
+    reason = "each test file uses only some of the shared meshes"
+)]
 mod common;
 
 use std::collections::BTreeMap;

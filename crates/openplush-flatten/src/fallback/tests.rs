@@ -4,9 +4,10 @@ use openplush_geom::DVec3;
 use openplush_mesh::VertexId;
 use openplush_seams::ChartId;
 
-use super::not_realizable;
+use super::{dart, not_realizable};
 use crate::FlattenError;
-use crate::boundary::fixtures::{Faces, rings};
+use crate::boundary::Open;
+use crate::boundary::fixtures::{Faces, faces as chart_faces, rings};
 
 const CHART: ChartId = ChartId::new(4);
 const RINGS: u32 = 6;
@@ -117,5 +118,94 @@ fn a_chart_that_cannot_be_measured_is_refused_as_such_not_as_unclosed() {
     assert_eq!(
         not_realizable(CHART, &xyz, &[]),
         FlattenError::EmptyChart { chart: CHART }
+    );
+}
+
+/// Vertices at `points` (index = vertex) and the triangles `tris`; with `open` listing the rim
+/// and the angle sum of every vertex a triangle uses.
+fn graph(
+    points: &[[f64; 3]],
+    tris: &[[u32; 3]],
+    rim: &[u32],
+    angles: &[(u32, f64)],
+) -> (Vec<DVec3>, Faces, Open) {
+    let xyz = points
+        .iter()
+        .map(|p| DVec3::new(p[0], p[1], p[2]))
+        .collect();
+    let open = Open {
+        ring: rim.to_vec(),
+        gap: 0.0,
+        angle_sum: angles.iter().copied().collect(),
+    };
+    (xyz, chart_faces(tris), open)
+}
+
+fn ids(path: Option<Vec<VertexId>>) -> Option<Vec<u32>> {
+    path.map(|p| p.iter().map(|v| v.index()).collect())
+}
+
+/// Vertex 0 is the tip. Rim vertex 1 reaches it by 0.1 + 2.0 and rim vertex 2 by 1.2 + 1.2;
+/// vertex 9 is far off and only supplies triangles.
+fn two_routes() -> (Vec<DVec3>, Faces, Open) {
+    let mut points = vec![[0.0; 3]; 10];
+    points[3] = [2.0, 0.0, 0.0];
+    points[1] = [2.0, 0.1, 0.0];
+    points[4] = [0.0, 1.2, 0.0];
+    points[2] = [1.2, 1.2, 0.0];
+    points[9] = [0.0, 0.0, 1000.0];
+    let angles = [(0, 1.0), (1, 3.0), (2, 3.0), (3, 6.0), (4, 6.0), (9, 6.0)];
+    graph(
+        &points,
+        &[[1, 3, 9], [3, 0, 9], [2, 4, 9], [4, 0, 9]],
+        &[1, 2],
+        &angles,
+    )
+}
+
+#[test]
+fn the_dart_follows_true_edge_lengths_not_their_squares() {
+    let (xyz, faces, open) = two_routes();
+    assert_eq!(ids(dart(&xyz, &faces, &open)), Some(vec![1, 3, 0]));
+}
+
+#[test]
+fn equal_angle_defects_end_the_dart_at_the_smaller_vertex() {
+    let (xyz, faces, mut open) = two_routes();
+    open.angle_sum.insert(3, 1.0);
+    assert_eq!(
+        ids(dart(&xyz, &faces, &open)).and_then(|p| p.last().copied()),
+        Some(0)
+    );
+}
+
+#[test]
+fn equal_routes_keep_the_one_found_first() {
+    // Mirror-image routes 1 -> 3 -> 0 and 2 -> 4 -> 0, each 0.1 + 1.0 long.
+    let mut points = vec![[0.0; 3]; 10];
+    points[3] = [1.0, 0.0, 0.0];
+    points[1] = [1.0, 0.1, 0.0];
+    points[4] = [-1.0, 0.0, 0.0];
+    points[2] = [-1.0, 0.1, 0.0];
+    points[9] = [0.0, 0.0, 1000.0];
+    let angles = [(0, 1.0), (1, 3.0), (2, 3.0), (3, 6.0), (4, 6.0), (9, 6.0)];
+    let (xyz, faces, open) = graph(
+        &points,
+        &[[1, 3, 9], [3, 0, 9], [2, 4, 9], [4, 0, 9]],
+        &[1, 2],
+        &angles,
+    );
+    assert_eq!(ids(dart(&xyz, &faces, &open)), Some(vec![1, 3, 0]));
+}
+
+#[test]
+fn the_message_states_the_gap() {
+    let (xyz, faces) = cone();
+    let error = not_realizable(CHART, &xyz, &faces);
+    let (residual, _) = parts(error.clone()).expect("BoundaryNotRealizable");
+    assert!(
+        error
+            .to_string()
+            .contains(&format!("misses closing by {residual:e}"))
     );
 }

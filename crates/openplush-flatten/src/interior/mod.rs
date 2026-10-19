@@ -168,7 +168,7 @@ pub(crate) fn refuse_measurement(chart: ChartId, error: BoundaryError) -> Flatte
         }
         BoundaryError::NotADisk => FlattenError::NotADisk { chart },
         BoundaryError::Solve(e) => solve_failed(chart, e),
-        // A boundary that will not close has its own report.
+        // `open_polygon` never closes anything, so it never returns these.
         BoundaryError::BadInput | BoundaryError::NotClosed => FlattenError::SolveFailed { chart },
     }
 }

@@ -15,8 +15,7 @@ type Faces<'a> = &'a [(FaceId, [VertexId; 3])];
 /// The `BoundaryNotRealizable` for a chart, or the refusal that stops it being measured.
 pub(crate) fn not_realizable(chart: ChartId, xyz: &[DVec3], faces: Faces<'_>) -> FlattenError {
     let open = match boundary::open_polygon(xyz, faces) {
-        Ok(open) if open.gap.is_finite() => open,
-        Ok(_) => return FlattenError::SolveFailed { chart },
+        Ok(open) => open,
         Err(e) => return crate::interior::refuse_measurement(chart, e),
     };
     FlattenError::BoundaryNotRealizable {

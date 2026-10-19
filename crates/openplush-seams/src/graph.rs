@@ -69,12 +69,7 @@ impl SeamGraph {
     /// # Errors
     /// `UnknownEdge`, naming the lowest, when a seam is on an edge `mesh` does not have.
     pub fn new(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<Self, SeamsError> {
-        if let Some((edge, _)) = seams
-            .iter()
-            .find(|(e, _)| e.index() as usize >= mesh.edge_count())
-        {
-            return Err(SeamsError::UnknownEdge { edge });
-        }
+        seams.check_edges(mesh)?;
         let stops = stops(mesh, seams);
         let mut walk = Walk {
             mesh,

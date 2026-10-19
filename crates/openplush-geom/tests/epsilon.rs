@@ -3,7 +3,9 @@
 //! meet only through a named conversion (AGENTS.md, units).
 
 use openplush_geom::GeomError;
-use openplush_geom::epsilon::{MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity, UV_CUT};
+use openplush_geom::epsilon::{
+    FOLD_ANGLE, MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity, UV_CUT,
+};
 use openplush_geom::units::{Mm, Scale};
 
 fn close(a: f64, b: f64) -> bool {
@@ -162,4 +164,15 @@ fn uv_cut_is_1e_minus_5_between_f32_noise_and_the_tightest_measured_cut() {
     // The tightest cut measured on Blender 5.2 UV spheres, a slit near its tip, was 1.81e-4.
     let tightest_cut = std::hint::black_box(1.81e-4);
     assert!(UV_CUT * 18.0 <= tightest_cut);
+}
+
+#[test]
+fn fold_angle_is_five_degrees_between_a_closed_dart_and_a_wrapped_cap() {
+    assert_eq!(FOLD_ANGLE, 5.0_f64.to_radians());
+    // The sharpest crease a plush carries, a closed dart edge, leaves its faces about 10°
+    // apart; a sphere cap wrapped past its pole (S7) leaves them under 0.12° from antiparallel.
+    let closed_dart = std::hint::black_box(10.0_f64.to_radians());
+    let wrapped_cap = std::hint::black_box(0.12_f64.to_radians());
+    assert!(FOLD_ANGLE * 2.0 <= closed_dart);
+    assert!(FOLD_ANGLE > wrapped_cap * 40.0);
 }

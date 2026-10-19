@@ -52,4 +52,12 @@ fn seams_error_messages_are_pinned() {
         .to_string(),
         "edge EdgeId(7) has no seam to mark"
     );
+    assert_eq!(
+        SeamsError::FoldedChart {
+            chart: ChartId::new(2),
+            edge: EdgeId::new(17)
+        }
+        .to_string(),
+        "chart ChartId(2) lies back over itself across edge EdgeId(17)"
+    );
 }

@@ -1,4 +1,4 @@
-use std::f64::consts::{FRAC_PI_2, PI, TAU};
+use std::f64::consts::{FRAC_PI_2, PI};
 
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
@@ -9,7 +9,7 @@ use super::energy::{energy, rest_shapes};
 use super::{Solve, Step, flatten, refuse, solve_failed};
 use crate::FlattenError;
 use crate::boundary::BoundaryError;
-use crate::boundary::fixtures::{Faces, faces, grid};
+use crate::boundary::fixtures::{Faces, faces, grid, rings};
 use crate::injectivity;
 use crate::solver::SolveError;
 
@@ -27,49 +27,13 @@ fn half_cylinder() -> (Vec<DVec3>, Faces) {
     (xyz, grid(8, 3))
 }
 
-/// The band between two concentric rings, walking both by angle.
-fn zip(inner: &[u32], outer: &[u32], tris: &mut Vec<[u32; 3]>) {
-    let (n_in, n_out) = (inner.len(), outer.len());
-    let (mut i, mut j) = (0, 0);
-    while i < n_in || j < n_out {
-        let a_in = (i + 1) as f64 / n_in as f64;
-        let a_out = (j + 1) as f64 / n_out as f64;
-        if j < n_out && (i >= n_in || a_out <= a_in) {
-            tris.push([inner[i % n_in], outer[j], outer[(j + 1) % n_out]]);
-            j += 1;
-        } else {
-            tris.push([inner[i % n_in], outer[j % n_out], inner[(i + 1) % n_in]]);
-            i += 1;
-        }
-    }
-}
-
-/// The northern hemisphere of the unit sphere, 16 rings of 6k vertices (1536 triangles), as
-/// in the S7 corpus's `cap-90`.
+/// The northern hemisphere of the unit sphere, 16 rings (1536 triangles), as in the S7
+/// corpus's `cap-90`.
 fn hemisphere() -> (Vec<DVec3>, Faces) {
-    const RINGS: u32 = 16;
-    let mut xyz = vec![DVec3::new(0.0, 0.0, 1.0)];
-    let mut rings: Vec<Vec<u32>> = vec![vec![0]];
-    for k in 1..=RINGS {
-        let theta = FRAC_PI_2 * f64::from(k) / f64::from(RINGS);
-        let first = 1 + 3 * k * (k - 1);
-        for j in 0..6 * k {
-            let a = TAU * f64::from(j) / f64::from(6 * k);
-            xyz.push(DVec3::new(
-                theta.sin() * a.cos(),
-                theta.sin() * a.sin(),
-                theta.cos(),
-            ));
-        }
-        rings.push((first..first + 6 * k).collect());
-    }
-    let mut tris: Vec<[u32; 3]> = (0..6)
-        .map(|j| [0, rings[1][j], rings[1][(j + 1) % 6]])
-        .collect();
-    for k in 2..=RINGS as usize {
-        zip(&rings[k - 1], &rings[k], &mut tris);
-    }
-    (xyz, faces(&tris))
+    rings(16, |r, a| {
+        let theta = FRAC_PI_2 * r;
+        DVec3::new(theta.sin() * a.cos(), theta.sin() * a.sin(), theta.cos())
+    })
 }
 
 fn dense(layout: &[(VertexId, DVec2)], n: usize) -> Vec<DVec2> {
@@ -275,6 +239,7 @@ fn charts_that_cannot_be_flattened_are_refused_with_their_chart() {
 
 #[test]
 fn each_refusal_maps_to_the_variant_that_names_it() {
+    let (xyz, f) = half_cylinder();
     let face = FaceId::new(5);
     for (from, to) in [
         (
@@ -297,16 +262,8 @@ fn each_refusal_maps_to_the_variant_that_names_it() {
             BoundaryError::Solve(SolveError::NotFinite),
             FlattenError::SolveFailed { chart: CHART },
         ),
-        (
-            BoundaryError::BadInput,
-            FlattenError::BoundaryNotRealizable { chart: CHART },
-        ),
-        (
-            BoundaryError::NotClosed,
-            FlattenError::BoundaryNotRealizable { chart: CHART },
-        ),
     ] {
-        assert_eq!(refuse(CHART, from.clone()), to, "{from:?}");
+        assert_eq!(refuse(CHART, &xyz, &f, from.clone()), to, "{from:?}");
     }
     assert_eq!(
         solve_failed(CHART, SolveError::NotPositiveDefinite),
@@ -349,4 +306,16 @@ fn the_solve_keeps_going_until_the_gain_is_negligible() -> Result<(), FlattenErr
         solve.energy()
     );
     Ok(())
+}
+
+#[test]
+fn a_boundary_that_will_not_close_is_reported_with_its_gap_and_a_dart() {
+    let (xyz, f) = hemisphere();
+    for refusal in [BoundaryError::NotClosed, BoundaryError::BadInput] {
+        assert!(matches!(
+            refuse(CHART, &xyz, &f, refusal),
+            FlattenError::BoundaryNotRealizable { chart, residual, dart: Some(_) }
+                if chart == CHART && residual.is_finite() && residual >= 0.0
+        ));
+    }
 }

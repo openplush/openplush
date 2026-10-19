@@ -1,5 +1,5 @@
 use openplush_geom::GeomError;
-use openplush_mesh::FaceId;
+use openplush_mesh::{FaceId, VertexId};
 use openplush_seams::ChartId;
 use thiserror::Error;
 
@@ -53,9 +53,16 @@ pub enum FlattenError {
         chart: ChartId,
     },
     /// The boundary could not be closed at its 3D edge lengths.
-    #[error("the boundary of chart {} cannot be laid flat at its 3D edge lengths", .chart.index())]
+    #[error("the boundary of chart {} cannot be laid flat at its 3D edge lengths: it misses closing by {residual:e}", .chart.index())]
     BoundaryNotRealizable {
         /// The chart.
         chart: ChartId,
+        /// How far the boundary polygon at the interior's own turning ends from its start, in
+        /// the chart's units (millimetres once the chart is scaled).
+        residual: f64,
+        /// A dart to relieve it: vertices from a boundary vertex to the interior vertex with
+        /// the most angle defect, along the shortest edge path. `None` when the chart has no
+        /// interior vertex.
+        dart: Option<Vec<VertexId>>,
     },
 }

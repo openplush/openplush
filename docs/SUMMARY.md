@@ -26,6 +26,7 @@
   - [The pipeline, one model at a time](explanation/pipeline.md)
   - [Seams, charts, darts and openings](explanation/seams.md)
   - [Flattening and exact seam lengths](explanation/flattening.md)
+  - [Sewing concepts for programmers](explanation/sewing.md)
 - [How-to guides](how-to/README.md)
   - [Scope and open a pull request](how-to/pull-requests.md)
   - [Write a documentation page](how-to/write-docs.md)

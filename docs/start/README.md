@@ -26,11 +26,12 @@ Read in this order; each step builds on the one before.
 1. **Set up**: [install the tools and run every check](setup.md), so you know your machine matches what CI runs.
 2. **See where things stand**: the [project status](status.md), by capability and by feature.
 3. **Learn how the engine works**: the [architecture](../explanation/architecture.md), stage by stage and why each stage's output type is its guarantee; then the [crates](../reference/crates.md) and the [engine API](../reference/engine-api.md).
-4. **Pick a task**: work is planned per feature as a numbered list in `tasks.md`, starting from the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). Pick one that is ready: the [glossary](../reference/glossary.md#process) says what makes a task ready and what each marker on its line means.
-5. **Make the change**: [scope and open a pull request](../how-to/pull-requests.md), test first, one intent per pull request; for a docs change, [write a documentation page](../how-to/write-docs.md).
-6. **Learn how the project is run**: the [constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md), whose principles every review enforces, [governance](https://github.com/openplush/openplush/blob/main/GOVERNANCE.md), the roles and how decisions are made, and [who merges a pull request](../adr/0014-auto-merge-tiers.md), by the risk of what it touches.
-7. **Look things up**: the [reference](../reference/README.md), with the [glossary](../reference/glossary.md) for every domain term and ID prefix.
-8. **Go deeper into a decision**: the [architecture decision records](../adr/README.md), each with the options weighed and why one won.
+4. **Make a first change**: [your first engine change, test first](../tutorials/first-change.md), an exercise you throw away, so a real task's steps are familiar.
+5. **Pick a task**: work is planned per feature as a numbered list in `tasks.md`, starting from the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). Pick one that is ready: the [glossary](../reference/glossary.md#process) says what makes a task ready and what each marker on its line means.
+6. **Make the change**: [scope and open a pull request](../how-to/pull-requests.md), test first, one intent per pull request; for a docs change, [write a documentation page](../how-to/write-docs.md).
+7. **Learn how the project is run**: the [constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md), whose principles every review enforces, [governance](https://github.com/openplush/openplush/blob/main/GOVERNANCE.md), the roles and how decisions are made, and [who merges a pull request](../adr/0014-auto-merge-tiers.md), by the risk of what it touches.
+8. **Look things up**: the [reference](../reference/README.md), with the [glossary](../reference/glossary.md) for every domain term and ID prefix.
+9. **Go deeper into a decision**: the [architecture decision records](../adr/README.md), each with the options weighed and why one won.
 
 ### Where to ask
 

@@ -41,3 +41,4 @@
   - [Glossary](reference/glossary.md)
   - [Worker protocol](reference/worker-protocol.md)
 - [Tutorials](tutorials/README.md)
+  - [Your first engine change, test first](tutorials/first-change.md)

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Compute a pull request's merge tier (A, B or C) from its diff, by ADR 0014.
+"""Compute a pull request's merge tier (A, B, C or H) from its diff, by ADR 0014 and ADR 0018.
 
 Reads one JSON document on stdin:
   {"title": str, "head_ref": str, "labels": [str], "changed_files": int,
    "files": [{"filename": str, "status": str, "previous_filename"?: str, "patch"?: str}]}
 (the files are GitHub's pulls/N/files entries) and prints one:
-  {"tier": "A"|"B"|"C", "computed": ..., "label": "A"|"B"|"C"|null,
+  {"tier": "A"|"B"|"C"|"H", "computed": ..., "label": "A"|"B"|"C"|"H"|null,
    "relabel": bool, "review_exempt": bool, "reasons": [str]}
 `tier` is the higher of the computed tier and any tier: label; `relabel` says
 the label must be set to it. `review_exempt` is whether review.yml skips the
@@ -18,21 +18,22 @@ import sys
 from typing import TypeVar
 from pathlib import PurePosixPath
 
-C_DIRS = ("crates/", "specs/", ".specify/", "docs/adr/", ".github/", ".claude/", "scripts/", "bindings/")
-C_NAMES = frozenset({
-    "AGENTS.md", "CLAUDE.md", "GOVERNANCE.md", "CODE_OF_CONDUCT.md",
-    "Cargo.toml", "Cargo.lock", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml",
-    "deny.toml", "rust-toolchain.toml",
-})
-C_ROOT_NAMES = frozenset({"clippy.toml", "rustfmt.toml", ".gitattributes"})  # rules files; a change passes CI silently
-C_ROOT_PREFIX = "LICENSE-"
+# Tier H: what defines the gate, the checks and the rules; the gate never merges it.
+H_DIRS = (".specify/", "docs/adr/", ".github/", ".claude/", "scripts/")
+H_NAMES = frozenset({"AGENTS.md", "CLAUDE.md", "GOVERNANCE.md", "CODE_OF_CONDUCT.md", "deny.toml", "rust-toolchain.toml"})
+H_ROOT_NAMES = frozenset({"clippy.toml", "rustfmt.toml", ".gitattributes"})  # rules files; a change passes CI silently
+H_ROOT_PREFIX = "LICENSE-"
+C_DIRS = ("crates/", "specs/", "bindings/")
+C_NAMES = frozenset({"Cargo.toml", "Cargo.lock", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"})
 EXPECTED_OUTPUT_SUFFIXES = (".svg", ".pdf")
 TICK_TITLE = "docs(tasks): tick"
 TASKS_FILE = re.compile(r"specs/[^/]+/tasks\.md")
 UNTICKED = re.compile(r"^(?P<indent>\s*)- \[ \] (?P<text>.*)$")
 TICKED = re.compile(r"^(?P<indent>\s*)- \[x\] (?P<text>.*)$")
+HUMAN = "human:"
 FILE_CAP = 3000
-RANK = {"A": 0, "B": 1, "C": 2}
+RANK = {"A": 0, "B": 1, "C": 2, "H": 3}
+TIER_LABELS = {f"tier:{t}": t for t in RANK}
 
 T = TypeVar("T")
 Tier = str
@@ -53,14 +54,18 @@ def field(obj: dict[str, object], name: str, kind: type[T]) -> T:
 def path_tier(path: str) -> tuple[Tier, str]:
     """The tier one changed path reaches, with the rule that puts it there."""
     parts = PurePosixPath(path).parts
+    if path.startswith(H_DIRS):
+        return "H", f"{path}: under a tier H directory (the gate, the checks or the rules)"
+    if parts and parts[-1] in H_NAMES:
+        return "H", f"{path}: a rules, licence-policy or toolchain file"
+    if len(parts) == 1 and (path in H_ROOT_NAMES or path.startswith(H_ROOT_PREFIX)):
+        return "H", f"{path}: a root rules or license file"
     if path.startswith(C_DIRS):
         return "C", f"{path}: under a tier C directory"
     if ".cargo" in parts:
         return "C", f"{path}: under .cargo/"
     if parts and parts[-1] in C_NAMES:
-        return "C", f"{path}: a rules file, manifest, lockfile or toolchain file"
-    if len(parts) == 1 and (path in C_ROOT_NAMES or path.startswith(C_ROOT_PREFIX)):
-        return "C", f"{path}: a root rules or license file"
+        return "C", f"{path}: a manifest or lockfile"
     if path.startswith("fixtures/golden/"):
         return "B", f"{path}: expected output under fixtures/golden/"
     if path.endswith(".snap"):
@@ -117,8 +122,20 @@ def not_a_tick(old: str, new: str) -> str | None:
         return "the task text changed"
     if len(after["text"]) == len(before["text"]):
         return "no as-built note appended"
-    if "human:" in before["text"]:
-        return "a human: task is the maintainer's to tick"
+    return None
+
+
+def human_tick(files: list[File]) -> str | None:
+    """A ticked human: task line in any tasks.md patch, which only the maintainer may land."""
+    for file in files:
+        name = field(file, "filename", str)
+        patch = file.get("patch")
+        if TASKS_FILE.fullmatch(name) is None or not isinstance(patch, str):
+            continue
+        for line in patch.splitlines():
+            ticked = TICKED.match(line[1:]) if line.startswith("+") else None
+            if ticked is not None and HUMAN in ticked["text"]:
+                return f"{name}: ticks a {HUMAN} task, the maintainer's to tick: {ticked['text'][:80]}"
     return None
 
 
@@ -155,7 +172,10 @@ def tick_failure(title: str, files: list[File]) -> str | None:
 
 def compute(title: str, changed_files: int, files: list[File]) -> tuple[Tier, list[str]]:
     if changed_files > FILE_CAP or changed_files > len(files):
-        return "C", [f"file listing incomplete: {changed_files} changed, {len(files)} listed, cap {FILE_CAP}"]
+        return "H", [f"file listing incomplete: {changed_files} changed, {len(files)} listed, cap {FILE_CAP}"]
+    human = human_tick(files)
+    if human is not None:
+        return "H", [human]
     tick = tick_failure(title, files)
     if tick is None:
         return "A", ["a tick PR: only '- [ ]' to '- [x]' flips with as-built notes in specs/*/tasks.md"]
@@ -168,15 +188,15 @@ def compute(title: str, changed_files: int, files: list[File]) -> tuple[Tier, li
                 reasons.append(reason)
             if RANK[path_t] > RANK[tier]:
                 tier = path_t
-    if tier == "C" and title.startswith(TICK_TITLE):
+    if tier != "A" and title.startswith(TICK_TITLE):
         reasons.insert(0, f"not a tick PR: {tick}")
     if tier == "A":
-        reasons.append("no path reaches tier B or C")
+        reasons.append("no path reaches tier B, C or H")
     return tier, reasons
 
 
 def label_tier(labels: list[str]) -> Tier | None:
-    tiers = [label[len("tier:"):] for label in labels if label in ("tier:A", "tier:B", "tier:C")]
+    tiers = [TIER_LABELS[label] for label in labels if label in TIER_LABELS]
     return max(tiers, key=RANK.__getitem__) if tiers else None
 
 

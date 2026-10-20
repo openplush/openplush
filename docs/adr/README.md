@@ -27,9 +27,10 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0012](0012-export-reads-layout.md) | `openplush-export` may depend on `openplush-layout` | Accepted |
 | [0013](0013-intent-sized-pull-requests.md) | Size pull requests by intent, not by line count, and review each one once | Accepted |
 | [0014](0014-auto-merge-tiers.md) | Merge by tier: agents enable auto-merge on low-risk PRs, the maintainer merges the rest | Proposed |
-| [0015](0015-merge-gate.md) | A workflow computes the tier and enables auto-merge; agents never do | Proposed |
+| [0015](0015-merge-gate.md) | A workflow computes the tier and enables auto-merge; agents never do | Accepted |
 | [0016](0016-standing-merge-authorization.md) | A time-boxed standing authorization lets an agent merge tier C PRs | Accepted |
 | [0017](0017-docs-site.md) | Build the docs site with mdBook; accept OFL-1.1 fonts and CC BY 4.0 icons in the published site only; CI-only tooling is outside Constitution IX | Accepted |
+| [0018](0018-hands-off-merging.md) | The merge gate merges every tier; the maintainer keeps only the files that define the gate and the rules | Accepted |
 
 ## How to read an ADR
 

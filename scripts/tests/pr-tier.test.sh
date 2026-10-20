@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Tests for scripts/pr-tier.py: one case per ADR 0014 rule, each a PR file
-# listing on stdin and the tier it must get.
+# Tests for scripts/pr-tier.py: one case per ADR 0014 and ADR 0018 rule, each
+# a PR file listing on stdin and the tier it must get.
 #
-# What matters: a C path anywhere wins, a rename counts both names, the tick
-# exception holds only for pure ticks, a tier: label is never lowered, and an
-# incomplete file listing is C rather than a guess.
+# What matters: the highest path wins (H over C over B), a rename counts both
+# names, the tick exception holds only for pure ticks and never for a human:
+# task, a tier: label is never lowered, and an incomplete file listing is H
+# rather than a guess.
 set -euo pipefail
 # expect runs at the end of a pipeline and counts in this shell.
 shopt -s lastpipe
@@ -42,21 +43,29 @@ f crates/openplush-geom/src/new.rs renamed docs/new.md | files | pr "$a_title" 0
 f Cargo.lock | files | pr "$a_title" 001/10-x '[]' | expect "a lockfile is C" '.tier == "C"'
 f apps/web/package.json | files | pr "$a_title" 001/10-x '[]' | expect "a nested manifest is C" '.tier == "C"'
 f .cargo/config.toml | files | pr "$a_title" 001/10-x '[]' | expect "a .cargo/ config is C" '.tier == "C"'
-f .github/workflows/review.yml | files | pr "chore(ci): tweak" chore/review-tweak '[]' | expect "a chore editing review.yml is C, and the review skips it" '.tier == "C" and .review_exempt'
+f .github/workflows/review.yml | files | pr "chore(ci): tweak" chore/review-tweak '[]' | expect "a chore editing review.yml is H, and the review skips it" '.tier == "H" and .review_exempt'
+f scripts/merge-gate.py | files | pr "chore(ci): widen the gate" chore/gate '[]' | expect "scripts/ is H: the gate cannot judge itself" '.tier == "H"'
+f .claude/skills/steward/SKILL.md | files | pr "docs(agents): steward" chore/steward '[]' | expect ".claude/ is H" '.tier == "H"'
+f .specify/memory/constitution.md | files | pr "docs: constitution" chore/constitution '[]' | expect ".specify/ is H" '.tier == "H"'
+f GOVERNANCE.md | files | pr "docs: governance" chore/governance '[]' | expect "GOVERNANCE.md is H" '.tier == "H"'
+f deny.toml | files | pr "chore: allow a license" chore/deny '[]' | expect "deny.toml is H" '.tier == "H"'
+f rust-toolchain.toml | files | pr "chore: bump rust" chore/rust '[]' | expect "rust-toolchain.toml is H" '.tier == "H"'
+{ f crates/openplush-geom/src/lib.rs; f scripts/check.sh; } | files | pr "$a_title" 001/10-x '[]' | expect "a mixed C+H PR is H" '.tier == "H"'
 f README.md | files | pr "chore: readme" chore/readme '[]' | expect "a chore editing only the README is A" '.tier == "A" and .review_exempt'
 { f docs/explanation/seams.md; f docs/reference/cli.md added; } | files | pr "docs: explain seams" 001/10-x '[]' | expect "a docs-only PR is A, and the review skips it" '.tier == "A" and .review_exempt'
-f docs/adr/0099-x.md added | files | pr "docs(adr): decide" 001/10-x '[]' | expect "docs/adr/ is C, not docs" '.tier == "C"'
+f docs/adr/0099-x.md added | files | pr "docs(adr): decide" 001/10-x '[]' | expect "docs/adr/ is H, not docs" '.tier == "H"'
+f specs/002-seam-placement-hints/plan.md | files | pr "docs(plan): accept H-011" 002/05-x '[]' | expect "a plan's decision ledger is C, the gate merges it" '.tier == "C"'
 f apps/web/src/main.ts | files | pr "$a_title" 001/10-x '[]' | expect "an apps/ source change is A, and the review runs" '.tier == "A" and (.review_exempt | not)'
 f fixtures/golden/cube.svg | files | pr "$a_title" 001/10-x '[]' | expect "a golden file is B" '.tier == "B"'
 f apps/web/src/__snapshots__/view.snap | files | pr "$a_title" 001/10-x '[]' | expect "a .snap file is B" '.tier == "B"'
 f fixtures/expected/cube.pdf | files | pr "$a_title" 001/10-x '[]' | expect "an expected PDF fixture is B" '.tier == "B"'
 { f apps/web/src/main.ts; f fixtures/golden/cube.svg; } | files | pr "$a_title" 001/10-x '[]' | expect "a mixed A+B PR is B" '.tier == "B"'
 { f fixtures/golden/cube.svg; f crates/openplush-geom/src/lib.rs; } | files | pr "$a_title" 001/10-x '[]' | expect "a mixed B+C PR is C" '.tier == "C"'
-f apps/AGENTS.md | files | pr "$a_title" 001/10-x '[]' | expect "any AGENTS.md is C" '.tier == "C"'
-f clippy.toml | files | pr "chore: relax a lint" chore/lints '[]' | expect "clippy.toml is C (the determinism lints)" '.tier == "C"'
-f rustfmt.toml | files | pr "chore: fmt" chore/fmt '[]' | expect "rustfmt.toml is C" '.tier == "C"'
-f .gitattributes | files | pr "chore: attributes" chore/attrs '[]' | expect ".gitattributes is C (eol and binary keep fixtures byte-identical)" '.tier == "C"'
-f LICENSE-MIT | files | pr "chore: license" chore/license '[]' | expect "a LICENSE-* file is C" '.tier == "C"'
+f apps/AGENTS.md | files | pr "$a_title" 001/10-x '[]' | expect "any AGENTS.md is H" '.tier == "H"'
+f clippy.toml | files | pr "chore: relax a lint" chore/lints '[]' | expect "clippy.toml is H (the determinism lints)" '.tier == "H"'
+f rustfmt.toml | files | pr "chore: fmt" chore/fmt '[]' | expect "rustfmt.toml is H" '.tier == "H"'
+f .gitattributes | files | pr "chore: attributes" chore/attrs '[]' | expect ".gitattributes is H (eol and binary keep fixtures byte-identical)" '.tier == "H"'
+f LICENSE-MIT | files | pr "chore: license" chore/license '[]' | expect "a LICENSE-* file is H" '.tier == "H"'
 f docs/LICENSE-NOTES.md | files | pr "docs: license notes" 001/10-x '[]' | expect "a LICENSE-* name below the root is not the project's terms" '.tier == "A"'
 
 # Tick PRs: the patch is what GitHub's files API returns (hunks only).
@@ -70,7 +79,9 @@ tick_file "$(tick_patch "$old" "$noted")" | files | pr "$tick_title" 001/11-tick
 tick_file "$(printf '%s-%s\n+%s\n' "$(tick_patch "$old" "$noted")" '- [ ] H008 old scope' '- [ ] H008 new scope')" | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick plus a re-scoped task is C" '.tier == "C"'
 tick_file "$(tick_patch "$old" "${old/\[ \]/[x]}")" | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick without an as-built note is C" '.tier == "C"'
 tick_file "$(tick_patch "$old" "${noted/vectors/vector}")" | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick that edits the task text is C" '.tier == "C"'
-tick_file "$(tick_patch "${old/\[P\]/human:}" "${noted/\[P\]/human:}")" | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick of a human: task is C" '.tier == "C"'
+tick_file "$(tick_patch "${old/\[P\]/human:}" "${noted/\[P\]/human:}")" | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick of a human: task is H" '.tier == "H"'
+{ tick_file "$(tick_patch "${old/\[P\]/human:}" "${noted/\[P\]/human:}")"; f crates/openplush-geom/src/lib.rs; } | files | pr "$a_title" 001/11-x '[]' | expect "a human: task ticked inside a feature PR is H too" '.tier == "H"'
+tick_file "$(printf '@@ -10,2 +10,3 @@\n ctx\n+- [x] H009 human:merge done — *merged*\n ctx\n')" | files | pr "$a_title" 001/11-x '[]' | expect "a human: task added already ticked is H" '.tier == "H"'
 tick_file "$(printf '@@ -10,2 +10,3 @@\n ctx\n+- [ ] H009 new task\n ctx\n')" | files | pr "$tick_title" 001/11-tick '[]' | expect "an added task line in a tick PR is C" '.tier == "C"'
 { tick_file "$(tick_patch "$old" "$noted")"; f docs/reference/cli.md; } | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick PR touching a second file is C" '.tier == "C"'
 f "$tasks" | files | pr "$tick_title" 001/11-tick '[]' | expect "a tick PR whose tasks.md patch is missing is C" '.tier == "C"'
@@ -79,12 +90,14 @@ f docs/reference/cli.md | files | pr "$tick_title" 001/11-tick '[]' | expect "a 
 
 # Labels: never lowered, raised when the diff says so.
 f apps/web/src/main.ts | files | pr "$a_title" 001/10-x '["tier:C"]' | expect "an existing tier:C label on an A diff stays C" '.tier == "C" and .computed == "A" and .label == "C" and (.relabel | not)'
+f apps/web/src/main.ts | files | pr "$a_title" 001/10-x '["tier:H"]' | expect "a tier:H label the maintainer set on an A diff stays H" '.tier == "H" and .computed == "A" and .label == "H" and (.relabel | not)'
 f crates/openplush-geom/src/lib.rs | files | pr "$a_title" 001/10-x '["tier:A", "chore"]' | expect "a tier:A label on a C diff is raised" '.tier == "C" and .computed == "C" and .label == "A" and .relabel'
+f scripts/check.sh | files | pr "chore: check" chore/check '["tier:C"]' | expect "a tier:C label on an H diff is raised" '.tier == "H" and .computed == "H" and .label == "C" and .relabel'
 f apps/web/src/main.ts | files | pr "$a_title" 001/10-x '[]' | expect "no tier label on an A diff asks for one" '.label == null and .relabel'
 
 # An incomplete listing is never guessed from.
-jq -nc '[range(3001) | {filename: "docs/\(.).md", status: "added"}]' | pr "$a_title" 001/10-x '[]' | expect "more than 3000 files is C" '.tier == "C"'
-f docs/x.md | files | pr "$a_title" 001/10-x '[]' | jq -c '.changed_files = 2' | expect "a listing shorter than changed_files is C" '.tier == "C"'
+jq -nc '[range(3001) | {filename: "docs/\(.).md", status: "added"}]' | pr "$a_title" 001/10-x '[]' | expect "more than 3000 files is H" '.tier == "H"'
+f docs/x.md | files | pr "$a_title" 001/10-x '[]' | jq -c '.changed_files = 2' | expect "a listing shorter than changed_files is H" '.tier == "H"'
 echo '[]' | pr "$a_title" 001/10-x '[]' | expect "an empty diff is A with the reason stated" '.tier == "A" and (.reasons | length) > 0'
 
 if out=$(python3 "$tier" <<<'{"title": "x"}' 2>&1); then bad "a missing field fails" "$out"; else ok "a missing field fails"; fi

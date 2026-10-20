@@ -9,6 +9,7 @@ import unittest
 from collections import Counter
 
 from test_fixtures import FIXTURES, Face, UnionFind, Vec, edges_of, signed_volume, triangles_cross
+from test_source_seams import read_glb
 from test_symmetry import read_glb_mesh
 
 QUADRUPED = FIXTURES / "meshes" / "quadruped.glb"
@@ -151,6 +152,14 @@ class Quadruped(unittest.TestCase):
             n = cross(sub(q, p), sub(r, p))
             self.assertGreater(dot(n, n) / 4, floor, f"face {f} has no area")
         self.assertEqual(crossings(pos, faces), 0)
+
+    def test_the_embedded_note_names_the_mesher_that_made_it(self) -> None:
+        """Prevents a fixture whose own provenance string contradicts how it was made: the note travels with the file."""
+        doc, _ = read_glb(QUADRUPED)
+        note = doc["asset"]["extras"]["note"] if isinstance(doc, dict) else ""
+        self.assertIn("dual contouring", note)
+        self.assertNotIn("surface nets", note)
+        self.assertNotIn("marching", note)
 
     def test_mirror_symmetric_about_x_0_bit_for_bit(self) -> None:
         """Symmetry detection (SC-005) must find x = 0 on this model with a score of exactly zero."""

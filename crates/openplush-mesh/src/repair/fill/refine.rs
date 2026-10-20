@@ -85,8 +85,8 @@ fn relax(
 }
 
 /// The first edge, in vertex order, whose two triangles `(a, b, c)` and `(b, a, d)` would be
-/// better as `(a, d, c)` and `(d, b, c)`: the angles opposite it sum clearly past π (`DELAUNAY_COT`), chord `c`–`d`
-/// is new, and neither new triangle is a sliver or folds against the other.
+/// better as `(a, d, c)` and `(d, b, c)`: the angles opposite it sum clearly past π, chord
+/// `c`–`d` is new, and neither new triangle is a sliver or folds against the other.
 fn swappable(
     patch: &Patch,
     joined: &dyn Fn(usize, usize) -> bool,

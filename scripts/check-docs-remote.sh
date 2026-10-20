@@ -3,7 +3,9 @@
 # party learns who reads which page. A browser fetches a remote resource on page
 # load from these references, so the check fails on any that is http(s):// or
 # protocol-relative (//host/...):
-#   - in HTML: the src of any element, and the href of <link>;
+#   - in HTML: the src and poster of any element, any srcset candidate, the data
+#     of <object>, the href of <link>, and the href or xlink:href of SVG
+#     <image>, <use> and <feImage>;
 #   - in CSS, and anywhere in HTML (so <style> and style="" too): url() and @import.
 # Links (<a href>) load nothing until followed, and data: URIs load nothing, so
 # both pass. Scripts can still fetch at run time; book.toml's settings keep
@@ -21,7 +23,10 @@ cd "$dir"
 remote='(https?:)?//'
 value="(\"[[:space:]]*$remote[^\"]*\"|'[[:space:]]*$remote[^']*'|$remote[^[:space:]>\"']+)"
 attr='([[:space:]][^>]*)?[[:space:]]'
-src_ref="<[a-z][a-z0-9-]*${attr}src[[:space:]]*=[[:space:]]*$value"
+src_ref="<[a-z][a-z0-9-]*${attr}(src|poster)[[:space:]]*=[[:space:]]*$value"
+srcset_ref="<[a-z][a-z0-9-]*${attr}srcset[[:space:]]*=[[:space:]]*(\"[^\"]*$remote[^\"]*\"|'[^']*$remote[^']*')"
+object_ref="<object${attr}data[[:space:]]*=[[:space:]]*$value"
+svg_ref="<(image|use|feimage)${attr}(xlink:)?href[[:space:]]*=[[:space:]]*$value"
 link_ref="<link${attr}href[[:space:]]*=[[:space:]]*$value"
 url_ref="url\\([[:space:]]*[\"']?[[:space:]]*$remote[^)\"'[:space:]]*"
 import_ref="@import[[:space:]]*[\"'][[:space:]]*$remote[^\"']*"
@@ -36,7 +41,10 @@ refs() {
 remote_refs() {
   local f=$1 q="[\"']"
   if [[ $f == *.html ]]; then
-    refs "$f" "$src_ref" "s/^<([a-zA-Z0-9-]+).*[[:space:]][sS][rR][cC][[:space:]]*=[[:space:]]*$q?[[:space:]]*/<\\1> src /; s/$q\$//"
+    refs "$f" "$src_ref" "s/^<([a-zA-Z0-9-]+).*[[:space:]]([sS][rR][cC]|[pP][oO][sS][tT][eE][rR])[[:space:]]*=[[:space:]]*$q?[[:space:]]*/<\\1> \\2 /; s/$q\$//"
+    refs "$f" "$srcset_ref" "s/^<([a-zA-Z0-9-]+).*[[:space:]][sS][rR][cC][sS][eE][tT][[:space:]]*=[[:space:]]*$q/<\\1> srcset /; s/$q\$//"
+    refs "$f" "$object_ref" "s/^<([a-zA-Z]+).*[[:space:]][dD][aA][tT][aA][[:space:]]*=[[:space:]]*$q?[[:space:]]*/<\\1> data /; s/$q\$//"
+    refs "$f" "$svg_ref" "s/^<([a-zA-Z]+).*[[:space:]](([xX][lL][iI][nN][kK]:)?[hH][rR][eE][fF])[[:space:]]*=[[:space:]]*$q?[[:space:]]*/<\\1> \\2 /; s/$q\$//"
     refs "$f" "$link_ref" "s/^<([a-zA-Z]+).*[[:space:]][hH][rR][eE][fF][[:space:]]*=[[:space:]]*$q?[[:space:]]*/<\\1> href /; s/$q\$//"
   fi
   refs "$f" "$url_ref" "s/^[uU][rR][lL]\\([[:space:]]*$q?[[:space:]]*/url() /"

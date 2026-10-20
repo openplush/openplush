@@ -42,6 +42,11 @@ new_case() {
 <script src="/searcher.js"></script>
 </head><body>
 <img src="../images/seam.png" alt="a seam">
+<img srcset="../images/seam.png 1x, ../images/seam@2x.png 2x" alt="">
+<video poster="poster.png"></video>
+<object data="diagram.svg"></object>
+<svg><use href="#icon"/><image xlink:href="icon.png"/></svg>
+<div data-src="https://example.com/lazy.png"></div>
 <img src="data:image/svg+xml;utf8,<svg xmlns='"'"'http://www.w3.org/2000/svg'"'"'/>">
 <a href="https://github.com/openplush/openplush">source</a>
 <a href='"'"'http://example.com/'"'"'>elsewhere</a>
@@ -141,6 +146,26 @@ file "$d" remote.html '<style>
 @import "https://fonts.example.com/css";
 </style>'
 expect fail "an @import in a style element" "$d" "remote.html" "https://fonts.example.com/css"
+
+d=$(new_case srcset)
+file "$d" remote.html '<img src="a.png" srcset="a.png 1x, https://img.example.com/a@2x.png 2x">'
+expect fail "a remote candidate in srcset" "$d" "remote.html" "srcset" "https://img.example.com/a@2x.png"
+
+d=$(new_case poster)
+file "$d" remote.html '<video poster="https://img.example.com/p.png"></video>'
+expect fail "a remote video poster" "$d" "remote.html" "poster" "https://img.example.com/p.png"
+
+d=$(new_case object-data)
+file "$d" remote.html "<object data='//e.example.com/x.svg'></object>"
+expect fail "a remote object data" "$d" "remote.html" "<object> data" "//e.example.com/x.svg"
+
+d=$(new_case svg-image-href)
+file "$d" remote.html '<svg><image href="https://img.example.com/a.png"/></svg>'
+expect fail "a remote SVG image href" "$d" "remote.html" "<image> href" "https://img.example.com/a.png"
+
+d=$(new_case svg-use-xlink)
+file "$d" remote.html '<svg><use xlink:href="https://e.example.com/s.svg#i"/></svg>'
+expect fail "a remote SVG use xlink:href" "$d" "remote.html" "<use> xlink:href" "https://e.example.com/s.svg#i"
 
 d=$(new_case every-reference)
 file "$d" a.html '<img src="https://img.example.com/a.png">'

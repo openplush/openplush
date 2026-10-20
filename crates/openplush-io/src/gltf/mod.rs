@@ -210,7 +210,8 @@ impl Builder {
             .attributes()
             .filter(|(s, _)| matches!(s, Semantic::TexCoords(_)))
             .count();
-        let extra = u32::try_from(sets.saturating_sub(1)).unwrap_or(u32::MAX);
+        // Every set but the one read counts, TEXCOORD_0's absence included.
+        let extra = u32::try_from(sets - usize::from(uvs.is_some())).unwrap_or(u32::MAX);
         self.extra_uv_sets = self.extra_uv_sets.max(extra);
         self.materials.push(
             primitive

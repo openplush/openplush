@@ -194,7 +194,7 @@ for step in "${steps[@]}"; do
       fi
       run cargo build --workspace --target wasm32-unknown-unknown --locked
       run cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings
-      # Only #[wasm_bindgen_test] tests run here; see CONTRIBUTING.
+      # Only #[wasm_bindgen_test] tests run here; see docs/reference/checks.md.
       run cargo test --workspace --target wasm32-unknown-unknown --locked
       # Each wasm canary (crates/*/tests/wasm_*.rs) must actually run on wasm32.
       # Without its #[wasm_bindgen_test] attribute, wasm32 reports "no tests to

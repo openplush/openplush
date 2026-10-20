@@ -31,19 +31,19 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Merging
 
-[ADR 0014](../../../docs/adr/0014-auto-merge-tiers.md) sets who merges; the merge gate ([ADR 0015](../../../docs/adr/0015-merge-gate.md), `.github/workflows/merge-gate.yml`) computes the tier from the diff and enables auto-merge. A PR's tier is the highest any of its paths or tasks reaches. Label it `tier:A`, `tier:B` or `tier:C` on opening as your reading of the diff; the gate raises a label that is too low and never lowers one.
+[ADR 0014](../../../docs/adr/0014-auto-merge-tiers.md) and [ADR 0018](../../../docs/adr/0018-hands-off-merging.md) set who merges; the merge gate ([ADR 0015](../../../docs/adr/0015-merge-gate.md), `.github/workflows/merge-gate.yml`) computes the tier from the diff and enables auto-merge. A PR's tier is the highest any of its paths or tasks reaches. Label it `tier:A`, `tier:B`, `tier:C` or `tier:H` on opening as your reading of the diff; the gate raises a label that is too low and never lowers one.
 
 | Tier | When | Who merges |
 |---|---|---|
-| C | `crates/`, `bindings/`, `specs/`, `.specify/`, `docs/adr/`, `.github/`, `.claude/`, `scripts/`; any `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT.md`; any `Cargo.toml`, `Cargo.lock`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `deny.toml`, `rust-toolchain.toml`, `.cargo/`; an ADR or Decision Ledger entry; a `human:` task; labelled `tier:C` by the maintainer | The maintainer, or you under a standing authorization (below) |
+| H | `.github/`, `scripts/`, `.claude/`, `docs/adr/`, `.specify/`; any `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT.md`; `deny.toml`, `rust-toolchain.toml`, `clippy.toml`, `rustfmt.toml`, `.gitattributes`, `LICENSE-*`; a ticked `human:` task; labelled `tier:H` by the maintainer | The maintainer |
+| C | `crates/`, `bindings/`, `specs/`; any `Cargo.toml`, `Cargo.lock`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.cargo/`; a Decision Ledger entry | Auto-merge, enabled once ready |
 | B | `fixtures/golden/`, `*.snap`, or an expected SVG or PDF fixture | Auto-merge, enabled 24 h after the head's CI went green |
 | A | Everything else, and a `docs(tasks): tick …` PR whose diff touches only `specs/*/tasks.md` with ticks and as-built notes | Auto-merge, enabled once ready |
 
 - Read the gate's comment on the PR (it starts "Merge gate"): it lists the tier and each condition as pass or fail, and `merge:ready` is its verdict. Never enable auto-merge yourself, on any tier, and never apply `merge:ready`: the gate removes what it did not set.
-- On a stall, fix what the comment names: a failing check, an open thread (answer it, then resolve it: an unresolved thread is an unanswered finding to the gate), a conflict, or a base that is not `main`. A push revokes the verdict; the gate judges the new head when its CI completes.
-- Never merge a PR yourself, except a tier C PR a standing authorization covers ([ADR 0016](../../../docs/adr/0016-standing-merge-authorization.md)). Otherwise tier C waits for the maintainer; the comment says so.
-- A standing authorization is the maintainer's own words naming an end time in UTC at most 4 hours ahead, the features it covers, and whether it covers decisions. Post it verbatim on the ledger issue before the first merge under it. It is wall clock: a pause does not extend it, and "continue" resumes the work, not the grant; past the end time, merge nothing more and hand off.
-- Under one, merge a covered tier C PR when it is ready (Reviews) and its mutation audit is done with every survivor closed or recorded as equivalent: base `main`, bottom-up, a merge commit with the full expected head SHA. Never under one: a PR touching `.github/`, `scripts/`, `.claude/`, any `AGENTS.md` or `CLAUDE.md`, ADR 0014, 0015 or 0016; a `human:` task; a PR the maintainer labelled `tier:C`; expected output. Log each merge, each decision accepted, and any rule broken in the run's ledger entry.
+- On a stall, fix what the comment names: a failing check, an open thread (answer it, then resolve it: an unresolved thread is an unanswered finding to the gate), a conflict, a base that is not `main`, or a reviewer's changes requested. A push revokes the verdict; the gate judges the new head when its CI completes.
+- The review summary must name the current head. After a push the gate adds `rereview` itself, once per head, and judges the new summary; you never add the label. If the review ran on a head without posting a summary, the comment says the maintainer must look.
+- Never merge a PR yourself, on any tier. Tier H waits for the maintainer; the comment says so.
 
 ## Waiting
 

@@ -26,7 +26,7 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 ## One firing
 
 1. Check `main`, the open PRs, and the next free slice number once (`steward`, Sessions).
-2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and fix whatever the merge gate's comment names on a tier A or B PR that is not `merge:ready` (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone; the gate enables auto-merge on its own.
+2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and fix whatever the merge gate's comment names on a tier A, B or C PR that is not `merge:ready` (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone; the gate enables auto-merge on its own.
 3. Pick up to four ready tasks that touch different crates and share no file. One task runs inline; two or more run through the Workflow tool, one agent per task, each in its own worktree, and nothing else runs while they do.
 4. Per task: branch `NNN/NN-<ID>-slug` from its parent (`main`, or the open PR it depends on); the failing test commit; the implementation commit; `scripts/check.sh <lane>` green; `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; label its tier; remove the attribution footer the server adds; subscribe.
 5. Scope each PR by intent (ADR 0013): one task is one PR unless it carries two intents, and the `Intent` section says what it brings in and why. Never split by size, and never a reason to stop.
@@ -38,7 +38,7 @@ Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and sta
 
 ## What it never does
 
-Merge a PR itself, unless a standing authorization covers it (`steward`, Merging); enable auto-merge, or apply `merge:ready` (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision, unless the standing authorization says it covers decisions; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
+Merge a PR itself; enable auto-merge, or apply `merge:ready` (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision, unless a standing authorization says it covers decisions ([ADR 0016](../../../docs/adr/0016-standing-merge-authorization.md)); add scope without a task ID; add `rereview` or `mutation-audit` (the gate asks for a review of a new head; the maintainer requests any other rerun).
 
 ## Stop conditions
 
@@ -62,12 +62,11 @@ One GitHub issue per feature, titled `Factory ledger: <feature>`, labelled `fact
 **Firing <date> <time UTC>**
 Opened: #N (<ID>, stacked on #M), …
 Skipped: <ID> (<reason>), …
-Merged: #N (<merge SHA>), … under the grant in <ledger comment link>, or none
 Stopped: <reason>
 Next ready: <ID> or none
 ```
 
-The maintainer reads the ledger, accepts decisions and ticks `human:` work in `tasks.md`, and merges tier C PRs bottom-up, except those a standing authorization lets the firing merge. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
+The maintainer reads the ledger, accepts decisions and ticks `human:` work in `tasks.md`, and merges tier H PRs; the gate merges the rest, bottom-up as each base becomes `main`. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
 
 ## Scheduling
 

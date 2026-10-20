@@ -2,7 +2,9 @@
 # auto-merge: it computes the tier from the diff (scripts/pr-tier.py), judges
 # every condition on the current head (scripts/merge-gate.py), keeps one
 # comment per PR saying which conditions fail, applies `merge:ready` as its
-# verdict and enables auto-merge. Tier C is never labelled or merged.
+# verdict and enables auto-merge. Tier H (the gate, the checks and the rules)
+# is never labelled `merge:ready` or merged. When the newest review summary is
+# for another head, the gate adds `rereview` once for this head.
 #
 # It never checks out or runs the PR's code: pull_request_target, workflow_run
 # and schedule all take this file from the base branch, the PR is read through
@@ -155,6 +157,10 @@ jobs:
                   nodes { isResolved comments(first: 100) { nodes { body } } } } } } }' \
             --jq '.data.repository.pullRequest.reviewThreads.nodes' |
             jq -s 'add | map({isResolved, comments: .comments.nodes})' > "$WORK/threads.json"
+          gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" -F pr="$PR" \
+            -f query='query($owner: String!, $name: String!, $pr: Int!) {
+              repository(owner: $owner, name: $name) { pullRequest(number: $pr) { reviewDecision } } }' |
+            jq '.data.repository.pullRequest.reviewDecision' > "$WORK/decision.json"
       - name: judge
         if: env.HAS_APP == 'true'
         run: |
@@ -164,8 +170,9 @@ jobs:
           jq -n --arg mode "$MODE" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg repo "$GITHUB_REPOSITORY" \
             --slurpfile pr "$WORK/pr.json" --slurpfile tier "$WORK/tier.json" --slurpfile checks "$WORK/checks.json" \
             --slurpfile comments "$WORK/comments.json" --slurpfile threads "$WORK/threads.json" \
+            --slurpfile decision "$WORK/decision.json" \
             '{mode: $mode, now: $now, repository: $repo, pr: $pr[0], tier: $tier[0],
-              check_runs: $checks[0], comments: $comments[0], threads: $threads[0]}' |
+              check_runs: $checks[0], comments: $comments[0], threads: $threads[0], review_decision: $decision[0]}' |
             python3 scripts/merge-gate.py > "$WORK/verdict.json"
           jq -r .comment "$WORK/verdict.json" | tee -a "$GITHUB_STEP_SUMMARY" > "$WORK/comment.md"
       # The tier label is never lowered; a higher computed tier relabels, once.
@@ -197,6 +204,15 @@ jobs:
           else
             gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$WORK/comment.md"
           fi
+      # The marker the verdict comment now carries keeps this to once per head.
+      - name: ask for a review when the summary is for another head
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          [[ $(jq -r .rereview "$WORK/verdict.json") == true ]] || exit 0
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label rereview
+          echo "asked for a review of $HEAD_SHA"
       - name: apply the verdict
         if: env.HAS_APP == 'true'
         env:

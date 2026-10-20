@@ -135,19 +135,21 @@ Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
 
 | Date | ID | Decision | Status |
 |---|---|---|---|
-| 2026-10-20 | W-001 | **mdBook 0.5.x** for both books. The only candidate on the licence allow-list that is a single binary, privacy-clean by default and actively maintained; Zola is EUPL-1.2 since 0.22, Material for MkDocs reaches end of life 2026-11, Zensical is alpha, Starlight's build sends telemetry by default (research R1) | Proposed in [ADR 0017](../../docs/adr/0017-docs-site.md) |
+| 2026-10-20 | W-001 | **mdBook 0.5.x** for both books. The only candidate on the licence allow-list that is a single binary, privacy-clean by default and actively maintained; Zola is EUPL-1.2 since 0.22, Material for MkDocs reaches end of life 2026-11, Zensical is alpha, Starlight's build sends telemetry by default (research R1) | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20 |
 | 2026-10-20 | W-002 | **Two books, one site**: contributor book at `/dev/`, maker book at `/guide/`, a static landing page at `/`. Separate sidebars keep the maker guide free of contributor vocabulary | Proposed |
 | 2026-10-20 | W-003 | **The maker guide is built and checked from its first page but published only at the first public release.** Pages describe what exists on `main`; publishing waits until that is released (spec FR-005, FR-032); lifting this is a maintainer decision | Proposed |
 | 2026-10-20 | W-004 | **Hand-curated `SUMMARY.md` per book, journey-ordered**, with a check that fails on any page in neither navigation, and `create-missing = false`. A generated sidebar would sort alphabetically or need a second file for the order (research R2) | Proposed |
 | 2026-10-20 | W-005 | **Links leaving the published tree become GitHub URLs**, rewritten once; the 37 existing ones are fixed in one task. `lychee --offline --include-fragments` checks the built HTML, not the Markdown, because mdBook rewrites `.md` to `.html` without checking (research R2) | Proposed |
 | 2026-10-20 | W-006 | **No network on page load**: `[output.html.playground] runnable = false`, no MathJax, no remote `additional-*`; a check fails on any `http(s)://` resource reference (`src`, `href` on `link`, CSS `url()`, `@import`) in the built output | Proposed |
-| 2026-10-20 | W-007 | **OFL-1.1 accepted for font files, and CC BY 4.0 for mdBook's inlined Font Awesome icons, in the published docs site only**, not the app, the WASM package or exported PDFs. rustdoc bundles OFL fonts with no stable way to drop them, so `/api/` needs this; ADR 0008's PDF font question stays separate | Proposed in [ADR 0017](../../docs/adr/0017-docs-site.md). Blocks W016 |
-| 2026-10-20 | W-008 | **CI-only tooling is outside Constitution IX**, which governs what the project ships (ADR 0011's reading). Ratifies `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows. The ADR also records the licences of `cargo install`ed tools, which `cargo deny` never sees | Proposed in [ADR 0017](../../docs/adr/0017-docs-site.md) |
+| 2026-10-20 | W-007 | **OFL-1.1 accepted for font files, and CC BY 4.0 for mdBook's inlined Font Awesome icons, in the published docs site only**, not the app, the WASM package or exported PDFs. rustdoc bundles OFL fonts with no stable way to drop them, so `/api/` needs this; ADR 0008's PDF font question stays separate | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20. Blocks W016 |
+| 2026-10-20 | W-008 | **CI-only tooling is outside Constitution IX**, which governs what the project ships (ADR 0011's reading). Ratifies `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows. The ADR also records the licences of `cargo install`ed tools, which `cargo deny` never sees | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20 |
 | 2026-10-20 | W-009 | **`docs/` is the home of every fact a human needs; agent files keep directives and link.** Exception: the commands table stays in `AGENTS.md` and the site includes it by anchor | Proposed |
 | 2026-10-20 | W-010 | **Maker-facing message explanations live in the maker guide.** `docs/reference/` keeps the exact strings and codes for contributors and links to the maker explanation, so each fact has one home | Proposed |
 | 2026-10-20 | W-011 | **The writing guide (`docs/how-to/write-docs.md`) is the one home for documentation rules.** Templates carry structure; the docs skill carries steps and links to the guide | Proposed |
 | 2026-10-20 | W-012 | **PR previews are a downloadable workflow artifact**, not a live host. GitHub's native Pages previews are not public, and branch-based preview actions need write tokens and fail for forks (research R4) | Proposed |
 | 2026-10-20 | W-013 | **No diagrams tool until a page needs one.** `mdbook-mermaid` adds ~2.7 MB per page; the first diagram task decides between it and committed SVG | Proposed |
+| 2026-10-20 | W-014 | **CONTRIBUTING.md is a short pointer into the site** (Bevy's model): GitHub shows it on new issues and PRs, so it keeps only what a first-time contributor needs at that moment and links the site for the rest; two full homes would drift | Accepted (standing authorization, 2026-10-20) |
+| 2026-10-20 | W-015 | **The first-change tutorial is written now**, on crates that exist, rather than after the pipeline runs end to end: a newcomer needs a code path today, and a tutorial built on stable leaf crates survives later stages landing | Accepted (standing authorization, 2026-10-20) |
 
 ### Trade-offs accepted
 
@@ -158,5 +160,5 @@ Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
 ### Open questions
 
 - **CI cost**: does the `docs` step join the default `scripts/check.sh` run and the required checks, or stay a separate non-required workflow? `cargo doc` adds build time.
-- **CONTRIBUTING.md**: a short pointer into the site (Bevy's model), or a standalone root document? W030 assumes the pointer.
-- **First tutorial**: a code-level tutorial on existing crates now, or wait for the end-to-end pipeline? W033 assumes now.
+- **CONTRIBUTING.md**: resolved 2026-10-20 by W-014: a short pointer into the site, as W030 assumed.
+- **First tutorial**: resolved 2026-10-20 by W-015: a code-level tutorial on existing crates now, as W033 assumed.

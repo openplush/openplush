@@ -1,7 +1,7 @@
 ---
-status: Proposed
+status: Accepted
 date: 2026-10-20
-deciders: Lavender (maintainer)
+deciders: Lavender (maintainer, accepted 2026-10-20 by merging #277)
 ---
 
 # Build the docs site with mdBook; accept OFL-1.1 fonts and CC BY 4.0 icons in the published site only; CI-only tooling is outside Constitution IX

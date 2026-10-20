@@ -146,6 +146,28 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_skipped_primitive_names_its_node_mesh_and_index_and_the_remedy_is_fixed() {
+        let w = ignored_warning(&[Ignored::Primitive {
+            node: 3,
+            mesh: 1,
+            primitive: 2,
+        }]);
+        assert_eq!(
+            w.explanation(),
+            "The file has parts the pattern does not follow: primitive 2 of mesh 1 (node 3), \
+             which is points or lines. The pattern is made from the triangles as modelled."
+        );
+        let Remedy::Advisory { what_to_change } = w.remedy() else {
+            panic!("the remedy is not advisory");
+        };
+        assert_eq!(
+            what_to_change.as_str(),
+            "To pattern a posed or morphed shape, apply the pose or morph in your 3D tool and \
+             export again."
+        );
+    }
+
+    #[test]
     fn each_kind_of_skipped_part_is_named() {
         assert_eq!(
             ignored_text(&[

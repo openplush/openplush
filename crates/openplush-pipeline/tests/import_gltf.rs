@@ -107,3 +107,14 @@ fn what_the_reader_skipped_is_one_import_ignored_warning() -> Result<(), Setup> 
     assert!(matches!(w.remedy(), Remedy::Advisory { .. }));
     Ok(())
 }
+
+#[test]
+fn of_two_supplied_files_with_one_name_the_first_is_read() -> Result<(), Setup> {
+    let (json, bin) = gltf_beside("tri.bin", ONE_TRIANGLE);
+    let imported = import(&ImportFiles {
+        primary: file("tri.gltf", json.as_bytes()),
+        others: vec![file("tri.bin", &bin), file("tri.bin", &[])],
+    })?;
+    assert_eq!(imported.value.triangle_count(), 1);
+    Ok(())
+}

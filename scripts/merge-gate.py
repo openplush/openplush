@@ -239,10 +239,13 @@ def render(doc: Doc, conditions: list[Condition], ready: bool, asked: bool) -> s
     elif ready and mode == "on":
         verdict = "Ready: `merge:ready` applied and auto-merge enabled, matched to this head."
     elif ready:
-        verdict = "Ready: `merge:ready` applied. Mode dry-run: auto-merge is not enabled."
+        verdict = "Ready: `merge:ready` applied."
     else:
         verdict = ("Not ready: fix what fails above. The gate judges again when a CI workflow completes, "
                    "on every push, label and edit, and every 30 minutes.")
+    if mode == "dry-run":
+        verdict += ("\n\nThe gate is rehearsing (mode dry-run): it comments and labels but never enables auto-merge. "
+                    "Setting the repository variable `MERGE_GATE_MODE` to `on` makes it live.")
     return (
         f"{MARKER}\n{mark}### Merge gate: {'ready' if ready else 'not ready'} (head `{sha[:7]}`, mode {mode}, "
         f"checked {field(doc, 'now', str)})\n\n"

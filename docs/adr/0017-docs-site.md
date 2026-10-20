@@ -4,7 +4,7 @@ date: 2026-10-20
 deciders: Lavender (maintainer)
 ---
 
-# Build the docs site with mdBook; accept OFL-1.1 fonts in the published site only; CI-only tooling is outside Constitution IX
+# Build the docs site with mdBook; accept OFL-1.1 fonts and CC BY 4.0 icons in the published site only; CI-only tooling is outside Constitution IX
 
 ## Context and problem statement
 
@@ -27,7 +27,7 @@ Generator (W-001):
 * D: Starlight, Docusaurus or VitePress
 
 Fonts (W-007):
-* E: accept OFL-1.1 for font files in the published docs site only
+* E: accept OFL-1.1 font files and CC BY 4.0 icons in the published docs site only
 * F: strip or replace the bundled fonts
 * G: publish no rustdoc
 
@@ -40,6 +40,8 @@ CI-only tooling (W-008):
 **Generator: A, mdBook 0.5.x**, for both books. It is the only candidate that is at once on the allow-list (MPL-2.0), a single binary, privacy-clean by default and actively maintained [solid: research R1]. Two builds of the same input were byte-identical [solid: measured, research R1].
 
 **Fonts: E.** Font files licensed OFL-1.1 may appear in the published docs site and nowhere else: not in the app, the WASM package, the CLI, or an exported PDF. rustdoc bundles FiraSans, FiraMono, SourceSerif4, SourceCodePro and NanumBarunGothic with no stable option to omit them [solid: research R4], and mdBook's default theme bundles Source Code Pro [solid: research R2]. The fonts are served from the site itself, never fetched from elsewhere, so VIII holds. OFL-1.1 lets fonts be bundled and redistributed with software; it forbids selling a font on its own, which the site never does. [ADR 0008](0008-pdf-export.md)'s choice to embed no fonts in exported PDFs is unchanged.
+
+The same exception covers icons licensed CC BY 4.0. mdBook 0.5.4 inlines Font Awesome Free 6.2.0 icons as SVG in every page, through the `font-awesome-as-a-crate` crate (`CC-BY-4.0 AND MIT`) [solid: measured on the built site]. CC BY 4.0 requires attribution, and each inlined SVG carries Font Awesome's own licence comment, which the build keeps. Like the fonts, the icons are served from the site and appear nowhere else.
 
 **CI-only tooling: H.** Constitution IX governs what the project ships and the code it is licensed under. [ADR 0011](0011-blender-research-tool.md) took that reading for research spike directories; this ADR extends it to CI tooling. A tool that runs in a CI job and leaves nothing in a shipped artifact or in the published site is outside it. This ratifies `Swatinem/rust-cache` (LGPL-3.0). What such a tool writes into a published or shipped output is not CI-only: the fonts above fall under E, not H.
 
@@ -59,13 +61,13 @@ Licences of tools that `cargo install` puts on a runner or a contributor's machi
 * Good, because the site builds from one pinned binary with no Python or Node toolchain, and its output is reproducible.
 * Good, because the full API reference can be published as rustdoc writes it, with no patched theme to maintain.
 * Good, because a CI tool's licence no longer reads as a breach of IX, and the reading is written down once.
-* Bad, because the published site carries files under a licence that is not on the allow-list. The exception is scoped to font files in the docs site; any other asset outside the allow-list needs its own ADR.
+* Bad, because the published site carries files under licences that are not on the allow-list. The exception is scoped to font files and icons in the docs site; any other asset outside the allow-list needs its own ADR.
 * Bad, because H moves a judgement to review: whether a tool's output reaches a shipped artifact is not something `cargo deny` can see.
 
 ### Confirmation
 
-* Review: a PR that adds an OFL font, or any asset outside the allow-list, to anything but the docs site is rejected; a CI tool whose output lands in a shipped artifact or the published site is held to the allow-list.
-* The `docs` step's build (W008) is the point where every third-party asset in the built site is listed with its licence. An asset that is neither on the allow-list nor an OFL-1.1 font stops that task for a new ADR. mdBook 0.5 embeds icons as inline SVG; their licence is not yet confirmed [verify].
+* Review: a PR that adds an OFL font, a CC BY icon, or any asset outside the allow-list, to anything but the docs site is rejected; a CI tool whose output lands in a shipped artifact or the published site is held to the allow-list.
+* The `docs` step's build (W008) is the point where every third-party asset in the built site is listed with its licence. An asset that is neither on the allow-list, an OFL-1.1 font, nor a CC BY 4.0 icon stops that task for a new ADR. mdBook 0.5.4's assets were listed before this ADR merged: Open Sans (Apache-2.0), Source Code Pro (OFL-1.1), Font Awesome icons (CC BY 4.0), and clipboard.js, elasticlunr and mark.js (MIT), highlight.js (BSD-3-Clause), mdBook's own front end (MPL-2.0) [solid: file headers and crate licences]. A version bump of mdBook repeats the list.
 * A tool added to `scripts/check.sh --setup` adds its row to the table above.
 
 ## Pros and cons of the options
@@ -73,7 +75,7 @@ Licences of tools that `cargo install` puts on a runner or a contributor's machi
 ### A: mdBook
 
 * Good, because MPL-2.0, one binary, client-side search, no analytics since 0.5.0, and unknown config keys are errors.
-* Bad, because its theming is plainer than the alternatives', and its default theme carries one OFL font.
+* Bad, because its theming is plainer than the alternatives', and its default theme carries one OFL font and CC BY icons.
 
 ### B: Zola
 
@@ -87,7 +89,7 @@ Licences of tools that `cargo install` puts on a runner or a contributor's machi
 
 * Bad, because each adds a Node toolchain to the docs lane, and each has a blocker of its own: Astro's CLI sends telemetry unless disabled, Docusaurus has no offline search built in, VitePress stable has been idle since 2025-08.
 
-### E: OFL in the docs site only
+### E: OFL fonts and CC BY icons in the docs site only
 
 * Good, because rustdoc and mdBook are used as shipped.
 * Bad, because it is an exception to the allow-list, however narrow.

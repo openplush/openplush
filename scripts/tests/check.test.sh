@@ -135,6 +135,16 @@ if [[ -f $docs_yml ]] && grep -q 'scripts/check.sh --setup docs' "$docs_yml"; th
 else
   bad "docs.yml installs the docs tools with check.sh --setup docs" "$(grep -n 'check.sh' "$docs_yml" 2>&1)"
 fi
+# The determinism job builds, moves the site aside, builds again, then diffs:
+# --setup docs installs the tools and runs the docs step, so it is the first build. The first build
+# moves outside target/, which rust-cache restores, so a stale copy can never stand in for it.
+want_runs=$'scripts/check.sh --setup docs\nmv target/site "$RUNNER_TEMP/site-1"\nscripts/check.sh docs\ndiff -r "$RUNNER_TEMP/site-1" target/site'
+got_runs=$([[ -f $docs_yml ]] && awk '/^  determinism:$/ {on = 1; next} on && /^  [a-z-]+:$/ {on = 0} on' "$docs_yml" | sed -n 's/^ *- run: //p' | grep -E '^(scripts/check.sh|mv |diff )')
+if [[ $got_runs == "$want_runs" ]]; then
+  ok "docs.yml builds the site twice and diffs the builds"
+else
+  bad "docs.yml builds the site twice and diffs the builds" "$got_runs"
+fi
 # With steps named, --setup installs only what they need.
 expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="
 out=$("$check" --dry-run --setup engine 2>&1)

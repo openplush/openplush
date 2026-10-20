@@ -64,6 +64,7 @@ fn a_clean_closed_surface_builds_and_the_report_has_nothing_but_its_component() 
     assert_eq!(mesh.face_count(), 4);
     assert_eq!(mesh.vertex_count(), 4);
     assert!(nothing_to_report(&report));
+    assert!(mesh.edge_copies().is_empty());
     assert_eq!(report.components().len(), 1);
     assert!(!report.components()[0].detail_candidate);
 }
@@ -154,6 +155,7 @@ fn a_double_sided_sheet_builds_with_its_pairings_and_sheets_listed() {
     assert_eq!(report.sheets(), [[f(0), f(3)], [f(1), f(2)]]);
     assert_eq!(report.paired_edges().len(), 1);
     assert!(report.mandatory_seams().is_empty());
+    assert_eq!(mesh.edge_copies(), report.edge_copies());
     // The diagonal's two copies are one group, both interior.
     let [group] = report.edge_copies() else {
         panic!("{:?}", report.edge_copies());

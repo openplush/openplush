@@ -16,7 +16,7 @@ mod validate;
 use openplush_geom::epsilon::{AREA_RELATIVE_SQ, ModelTolerances};
 use openplush_geom::{DVec2, DVec3};
 
-use crate::{FaceId, HalfEdgeId, SourceCorner, SourceMaterials, VertexId};
+use crate::{EdgeId, FaceId, HalfEdgeId, SourceCorner, SourceMaterials, VertexId};
 
 /// A triangle mesh satisfying the five invariants of `debug_validate`: a
 /// consistently oriented 2-manifold, possibly with boundary, with no degenerate or
@@ -43,6 +43,7 @@ pub struct ManifoldMesh {
     // file-level, moved unchanged from the soup
     materials: SourceMaterials,
     extra_uv_sets: u32,
+    edge_copies: Vec<Vec<EdgeId>>,
 }
 
 /// True if triangle (a, b, c) has area at or below `tol.area()`. The edge vectors
@@ -62,6 +63,17 @@ fn ix(i: u32) -> usize {
 }
 
 impl ManifoldMesh {
+    /// The copies repair made of each edge it split, as edge IDs of this mesh: one group per
+    /// split edge, each ascending, the groups ordered by their first copy. Empty if it split none.
+    pub fn edge_copies(&self) -> &[Vec<EdgeId>] {
+        &self.edge_copies
+    }
+
+    /// Records the copy groups; only repair knows them, once the mesh's edges are numbered.
+    pub(crate) fn set_edge_copies(&mut self, groups: Vec<Vec<EdgeId>>) {
+        self.edge_copies = groups;
+    }
+
     /// Number of vertices.
     pub fn vertex_count(&self) -> usize {
         self.pos.len()

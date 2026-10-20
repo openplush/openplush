@@ -275,13 +275,15 @@ fn build(
             faces: [s.copies[0].0, s.copies[1].0],
         })
         .collect();
-    let mesh = ManifoldMesh::from_paired_triangles(&compact, tol, &pairings, &sheets, &conflicts)?;
+    let mut mesh =
+        ManifoldMesh::from_paired_triangles(&compact, tol, &pairings, &sheets, &conflicts)?;
     for copy in &mut report.vertex_copies {
         copy.of = renumber(copy.of);
         copy.copy = renumber(copy.copy);
     }
     let mut seams: Vec<[VertexId; 2]> = seams.into_iter().map(edge).collect();
     resolve_splits(&mesh, &splits, &mut report, &mut seams);
+    mesh.set_edge_copies(report.edge_copies.clone());
     seams.sort();
     seams.dedup();
     report.mandatory_seams = seams;

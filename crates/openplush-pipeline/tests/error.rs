@@ -6,7 +6,7 @@ use std::error::Error;
 
 use openplush_pipeline::{
     ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PieceId, Proposal, ProposalId,
-    ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
+    ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
 };
 
 fn dart(chart: u32, edge: u32) -> Result<Proposal, Box<dyn Error>> {
@@ -196,4 +196,17 @@ fn proposal_not_offered_names_the_proposal_in_its_wire_form() {
 fn cancelled_has_nothing_to_locate() {
     // Cooperative cancellation is the caller's act, not a defect in the model.
     assert_eq!(EngineError::Cancelled.to_string(), "cancelled");
+}
+
+#[test]
+fn seams_prints_its_inner_errors_message() {
+    let inner = SeamsError::UnpairedBoundarySeam {
+        chain: SeamChainId::new(3),
+    };
+    let e = EngineError::Seams(inner.clone());
+    assert_eq!(e.to_string(), inner.to_string());
+    assert_eq!(
+        e.to_string(),
+        "seam chain SeamChainId(3) runs along the mesh boundary with no recorded partner"
+    );
 }

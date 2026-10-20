@@ -18,9 +18,9 @@ A chart arrives from the seams stage as a `ChartMesh`: model-space positions and
 
 The flattener works in the chart's own units. Flattening a chart and then scaling it gives the same shape as scaling first, so physical size is applied after flattening and never baked in here.
 
-**Where the distortion shows.** A developable chart, such as a cylinder slit lengthwise, flattens with no distortion at all. A curved chart pays inside: a hemisphere cap pinned at its rim compresses toward the middle, with a mean compression deficit of 35 to 38% in the research measurements. `metrics::distortion` reports each face's stretch and compression (the singular values of the map from its 3D shape to its flat one), and `summary::summarize` sums a chart up by area. Neither applies a threshold: how much compression is too much depends on the fabric, and the remedy is a dart, which the maker chooses.
+**Where the distortion shows.** A developable chart, such as a cylinder slit lengthwise, flattens with no distortion at all. A curved chart pays inside: a hemisphere cap pinned at its rim compresses toward the middle, with a mean compression deficit of 35 to 38% in [ADR 0005](../adr/0005-boundary-pinned-flattening.md)'s measurements. `metrics::distortion` reports each face's stretch and compression (the singular values of the map from its 3D shape to its flat one), and `summary::summarize` sums a chart up by area. Neither applies a threshold: how much compression is too much depends on the fabric, and the remedy is a dart, which the maker chooses.
 
-**When it fails.** Two failures are possible and both are typed errors, never a quiet compromise:
+**When it fails.** Two failures come from the shape itself, and both are typed errors, never a quiet compromise. The others, such as an empty or degenerate chart, are guards; the [pipeline](pipeline.md#flatten-each-chart-laid-flat) page lists them all.
 
 - The boundary cannot close at its lengths: `BoundaryNotRealizable`, with how far the polygon misses and a dart (the shortest edge path from the boundary to the interior vertex with the most angle defect, the most curved point) that would relieve it.
 - A triangle comes out turned over: `Flip`, listing every such face.

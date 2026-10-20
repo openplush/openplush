@@ -450,7 +450,7 @@ pub enum WarningTarget { Face(FaceId), Edge(EdgeId), Chain(SeamChainId), Piece(P
 
 ```rust
 #[non_exhaustive]
-pub enum Format { Obj, Gltf, Glb, Stl, Ply }
+pub enum Format { Obj, Gltf, Glb, Stl, Ply, Fbx }
 ```
 
 ## 14. Contracts to Write Next (`contracts/`)

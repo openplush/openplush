@@ -43,7 +43,7 @@ Each `EngineError` variant carries the location of the problem. The messages are
 |---|---|---|
 | `Parse` | `format`, plus the reader's `detail` | `could not read the {format name} file: {detail}` |
 | `NonFiniteInput` | every non-finite source vertex (`SourceCorner`) | `{n} source vertices have a NaN or infinite coordinate` |
-| `Mesh` | whatever the inner `MeshError` names, in the soup given to repair (no mesh exists when repair refuses): its faces, its vertices, a hole loop by its `SourceCorner` in `source_vertices`, a broken invariant's element (a half-edge as its edge); a refusal about the soup as a whole names none | the inner error's message, unchanged, as in the `MeshError` table below |
+| `Mesh` | whatever the inner `MeshError` names, in the soup given to repair (no mesh exists when repair refuses; only `BrokenInvariant`, a bug-class check of debug builds, names the half-built mesh's IDs): its faces, its vertices, a hole loop by its `SourceCorner` in `source_vertices`, a broken invariant's element (a half-edge as its edge); a refusal about the soup as a whole names none | the inner error's message, unchanged, as in the `MeshError` table below |
 | `ChartNotDisk` | `chart`; carries `failure` and the `proposals` that fix it | `chart {chart} is not a topological disk` |
 | `FoldedChart` | `chart`, `edge` (the lowest edge it folds across) | `chart {chart} lies back over itself across edge {edge}` |
 | `Seams` | whatever the inner `SeamsError` names: its `edge`, `chart`, `chain` or `vertex` IDs; a refusal about a whole proposal or dart (`EmptyProposal`, `EmptyDart`, `BadProposalId`) names none | the inner error's message, unchanged, with IDs in Debug form as in the `SeamsError` table below |

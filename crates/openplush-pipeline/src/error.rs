@@ -193,11 +193,11 @@ impl EngineError {
 /// The elements an [`EngineError`] names, by category; each list is sorted and without duplicates.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ErrorLocations {
-    /// Faces of the repaired mesh.
+    /// Faces of the repaired mesh; for `Mesh`, of the soup repair was given.
     pub faces: Vec<FaceId>,
     /// Edges of the repaired mesh.
     pub edges: Vec<EdgeId>,
-    /// Vertices of the repaired mesh.
+    /// Vertices of the repaired mesh; for `Mesh`, of the soup repair was given.
     pub vertices: Vec<VertexId>,
     /// Pattern pieces.
     pub pieces: Vec<PieceId>,

@@ -4,10 +4,10 @@ use openplush_geom::epsilon::ModelTolerances;
 
 use super::nonmanifold_edge::pair_edges;
 use super::orientation::Conflict;
-use super::{bowtie, cap, components, degenerate, orientation, weld};
+use super::{bowtie, cap, components, degenerate, holes, orientation, weld};
 use crate::{
-    EdgeId, FaceId, HalfEdgeId, HoleReport, LoopRef, ManifoldMesh, MeshError, PairedEdge,
-    RepairPlan, RepairReport, TriangleSoup, VertexId,
+    EdgeId, FaceId, HalfEdgeId, HoleReport, ManifoldMesh, MeshError, PairedEdge, RepairPlan,
+    RepairReport, TriangleSoup, VertexId,
 };
 
 /// What the steps found that the build and the report still need.
@@ -285,38 +285,22 @@ fn build(
     seams.sort();
     seams.dedup();
     report.mandatory_seams = seams;
-    report.holes = holes(&mesh)
+    let holes = holes::classify(&mesh, plan)?;
+    // Filling is not built yet: a loop classified accidental is refused, never left open silently.
+    if let Some(hole) = holes.iter().find(|h| h.accidental) {
+        return Err(MeshError::HoleFillUnavailable {
+            loop_ref: hole.loop_ref,
+        });
+    }
+    report.holes = holes
         .into_iter()
-        .map(|loop_ref| HoleReport {
-            loop_ref,
+        .map(|h| HoleReport {
+            loop_ref: h.loop_ref,
             filled: false,
             added_faces: Vec::new(),
         })
         .collect();
-    let has = |l: &LoopRef| report.holes.iter().any(|h| h.loop_ref == *l);
-    if let Some(&loop_ref) = plan.fill_holes.iter().find(|l| !has(l)) {
-        return Err(MeshError::UnknownHoleLoop { loop_ref });
-    }
-    if let Some(&loop_ref) = plan.fill_holes.iter().next() {
-        return Err(MeshError::HoleFillUnavailable { loop_ref });
-    }
     Ok((mesh, report))
-}
-
-/// Each boundary loop of the mesh, named by the lowest source corner among its vertices.
-fn holes(mesh: &ManifoldMesh) -> Vec<LoopRef> {
-    mesh.boundary_loops()
-        .iter()
-        .filter_map(|boundary| {
-            boundary
-                .iter()
-                // The twin of a boundary half-edge has a face, whose corner at its
-                // origin is the boundary half-edge's destination.
-                .filter_map(|&h: &HalfEdgeId| mesh.corner_source(h.twin()))
-                .min()
-                .map(LoopRef::new)
-        })
-        .collect()
 }
 
 /// Fills the report's edge copies and orientation conflicts from the split edges, as the

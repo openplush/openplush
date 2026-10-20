@@ -10,8 +10,10 @@ mod common;
 
 use common::{Setup, repaired_with_report};
 use openplush_geom::DVec3;
-use openplush_mesh::{EdgeId, ManifoldMesh, RepairReport};
-use openplush_seams::{SeamBundle, SeamChainId, SeamGraph, SeamKind, SeamSet, SeamsError, SewingMap};
+use openplush_mesh::{EdgeId, HalfEdgeId, ManifoldMesh, RepairReport};
+use openplush_seams::{
+    SeamBundle, SeamChainId, SeamGraph, SeamKind, SeamNode, SeamSet, SeamsError, SewingMap,
+};
 
 fn p(x: f64, y: f64, z: f64) -> DVec3 {
     DVec3::new(x, y, z)
@@ -66,8 +68,12 @@ fn mark_groups(report: &RepairReport, seams: &mut SeamSet, kind: SeamKind) -> Re
     Ok(())
 }
 
-fn map(mesh: &ManifoldMesh, seams: &SeamSet, report: &RepairReport) -> Result<Result<SewingMap, SeamsError>, Setup> {
-    let graph = SeamGraph::new(mesh, seams)?;
+fn map(
+    mesh: &ManifoldMesh,
+    seams: &SeamSet,
+    report: &RepairReport,
+) -> Result<Result<SewingMap, SeamsError>, Setup> {
+    let graph = SeamGraph::with_copies(mesh, seams, report.edge_copies())?;
     Ok(SewingMap::new(mesh, seams, &graph, report.edge_copies()))
 }
 
@@ -76,16 +82,24 @@ fn is_boundary(mesh: &ManifoldMesh, e: EdgeId) -> bool {
     mesh.face(h).is_none() || mesh.face(h.twin()).is_none()
 }
 
-/// Every side of a joined bundle runs with the lead chain's walk: at each position, the origins
-/// of all sides' half-edges sit at one point, and so do the destinations.
+/// Every side of a joined bundle follows the lead chain's walk: at each position, every side's
+/// half-edge joins the same two points as the lead's (with the walk or, for a twin side, against
+/// it), and every side has faces.
 fn sides_run_together(mesh: &ManifoldMesh, bundle: &SeamBundle) {
     let lead = &bundle.sides()[0];
+    let at = |h: HalfEdgeId| {
+        let mut ends = [mesh.position(mesh.origin(h)), mesh.position(mesh.dest(h))];
+        ends.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.y.total_cmp(&b.y)));
+        ends
+    };
     for side in bundle.sides() {
-        assert_eq!(side.half_edges().len(), lead.half_edges().len(), "{bundle:?}");
+        assert_eq!(
+            side.half_edges().len(),
+            lead.half_edges().len(),
+            "{bundle:?}"
+        );
         for (&h, &g) in side.half_edges().iter().zip(lead.half_edges()) {
-            let at = |v| mesh.position(v);
-            assert_eq!(at(mesh.origin(h)), at(mesh.origin(g)), "{bundle:?}");
-            assert_eq!(at(mesh.dest(h)), at(mesh.dest(g)), "{bundle:?}");
+            assert_eq!(at(h), at(g), "{bundle:?}");
             assert!(mesh.face(h).is_some(), "{bundle:?}: a side has a face");
         }
     }
@@ -118,9 +132,12 @@ fn a_fin_whose_body_edge_is_not_a_seam_is_still_an_unpaired_boundary() -> Result
     let [group] = report.edge_copies() else {
         panic!("{:?}", report.edge_copies());
     };
-    let rim = *group.iter().find(|&&e| is_boundary(&mesh, e)).ok_or("a boundary copy")?;
+    let rim = *group
+        .iter()
+        .find(|&&e| is_boundary(&mesh, e))
+        .ok_or("a boundary copy")?;
     seams.insert(rim, SeamKind::Mandatory)?;
-    let graph = SeamGraph::new(&mesh, &seams)?;
+    let graph = SeamGraph::with_copies(&mesh, &seams, report.edge_copies())?;
     let chain = graph.chains()[0].id();
     assert_eq!(
         map(&mesh, &seams, &report)?,
@@ -168,12 +185,15 @@ fn copies_whose_chains_differ_in_length_are_a_mismatch_not_a_guess() -> Result<(
     let [group] = report.edge_copies() else {
         panic!("{:?}", report.edge_copies());
     };
-    let rim = *group.iter().find(|&&e| is_boundary(&mesh, e)).ok_or("a boundary copy")?;
+    let rim = *group
+        .iter()
+        .find(|&&e| is_boundary(&mesh, e))
+        .ok_or("a boundary copy")?;
     let h = rim.half_edge();
     let b = if mesh.face(h).is_none() { h } else { h.twin() };
     let next = mesh.next(b).edge();
     seams.insert(next, SeamKind::Mandatory)?;
-    let graph = SeamGraph::new(&mesh, &seams)?;
+    let graph = SeamGraph::with_copies(&mesh, &seams, report.edge_copies())?;
     let body = graph
         .chains()
         .iter()
@@ -195,5 +215,22 @@ fn chain_ids_are_the_lowest_edge_whatever_the_join() -> Result<(), Setup> {
     let map = map(&mesh, &seams, &report)??;
     let lead: SeamChainId = map.bundles()[0].chain();
     assert!(map.bundles()[0].chains().iter().all(|&c| c >= lead));
+    Ok(())
+}
+
+#[test]
+fn two_copies_meeting_at_a_shared_vertex_are_separate_chains_ending_at_copy_ends()
+-> Result<(), Setup> {
+    // The pillow's diagonal copies join the same two vertices; without the groups they would
+    // chain into one two-edge ring.
+    let (mesh, report) = sheet()?;
+    let mut seams = SeamSet::new();
+    mark_groups(&report, &mut seams, SeamKind::Cut)?;
+    let ring = SeamGraph::new(&mesh, &seams)?;
+    assert_eq!(ring.chains().len(), 1);
+    let graph = SeamGraph::with_copies(&mesh, &seams, report.edge_copies())?;
+    assert_eq!(graph.chains().len(), 2);
+    assert!(graph.nodes().all(|(_, n)| n == SeamNode::CopyEnd));
+    assert_eq!(graph.nodes().count(), 2);
     Ok(())
 }

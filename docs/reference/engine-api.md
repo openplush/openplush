@@ -66,6 +66,7 @@ Three methods read an error the way the shell needs it. Each matches every varia
 | `NotAWalk` | the `edge`, in Debug form | `edge {edge:?} does not continue the walk` |
 | `DartNotAnchored` | the walk's first `vertex`, in Debug form | `a dart starts on a seam or the mesh boundary; neither end does (vertex {vertex:?})` |
 | `DartTouchesSeam` | the first such `vertex`, in Debug form | `a dart's tip and inner vertices touch no seam or boundary; vertex {vertex:?} does` |
+| `CopyGroupMismatch` | the lead `chain`, in Debug form | `the copies of seam chain {chain:?} do not form chains that sew together` |
 
 ## Warnings
 

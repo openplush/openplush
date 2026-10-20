@@ -96,7 +96,10 @@ pub(crate) fn repaired_with_report(
         })
         .collect();
     let soup = TriangleSoup::new(positions, triangles, corners, None)?;
-    Ok(openplush_mesh::into_manifold(&soup, &RepairPlan::default())?)
+    Ok(openplush_mesh::into_manifold(
+        &soup,
+        &RepairPlan::default(),
+    )?)
 }
 
 /// A closed octahedron: four points round the equator, then the top and the bottom.

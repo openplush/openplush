@@ -896,6 +896,24 @@ fn an_interleaved_view_is_read_by_its_stride() -> Result<(), Setup> {
 }
 
 #[test]
+fn a_stride_shorter_than_its_element_is_refused_not_read_overlapping() -> Result<(), Setup> {
+    let bytes: Vec<u8> = TRIANGLE
+        .iter()
+        .flatten()
+        .flat_map(|c| c.to_le_bytes())
+        .collect();
+    let doc = raw(
+        &bytes,
+        r#"{"buffer":0,"byteLength":36,"byteStride":8}"#,
+        &format!(r#"{{"bufferView":0,{POSITION_ACCESSOR}}}"#),
+        false,
+    );
+    let detail = parse_detail(read(&doc))?;
+    assert!(detail.contains("stride"), "{detail}");
+    Ok(())
+}
+
+#[test]
 fn an_accessor_offset_into_its_view_is_honoured() -> Result<(), Setup> {
     let points = [
         [9.0f32, 9.0, 9.0],

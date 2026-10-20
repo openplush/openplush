@@ -3,6 +3,7 @@
 [OpenPlush documentation](README.md)
 
 - [Start here](start/README.md)
+  - [Set up and run every check](start/setup.md)
   - [Project status](start/status.md)
 - [Architecture decision records](adr/README.md)
   - [0000 Template](adr/0000-template.md)

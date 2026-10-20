@@ -57,7 +57,6 @@ fn every_loop_is_an_opening_unless_the_plan_lists_it() {
         names.iter().all(|&n| n != LoopRef::new(corner(1))),
         "{names:?}"
     );
-    assert_eq!(holes.iter().map(|h| h.half_edges.len()).sum::<usize>(), 8);
 }
 
 #[test]

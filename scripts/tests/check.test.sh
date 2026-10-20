@@ -65,10 +65,16 @@ expect_plan "workflows step lints the workflows with actionlint alone" "workflow
 expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
 expect_plan "docs step builds the book and checks its navigation" "docs" \
   "mdbook build" "scripts/check-docs-summary.sh"
-expect_plan "docs step checks the built site loads nothing remote" "docs" \
-  "scripts/check-docs-remote.sh target/site/dev"
-expect_plan "docs step checks every link and anchor in the built site, after its self-test" "docs" \
-  "scripts/tests/check-docs-links.test.sh" "scripts/check-docs-links.sh target/site/dev"
+# mdBook copies every non-Markdown file under docs/, so the landing page also
+# lands inside the book, where its dev/ link is dead; the step drops that copy.
+expect_plan "docs step puts the landing page at the site root, not in the book" "docs" \
+  "cp docs/site/index.html target/site/index.html" "rm -r target/site/dev/site"
+expect_plan "docs step runs the links self-test" "docs" "scripts/tests/check-docs-links.test.sh"
+# The whole site, landing page included, not just the book under dev/.
+out=$("$check" --dry-run docs 2>&1)
+for cmd in "scripts/check-docs-remote.sh target/site" "scripts/check-docs-links.sh target/site"; do
+  if grep -qxF "+ $cmd" <<<"$out"; then ok "docs step runs $cmd"; else bad "docs step runs $cmd" "$out"; fi
+done
 # The links self-test builds a book with mdbook and runs lychee, which CI's engine
 # setup does not install, so only the docs step runs it.
 out=$("$check" --dry-run boundary 2>&1)

@@ -1,6 +1,6 @@
 //! The seam graph: the vertices where seam chains must end, and the chains between them.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use openplush_mesh::{EdgeId, HalfEdgeId, ManifoldMesh, VertexId};
 
@@ -17,6 +17,9 @@ pub enum SeamNode {
     DartTip,
     /// Two seam edges of different kinds meet, as where an opening starts along a seam.
     KindChange,
+    /// Two seam copies of one split edge meet: each copy is a chain of its own, so the sewing
+    /// map can join them side by side rather than walk from one copy into the other.
+    CopyEnd,
 }
 
 /// A maximal path of seam edges between nodes, or a closed loop with no node on it.
@@ -64,13 +67,32 @@ pub struct SeamGraph {
 }
 
 impl SeamGraph {
-    /// The graph of `seams` on `mesh`.
+    /// The graph of `seams` on `mesh`, with no split edges.
     ///
     /// # Errors
     /// `UnknownEdge`, naming the lowest, when a seam is on an edge `mesh` does not have.
     pub fn new(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<Self, SeamsError> {
+        Self::with_copies(mesh, seams, &[])
+    }
+
+    /// The graph of `seams` on `mesh`, where `groups` are repair's copy groups
+    /// (`RepairReport::edge_copies`): two seam copies of one split edge never continue one chain,
+    /// the vertex where they meet being a `CopyEnd` node.
+    ///
+    /// # Errors
+    /// `UnknownEdge`, naming the lowest, when a seam is on an edge `mesh` does not have.
+    pub fn with_copies(
+        mesh: &ManifoldMesh,
+        seams: &SeamSet,
+        groups: &[Vec<EdgeId>],
+    ) -> Result<Self, SeamsError> {
         seams.check_edges(mesh)?;
-        let stops = stops(mesh, seams);
+        let copies: BTreeSet<(EdgeId, EdgeId)> = groups
+            .iter()
+            .flat_map(|g| g.iter().flat_map(move |&a| g.iter().map(move |&b| (a, b))))
+            .filter(|(a, b)| a != b)
+            .collect();
+        let stops = stops(mesh, seams, &copies);
         let mut walk = Walk {
             mesh,
             stops: &stops,
@@ -128,14 +150,18 @@ enum Stop {
 }
 
 /// Every vertex at the end of a seam edge, classified.
-fn stops(mesh: &ManifoldMesh, seams: &SeamSet) -> BTreeMap<VertexId, Stop> {
+fn stops(
+    mesh: &ManifoldMesh,
+    seams: &SeamSet,
+    copies: &BTreeSet<(EdgeId, EdgeId)>,
+) -> BTreeMap<VertexId, Stop> {
     seams
         .iter()
         .flat_map(|(e, _)| {
             let h = e.half_edge();
             [mesh.origin(h), mesh.dest(h)]
         })
-        .map(|v| (v, classify(mesh, seams, v)))
+        .map(|v| (v, classify(mesh, seams, copies, v)))
         .collect()
 }
 
@@ -146,7 +172,12 @@ fn star(mesh: &ManifoldMesh, seams: &SeamSet, v: VertexId) -> Vec<(HalfEdgeId, S
         .collect()
 }
 
-fn classify(mesh: &ManifoldMesh, seams: &SeamSet, v: VertexId) -> Stop {
+fn classify(
+    mesh: &ManifoldMesh,
+    seams: &SeamSet,
+    copies: &BTreeSet<(EdgeId, EdgeId)>,
+    v: VertexId,
+) -> Stop {
     let star = star(mesh, seams, v);
     if star.len() >= 3 {
         return Stop::Node(SeamNode::Junction);
@@ -159,6 +190,7 @@ fn classify(mesh: &ManifoldMesh, seams: &SeamSet, v: VertexId) -> Stop {
         return Stop::Node(SeamNode::BoundaryEnd);
     }
     match star[..] {
+        [(a, _), (b, _)] if copies.contains(&(a.edge(), b.edge())) => Stop::Node(SeamNode::CopyEnd),
         [(a, ka), (b, kb)] if ka == kb => Stop::Pass([a, b]),
         [_, _] => Stop::Node(SeamNode::KindChange),
         // `v` ends a seam edge, so this is one edge.

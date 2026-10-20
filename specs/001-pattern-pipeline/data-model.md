@@ -121,6 +121,7 @@ Seam edges form a graph on mesh vertices. A vertex's seam-valence counts its sea
 - **Junction**: seam-valence ≥ 3 (three or more seam edges meet).
 - **Endpoint on boundary**: on a seam and on a mesh-boundary edge that is not itself a seam, so the seam meets a hole/opening there.
 - **Free endpoint** (seam-valence 1, otherwise): **dart tip**.
+- **Copy end**: seam-valence 2, its two seam edges copies of one edge repair split (D-061), so each copy is a chain of its own that the sewing map joins side by side.
 - **Kind change**: seam-valence 2, its two seam edges of different `SeamKind`, so an `Opening` stretch of a seam is a chain of its own.
 - **Chain vertex**: seam-valence 2, both seam edges of the same kind.
 

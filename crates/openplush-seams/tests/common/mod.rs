@@ -4,7 +4,9 @@
 use std::f64::consts::TAU;
 
 use openplush_geom::DVec3;
-use openplush_mesh::{EdgeId, ManifoldMesh, RepairPlan, SourceCorner, TriangleSoup, VertexId};
+use openplush_mesh::{
+    EdgeId, ManifoldMesh, RepairPlan, RepairReport, SourceCorner, TriangleSoup, VertexId,
+};
 use openplush_seams::{SeamKind, SeamSet};
 
 pub(crate) type Setup = Box<dyn std::error::Error>;
@@ -78,6 +80,14 @@ pub(crate) fn repaired(
     positions: Vec<DVec3>,
     triangles: Vec<[u32; 3]>,
 ) -> Result<ManifoldMesh, Setup> {
+    Ok(repaired_with_report(positions, triangles)?.0)
+}
+
+/// As `repaired`, with what repair did.
+pub(crate) fn repaired_with_report(
+    positions: Vec<DVec3>,
+    triangles: Vec<[u32; 3]>,
+) -> Result<(ManifoldMesh, RepairReport), Setup> {
     let corners = (0..)
         .take(3 * triangles.len())
         .map(|vertex| SourceCorner {
@@ -86,7 +96,10 @@ pub(crate) fn repaired(
         })
         .collect();
     let soup = TriangleSoup::new(positions, triangles, corners, None)?;
-    Ok(openplush_mesh::into_manifold(&soup, &RepairPlan::default())?.0)
+    Ok(openplush_mesh::into_manifold(
+        &soup,
+        &RepairPlan::default(),
+    )?)
 }
 
 /// A closed octahedron: four points round the equator, then the top and the bottom.

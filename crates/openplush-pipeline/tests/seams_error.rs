@@ -115,4 +115,11 @@ fn dart_error_messages_are_pinned() {
         .to_string(),
         "a dart's tip and inner vertices touch no seam or boundary; vertex VertexId(5) does"
     );
+    assert_eq!(
+        SeamsError::CopyGroupMismatch {
+            chain: SeamChainId::new(9)
+        }
+        .to_string(),
+        "the copies of seam chain SeamChainId(9) do not form chains that sew together"
+    );
 }

@@ -88,6 +88,13 @@ pub enum SeamsError {
         /// The walk's first vertex.
         vertex: VertexId,
     },
+    /// The seam copies of a split edge do not form chains of one length running end to end with
+    /// the lead chain, or one of them is already joined elsewhere.
+    #[error("the copies of seam chain {chain:?} do not form chains that sew together")]
+    CopyGroupMismatch {
+        /// The lead chain.
+        chain: SeamChainId,
+    },
     /// A vertex past the base lies on a seam or the mesh boundary, so the dart would split the
     /// piece or cross a seam.
     #[error("a dart's tip and inner vertices touch no seam or boundary; vertex {vertex:?} does")]

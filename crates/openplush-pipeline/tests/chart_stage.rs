@@ -168,12 +168,15 @@ fn a_closed_mesh_with_no_seam_is_closed_and_the_error_carries_a_cut() -> Result<
     Ok(())
 }
 
+/// Two triangles on one edge, the second folded back `degrees` from lying on the first.
+fn book(degrees: f64) -> String {
+    let lift = 8.0 * degrees.to_radians().tan();
+    format!("v 0 0 0\nv 10 0 0\nv 5 10 0\nv 5 8 {lift}\nf 1 2 3\nf 2 1 4\n")
+}
+
 #[test]
 fn a_chart_folded_over_itself_is_refused_before_its_topology_is_judged() -> Result<(), Setup> {
-    // Two triangles on one edge, the second folded back 2 degrees from lying on the first.
-    let lift = 8.0 * 2.0_f64.to_radians().tan();
-    let book = format!("v 0 0 0\nv 10 0 0\nv 5 10 0\nv 5 8 {lift}\nf 1 2 3\nf 2 1 4\n");
-    let (mesh, _) = mesh_of(&book)?;
+    let (mesh, _) = mesh_of(&book(2.0))?;
     let Err(EngineError::FoldedChart { chart: id, edge }) = chart(&mesh, &SeamSet::new()) else {
         panic!("a folded chart is refused");
     };
@@ -189,11 +192,24 @@ fn a_chart_folded_over_itself_is_refused_before_its_topology_is_judged() -> Resu
 #[test]
 fn a_seam_on_an_edge_the_mesh_does_not_have_is_a_seams_refusal() -> Result<(), Setup> {
     let (mesh, _) = mesh_of(&sheet(2, 1))?;
+    unknown_edge_is_refused(&mesh)
+}
+
+#[test]
+fn an_unknown_seam_edge_is_refused_before_any_chart_is_judged() -> Result<(), Setup> {
+    // A tube is not a disk, and a book is folded; the unknown edge comes first all the same.
+    let (tube, _) = mesh_of(&tube(4, 2))?;
+    unknown_edge_is_refused(&tube)?;
+    let (book, _) = mesh_of(&book(2.0))?;
+    unknown_edge_is_refused(&book)
+}
+
+fn unknown_edge_is_refused(mesh: &ManifoldMesh) -> Result<(), Setup> {
     let beyond = EdgeId::new(u32::try_from(mesh.edge_count())?);
     let mut seams = SeamSet::new();
     seams.insert(beyond, SeamKind::Cut)?;
     assert_eq!(
-        chart(&mesh, &seams),
+        chart(mesh, &seams),
         Err(EngineError::Seams(SeamsError::UnknownEdge { edge: beyond }))
     );
     Ok(())
@@ -247,5 +263,54 @@ fn a_seam_on_only_the_fins_copy_has_nothing_to_sew_to() -> Result<(), Setup> {
             chain: SeamChainId::new(rim.index())
         }))
     );
+    Ok(())
+}
+
+/// A Möbius strip two quads wide and `n` long round a ring of radius 10, turned half a turn
+/// over the loop: repair cuts it across where no flips make the faces agree.
+fn moebius(n: u32) -> String {
+    let mut s = String::new();
+    for i in 0..n {
+        let a = std::f64::consts::TAU * f64::from(i) / f64::from(n);
+        let (radial, up) = ((a / 2.0).cos(), (a / 2.0).sin());
+        for w in [-2.0, 0.0, 2.0] {
+            let r = 10.0 + w * radial;
+            let _ = writeln!(s, "v {} {} {}", r * a.cos(), r * a.sin(), w * up);
+        }
+    }
+    // Vertex `side` (0, 1, 2 across the rung) of rung `i`; the half turn swaps the sides of
+    // rung `n`, which is rung 0 again.
+    let id = |i: u32, side: u32| if i == n { 3 - side } else { 3 * i + side + 1 };
+    for i in 0..n {
+        for side in 0..2 {
+            let (a, b) = (id(i, side), id(i, side + 1));
+            let (c, d) = (id(i + 1, side), id(i + 1, side + 1));
+            let _ = writeln!(s, "f {a} {b} {d}\nf {a} {d} {c}");
+        }
+    }
+    s
+}
+
+#[test]
+fn a_cut_across_a_strip_sews_as_one_seam_whatever_edges_repair_split_it_into() -> Result<(), Setup>
+{
+    let (mesh, _) = mesh_of(&moebius(8))?;
+    // The cut runs across the strip in three edges, so its two sides are three copies each.
+    assert_eq!(mesh.edge_copies().len(), 3, "{:?}", mesh.edge_copies());
+    let mut seams = SeamSet::new();
+    for &e in mesh.edge_copies().iter().flatten() {
+        seams.insert(e, SeamKind::Mandatory)?;
+    }
+    let (charts, map) = chart(&mesh, &seams)?.value;
+    assert_eq!(charts.len(), 1, "the cut strip");
+    let [bundle] = map.bundles() else {
+        panic!("one seam: {:?}", map.bundles());
+    };
+    assert_eq!(bundle.chains().len(), 2, "{bundle:?}");
+    let [a, b] = bundle.sides() else {
+        panic!("{bundle:?}");
+    };
+    assert_eq!(a.half_edges().len(), 3);
+    assert_eq!(b.half_edges().len(), 3);
     Ok(())
 }

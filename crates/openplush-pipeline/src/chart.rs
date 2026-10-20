@@ -44,11 +44,12 @@ fn check_chart(mesh: &ManifoldMesh, seams: &SeamSet, chart: &Chart) -> Result<()
     let Err(failure) = check_disk(mesh, seams, chart) else {
         return Ok(());
     };
-    let proposals = match close_chart(mesh, seams, chart) {
-        Ok(found) => found.into_iter().collect(),
-        Err(SeamsError::ChartNotClosed { .. }) => Vec::new(),
-        Err(other) => return Err(other.into()),
-    };
+    // `ChartNotClosed`, its one refusal: no cut found leaves a disk, so none is offered.
+    let proposals = close_chart(mesh, seams, chart)
+        .ok()
+        .flatten()
+        .into_iter()
+        .collect();
     Err(EngineError::ChartNotDisk {
         chart: chart.id(),
         failure,

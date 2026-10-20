@@ -36,7 +36,8 @@ permissions:
 jobs:
   # Which PRs this event is about. A label event counts only when a person
   # changes a tier: label; the gate's own label changes come back as events
-  # and would judge again for nothing.
+  # and would judge again for nothing. An edit counts only when it changes the
+  # title (the tick exception) or the base; the gate reads nothing else of it.
   targets:
     name: pull requests to judge
     if: >-
@@ -44,7 +45,8 @@ jobs:
       (github.event_name != 'workflow_run' || github.event.workflow_run.event == 'pull_request') &&
       (github.event_name != 'pull_request_target' ||
        (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
-       (startsWith(github.event.label.name, 'tier:') && github.event.sender.type != 'Bot'))
+       (startsWith(github.event.label.name, 'tier:') && github.event.sender.type != 'Bot')) &&
+      (github.event.action != 'edited' || github.event.changes.title != null || github.event.changes.base != null)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -81,10 +83,12 @@ jobs:
       max-parallel: 4
       matrix:
         pr: ${{ fromJSON(needs.targets.outputs.numbers) }}
-    # One judgement per PR at a time; a newer event supersedes a running one.
+    # One judgement per PR at a time. A push cancels a running one, so the old
+    # head's judgement never finishes after it; any other event queues behind
+    # it instead, since a cancelled run shows on the PR as a failed check.
     concurrency:
       group: merge-gate-${{ matrix.pr }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.event.action == 'synchronize' }}
     env:
       HAS_APP: ${{ secrets.MERGE_GATE_APP_ID != '' && secrets.MERGE_GATE_PRIVATE_KEY != '' }}
       PR: ${{ matrix.pr }}

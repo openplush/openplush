@@ -85,6 +85,6 @@ The automated review (`.github/workflows/review.yml`) skips, on opening, a PR ti
 
 ## More information
 
-The merge mechanics (who labels the tier, who enables auto-merge, when it is disabled) are superseded by [ADR 0015](0015-merge-gate.md). Tier C's "the maintainer merges" and its list of paths are superseded by [ADR 0016](0016-hands-off-merging.md): the gate merges tier C, and a new tier H keeps the gate, the workflows, the rules, the decisions and the licence files with the maintainer. Tiers A and B and the tick exception stand.
+The merge mechanics (who labels the tier, who enables auto-merge, when it is disabled) are superseded by [ADR 0015](0015-merge-gate.md); the tiers and their paths stand. [ADR 0016](0016-standing-merge-authorization.md) lets an agent merge tier C PRs under a time-boxed standing authorization.
 
 Revisit once the factory has run a week under the tiers: count PRs per tier, and any tier-A merge that had to be reverted.

@@ -19,7 +19,11 @@ def box(w: float, d: float, h: float) -> Mesh:
 
 def tube(n: int, r: float, length: float, rings: int) -> Mesh:
     """An open cylinder of `rings` bands, each `n` quads, wound outward."""
-    pos = [(r * math.cos(2 * math.pi * j / n), r * math.sin(2 * math.pi * j / n), length * i / rings) for i in range(rings + 1) for j in range(n)]
+    pos = [
+        (r * math.cos(2 * math.pi * j / n), r * math.sin(2 * math.pi * j / n), length * i / rings)
+        for i in range(rings + 1)
+        for j in range(n)
+    ]
     faces = []
     for i in range(rings):
         for j in range(n):
@@ -85,7 +89,9 @@ class Curvature(unittest.TestCase):
         self.assertEqual([round(x) for x in integrated_curvature(m, 10.0, absolute=True)], [round(x) for x in signed])
         # Pull one corner inward through the box: its defect turns negative and the signed disk sum drops.
         dented = Mesh([p if i != 7 else (7.0, 7.0, 7.0) for i, p in enumerate(m.pos)], m.faces)
-        self.assertLess(round(integrated_curvature(dented, 10.0)[7]), round(integrated_curvature(dented, 10.0, absolute=True)[7]))
+        signed_dented = integrated_curvature(dented, 10.0)[7]
+        absolute_dented = integrated_curvature(dented, 10.0, absolute=True)[7]
+        self.assertLess(round(signed_dented), round(absolute_dented))
 
     def test_clusters_merge_adjacent_vertices_and_report_the_peak(self) -> None:
         m = box(10.0, 10.0, 10.0)

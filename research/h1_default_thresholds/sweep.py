@@ -53,10 +53,9 @@ def region_of(p: tuple[float, float, float]) -> str:
 
 
 def chain_centre(m: Mesh, c: Chain) -> tuple[float, float, float]:
-    xs = [m.pos[v][d] for e in c.edges for v in e for d in (0,)]
-    ys = [m.pos[v][1] for e in c.edges for v in e]
-    zs = [m.pos[v][2] for e in c.edges for v in e]
-    return (sum(xs) / len(xs), sum(ys) / len(ys), sum(zs) / len(zs))
+    ends = [m.pos[v] for e in c.edges for v in e]
+    n = len(ends)
+    return (sum(p[0] for p in ends) / n, sum(p[1] for p in ends) / n, sum(p[2] for p in ends) / n)
 
 
 def by_region(names: list[str]) -> str:
@@ -83,7 +82,8 @@ def fold_tables(meshes: dict[str, Mesh]) -> None:
         m = meshes["quadruped"]
         print(f"\nQuadruped {name.lower()} by region (min length 20 mm):\n")
         for t in levels:
-            names = [region_of(chain_centre(m, c)) for c in built["quadruped"] if c.mean_fold >= t and c.length_mm >= 20.0]
+            kept = [c for c in built["quadruped"] if c.mean_fold >= t and c.length_mm >= 20.0]
+            names = [region_of(chain_centre(m, c)) for c in kept]
             print(f"- ≥ {t:.0f}°: {by_region(names)}")
 
 
@@ -101,8 +101,10 @@ def curvature_tables(meshes: dict[str, Mesh]) -> None:
             if n == "quadruped":
                 for t in CURVATURE:
                     names = [region_of(m.pos[v]) for v, peak in built if peak >= t]
-                    where = sorted(tuple(round(c) for c in m.pos[v]) for v, peak in built if peak >= t and region_of(m.pos[v]) == "elsewhere")
-                    placed.append(f"- radius {r:.0f} mm, ≥ {t:.0f}°: {by_region(names)}" + (f"; elsewhere at {where[:6]}" if where else ""))
+                    far = [m.pos[v] for v, peak in built if peak >= t and region_of(m.pos[v]) == "elsewhere"]
+                    where = sorted((round(p[0]), round(p[1]), round(p[2])) for p in far)
+                    tail = f"; elsewhere at {where[:6]}" if where else ""
+                    placed.append(f"- radius {r:.0f} mm, ≥ {t:.0f}°: {by_region(names)}{tail}")
     print("\nQuadruped dart candidates by region (clusters built once at the first threshold, kept by their peak):\n")
     print("\n".join(placed))
 

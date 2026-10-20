@@ -63,6 +63,17 @@ expect_plan "wasm-check builds every test binary for wasm32" "wasm-check" \
 expect_plan "workflows step lints the workflows with actionlint alone" "workflows" \
   "actionlint -shellcheck= -pyflakes= .github/workflows"
 expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
+expect_plan "docs step builds the book and checks its navigation" "docs" \
+  "mdbook build" "scripts/check-docs-summary.sh"
+# The docs step stays out of the default and group runs until CI's cost is decided.
+for args in "" all engine; do
+  out=$("$check" --dry-run $args 2>&1)
+  if [[ $out != *"mdbook build"* && $out != *"scripts/check-docs-summary.sh"* ]]; then
+    ok "${args:-default} run leaves out the docs step"
+  else
+    bad "${args:-default} run leaves out the docs step" "$out"
+  fi
+done
 expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
 mdbook=$(sed -n 's/^MDBOOK_VERSION=//p' "$check")
 lychee=$(sed -n 's/^LYCHEE_VERSION=//p' "$check")
@@ -120,7 +131,7 @@ fi
 
 status=0
 out=$("$check" --dry-run fmtt 2>&1) || status=$?
-if [[ $status -eq 2 && $out == *"unknown step"* ]]; then
+if [[ $status -eq 2 && $out == *"unknown step"* && $out == *" docs"* ]]; then
   ok "unknown step fails with exit 2"
 else
   bad "unknown step fails with exit 2 (got $status)" "$out"

@@ -152,15 +152,16 @@ fn a_swap_that_would_fold_the_pair_over_is_refused() {
 }
 
 #[test]
-fn a_pair_that_keeps_swapping_is_refused() {
+fn a_cocircular_pair_that_rounding_leaves_just_past_delaunay_settles() {
     // An isosceles trapezoid on the unit circle. Cocircular, so in exact arithmetic both
     // diagonals sit on the Delaunay boundary; rounding puts both cotangent sums at -5.6e-17,
-    // so each swap undoes the last until the bound.
+    // which must not make each swap undo the last.
     let mut patch = pair(
         DVec3::new(-0.8, -0.6, 0.0),
         DVec3::new(1.0, 0.0, 0.0),
         DVec3::new(0.8, -0.6, 0.0),
         DVec3::new(-1.0, 0.0, 0.0),
     );
-    assert_eq!(relax(&mut patch, &|_, _| false, &tol(2.0)), None);
+    assert_eq!(relax(&mut patch, &|_, _| false, &tol(2.0)), Some(()));
+    assert_eq!(patch.tris, vec![[0, 1, 2], [1, 0, 3]]);
 }

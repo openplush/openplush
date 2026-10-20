@@ -10,6 +10,7 @@
 //! is a caller bug and indexing panics on it, like a slice.
 
 mod build;
+mod copies;
 mod validate;
 
 use openplush_geom::epsilon::{AREA_RELATIVE_SQ, ModelTolerances};

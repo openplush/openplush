@@ -6,7 +6,7 @@ use super::bowtie::VertexCopy;
 use super::components::Component;
 use super::degenerate::DroppedCopy;
 use super::nonmanifold_edge::PairedEdge;
-use crate::{FaceId, SourceCorner, VertexId};
+use crate::{EdgeId, FaceId, SourceCorner, VertexId};
 
 /// A boundary loop, named by the lowest source corner among its vertices, so the name is
 /// the same on every replay whatever the repaired numbering is.
@@ -97,6 +97,7 @@ pub struct RepairReport {
     pub(crate) components: Vec<Component>,
     pub(crate) holes: Vec<HoleReport>,
     pub(crate) mandatory_seams: Vec<[VertexId; 2]>,
+    pub(crate) edge_copies: Vec<Vec<EdgeId>>,
 }
 
 impl RepairReport {
@@ -145,7 +146,8 @@ impl RepairReport {
         &self.flipped_faces
     }
 
-    /// Edges whose two faces no flips make agree. Empty today: such an edge is refused by the build.
+    /// Edges whose two faces no flips make agree, each cut into a forced seam: the ends of the
+    /// copy its lower face kept.
     pub fn orientation_conflicts(&self) -> &[[VertexId; 2]] {
         &self.orientation_conflicts
     }
@@ -163,6 +165,13 @@ impl RepairReport {
     /// Edges that must be seams because repair made them boundaries.
     pub fn mandatory_seams(&self) -> &[[VertexId; 2]] {
         &self.mandatory_seams
+    }
+
+    /// Each edge repair split, as the mesh's edges it became: every copy, ascending, each with
+    /// two faces (a pair) or one (an unpaired face, or either side of an orientation cut); the
+    /// groups in order of their first copy.
+    pub fn edge_copies(&self) -> &[Vec<EdgeId>] {
+        &self.edge_copies
     }
 }
 

@@ -10,7 +10,9 @@ use std::collections::btree_map::Entry;
 use openplush_geom::DVec2;
 use openplush_geom::epsilon::ModelTolerances;
 
+use super::copies::{Copies, corners_out, cut_copies, edge_copies, edge_key};
 use super::{ManifoldMesh, is_sliver, ix};
+use crate::repair::orientation::Conflict;
 use crate::{
     Counted, FaceId, HalfEdgeId, MeshError, PairedEdge, SourceCorner, TriangleSoup, VertexId,
 };
@@ -32,10 +34,6 @@ struct EdgeSlot {
 
 /// The numbered edges, keyed by (lower, higher) vertex and copy.
 type Edges = BTreeMap<(u32, u32, u32), EdgeSlot>;
-
-/// Which copy of an edge a face uses, for the faces a pairing names: keyed by (face,
-/// lower, higher) vertex. A face not here uses copy 0.
-type Copies = BTreeMap<(u32, u32, u32), u32>;
 
 /// The half-edge arrays, each face linked into a loop; boundary half-edges are
 /// not linked yet.
@@ -63,7 +61,7 @@ impl ManifoldMesh {
         soup: &TriangleSoup,
         tol: &ModelTolerances,
     ) -> Result<Self, MeshError> {
-        Self::from_paired_triangles(soup, tol, &[], &[])
+        Self::from_paired_triangles(soup, tol, &[], &[], &[])
     }
 
     /// As [`Self::from_oriented_triangles`], for a soup with edges on more than two
@@ -71,16 +69,19 @@ impl ManifoldMesh {
     /// edge, even where the copies join the same two vertices, and a face left
     /// unpaired gets a copy of its own. `sheets` are the pairs of coincident faces
     /// (lower face ID first) that are the two layers of a double-sided sheet, which the duplicate check
-    /// lets through. A face the pairings do not name shares the first copy.
+    /// lets through. A face the pairings do not name shares the first copy. Each of
+    /// `conflicts` is a two-face edge cut into two boundary copies, one per face.
     pub(crate) fn from_paired_triangles(
         soup: &TriangleSoup,
         tol: &ModelTolerances,
         pairings: &[PairedEdge],
         sheets: &[[FaceId; 2]],
+        conflicts: &[Conflict],
     ) -> Result<Self, MeshError> {
         refuse_bad_triangles(soup, tol)?;
         refuse_duplicates(soup.triangle_indices(), sheets)?;
-        let copies = edge_copies(soup.triangle_indices(), pairings)?;
+        let mut copies = edge_copies(soup.triangle_indices(), pairings)?;
+        cut_copies(soup.triangle_indices(), conflicts, &mut copies)?;
         refuse_isolated(soup)?;
         let edges = number_edges(soup.triangle_indices(), &copies)?;
         let mut linked = link_faces(soup, &edges, &copies)?;
@@ -316,68 +317,4 @@ fn vertex_out(boundary_out: Vec<Option<HalfEdgeId>>, he_origin: &[VertexId]) -> 
         }
     }
     v_out.into_iter().map(|h| h.unwrap_or(UNSET)).collect()
-}
-
-/// A triangle's three directed edges, corner i to corner i + 1.
-fn corners_out(&[a, b, c]: &[u32; 3]) -> [[u32; 2]; 3] {
-    [[a, b], [b, c], [c, a]]
-}
-
-/// The key of the edge triangle `t` crosses from `a` to `b`.
-fn edge_key(copies: &Copies, t: usize, a: u32, b: u32) -> (u32, u32, u32) {
-    let (lo, hi) = (a.min(b), a.max(b));
-    let copy = copies.get(&(t as u32, lo, hi)).copied().unwrap_or(0);
-    (lo, hi, copy)
-}
-
-/// Gives each pair of an edge's pairing a copy of its own (1, 2, ...) and a face left
-/// unpaired the next. A pairing must be on an edge with more than two faces and name
-/// every one of them, once; otherwise it would cut an edge the soup does not need cut.
-fn edge_copies(tris: &[[u32; 3]], pairings: &[PairedEdge]) -> Result<Copies, MeshError> {
-    let mut users: BTreeMap<(u32, u32), Vec<u32>> = BTreeMap::new();
-    for (t, tri) in tris.iter().enumerate() {
-        for [x, y] in corners_out(tri) {
-            // Lossless: the face count fits in u32 (`TriangleSoup::new`).
-            users
-                .entry((x.min(y), x.max(y)))
-                .or_default()
-                .push(t as u32);
-        }
-    }
-    let mut copies = Copies::new();
-    for pairing in pairings {
-        let [a, b] = pairing.vertices.map(VertexId::index);
-        let on_edge = users.get(&(a, b)).map_or(&[][..], Vec::as_slice);
-        let groups: Vec<Vec<FaceId>> = pairing
-            .pairs
-            .iter()
-            .map(|pair| pair.to_vec())
-            .chain(pairing.unpaired.map(|face| vec![face]))
-            .collect();
-        let named: Vec<FaceId> = groups.iter().flatten().copied().collect();
-        let wrong = |face| MeshError::PairingMismatch {
-            face,
-            a: VertexId::new(a),
-            b: VertexId::new(b),
-        };
-        for (copy, group) in (1u32..).zip(&groups) {
-            for &face in group {
-                let fresh = copies.insert((face.index(), a, b), copy).is_none();
-                if !on_edge.contains(&face.index()) || !fresh {
-                    return Err(wrong(face));
-                }
-            }
-        }
-        if on_edge.len() <= 2 {
-            if let Some(&face) = named.first() {
-                return Err(wrong(face));
-            }
-        } else if let Some(&left) = on_edge
-            .iter()
-            .find(|&&t| !named.iter().any(|n| n.index() == t))
-        {
-            return Err(wrong(FaceId::new(left)));
-        }
-    }
-    Ok(copies)
 }

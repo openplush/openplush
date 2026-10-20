@@ -161,7 +161,10 @@ fn a_double_sided_sheet_builds_with_its_pairings_and_sheets_listed() {
     assert_eq!(group.len(), 2);
     for &e in group {
         let h = e.half_edge();
-        assert!(mesh.face(h).is_some() && mesh.face(h.twin()).is_some(), "{e:?}");
+        assert!(
+            mesh.face(h).is_some() && mesh.face(h.twin()).is_some(),
+            "{e:?}"
+        );
     }
 }
 
@@ -236,7 +239,7 @@ fn a_twisted_ring_is_cut_at_its_conflict_edge_into_an_open_strip_with_a_forced_s
     assert_eq!(mesh.vertex_count(), 7);
     assert_eq!(mesh.boundary_loops().len(), 1);
     assert_eq!(report.orientation_conflicts().len(), 1);
-    assert_eq!(report.flipped_faces(), [f(1), f(3)]);
+    assert_eq!(report.flipped_faces(), [f(0), f(3)]);
     // The two copies of the cut edge are both boundaries, both mandatory seams, one group.
     let [group] = report.edge_copies() else {
         panic!("{:?}", report.edge_copies());
@@ -244,7 +247,10 @@ fn a_twisted_ring_is_cut_at_its_conflict_edge_into_an_open_strip_with_a_forced_s
     assert_eq!(group.len(), 2);
     for &e in group {
         let h = e.half_edge();
-        assert!(mesh.face(h).is_none() || mesh.face(h.twin()).is_none(), "{e:?} is a boundary");
+        assert!(
+            mesh.face(h).is_none() || mesh.face(h.twin()).is_none(),
+            "{e:?} is a boundary"
+        );
         let mut ends = [mesh.origin(h), mesh.dest(h)];
         ends.sort();
         assert!(report.mandatory_seams().contains(&ends), "{e:?} is a seam");

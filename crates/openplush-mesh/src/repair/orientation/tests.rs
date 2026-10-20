@@ -3,7 +3,7 @@
 use openplush_geom::epsilon::ModelTolerances;
 use openplush_geom::{DVec2, DVec3};
 
-use super::orient;
+use super::{Conflict, orient};
 use crate::{FaceId, MeshError, SourceCorner, TriangleSoup, VertexId, validate};
 
 fn f(i: u32) -> FaceId {
@@ -219,8 +219,15 @@ fn a_twisted_ring_reports_the_one_edge_where_the_walk_meets_itself() {
     let s = mobius();
     let (out, done) = oriented(&s);
     assert_eq!(done.flipped, [f(0), f(3)]);
-    assert_eq!(done.conflicts, [[v(2), v(3)]]);
-    assert_eq!(validate(&out).winding_conflicts(), done.conflicts);
+    assert_eq!(
+        done.conflicts,
+        [Conflict {
+            vertices: [v(2), v(3)],
+            faces: [f(1), f(2)]
+        }]
+    );
+    let ends: Vec<[VertexId; 2]> = done.conflicts.iter().map(|c| c.vertices).collect();
+    assert_eq!(validate(&out).winding_conflicts(), ends);
 }
 
 /// The six-vertex projective plane: closed, every edge on two faces, not orientable.

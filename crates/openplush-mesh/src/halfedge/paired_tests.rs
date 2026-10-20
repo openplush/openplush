@@ -20,7 +20,7 @@ fn build(
     pairings: &[PairedEdge],
     sheets: &[[FaceId; 2]],
 ) -> Result<ManifoldMesh, MeshError> {
-    ManifoldMesh::from_paired_triangles(s, &tol(s), pairings, sheets, &[]).map(|(mesh, _)| mesh)
+    ManifoldMesh::from_paired_triangles(s, &tol(s), pairings, sheets, &[])
 }
 
 fn tetra() -> TriangleSoup {
@@ -31,22 +31,19 @@ fn tetra() -> TriangleSoup {
 }
 
 #[test]
-fn a_conflict_cut_splits_a_two_face_edge_into_two_boundary_copies_in_one_group() {
-    // Faces 0 and 1 share edge 0-1; cutting it opens the tetrahedron along that edge.
+fn a_conflict_cut_splits_a_two_face_edge_into_two_boundary_copies() {
+    // Faces 0 and 1 share edge 0-1; cutting it opens the tetrahedron along that edge, and
+    // the cut's ends, still shared by the faces round them, make one two-edge boundary loop.
     let s = tetra();
     let cut = Conflict {
         vertices: [v(0), v(1)],
         faces: [f(0), f(1)],
     };
-    let (mesh, groups) =
-        ManifoldMesh::from_paired_triangles(&s, &tol(&s), &[], &[], &[cut]).unwrap();
+    let mesh = ManifoldMesh::from_paired_triangles(&s, &tol(&s), &[], &[], &[cut]).unwrap();
     assert_eq!(mesh.edge_count(), 7);
-    assert_eq!(groups.len(), 1);
-    assert_eq!(groups[0].len(), 2);
-    for &e in &groups[0] {
-        let h = e.half_edge();
-        assert!(mesh.face(h).is_none() || mesh.face(h.twin()).is_none(), "{e:?}");
-    }
+    let loops = mesh.boundary_loops();
+    assert_eq!(loops.len(), 1);
+    assert_eq!(loops[0].len(), 2);
 }
 
 #[test]
@@ -65,12 +62,13 @@ fn a_conflict_cut_must_name_the_two_faces_of_a_two_face_edge() {
         }
     );
     let sheet = square_sheet();
+    let sheets = [[f(0), f(3)], [f(1), f(2)]];
     let on_four_faces = Conflict {
         vertices: [v(0), v(2)],
         faces: [f(0), f(1)],
     };
     assert_eq!(
-        ManifoldMesh::from_paired_triangles(&sheet, &tol(&sheet), &[], &[], &[on_four_faces])
+        ManifoldMesh::from_paired_triangles(&sheet, &tol(&sheet), &[], &sheets, &[on_four_faces])
             .unwrap_err(),
         MeshError::PairingMismatch {
             face: f(0),

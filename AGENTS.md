@@ -47,8 +47,8 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 |---|---|
 | Install the pinned tools | `scripts/check.sh --setup` |
 | Every gate CI runs | `scripts/check.sh` |
-| Engine: boundary, hygiene, fmt, clippy, tests, generated TS types | `scripts/check.sh engine` |
-| One step | `scripts/check.sh <boundary\|hygiene\|fmt\|clippy\|test\|types\|deny\|wasm\|shell>` |
+| Engine: boundary, hygiene, fmt, clippy, tests, generated TS types, test build for wasm32 | `scripts/check.sh engine` |
+| One step | `scripts/check.sh <boundary\|hygiene\|fmt\|clippy\|test\|types\|wasm-check\|deny\|wasm\|shell>` |
 | See the exact commands | `scripts/check.sh --dry-run <steps>` |
 | One crate's tests | `cargo test -p openplush-<crate>` |
 

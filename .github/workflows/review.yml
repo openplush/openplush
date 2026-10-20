@@ -213,7 +213,7 @@ jobs:
                comment with mcp__github_inline_comment__create_inline_comment and
                confirmed: true. Start each with its severity mark.
 
-            4. Write the summary to a file under $RUNNER_TEMP (never inside the
+            4. Write the summary to a file under `${{ runner.temp }}` (never inside the
                checkout), then post it with
                `gh pr comment ${{ github.event.pull_request.number }} --body-file <file>`.
                Its first line is exactly

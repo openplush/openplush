@@ -339,13 +339,13 @@ This phase is large because US1 *is* the product. Every other story decorates th
 
 - [ ] T120 [P] [US7] `crates/openplush-project/tests/roundtrip.rs` — save then load is lossless for every field in contracts/project.schema.json
 - [ ] T121 [P] [US7] `crates/openplush-project/tests/schema.rs` — written documents validate against the JSON Schema
-- [ ] T122 [P] [US7] `crates/openplush-project/tests/provenance_stability.rs` — **change repair settings and confirm seams still land on the same edges.** This is the test that protects the provenance-key design; if it fails, reopening a project silently moves the maker's seams
+- [ ] T122 [P] [US7] blocked:D-067 `crates/openplush-project/tests/provenance_stability.rs` — **change repair settings and confirm seams still land on the same edges.** This is the test that protects the provenance-key design; if it fails, reopening a project silently moves the maker's seams
 - [ ] T123 [P] [US7] `crates/openplush-project/tests/migration.rs` — a v1 document opens in a later engine unchanged
 
 ### Implementation
 
 - [ ] T124 [US7] `crates/openplush-project/src/document.rs` — the document type matching the schema; re-export the public document API from `openplush-pipeline` as `openplush_pipeline::project` (D-020)
-- [ ] T125 [US7] `crates/openplush-project/src/provenance.rs` — stable keys from source provenance: sorted source-vertex pairs for edges, sorted source-corner triples for faces. Never `EdgeId`, which moves when repair settings change
+- [ ] T125 [US7] blocked:D-067 `crates/openplush-project/src/provenance.rs` — stable keys from source provenance: sorted source-vertex pairs for edges, sorted source-corner triples for faces. Never `EdgeId`, which moves when repair settings change *2026-10-20: key form and resolution fixed by D-067 (proposed)*
 - [ ] T126 [US7] `crates/openplush-project/src/serde.rs` — JSON plus embedded binary mesh chunk; store the repair **plan**, not the repaired mesh, so a later engine with better repair improves old projects
 - [ ] T127 [US7] `crates/openplush-project/src/migrate.rs` — `schemaVersion` with forward migrations (FR-070)
 - [ ] T128 [US7] `crates/openplush-pipeline/src/undo.rs` — undo and redo for every edit, as diffs over `SeamSet` and the option structs (FR-071)

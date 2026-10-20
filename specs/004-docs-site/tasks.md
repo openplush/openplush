@@ -68,7 +68,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 - [ ] W013 [US2] `docs/site/index.html`: landing page with "For contributors" (to `dev/`) and, hidden until W036, "For makers" (to `guide/`). Self-contained, no external resources; the `docs` step assembles `target/site/`. needs:W008
 - [ ] W014 [US2] `.github/workflows/docs.yml`: on `pull_request` and `push` to `main`, run `scripts/check.sh docs`; on PRs upload `target/site/` as a 7-day artifact (W-012); on `main`, remove `target/site/guide/` (W-003) and deploy with job-level `pages: write` and `id-token: write`, environment `github-pages`, `concurrency: pages` without cancel. Every action SHA-pinned; never `pull_request_target`. needs:W011,W012,W013
 - [ ] W015 [US2] Enable Pages with Source "GitHub Actions" and restrict the `github-pages` environment to `main`. `human:settings` needs:W014
-- [ ] W016 [P] [US5] `scripts/tests/assemble-docs-api.test.sh` then `scripts/assemble-docs-api.sh`: `cargo doc --workspace --no-deps --locked` copied to `target/site/dev/api/` without `.lock`, plus a generated `api/index.html` listing every workspace crate in name order; the test fails on a missing crate or a leftover dotfile. `docs/SUMMARY.md` links to it. blocked:W-007 needs:W012
+- [ ] W016 [P] [US5] `scripts/tests/assemble-docs-api.test.sh` then `scripts/assemble-docs-api.sh`: `cargo doc --workspace --no-deps --locked` copied to `target/site/dev/api/` without `.lock`, plus a generated `api/index.html` listing every workspace crate in name order; the test fails on a missing crate or a leftover dotfile. `docs/SUMMARY.md` links to it. needs:W012
 - [ ] W017 [US2] `docs.yml` determinism job: build the site twice into separate directories and compare byte for byte (SC-007). Workflow only, not the local `docs` step, to keep local runs fast. needs:W014
 
 ## Phase 3: Onboarding path (US1) 🎯 MVP
@@ -87,10 +87,10 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 
 ## Phase 5: How the engine works (US1)
 
-- [ ] W026 [P] [US1] `docs/explanation/pipeline.md`: one model followed through every stage, the crate that owns each, what can fail there (FR-022)
-- [ ] W027 [P] [US1] `docs/explanation/flattening.md`: what flattening does and why seam lengths are pinned exactly
-- [ ] W028 [P] [US1] `docs/explanation/seams.md`: seams, charts, darts and openings, and why a chart must be a disk
-- [ ] W029 [P] [US1] `docs/explanation/sewing.md`: sewing concepts for programmers (allowance, grain, nap, notches)
+- [x] W026 [P] [US1] `docs/explanation/pipeline.md`: one model followed through every stage, the crate that owns each, what can fail there (FR-022). As built: follows the capsule fixture; with no glossary or status page on main, terms are plain prose and unbuilt stages link to the specs index's status table
+- [x] W027 [P] [US1] `docs/explanation/flattening.md`: what flattening does and why seam lengths are pinned exactly
+- [x] W028 [P] [US1] `docs/explanation/seams.md`: seams, charts, darts and openings, and why a chart must be a disk. As built: also covers the seam graph, the sewing map, mandatory seams and the fold check, since the chart stage refuses on them
+- [x] W029 [P] [US1] `docs/explanation/sewing.md`: sewing concepts for programmers (allowance, grain, nap, notches). As built: notches and grain arrows are not built, so their sections say so and link to status
 
 ## Phase 6: Reference and tutorial
 

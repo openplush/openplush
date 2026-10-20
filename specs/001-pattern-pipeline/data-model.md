@@ -103,7 +103,7 @@ pub struct LoopRef(SourceCorner);
 
 `voxelRemesh` in the schema is reserved: not in v0.1 (D-024). The maker's detail-part marking is stored in the project's `detailParts` (by component index), not in the plan; step 6's 1% rule gives the default and the report lists each component's flag.
 
-`RepairReport` lists everything repair did or found, so nothing is silent (Constitution VII, FR-004): the welded vertex groups; faces dropped as repeated-index or duplicate; the double-sided sheets; stitched caps and the faces re-triangulated with them; every paired non-manifold edge (pairs and unpaired face); every added vertex copy (bowtie); every flipped face; every orientation-conflict edge; every component with its detail flag; every boundary loop by `LoopRef` with whether the plan filled it and the faces a fill added; and the mandatory seams the above create. Removals, flips and pairings name faces and vertices of the soup given to repair; additions (vertex copies, hole faces) name those of the repaired mesh.
+`RepairReport` lists everything repair did or found, so nothing is silent (Constitution VII, FR-004): the welded vertex groups; faces dropped as repeated-index or duplicate; the double-sided sheets; stitched caps and the faces re-triangulated with them; every paired non-manifold edge (pairs and unpaired face); every added vertex copy (bowtie); every flipped face; every orientation-conflict edge, cut into a forced seam (D-044); every component with its detail flag; every boundary loop by `LoopRef` with whether the plan filled it and the faces a fill added; the mandatory seams the above create; and every split edge as a copy group, the mesh's edges it became (D-060). Removals, flips and pairings name faces and vertices of the soup given to repair; additions (vertex copies, hole faces) name those of the repaired mesh.
 
 A fill is never silent: it appears in the report. A `fill_holes` entry naming a loop the mesh does not have (the source changed) is a typed error naming it, not a skipped entry.
 
@@ -154,7 +154,7 @@ pub struct SeamBundle {
 ```
 MVP UI exposes `k = 2`; the model supports `k > 2` from day one so FR-016 isn't a migration later.
 
-A chain on interior seam edges has its two sides from the faces across them. A chain on mesh-boundary edges is one side of a bundle only through repair's record of the split that made it (D-058); a boundary chain with no recorded partner is a hole's rim and is refused, never self-paired.
+A chain on interior seam edges has its two sides from the faces across them. A chain on mesh-boundary edges is one side of a bundle only through repair's record of the split that made it (D-058); a boundary chain with no recorded partner is a hole's rim and is refused, never self-paired. Repair's record is a copy group per split edge (D-060): the chains of all its copies join one bundle, with `k` = 2 per interior copy + 1 per boundary copy, so an orientation cut gives k = 2, a sandwiched four-face edge k = 4 and a three-face fin k = 3.
 
 ### Chart topology check (pre-flatten)
 χ = V − E + F; for a connected surface with genus g and b boundary loops, χ = 2 − 2g − b. Flattenable ⇔ **g = 0, b = 1** (disk, χ = 1). Darts don't change this — a slit extends the single boundary loop.

@@ -116,7 +116,8 @@ pub enum MeshError {
         /// The loop named.
         loop_ref: LoopRef,
     },
-    /// A pairing names a face that does not use the edge it pairs, or names a face twice.
+    /// A pairing names a face that does not use the edge it pairs, or names a face twice; or a
+    /// conflict cut is not on a two-face edge, names a face off it, or names a face already copied.
     #[error("a pairing on the edge between {a:?} and {b:?} names triangle {face:?} wrongly")]
     PairingMismatch {
         /// The face named wrongly.

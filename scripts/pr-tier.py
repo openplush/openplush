@@ -24,6 +24,8 @@ C_NAMES = frozenset({
     "Cargo.toml", "Cargo.lock", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml",
     "deny.toml", "rust-toolchain.toml",
 })
+C_ROOT_NAMES = frozenset({"clippy.toml", "rustfmt.toml", ".gitattributes"})  # rules files; a change passes CI silently
+C_ROOT_PREFIX = "LICENSE-"
 EXPECTED_OUTPUT_SUFFIXES = (".svg", ".pdf")
 TICK_TITLE = "docs(tasks): tick"
 TASKS_FILE = re.compile(r"specs/[^/]+/tasks\.md")
@@ -57,6 +59,8 @@ def path_tier(path: str) -> tuple[Tier, str]:
         return "C", f"{path}: under .cargo/"
     if parts and parts[-1] in C_NAMES:
         return "C", f"{path}: a rules file, manifest, lockfile or toolchain file"
+    if len(parts) == 1 and (path in C_ROOT_NAMES or path.startswith(C_ROOT_PREFIX)):
+        return "C", f"{path}: a root rules or license file"
     if path.startswith("fixtures/golden/"):
         return "B", f"{path}: expected output under fixtures/golden/"
     if path.endswith(".snap"):

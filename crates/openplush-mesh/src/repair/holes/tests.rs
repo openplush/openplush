@@ -53,7 +53,10 @@ fn every_loop_is_an_opening_unless_the_plan_lists_it() {
     // the first corner at a top vertex for the top rim.
     let names: Vec<LoopRef> = holes.iter().map(|h| h.loop_ref).collect();
     assert!(names.contains(&LoopRef::new(corner(0))), "{names:?}");
-    assert!(names.iter().all(|&n| n != LoopRef::new(corner(1))), "{names:?}");
+    assert!(
+        names.iter().all(|&n| n != LoopRef::new(corner(1))),
+        "{names:?}"
+    );
     assert_eq!(holes.iter().map(|h| h.half_edges.len()).sum::<usize>(), 8);
 }
 
@@ -69,7 +72,10 @@ fn a_listed_loop_is_accidental_and_the_others_stay_openings() {
         1,
         "{flags:?}"
     );
-    assert!(flags.contains(&(LoopRef::new(corner(0)), true)), "{flags:?}");
+    assert!(
+        flags.contains(&(LoopRef::new(corner(0)), true)),
+        "{flags:?}"
+    );
 }
 
 #[test]

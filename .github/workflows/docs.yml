@@ -1,0 +1,96 @@
+# Docs site: builds and checks it on every PR and on main. A PR's preview is a
+# downloadable artifact (no live host: native Pages previews are not public, and
+# branch-based preview actions need write tokens and fail for forks). Main deploys
+# to GitHub Pages, which must have Source "GitHub Actions" with the github-pages
+# environment restricted to main.
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel superseded PR runs only; every push to main gets its own run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build and check the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Installs exactly what rust-toolchain.toml pins; cargo builds lychee.
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # The same mdbook version contributors run, as a checksummed release binary.
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: mdbook@0.5.4
+          fallback: none
+      # The same entry point contributors run. --setup finds the pinned mdbook
+      # already installed and builds the pinned lychee, which install-action lacks.
+      - run: scripts/check.sh --setup docs
+      - if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docs-site
+          path: target/site/
+          retention-days: 7
+          if-no-files-found: error
+      # The maker guide is built and checked from its first page but published
+      # only from the first public release.
+      - if: github.event_name == 'push'
+        run: rm -rf target/site/guide
+      - if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: target/site/
+
+  determinism:
+    name: two builds of the site are identical
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: mdbook@0.5.4
+          fallback: none
+      # --setup installs the docs tools, then runs the docs step: this is the first build.
+      - run: scripts/check.sh --setup docs
+      # Outside target/, which rust-cache restores: a stale copy from an earlier run must not be what gets compared.
+      - run: mv target/site "$RUNNER_TEMP/site-1"
+      - run: scripts/check.sh docs
+      - run: diff -r "$RUNNER_TEMP/site-1" target/site
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Deploys queue rather than cancel one in progress, so each push to main finishes.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -1,34 +1,34 @@
 # Architecture
 
-How the engine is put together **as built today**, and why. Planned parts are marked *planned* and link to the spec that describes them; everything else exists on `main`. For what each crate exports, see [reference/crates.md](../reference/crates.md); for the public API, see [reference/engine-api.md](../reference/engine-api.md).
+How the engine is put together, and why. Which parts are built is on the [status page](../start/status.md); parts not built yet are described in the specs this page links. For what each crate exports, see [reference/crates.md](../reference/crates.md); for the public API, see [reference/engine-api.md](../reference/engine-api.md).
 
 ## Two halves, one seam between them
 
 OpenPlush turns a 3D model into a sewing pattern on the user's device. The work splits in two:
 
 - **The engine** (`crates/`): pure Rust geometry. It never touches the filesystem, the clock, threads, the network, or a browser API, so it runs identically as a native CLI and as WebAssembly in a browser worker.
-- **The shells** (`bindings/`, `apps/`, `packages/`): the CLI, the WASM facade, and the web app. They own all I/O and talk to the engine through one crate, `openplush-pipeline`. The CLI ([reference/cli.md](../reference/cli.md)) and the WASM facade exist as skeletons that call no stage yet, though the first stages exist; the web app is *planned*. Between the web app and the worker sits `packages/engine-client` ([reference/worker-protocol.md](../reference/worker-protocol.md)): it owns the worker and the request lifecycle, speaks only the protocol types generated from the facade's DTOs, and is the only package `apps/` may import for engine work.
+- **The shells** (`bindings/`, `apps/`, `packages/`): the CLI, the WASM facade, and the web app. They own all I/O and talk to the engine through one crate, `openplush-pipeline`. The CLI is described in [reference/cli.md](../reference/cli.md). Between the web app and the worker sits `packages/engine-client` ([reference/worker-protocol.md](../reference/worker-protocol.md)): it owns the worker and the request lifecycle, speaks only the protocol types generated from the facade's DTOs, and is the only package `apps/` may import for engine work.
 
 The boundary is enforced, not just intended: `scripts/check-boundary.sh` reads `cargo metadata` and the source, and fails CI if an engine crate reaches a browser or OS API or if a binding depends on any workspace crate but the pipeline. `crates/clippy.toml` bans the listed std filesystem, clock, thread, network and process items at compile time, so an aliased `use std::time;` cannot sneak past the text scan.
 
-Why: a geometry change should never need a UI change, and the user's model never leaves their machine. Rationale: [constitution, Principles I and VIII](../../.specify/memory/constitution.md).
+Why: a geometry change should never need a UI change, and the user's model never leaves their machine. Rationale: [constitution, Principles I and VIII](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md).
 
 ## The pipeline: each stage's type is its guarantee
 
 The engine is a chain of stages. Each stage's output type promises what the next stage needs, so a later stage cannot be handed data that skipped an earlier check.
 
-| Stage | Output type | It guarantees | Status |
+| Stage | Output type | It guarantees | Owner |
 |---|---|---|---|
-| Import | `TriangleSoup` (`openplush-mesh`) | Finite coordinates, in-range indices, a provenance record for every triangle corner. Says nothing about mesh quality: holes, duplicates and non-manifold edges pass through | Built, through `openplush-pipeline`'s `import` stage, for OBJ, STL, PLY, glTF and GLB (`openplush-io`), the reader chosen by the file's extension; FBX is planned |
-| Validate | `ValidationReport` (`openplush-mesh`) | Every defect of the soup located by face, vertex or vertex pair, judged as repair will see the mesh; changes nothing and never fails | Built, through `openplush-pipeline`'s `validate` stage |
-| Repair | `ManifoldMesh` (`openplush-mesh`) | A consistently oriented 2-manifold, possibly with boundary, with no degenerate or zero-area face and no isolated vertex | Built, through `openplush-pipeline`'s `repair` stage; filling a listed hole is planned |
-| Seams and charts | `Vec<ChartMesh>` and the `SewingMap` (`openplush-seams`), from `openplush-pipeline`'s `chart` stage | Every chart a topological disk that does not fold back over itself, cut open along its seams; every seam chain sewn to its partner sides, the copies of an edge repair split read from the mesh (`ManifoldMesh::edge_copies`, so `repair → chart` needs nothing else); else the first violated invariant, typed | The `chart` stage is built on these parts: the seam graph, whose chains end at junctions, boundary ends, dart tips and kind changes (`openplush-seams`'s `SeamGraph`), charts as the face sets the seams separate (`charts`), the disk check each chart must pass to flatten (`check_disk`), each chart cut open along its seams as the flattener's flat arrays (`ChartMesh`), the cuts proposed to close a chart that is not a disk (`close_chart`), and marking a chain as the stuffing opening (`mark_opening`); the fold check (`check_fold`) and the sewing map that joins a split edge's copies (`SewingMap`) |
-| Flatten | A parameterization with every triangle unflipped (det J > 0) | *planned* | The unflipped check is built (`openplush-flatten`'s `injectivity::verify`); the solver is planned |
-| Pattern, layout, export | Pieces with matched seam lengths, pages, SVG/PDF bytes | *planned* | Partly built: `Outline`, `PatternPiece`, the seam-side parity check and real-world scale (`openplush-pattern`), shelf packing, page tiling with labels and registration marks (`openplush-layout`), the cut line from per-edge seam allowances (`openplush-pattern`'s `allowance`, one boolean in `i_overlay`, ADR 0006), SVG export of one sheet, and tiled PDF export at true scale, every page with its label, registration crosshairs and a labelled scale-check square (`openplush-export`'s `svg` and `pdf`, which read layout's output, ADR 0012; PDF written directly with `pdf-writer`, ADR 0008), opening with a cover page that carries the scale check, a map of the tiles and the summary of unresolved warnings, which continues after the last tile when the cover runs out of room |
+| Import | `TriangleSoup` (`openplush-mesh`) | Finite coordinates, in-range indices, a provenance record for every triangle corner. Says nothing about mesh quality: holes, duplicates and non-manifold edges pass through | `openplush-io`, run as `openplush-pipeline`'s `import` stage |
+| Validate | `ValidationReport` (`openplush-mesh`) | Every defect of the soup located by face, vertex or vertex pair, judged as repair will see the mesh; changes nothing and never fails | `openplush-mesh`, run as `openplush-pipeline`'s `validate` stage |
+| Repair | `ManifoldMesh` (`openplush-mesh`) | A consistently oriented 2-manifold, possibly with boundary, with no degenerate or zero-area face and no isolated vertex | `openplush-mesh`, run as `openplush-pipeline`'s `repair` stage |
+| Seams and charts | `Vec<ChartMesh>` and the `SewingMap` (`openplush-seams`), from `openplush-pipeline`'s `chart` stage | Every chart a topological disk that does not fold back over itself, cut open along its seams; every seam chain sewn to its partner sides, the copies of an edge repair split read from the mesh (`ManifoldMesh::edge_copies`, so `repair → chart` needs nothing else); else the first violated invariant, typed | `openplush-seams`, run as `openplush-pipeline`'s `chart` stage |
+| Flatten | A parameterization with every triangle unflipped (det J > 0) | Every seam edge keeps its exact 3D length, because the boundary is pinned first and the interior solved inside it ([flattening](flattening.md)) | `openplush-flatten` |
+| Pattern, layout, export | Pieces with matched seam lengths, pages, SVG/PDF bytes | Sides sewn together have equal lengths, every piece at real-world scale with its seam allowance; pages tile the pieces at true scale with labels, registration marks and a scale check | `openplush-pattern`, `openplush-layout`, `openplush-export` |
 
 `ManifoldMesh` has **no public constructor**: repair will be its only producer, so unrepaired geometry cannot reach the flattener by construction. `ManifoldMesh::debug_validate` checks all five half-edge invariants and is what the property tests run against every mesh they build.
 
-The planned stages and their pre- and postconditions are in the [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.md) and the [data model](../../specs/001-pattern-pipeline/data-model.md).
+Every stage's pre- and postconditions, built or not, are in the [engine API contract](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/engine-api.md) and the [data model](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md).
 
 ## Errors and warnings are different channels
 
@@ -51,7 +51,7 @@ A `ProposalId` is different again: a hash of the edit itself (the kind of fix, w
 
 Same input, same output, to the byte, on every platform:
 
-- Ordered containers and total-order sorts on every output path, and plain IEEE-754 arithmetic (the rules: [AGENTS.md](../../AGENTS.md), Determinism), because one reordered seam changes the printed pattern.
+- Ordered containers and total-order sorts on every output path, and plain IEEE-754 arithmetic (the rules: [AGENTS.md](https://github.com/openplush/openplush/blob/main/AGENTS.md), Determinism), because one reordered seam changes the printed pattern.
 - Geometric predicates (`orient2d`, `orient3d`, `incircle`) are exact (`robust` crate, [ADR 0002](../adr/0002-robust-predicates.md)), so a near-degenerate triangle gets the same answer everywhere.
 - Tolerances come from `openplush_geom::epsilon` only, and come in two kinds kept apart by type:
   - **Model-space** (`ModelTolerances`): relative to the model's bounding-box diagonal, so the same shape at any size makes the same decisions.
@@ -61,4 +61,4 @@ Model units become millimetres through `Scale::to_mm`. `Mm::try_new` is public, 
 
 ## Crate layering
 
-Crates depend downward only; the graph and its rules are in the [plan's crate DAG](../../specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced), and `scripts/check-boundary.sh` enforces it. Which crates have code and which are scaffolds: [reference/crates.md](../reference/crates.md).
+Crates depend downward only; the graph and its rules are in the [plan's crate DAG](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced), and `scripts/check-boundary.sh` enforces it. Which crates have code and which are scaffolds: [reference/crates.md](../reference/crates.md).

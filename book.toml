@@ -1,0 +1,13 @@
+[book]
+title = "OpenPlush for contributors"
+language = "en"
+src = "docs"
+
+[build]
+build-dir = "target/site/dev"
+# An entry for a missing page fails the build instead of creating an empty one.
+create-missing = false
+
+[output.html]
+git-repository-url = "https://github.com/openplush/openplush"
+edit-url-template = "https://github.com/openplush/openplush/edit/main/docs/{path}"

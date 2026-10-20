@@ -6,9 +6,10 @@
 #   scripts/check.sh --setup          install the pinned tools (cargo-deny, mdbook, lychee, the
 #                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
 #   scripts/check.sh --setup <steps>  install only what those steps need, then run them
-#   scripts/check.sh                  run every gate
-#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell,
-#                                     or engine (= boundary hygiene fmt clippy test types workflows wasm-check), or all
+#   scripts/check.sh                  run every gate but docs
+#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs,
+#                                     or engine (= boundary hygiene fmt clippy test types workflows wasm-check),
+#                                     or all (every step but docs)
 #   --dry-run                         print the commands instead of running them
 #
 # Needs: rustup, Node 22+ with pnpm, bash >= 4.3, jq, python3 >= 3.11.
@@ -41,9 +42,9 @@ for arg in "$@"; do
     --setup) setup=1 ;;
     engine) steps+=(boundary hygiene fmt clippy test types workflows wasm-check) ;;
     all) steps+=(boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell) ;;
-    boundary | hygiene | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell) steps+=("$arg") ;;
+    boundary | hygiene | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell | docs) steps+=("$arg") ;;
     *)
-      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell; groups: engine all)" >&2
+      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs; groups: engine all)" >&2
       exit 2
       ;;
   esac
@@ -216,6 +217,15 @@ for step in "${steps[@]}"; do
         run pnpm --filter web --fail-if-no-match exec playwright install --with-deps chromium
         run pnpm --filter web --fail-if-no-match exec playwright test
       fi
+      ;;
+    docs)
+      if ! ((dry)); then
+        have=$(installed_version mdbook)
+        [[ $have == "v$MDBOOK_VERSION" ]] ||
+          die "mdbook ${have:-missing}, check.sh pins v$MDBOOK_VERSION; run scripts/check.sh --setup docs"
+      fi
+      run mdbook build
+      run scripts/check-docs-summary.sh
       ;;
   esac
   endgroup

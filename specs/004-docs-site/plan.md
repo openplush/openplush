@@ -148,6 +148,7 @@ Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
 | 2026-10-20 | W-011 | **The writing guide (`docs/how-to/write-docs.md`) is the one home for documentation rules.** Templates carry structure; the docs skill carries steps and links to the guide | Proposed |
 | 2026-10-20 | W-012 | **PR previews are a downloadable workflow artifact**, not a live host. GitHub's native Pages previews are not public, and branch-based preview actions need write tokens and fail for forks (research R4) | Proposed |
 | 2026-10-20 | W-013 | **No diagrams tool until a page needs one.** `mdbook-mermaid` adds ~2.7 MB per page; the first diagram task decides between it and committed SVG | Proposed |
+| 2026-10-20 | W-015 | **The first-change tutorial is written now**, on crates that exist, rather than after the pipeline runs end to end: a newcomer needs a code path today, and a tutorial built on stable leaf crates survives later stages landing | Accepted (standing authorization, 2026-10-20) |
 
 ### Trade-offs accepted
 
@@ -159,4 +160,4 @@ Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
 
 - **CI cost**: does the `docs` step join the default `scripts/check.sh` run and the required checks, or stay a separate non-required workflow? `cargo doc` adds build time.
 - **CONTRIBUTING.md**: a short pointer into the site (Bevy's model), or a standalone root document? W030 assumes the pointer.
-- **First tutorial**: a code-level tutorial on existing crates now, or wait for the end-to-end pipeline? W033 assumes now.
+- ~~**First tutorial**: a code-level tutorial on existing crates now, or wait for the end-to-end pipeline?~~ **Resolved 2026-10-20** by W-015: now.

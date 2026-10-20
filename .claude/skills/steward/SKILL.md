@@ -45,6 +45,7 @@ Which paths put a PR in which tier, and who merges each: [the tier table](../../
 - After opening a PR, subscribe to it, so CI and review results wake you. Also schedule one safety-net check-in of about 30 minutes, for what sends no event (a conflict with `main`, another agent's push); re-arm it silently while nothing changed. Unsubscribe when the PR merges or closes, and cancel the check-in.
 - Every check-in starts with the PR's `mergeable_state`. `dirty` means a conflict with `main`, and then CI and the review never start: merge `origin/main` in, resolve, push.
 - Before reading CI or a review, check it is for the PR's current head SHA; an event for an older head says nothing about the new one.
+- A check not started 15 minutes after the head was pushed, or not finished 60 minutes after it started, is stalled (runners start within minutes; the slowest job takes under 30). Report it once, to the user or in a `factory` firing's ledger comment, and stop polling it; look again only on the next event or check-in.
 - A turn that would only say "nothing new" is not worth taking. Report when a merge needs the maintainer, something is blocked, or a PR has merged.
 
 ## Pushing and posting

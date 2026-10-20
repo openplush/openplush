@@ -8,7 +8,7 @@ cargo run -p openplush-cli -- --help
 
 ## Status
 
-The arguments parse and are validated. **No subcommand runs a stage yet**: each one exits 1 with `openplush-cli: the {stage} stage is not built yet` on stderr and writes nothing. Each one is wired up by the task that builds its stage.
+The arguments parse and are validated. **No subcommand runs a stage yet**: each one exits 1 with `openplush-cli: the {stage} stage is not built yet` on stderr and writes nothing. Each one is wired up by the task that builds its stage. Which stages are built is on the [status page](../start/status.md).
 
 ## Subcommands
 

@@ -71,9 +71,10 @@ jobs:
           fallback: none
       # --setup installs the docs tools, then runs the docs step: this is the first build.
       - run: scripts/check.sh --setup docs
-      - run: mv target/site target/site-1
+      # Outside target/, which rust-cache restores: a stale copy from an earlier run must not be what gets compared.
+      - run: mv target/site "$RUNNER_TEMP/site-1"
       - run: scripts/check.sh docs
-      - run: diff -r target/site-1 target/site
+      - run: diff -r "$RUNNER_TEMP/site-1" target/site
 
   deploy:
     name: deploy to GitHub Pages

@@ -1,6 +1,7 @@
 # Automated adversarial review, by the agents in .claude/agents/
 # (pr-reviewer always; spec-reviewer when specs change; docs-reviewer when a public
-# surface or docs/ changes; mutation-auditor only on request). Advisory: it posts
+# surface, docs/, a tasks.md, the README or CONTRIBUTING changes, since each can
+# state what is built; mutation-auditor only on request). Advisory: it posts
 # findings as review comments and never approves. Who merges is set by the PR's
 # tier (ADR 0014).
 #
@@ -192,7 +193,9 @@ jobs:
                - pr-reviewer: always.
                - spec-reviewer: if anything under specs/ or .specify/memory/ changed.
                - docs-reviewer: if anything under crates/openplush-pipeline/src/,
-                 bindings/, packages/engine-client/, specs/*/contracts/, or docs/ changed.
+                 bindings/, packages/engine-client/, specs/*/contracts/, or docs/
+                 (docs/adr/ included) changed, or specs/*/tasks.md, README.md or
+                 CONTRIBUTING.md changed.
                - mutation-auditor: only if MUTATION AUDIT REQUESTED is true and a
                  .rs file under crates/ changed. If it is false and engine code
                  changed, say in the summary that the auditor can be requested

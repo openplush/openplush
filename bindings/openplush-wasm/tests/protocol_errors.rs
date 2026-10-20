@@ -3,6 +3,7 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 
+use openplush_pipeline::MeshError;
 use openplush_pipeline::{
     ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PieceId, Proposal, ProposalId,
     ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
@@ -82,30 +83,31 @@ fn non_finite_input_locates_source_vertices() -> Result<(), serde_json::Error> {
 }
 
 #[test]
-fn not_manifold_omits_its_empty_vertex_list() -> Result<(), serde_json::Error> {
-    let e = EngineError::NotManifold {
-        edges: vec![EdgeId::new(8), EdgeId::new(3)],
-        vertices: vec![],
-    };
+fn mesh_omits_its_empty_location_lists() -> Result<(), serde_json::Error> {
+    let e = EngineError::Mesh(MeshError::DuplicateTriangle {
+        triangle: FaceId::new(8),
+        first: FaceId::new(3),
+    });
     let expected = json!({
-        "code": "NotManifold",
-        "message": "the mesh is not manifold at 2 edges and 0 vertices",
-        "locations": { "edges": [3, 8] },
+        "code": "Mesh",
+        "message": "triangle FaceId(8) repeats the vertices of triangle FaceId(3)",
+        "locations": { "faces": [3, 8] },
     });
     assert_eq!(wire(&e)?, expected);
     Ok(())
 }
 
 #[test]
-fn not_manifold_locates_vertices_too() -> Result<(), serde_json::Error> {
-    let e = EngineError::NotManifold {
-        edges: vec![EdgeId::new(1)],
-        vertices: vec![VertexId::new(5)],
-    };
+fn mesh_locates_faces_and_vertices_together() -> Result<(), serde_json::Error> {
+    let e = EngineError::Mesh(MeshError::PairingMismatch {
+        face: FaceId::new(1),
+        a: VertexId::new(5),
+        b: VertexId::new(2),
+    });
     let expected = json!({
-        "code": "NotManifold",
-        "message": "the mesh is not manifold at 1 edges and 1 vertices",
-        "locations": { "edges": [1], "vertices": [5] },
+        "code": "Mesh",
+        "message": "a pairing on the edge between VertexId(5) and VertexId(2) names triangle FaceId(1) wrongly",
+        "locations": { "faces": [1], "vertices": [2, 5] },
     });
     assert_eq!(wire(&e)?, expected);
     Ok(())

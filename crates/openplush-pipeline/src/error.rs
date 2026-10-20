@@ -1,10 +1,12 @@
 use std::collections::BTreeSet;
 
 use openplush_io::Format;
-use openplush_mesh::{EdgeId, FaceId, SourceCorner, VertexId};
+use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
 use openplush_pattern::PieceId;
-use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId};
+use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
+
+use crate::locations::mesh_locations;
 
 /// A violated invariant: the stage produced no output. Every variant but
 /// `Cancelled` names where the problem is, so the UI can highlight it.
@@ -25,18 +27,9 @@ pub enum EngineError {
         /// Every non-finite source vertex, used by a face or not.
         vertices: Vec<SourceCorner>,
     },
-    /// The mesh is not manifold where repair needed it to be.
-    #[error(
-        "the mesh is not manifold at {} edges and {} vertices",
-        .edges.len(),
-        .vertices.len()
-    )]
-    NotManifold {
-        /// Non-manifold edges.
-        edges: Vec<EdgeId>,
-        /// Non-manifold vertices.
-        vertices: Vec<VertexId>,
-    },
+    /// Repair refused the soup; the inner error says how, naming the soup's own elements.
+    #[error(transparent)]
+    Mesh(#[from] MeshError),
     /// A chart is not a topological disk, so it cannot flatten as one piece.
     #[error("chart {} is not a topological disk", .chart.index())]
     ChartNotDisk {
@@ -55,6 +48,9 @@ pub enum EngineError {
         /// The lowest edge it folds across.
         edge: EdgeId,
     },
+    /// The seams cannot be applied to the mesh; the inner error says how and where.
+    #[error(transparent)]
+    Seams(#[from] SeamsError),
     /// Flattening inverted faces (det J ≤ 0).
     #[error("chart {} flattens with {} inverted faces", .chart.index(), .faces.len())]
     Flip {
@@ -117,9 +113,10 @@ impl EngineError {
         match self {
             Self::Parse { .. } => "Parse",
             Self::NonFiniteInput { .. } => "NonFiniteInput",
-            Self::NotManifold { .. } => "NotManifold",
+            Self::Mesh(_) => "Mesh",
             Self::ChartNotDisk { .. } => "ChartNotDisk",
             Self::FoldedChart { .. } => "FoldedChart",
+            Self::Seams(_) => "Seams",
             Self::Flip { .. } => "Flip",
             Self::BoundaryNotRealizable { .. } => "BoundaryNotRealizable",
             Self::SeamParity { .. } => "SeamParity",
@@ -139,11 +136,7 @@ impl EngineError {
                 source_vertices: sorted(vertices),
                 ..none
             },
-            Self::NotManifold { edges, vertices } => ErrorLocations {
-                edges: sorted(edges),
-                vertices: sorted(vertices),
-                ..none
-            },
+            Self::Mesh(inner) => mesh_locations(inner),
             // Proposal edges are not locations: proposals travel separately, as fixes.
             Self::ChartNotDisk { chart, .. } | Self::BoundaryNotRealizable { chart, .. } => {
                 ErrorLocations {
@@ -156,6 +149,7 @@ impl EngineError {
                 charts: vec![*chart],
                 ..none
             },
+            Self::Seams(inner) => seams_locations(inner),
             Self::Flip { chart, faces } => ErrorLocations {
                 faces: sorted(faces),
                 charts: vec![*chart],
@@ -184,8 +178,9 @@ impl EngineError {
             | Self::BoundaryNotRealizable { proposals, .. } => proposals,
             Self::Parse { .. }
             | Self::NonFiniteInput { .. }
-            | Self::NotManifold { .. }
+            | Self::Mesh(_)
             | Self::FoldedChart { .. }
+            | Self::Seams(_)
             | Self::Flip { .. }
             | Self::SeamParity { .. }
             | Self::OffsetFailed { .. }
@@ -198,11 +193,11 @@ impl EngineError {
 /// The elements an [`EngineError`] names, by category; each list is sorted and without duplicates.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ErrorLocations {
-    /// Faces of the repaired mesh.
+    /// Faces of the repaired mesh; for `Mesh`, of the soup repair was given.
     pub faces: Vec<FaceId>,
     /// Edges of the repaired mesh.
     pub edges: Vec<EdgeId>,
-    /// Vertices of the repaired mesh.
+    /// Vertices of the repaired mesh; for `Mesh`, of the soup repair was given.
     pub vertices: Vec<VertexId>,
     /// Pattern pieces.
     pub pieces: Vec<PieceId>,
@@ -216,7 +211,47 @@ pub struct ErrorLocations {
     pub proposal: Option<ProposalId>,
 }
 
-fn sorted<T: Ord + Copy>(ids: &[T]) -> Vec<T> {
+/// The elements `error` names; empty for a refusal about a whole proposal or dart.
+fn seams_locations(error: &SeamsError) -> ErrorLocations {
+    let none = ErrorLocations::default();
+    match error {
+        SeamsError::MandatorySeam { edge }
+        | SeamsError::UnknownEdge { edge }
+        | SeamsError::NotASeam { edge }
+        | SeamsError::NotAWalk { edge } => ErrorLocations {
+            edges: vec![*edge],
+            ..none
+        },
+        SeamsError::ChartNotClosed { chart } => ErrorLocations {
+            charts: vec![*chart],
+            ..none
+        },
+        SeamsError::FoldedChart { chart, edge } => ErrorLocations {
+            edges: vec![*edge],
+            charts: vec![*chart],
+            ..none
+        },
+        SeamsError::UnpairedBoundarySeam { chain } | SeamsError::CopyGroupMismatch { chain } => {
+            ErrorLocations {
+                chains: vec![*chain],
+                ..none
+            }
+        }
+        SeamsError::UnknownVertex { vertex }
+        | SeamsError::DartNotAnchored { vertex }
+        | SeamsError::DartTouchesSeam { vertex } => ErrorLocations {
+            vertices: vec![*vertex],
+            ..none
+        },
+        SeamsError::NoPath { from, to } => ErrorLocations {
+            vertices: sorted(&[*from, *to]),
+            ..none
+        },
+        _ => none,
+    }
+}
+
+pub(crate) fn sorted<T: Ord + Copy>(ids: &[T]) -> Vec<T> {
     ids.iter()
         .copied()
         .collect::<BTreeSet<_>>()

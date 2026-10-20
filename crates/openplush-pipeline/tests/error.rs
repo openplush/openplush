@@ -4,9 +4,10 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 
+use openplush_pipeline::MeshError;
 use openplush_pipeline::{
     ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PieceId, Proposal, ProposalId,
-    ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
+    ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
 };
 
 fn dart(chart: u32, edge: u32) -> Result<Proposal, Box<dyn Error>> {
@@ -63,19 +64,16 @@ fn non_finite_input_names_every_source_vertex() {
 }
 
 #[test]
-fn not_manifold_names_its_edges_and_vertices() {
-    let e = EngineError::NotManifold {
-        edges: vec![EdgeId::new(3), EdgeId::new(8)],
-        vertices: vec![VertexId::new(5)],
+fn mesh_prints_its_inner_errors_message() {
+    let inner = MeshError::NonManifoldEdge {
+        a: VertexId::new(1),
+        b: VertexId::new(4),
     };
-    assert!(matches!(
-        &e,
-        EngineError::NotManifold { edges, vertices }
-            if *edges == [EdgeId::new(3), EdgeId::new(8)] && *vertices == [VertexId::new(5)]
-    ));
+    let e = EngineError::Mesh(inner);
+    assert_eq!(e.to_string(), inner.to_string());
     assert_eq!(
         e.to_string(),
-        "the mesh is not manifold at 2 edges and 1 vertices"
+        "edge between VertexId(1) and VertexId(4) is shared by more than two triangles"
     );
 }
 
@@ -196,4 +194,17 @@ fn proposal_not_offered_names_the_proposal_in_its_wire_form() {
 fn cancelled_has_nothing_to_locate() {
     // Cooperative cancellation is the caller's act, not a defect in the model.
     assert_eq!(EngineError::Cancelled.to_string(), "cancelled");
+}
+
+#[test]
+fn seams_prints_its_inner_errors_message() {
+    let inner = SeamsError::UnpairedBoundarySeam {
+        chain: SeamChainId::new(3),
+    };
+    let e = EngineError::Seams(inner.clone());
+    assert_eq!(e.to_string(), inner.to_string());
+    assert_eq!(
+        e.to_string(),
+        "seam chain SeamChainId(3) runs along the mesh boundary with no recorded partner"
+    );
 }

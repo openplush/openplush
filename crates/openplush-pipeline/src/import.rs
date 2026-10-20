@@ -60,6 +60,22 @@ fn refusal(e: IoError) -> EngineError {
 
 #[cfg(test)]
 mod tests {
+    use openplush_io::gltf::Ignored;
+
+    #[test]
+    fn each_kind_of_skipped_part_is_named() {
+        assert_eq!(
+            super::ignored_text(&[
+                Ignored::Skin { node: 2 },
+                Ignored::MorphTargets { node: 2, mesh: 1 },
+                Ignored::Animation { animation: 0 },
+            ]),
+            "The file has parts the pattern does not follow: the skin on node 2, read in its \
+             bind pose; the morph targets of mesh 1 (node 2), read as the base mesh; animation \
+             0, not played. The pattern is made from the triangles as modelled."
+        );
+    }
+
     use openplush_mesh::{FaceId, MeshError};
 
     use super::*;

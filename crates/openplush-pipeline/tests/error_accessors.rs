@@ -46,6 +46,12 @@ fn import_and_seam_variants() -> Result<Vec<(EngineError, &'static str)>, Box<dy
             "UnknownFormat",
         ),
         (
+            EngineError::MissingResource {
+                uri: "tri.bin".into(),
+            },
+            "MissingResource",
+        ),
+        (
             EngineError::NonFiniteInput {
                 vertices: vec![SourceCorner {
                     primitive: 0,
@@ -136,12 +142,15 @@ fn code_is_the_variant_name() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn only_parse_unknown_format_and_cancelled_have_no_locations() -> Result<(), Box<dyn Error>> {
+fn only_import_refusals_and_cancelled_have_no_locations() -> Result<(), Box<dyn Error>> {
     for (e, code) in every_variant()? {
         let unlocated = e.locations() == ErrorLocations::default();
         assert_eq!(
             unlocated,
-            matches!(code, "Parse" | "UnknownFormat" | "Cancelled"),
+            matches!(
+                code,
+                "Parse" | "UnknownFormat" | "MissingResource" | "Cancelled"
+            ),
             "{code}: {:?}",
             e.locations()
         );

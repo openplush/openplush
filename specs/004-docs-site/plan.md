@@ -15,7 +15,7 @@ Publish `docs/` as a static site with two parts: a contributor guide ordered as 
 
 | Field | Value |
 |---|---|
-| Tools | mdBook 0.5.x (MPL-2.0), lychee (Apache-2.0 OR MIT), rustdoc from the pinned toolchain. All pinned exactly; installed by `scripts/check.sh --setup` and in CI by the already-pinned `taiki-e/install-action` (lychee support there `[verify]`, W006) |
+| Tools | mdBook 0.5.x (MPL-2.0), lychee (Apache-2.0 OR MIT), rustdoc from the pinned toolchain. All pinned exactly; installed by `scripts/check.sh --setup` and by `cargo install --locked`, since `taiki-e/install-action` has no lychee (research R4) |
 | Hosting | GitHub Pages, deployed by Actions from `main`; default address `https://openplush.github.io/openplush/` |
 | Testing | Shell checks under `scripts/` with their tests as `scripts/tests/*.test.sh`, run by `scripts/check.sh docs` and the `shell` step |
 | Constraints | No remote resources (Constitution VIII); byte-identical builds (V); licences on the allow-list or ADR-accepted (IX) |

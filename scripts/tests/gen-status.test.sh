@@ -109,13 +109,18 @@ expect fail "no tasks.md at all fails" "$r" "" "no specs/*/tasks.md"
 
 # Each looks like a task to a reader, so counting or skipping it silently would be wrong.
 for line in "- [X] Q009 upper-case" "  - [x] Q009 indented" "* [ ] Q009 other bullet" "- [x] no task ID" \
-  "- [x]Q009 no space" "- [~] Q009 other mark" "- [] Q009 empty box" "- [ ] q009 lower-case ID"; do
+  "- [x]Q009 no space" "- [~] Q009 other mark" "- [] Q009 empty box" "- [ ] q009 lower-case ID" \
+  "- [x ] Q009 stray space" "- [ x] Q009 leading space"; do
   r=$(new_case "malformed-${line//[^a-zA-Z0-9]/_}")
   cp "$r/$inc" "$tmp/before.inc"
   tasks "$r" 002-first-feature "- [x] Q001 done" "$line"
   expect fail "a malformed task line fails: '$line'" "$r" "" "specs/002-first-feature/tasks.md:6"
   if cmp -s "$tmp/before.inc" "$r/$inc"; then ok "a failed run writes nothing: '$line'"; else bad "a failed run writes nothing: '$line'"; fi
 done
+
+r=$(new_case link-bullet)
+tasks "$r" 002-first-feature "- [x] Q001 done" "- [the plan](plan.md) is a link, not a box"
+expect pass "a bullet that starts with a link is not a task box" "$r" ""
 
 status=0
 out=$("$gen" --bogus "$tmp" 2>&1) || status=$?

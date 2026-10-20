@@ -135,6 +135,11 @@ if [[ -f $docs_yml ]] && grep -q 'scripts/check.sh --setup docs' "$docs_yml"; th
 else
   bad "docs.yml installs the docs tools with check.sh --setup docs" "$(grep -n 'check.sh' "$docs_yml" 2>&1)"
 fi
+if [[ -f $docs_yml ]] && grep -q 'diff -r target/site-1 target/site' "$docs_yml"; then
+  ok "docs.yml diffs two builds of the site"
+else
+  bad "docs.yml diffs two builds of the site" "$(grep -n 'diff' "$docs_yml" 2>&1)"
+fi
 # With steps named, --setup installs only what they need.
 expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="
 out=$("$check" --dry-run --setup engine 2>&1)

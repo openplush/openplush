@@ -1,7 +1,7 @@
 ---
 status: Proposed
 date: 2026-10-20
-deciders: maintainer
+deciders: Lavender (maintainer)
 ---
 
 # Build the docs site with mdBook; accept OFL-1.1 fonts in the published site only; CI-only tooling is outside Constitution IX
@@ -37,20 +37,22 @@ CI-only tooling (W-008):
 
 ## Decision outcome
 
-**Generator: A, mdBook 0.5.x**, for both books. It is the only candidate that is on the allow-list (MPL-2.0), a single binary, privacy-clean by default and actively maintained [solid: research R1]. Two builds of the same input were byte-identical [solid: measured, research R1].
+**Generator: A, mdBook 0.5.x**, for both books. It is the only candidate that is at once on the allow-list (MPL-2.0), a single binary, privacy-clean by default and actively maintained [solid: research R1]. Two builds of the same input were byte-identical [solid: measured, research R1].
 
 **Fonts: E.** Font files licensed OFL-1.1 may appear in the published docs site and nowhere else: not in the app, the WASM package, the CLI, or an exported PDF. rustdoc bundles FiraSans, FiraMono, SourceSerif4, SourceCodePro and NanumBarunGothic with no stable option to omit them [solid: research R4], and mdBook's default theme bundles Source Code Pro [solid: research R2]. The fonts are served from the site itself, never fetched from elsewhere, so VIII holds. OFL-1.1 lets fonts be bundled and redistributed with software; it forbids selling a font on its own, which the site never does. [ADR 0008](0008-pdf-export.md)'s choice to embed no fonts in exported PDFs is unchanged.
 
-**CI-only tooling: H.** Constitution IX governs what the project ships and the code it is licensed under, the reading [ADR 0011](0011-blender-research-tool.md) already applies. A tool that runs in a CI job and leaves nothing in a shipped artifact or in the published site is outside it. This ratifies `Swatinem/rust-cache` (LGPL-3.0). What such a tool writes into a published or shipped output is not CI-only: the fonts above fall under E, not H.
+**CI-only tooling: H.** Constitution IX governs what the project ships and the code it is licensed under. [ADR 0011](0011-blender-research-tool.md) took that reading for research spike directories; this ADR extends it to CI tooling. A tool that runs in a CI job and leaves nothing in a shipped artifact or in the published site is outside it. This ratifies `Swatinem/rust-cache` (LGPL-3.0). What such a tool writes into a published or shipped output is not CI-only: the fonts above fall under E, not H.
+
+Neither choice amends the constitution. IX's own text limits its GPL/AGPL/LGPL bar to "the shipped artifact", so H reads IX rather than changes it; and E is a scoped exception to the allow-list, which `docs/adr/README.md` already routes through an ADR. No constitution version bump follows.
 
 Licences of tools that `cargo install` puts on a runner or a contributor's machine, which `cargo deny` never checks:
 
 | Tool | Licence | Used by |
 |---|---|---|
-| `mdbook` | MPL-2.0 | the `docs` step |
-| `lychee` | Apache-2.0 OR MIT | the `docs` step |
-| `cargo-deny` | Apache-2.0 OR MIT | the `deny` step |
-| `wasm-bindgen-cli` | Apache-2.0 OR MIT | the `wasm` step; its generated glue ships in the WASM package, so it is held to the allow-list, which it passes |
+| `mdbook` | MPL-2.0 [solid: research R1] | the `docs` step |
+| `lychee` | Apache-2.0 OR MIT [solid: crates.io] | the `docs` step |
+| `cargo-deny` | Apache-2.0 OR MIT [solid: crates.io, 0.20.2] | the `deny` step |
+| `wasm-bindgen-cli` | Apache-2.0 OR MIT [solid: crates.io] | the `wasm` step; its generated glue ships in the WASM package, so it is held to the allow-list, which it passes |
 
 ### Consequences
 
@@ -101,7 +103,7 @@ Licences of tools that `cargo install` puts on a runner or a contributor's machi
 
 ### H: CI-only tooling is outside IX
 
-* Good, because it matches what IX protects (what users receive) and the reading ADR 0011 already took.
+* Good, because it matches what IX protects (what users receive), and extends the reading ADR 0011 took for research spikes.
 * Bad, because it depends on review to see that a tool's output stays out of shipped artifacts.
 
 ### I: IX covers CI tooling

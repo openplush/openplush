@@ -24,6 +24,7 @@
   - [0015 Merge gate](adr/0015-merge-gate.md)
   - [0016 Standing merge authorization](adr/0016-standing-merge-authorization.md)
   - [0017 Docs site](adr/0017-docs-site.md)
+  - [0018 Hands-off merging](adr/0018-hands-off-merging.md)
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
   - [The pipeline, one model at a time](explanation/pipeline.md)

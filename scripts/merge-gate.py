@@ -27,7 +27,8 @@ REQUIRED_CHECKS = ("fmt, clippy, test", "licenses and advisories", "typecheck, u
 REVIEW_CHECKS = ("changed paths", "adversarial review")
 GREEN = frozenset({"success", "skipped"})
 SUMMARY_AUTHOR = "github-actions[bot]"
-RED_COUNT = re.compile(r"🔴\s*(\d+)")
+# The reviewer writes "🔴 0" and "0 🔴" alike; prose elsewhere in the summary also uses the mark.
+RED_COUNT = re.compile(r"^Findings:.*?(?:(\d+)[ \t]*🔴|🔴[ \t]*(\d+))", re.MULTILINE)
 SUMMARY_HEAD = re.compile(r"head ([0-9a-f]{40})")
 HOLD = timedelta(hours=24)
 MARKER = "<!-- merge-gate -->"
@@ -150,7 +151,7 @@ def summary_findings(summary: str, threads: list[object]) -> tuple[bool, str]:
     match = RED_COUNT.search(summary)
     if match is None:
         return False, "summary found but its 🔴 count not found"
-    reds = int(match[1])
+    reds = int(match[1] or match[2])
     if reds == 0:
         return True, "newest summary reports 🔴 0"
     open_reds = open_red_threads(threads)

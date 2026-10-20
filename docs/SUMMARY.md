@@ -2,6 +2,9 @@
 
 [OpenPlush documentation](README.md)
 
+- [Start here](start/README.md)
+  - [Set up and run every check](start/setup.md)
+  - [Project status](start/status.md)
 - [Architecture decision records](adr/README.md)
   - [0000 Template](adr/0000-template.md)
   - [0001 Preprocessing](adr/0001-preprocessing.md)
@@ -35,5 +38,6 @@
   - [Command line](reference/cli.md)
   - [Crates](reference/crates.md)
   - [Engine API](reference/engine-api.md)
+  - [Glossary](reference/glossary.md)
   - [Worker protocol](reference/worker-protocol.md)
 - [Tutorials](tutorials/README.md)

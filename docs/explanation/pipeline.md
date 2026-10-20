@@ -4,7 +4,7 @@ This page follows one model from its file to a printed pattern, stage by stage: 
 
 ## The short answer
 
-A model is read into a triangle soup (`openplush-io`), checked and repaired into a manifold mesh (`openplush-mesh`), cut along its seams into charts (`openplush-seams`), flattened chart by chart (`openplush-flatten`), turned into pattern pieces with seam allowance (`openplush-pattern`), laid out on fabric and pages (`openplush-layout`) and written as SVG or PDF (`openplush-export`). Each stage either hands on output that meets its promise or stops with a typed error naming where the problem is; nothing is quietly fixed. Today `openplush-pipeline`, the one public API, exposes validate, repair and chart; the later stages exist as crate functions that no pipeline stage calls yet ([status](https://github.com/openplush/openplush/blob/main/specs/README.md#status)).
+A model is read into a triangle soup (`openplush-io`), checked and repaired into a manifold mesh (`openplush-mesh`), cut along its seams into charts (`openplush-seams`), flattened chart by chart (`openplush-flatten`), turned into pattern pieces with seam allowance (`openplush-pattern`), laid out on fabric and pages (`openplush-layout`) and written as SVG or PDF (`openplush-export`). Each stage either hands on output that meets its promise or stops with a typed error naming where the problem is; nothing is quietly fixed. Today `openplush-pipeline`, the one public API, exposes validate, repair and chart; the later stages exist as crate functions that no pipeline stage calls yet ([status](../start/status.md)).
 
 ## How it works
 
@@ -14,7 +14,7 @@ The model followed here is the capsule in `fixtures/meshes/capsule.obj`: a close
 
 `openplush-io` reads the file. `obj::read`, `stl::read` and `ply::read` each turn bytes into a `TriangleSoup`: positions, triangles, and for every triangle corner a `SourceCorner` recording which primitive and which vertex of the file it came from. Polygons are triangulated without moving or adding a vertex. The soup promises finite coordinates and in-range indices, and nothing about quality: holes, duplicates and non-manifold edges pass through to the next stage.
 
-What can fail, as `IoError`: `Parse` (the file cannot be read, with the line or byte where the reader can say), `NonFiniteInput` (every vertex with a NaN or infinite coordinate, by its place in the file), and `Mesh` (the triangles do not fit a soup at all). `EngineError` has matching `Parse` and `NonFiniteInput` variants, but the pipeline has no import stage yet: a shell calls the reader directly. glTF and GLB have no reader yet ([status](https://github.com/openplush/openplush/blob/main/specs/README.md#status)).
+What can fail, as `IoError`: `Parse` (the file cannot be read, with the line or byte where the reader can say), `NonFiniteInput` (every vertex with a NaN or infinite coordinate, by its place in the file), and `Mesh` (the triangles do not fit a soup at all). `EngineError` has matching `Parse` and `NonFiniteInput` variants, but the pipeline has no import stage yet: a shell calls the reader directly. glTF and GLB have no reader yet ([status](../start/status.md)).
 
 The capsule reads as one OBJ primitive with 98 vertices and 192 triangles.
 
@@ -28,7 +28,7 @@ The capsule's report is clean: one component, no boundary loop, no non-manifold 
 
 `openplush-pipeline::repair` runs `openplush-mesh`'s `into_manifold` with a `RepairPlan`, the steps the maker allowed. It welds close vertices, drops faces that repeat an index or another face, pairs the faces on over-shared edges, orients the faces consistently, splits non-manifold vertices and components, and builds the half-edge `ManifoldMesh`, with a `RepairReport` of every change. This is the only way to get a `ManifoldMesh`, so unrepaired geometry cannot reach a later stage. An edge repair had to split becomes a mandatory seam, which the maker cannot remove (see [seams](seams.md)).
 
-What can fail: `EngineError::Mesh`, carrying the mesh crate's refusal. Examples are `NoTriangles`, a defect whose repair step the plan turned off reaching the build (a `NonManifoldEdge` or `InconsistentOrientation`, say), and a hole the maker asked to fill (`HoleFillUnavailable`), since hole filling is not built yet ([status](https://github.com/openplush/openplush/blob/main/specs/README.md#status)).
+What can fail: `EngineError::Mesh`, carrying the mesh crate's refusal. Examples are `NoTriangles`, a defect whose repair step the plan turned off reaching the build (a `NonManifoldEdge` or `InconsistentOrientation`, say), and a hole the maker asked to fill (`HoleFillUnavailable`), since hole filling is not built yet ([status](../start/status.md)).
 
 The capsule needs nothing: the mesh has 98 vertices, 288 edges and 192 faces.
 
@@ -44,7 +44,7 @@ With no seams at all, the capsule is one closed chart and the stage refuses it: 
 
 `openplush-flatten` gives every vertex of a chart a flat position. `FlattenSession::new` takes a `ChartMesh`'s arrays, lays the chart's boundary flat with every edge at its exact 3D length, then moves the interior a step at a time to keep each triangle as close to its 3D shape as it can without ever turning one over. `finish` hands out the layout only once it has settled. `metrics` and `summary` measure how far each face is stretched or compressed. Why the boundary is pinned is on the [flattening](flattening.md) page.
 
-What can fail, as `FlattenError`: `EmptyChart` (a chart with no faces), `NotADisk` (a guard, since the chart stage should not let one through), `Degenerate` (a face with no area), `Unjudgeable` (a face whose flat coordinates the exact orientation test refuses), `SolveFailed` (a sparse solve was refused), `BoundaryNotRealizable` (the boundary cannot close at its 3D lengths; it carries how far it misses and a dart that would relieve it) and `Flip` (a face turned over). `EngineError` declares `Flip` and `BoundaryNotRealizable` for this stage, but no pipeline stage calls the flattener yet ([status](https://github.com/openplush/openplush/blob/main/specs/README.md#status)).
+What can fail, as `FlattenError`: `EmptyChart` (a chart with no faces), `NotADisk` (a guard, since the chart stage should not let one through), `Degenerate` (a face with no area), `Unjudgeable` (a face whose flat coordinates the exact orientation test refuses), `SolveFailed` (a sparse solve was refused), `BoundaryNotRealizable` (the boundary cannot close at its 3D lengths; it carries how far it misses and a dart that would relieve it) and `Flip` (a face turned over). `EngineError` declares `Flip` and `BoundaryNotRealizable` for this stage, but no pipeline stage calls the flattener yet ([status](../start/status.md)).
 
 The capsule's tube is a cylinder, which unrolls to a rectangle with no distortion. Each cap is a hemisphere, which cannot lie flat at its own size: with its rim pinned, the interior compresses, and its flat area comes out about half its 3D area. That compression is where fabric would gather, and what a dart would relieve.
 
@@ -52,7 +52,7 @@ The capsule's tube is a cylinder, which unrolls to a rectangle with no distortio
 
 `openplush-pattern` turns flat outlines into pieces in millimetres. `scale::size` sets the real-world size: the factor from model units to millimetres and whether the result is within the supported 75 mm to 1000 mm. `Outline::new` accepts only a closed, simple, counter-clockwise polygon. `parity::check` confirms the two sides of a seam agree in length. `allowance::cut_line` grows the sewing line into the cut line, edge by edge (see [sewing concepts](sewing.md)). `PatternPiece` holds both lines, the cut count and the allowed rotations, and `Fabric` checks a fabric profile.
 
-What can fail, as `PatternError`: a seam whose sides differ (`SeamParity`, which means a flattener bug), an outline that crosses or touches itself or winds the wrong way, allowances that split the piece or close off a gap, a cut count of zero or over 100, a fabric profile that contradicts itself, and a model length or scale that is zero, negative or not finite. `EngineError` declares `SeamParity` and `OffsetFailed` for this stage. The step from a flattened chart to its outline, and a pipeline stage for any of this, are not built yet ([status](https://github.com/openplush/openplush/blob/main/specs/README.md#status)).
+What can fail, as `PatternError`: a seam whose sides differ (`SeamParity`, which means a flattener bug), an outline that crosses or touches itself or winds the wrong way, allowances that split the piece or close off a gap, a cut count of zero or over 100, a fabric profile that contradicts itself, and a model length or scale that is zero, negative or not finite. `EngineError` declares `SeamParity` and `OffsetFailed` for this stage. The step from a flattened chart to its outline, and a pipeline stage for any of this, are not built yet ([status](../start/status.md)).
 
 ### Layout: pieces on fabric and pages
 
@@ -68,7 +68,7 @@ What can fail, as `ExportError`: a placement whose piece was not given (`Unknown
 
 ### Who calls the stages
 
-The command-line tool and the WASM facade are the shells that will drive this chain. Neither calls a stage yet ([status](https://github.com/openplush/openplush/blob/main/specs/README.md#status)); see [reference/cli.md](../reference/cli.md) and [reference/worker-protocol.md](../reference/worker-protocol.md).
+The command-line tool and the WASM facade are the shells that will drive this chain. Neither calls a stage yet ([status](../start/status.md)); see [reference/cli.md](../reference/cli.md) and [reference/worker-protocol.md](../reference/worker-protocol.md).
 
 ## Why not the alternative
 

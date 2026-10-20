@@ -64,6 +64,10 @@ expect_plan "workflows step lints the workflows with actionlint alone" "workflow
   "actionlint -shellcheck= -pyflakes= .github/workflows"
 expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
 expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
+mdbook=$(sed -n 's/^MDBOOK_VERSION=//p' "$check")
+lychee=$(sed -n 's/^LYCHEE_VERSION=//p' "$check")
+expect_plan "setup installs the pinned mdbook and lychee" "--setup" \
+  "cargo install mdbook --version $mdbook --locked" "cargo install lychee --version $lychee --locked"
 actionlint=$(sed -n 's/^ACTIONLINT_VERSION=//p' "$check")
 expect_plan "setup installs the pinned actionlint release" "--setup" \
   "actionlint/releases/download/v$actionlint/actionlint_${actionlint}_" "tar -xzf"
@@ -97,6 +101,11 @@ if [[ $out != *"cargo install cargo-deny"* && $out != *"wasm-bindgen-cli"* ]]; t
   ok "setup for the engine group installs nothing for deny or wasm"
 else
   bad "setup for the engine group installs nothing for deny or wasm" "$out"
+fi
+if [[ $out != *"cargo install mdbook"* && $out != *"cargo install lychee"* ]]; then
+  ok "setup for the engine group installs nothing for docs"
+else
+  bad "setup for the engine group installs nothing for docs" "$out"
 fi
 expect_plan "setup for deny installs only cargo-deny" "--setup deny" "cargo install cargo-deny --version"
 out=$("$check" --dry-run --setup deny 2>&1)

@@ -120,11 +120,11 @@ You are responsible for everything you submit, whoever or whatever wrote it; an 
 
 ### 5. Open it for its one review
 
-The automated review runs once, when the PR opens, and only the maintainer asks for another run. Its findings arrive as review comments marked 🔴 blocking, 🟡 optional or 🟣 pre-existing; answer every 🔴, by fixing it or by replying with why not. Each run costs the maintainer's subscription, and reruns used to be spent twice on one PR within ten minutes. How a finding is fixed, proven and answered is in [`steward`, Reviews](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md#reviews).
+The automated review runs when the PR opens; when it runs again is in [Get a pull request reviewed and merged](review-and-merge.md). Its findings arrive as review comments marked 🔴 blocking, 🟡 optional or 🟣 pre-existing; answer every 🔴, by fixing it or by replying with why not. Each run costs the maintainer's subscription, and reruns used to be spent twice on one PR within ten minutes. How a finding is fixed, proven and answered is in [`steward`, Reviews](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md#reviews).
 
 ### 6. Merge the stack bottom-up
 
-Who merges depends on the PR's tier, which the merge gate computes from the diff; the tiers and what an agent may do are in [`steward`, Merging](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md#merging). [`.github/workflows/merge-gate.yml`](https://github.com/openplush/openplush/blob/main/.github/workflows/merge-gate.yml) judges every merge condition on the current head and keeps one comment per PR saying which fail.
+Who merges depends on the PR's tier, which the merge gate computes from the diff; the tiers and the gate's conditions are in [Get a pull request reviewed and merged](review-and-merge.md). [`.github/workflows/merge-gate.yml`](https://github.com/openplush/openplush/blob/main/.github/workflows/merge-gate.yml) judges every merge condition on the current head and keeps one comment per PR saying which fail.
 
 The repo uses merge commits only, because of what each strategy does to the PR above:
 

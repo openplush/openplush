@@ -20,7 +20,7 @@ It scans the files git tracks or would add, so ignored trees such as build outpu
 
 The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. `scripts/gen-status.py` reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc`, which the page includes; the `status` step renders the counts again and fails, with a diff, when the committed file differs. After ticking a task, run `scripts/gen-status.py` and commit the include with the tick.
 
-A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, another bullet or no ID), and on a `tasks.md` with no task lines.
+A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
 
 ### Workspace lints (`clippy`)
 

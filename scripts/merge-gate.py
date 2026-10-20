@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Judge whether a pull request may auto-merge, by ADR 0015, from fetched state.
+"""Judge whether a pull request may auto-merge, by ADR 0015 and ADR 0018, from fetched state.
 
 Reads one JSON document on stdin, assembled by .github/workflows/merge-gate.yml:
   {"mode": "dry-run"|"on", "now": RFC 3339, "repository": "owner/name",
    "pr": GitHub's pull object, "tier": scripts/pr-tier.py's output,
    "check_runs": the head commit's check runs, "comments": the PR's issue comments,
-   "threads": [{"isResolved": bool, "comments": [{"body": str}]}]}
+   "threads": [{"isResolved": bool, "comments": [{"body": str}]}],
+   "review_decision": GraphQL's reviewDecision or null}
 and prints one:
-  {"ready": bool, "tier": "A"|"B"|"C", "hold_until": RFC 3339|null,
+  {"ready": bool, "tier": "A"|"B"|"C"|"H", "hold_until": RFC 3339|null, "rereview": bool,
    "conditions": [{"name": str, "ok": bool, "detail": str}], "comment": markdown}
-It calls no API: the workflow fetches, this decides, the workflow acts.
+`rereview` asks the workflow to add the label: the newest summary is for another head
+and no review was asked for this one yet. It calls no API: the workflow fetches,
+this decides, the workflow acts.
 Needs Python 3.11+. Tests: scripts/tests/merge-gate.test.sh
 """
 
@@ -25,13 +28,20 @@ REVIEW_CHECKS = ("changed paths", "adversarial review")
 GREEN = frozenset({"success", "skipped"})
 SUMMARY_AUTHOR = "github-actions[bot]"
 RED_COUNT = re.compile(r"🔴\s*(\d+)")
+SUMMARY_HEAD = re.compile(r"head ([0-9a-f]{40})")
 HOLD = timedelta(hours=24)
 MARKER = "<!-- merge-gate -->"
+# Left in the gate's own comment for each head it asked a review for, so it asks once.
+REREVIEW_MARK = re.compile(r"<!-- rereview: ([0-9a-f]{40}) -->")
+REREVIEW_LABEL = "rereview"
+CHANGES_REQUESTED = "CHANGES_REQUESTED"
 MODES = ("dry-run", "on")
 
 T = TypeVar("T")
 Doc = dict[str, object]
 Condition = tuple[str, bool, str]
+# A review verdict: ok, detail, and whether to ask for a review on this head now.
+Review = tuple[bool, str, bool]
 
 
 class InputError(Exception):
@@ -107,30 +117,71 @@ def open_red_threads(threads: list[object]) -> int:
     return count
 
 
-def review_condition(doc: Doc, runs: dict[str, Doc], exempt: bool) -> tuple[bool, str]:
-    ok, detail = check_condition(runs, REVIEW_CHECKS, absent_ok=True)
-    if not ok:
-        return False, detail
-    summary = newest_summary(field(doc, "comments", list), field(field(doc, "pr", dict), "number", int))
-    if summary is None:
-        return (True, "skipped by review.yml's rules") if exempt else (False, "no review summary yet")
+def asked_heads(comments: list[object]) -> set[str]:
+    """The heads the gate's own comment already asked a review for."""
+    heads: set[str] = set()
+    for comment in comments:
+        if isinstance(comment, dict) and field(comment, "body", str).startswith(MARKER):
+            heads.update(REREVIEW_MARK.findall(field(comment, "body", str)))
+    return heads
+
+
+def pr_labels(pr: Doc) -> list[str]:
+    return [field(label, "name", str) for label in field(pr, "labels", list) if isinstance(label, dict)]
+
+
+def stale_summary(doc: Doc, runs: dict[str, Doc], head: str, reviewed: str) -> Review:
+    """Why a summary for another head fails, and whether to ask for a review now."""
+    where = f"newest summary is for head {reviewed[:7]}, not this head"
+    if rereview_pending(doc):
+        return False, f"{where}; `rereview` is on the PR, waiting for the review to start", False
+    if any(name in runs for name in REVIEW_CHECKS):
+        return False, f"{where}, and the review ran on this head without posting one: the maintainer must look", False
+    if head in asked_heads(field(doc, "comments", list)):
+        return False, f"{where}; a review was requested for this head", False
+    return False, f"{where}: requesting a review", True
+
+
+def rereview_pending(doc: Doc) -> bool:
+    return REREVIEW_LABEL in pr_labels(field(doc, "pr", dict))
+
+
+def summary_findings(summary: str, threads: list[object]) -> tuple[bool, str]:
     match = RED_COUNT.search(summary)
     if match is None:
         return False, "summary found but its 🔴 count not found"
     reds = int(match[1])
     if reds == 0:
         return True, "newest summary reports 🔴 0"
-    open_reds = open_red_threads(field(doc, "threads", list))
+    open_reds = open_red_threads(threads)
     if open_reds:
         return False, f"newest summary reports {reds} 🔴, {open_reds} 🔴 thread(s) unresolved"
     return True, f"newest summary reports {reds} 🔴, every 🔴 thread resolved"
 
 
+def review_condition(doc: Doc, runs: dict[str, Doc], exempt: bool) -> Review:
+    ok, detail = check_condition(runs, REVIEW_CHECKS, absent_ok=True)
+    if not ok:
+        return False, detail, False
+    pr = field(doc, "pr", dict)
+    head = field(field(pr, "head", dict), "sha", str)
+    summary = newest_summary(field(doc, "comments", list), field(pr, "number", int))
+    if summary is None:
+        return (True, "skipped by review.yml's rules", False) if exempt else (False, "no review summary yet", False)
+    match = SUMMARY_HEAD.search(summary)
+    if match is None:
+        return False, "summary found but its head not found", False
+    if match[1] != head:
+        return stale_summary(doc, runs, head, match[1])
+    ok, detail = summary_findings(summary, field(doc, "threads", list))
+    return ok, detail, False
+
+
 def tier_condition(tier: str, runs: dict[str, Doc], now: datetime) -> tuple[bool, str, datetime | None]:
-    if tier == "A":
-        return True, "tier A", None
-    if tier == "C":
-        return False, "tier C: the maintainer merges", None
+    if tier in ("A", "C"):
+        return True, f"tier {tier}", None
+    if tier == "H":
+        return False, "tier H: the maintainer merges", None
     completed = [field(runs[n], "completed_at", str) for n in REQUIRED_CHECKS if n in runs and runs[n].get("completed_at")]
     if len(completed) < len(REQUIRED_CHECKS):
         return False, "tier B: the 24 h hold starts when every required check has completed", None
@@ -140,7 +191,7 @@ def tier_condition(tier: str, runs: dict[str, Doc], now: datetime) -> tuple[bool
     return True, f"tier B, held since {fmt_time(until)}", None
 
 
-def judge(doc: Doc) -> tuple[list[Condition], datetime | None]:
+def judge(doc: Doc) -> tuple[list[Condition], datetime | None, bool]:
     pr = field(doc, "pr", dict)
     head = field(pr, "head", dict)
     tier = field(doc, "tier", dict)
@@ -154,8 +205,9 @@ def judge(doc: Doc) -> tuple[list[Condition], datetime | None]:
     threads = field(doc, "threads", list)
     unresolved = sum(1 for t in threads if isinstance(t, dict) and not field(t, "isResolved", bool))
     checks_ok, checks_detail = check_condition(runs, REQUIRED_CHECKS, absent_ok=False)
-    review_ok, review_detail = review_condition(doc, runs, field(tier, "review_exempt", bool))
+    review_ok, review_detail, rereview = review_condition(doc, runs, field(tier, "review_exempt", bool))
     tier_ok, tier_detail, hold = tier_condition(field(tier, "tier", str), runs, now)
+    decision = doc.get("review_decision")
     conditions: list[Condition] = [
         ("not a draft", not field(pr, "draft", bool), "" if not pr["draft"] else "a draft never merges"),
         ("head in this repository", head_repo == repository, "" if head_repo == repository else f"head is in {head_repo}"),
@@ -166,12 +218,13 @@ def judge(doc: Doc) -> tuple[list[Condition], datetime | None]:
         ("required checks green on this head", checks_ok, checks_detail),
         ("review", review_ok, review_detail),
         ("no unresolved review threads", unresolved == 0, "" if unresolved == 0 else f"{unresolved} unresolved thread(s)"),
+        ("no changes requested", decision != CHANGES_REQUESTED, "" if decision != CHANGES_REQUESTED else "a reviewer requested changes"),
         ("tier", tier_ok, tier_detail),
     ]
-    return conditions, hold
+    return conditions, hold, rereview
 
 
-def render(doc: Doc, conditions: list[Condition], ready: bool) -> str:
+def render(doc: Doc, conditions: list[Condition], ready: bool, asked: bool) -> str:
     pr = field(doc, "pr", dict)
     tier = field(doc, "tier", dict)
     mode = field(doc, "mode", str)
@@ -179,8 +232,9 @@ def render(doc: Doc, conditions: list[Condition], ready: bool) -> str:
     effective = field(tier, "tier", str)
     reasons = "; ".join(str(r) for r in field(tier, "reasons", list))
     rows = "\n".join(f"| {name} | {'✅' if ok else '❌'} | {detail} |" for name, ok, detail in conditions)
-    if effective == "C":
-        verdict = "Tier C: the maintainer merges. The gate never labels or merges it."
+    mark = f"<!-- rereview: {sha} -->\n" if asked else ""
+    if effective == "H":
+        verdict = "Tier H: the maintainer merges. The gate never labels or merges it."
     elif ready and mode == "on":
         verdict = "Ready: `merge:ready` applied and auto-merge enabled, matched to this head."
     elif ready:
@@ -189,7 +243,7 @@ def render(doc: Doc, conditions: list[Condition], ready: bool) -> str:
         verdict = ("Not ready: fix what fails above. The gate judges again when a CI workflow completes, "
                    "on every push, label and edit, and every 30 minutes.")
     return (
-        f"{MARKER}\n### Merge gate: {'ready' if ready else 'not ready'} (head `{sha[:7]}`, mode {mode}, "
+        f"{MARKER}\n{mark}### Merge gate: {'ready' if ready else 'not ready'} (head `{sha[:7]}`, mode {mode}, "
         f"checked {field(doc, 'now', str)})\n\n"
         f"Tier **{effective}** (computed {field(tier, 'computed', str)}, label {tier.get('label') or 'none'}): {reasons}\n\n"
         f"| Condition | | Detail |\n|---|---|---|\n{rows}\n\n{verdict}\n"
@@ -203,15 +257,17 @@ def main() -> int:
             raise InputError("the document must be an object")
         if field(doc, "mode", str) not in MODES:
             raise InputError(f"mode must be one of {MODES}")
-        conditions, hold = judge(doc)
+        conditions, hold, rereview = judge(doc)
         ready = all(ok for _, ok, _ in conditions)
-        comment = render(doc, conditions, ready)
+        head = field(field(field(doc, "pr", dict), "head", dict), "sha", str)
+        asked = rereview or head in asked_heads(field(doc, "comments", list))
+        comment = render(doc, conditions, ready, asked)
     except (InputError, json.JSONDecodeError, ValueError) as e:
         print(f"merge-gate: {e}", file=sys.stderr)
         return 2
     json.dump({
         "ready": ready, "tier": field(field(doc, "tier", dict), "tier", str),
-        "hold_until": fmt_time(hold) if hold else None,
+        "hold_until": fmt_time(hold) if hold else None, "rereview": rereview,
         "conditions": [{"name": n, "ok": ok, "detail": d} for n, ok, d in conditions],
         "comment": comment,
     }, sys.stdout)

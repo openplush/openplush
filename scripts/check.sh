@@ -3,20 +3,24 @@
 # exactly what CI runs.
 #
 # Usage:
-#   scripts/check.sh --setup          install the pinned tools (cargo-deny, the
+#   scripts/check.sh --setup          install the pinned tools (cargo-deny, mdbook, lychee, the
 #                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
 #   scripts/check.sh --setup <steps>  install only what those steps need, then run them
-#   scripts/check.sh                  run every gate
-#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell,
-#                                     or engine (= boundary hygiene fmt clippy test types workflows wasm-check), or all
+#   scripts/check.sh                  run every gate but docs
+#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs,
+#                                     or engine (= boundary hygiene fmt clippy test types workflows wasm-check),
+#                                     or all (every step but docs)
 #   --dry-run                         print the commands instead of running them
 #
 # Needs: rustup, Node 22+ with pnpm, bash >= 4.3, jq, python3 >= 3.11.
 # Tests: scripts/tests/check.test.sh
 set -euo pipefail
 
-# Keep in step with .github/workflows/engine.yml (scripts/tests/check.test.sh checks).
+# Keep DENY_VERSION and ACTIONLINT_VERSION in step with .github/workflows/engine.yml,
+# and MDBOOK_VERSION with .github/workflows/docs.yml (scripts/tests/check.test.sh checks).
 DENY_VERSION=0.20.2
+MDBOOK_VERSION=0.5.4
+LYCHEE_VERSION=0.24.2
 ACTIONLINT_VERSION=1.7.9
 # sha256 of each release tarball, from the release's checksums file.
 ACTIONLINT_SHA256=(
@@ -38,9 +42,9 @@ for arg in "$@"; do
     --setup) setup=1 ;;
     engine) steps+=(boundary hygiene fmt clippy test types workflows wasm-check) ;;
     all) steps+=(boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell) ;;
-    boundary | hygiene | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell) steps+=("$arg") ;;
+    boundary | hygiene | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell | docs) steps+=("$arg") ;;
     *)
-      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell; groups: engine all)" >&2
+      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs; groups: engine all)" >&2
       exit 2
       ;;
   esac
@@ -119,6 +123,14 @@ if ((setup)); then
   if needs deny && { ((dry)) || [[ $(installed_version cargo-deny) != "$DENY_VERSION" ]]; }; then
     run cargo install cargo-deny --version "$DENY_VERSION" --locked
   fi
+  if needs docs; then
+    if ((dry)) || [[ $(installed_version mdbook) != "v$MDBOOK_VERSION" ]]; then
+      run cargo install mdbook --version "$MDBOOK_VERSION" --locked
+    fi
+    if ((dry)) || [[ $(installed_version lychee) != "$LYCHEE_VERSION" ]]; then
+      run cargo install lychee --version "$LYCHEE_VERSION" --locked
+    fi
+  fi
   if needs wasm; then
     wb=$(wasm_bindgen_version)
     if [[ -z $wb ]]; then
@@ -138,7 +150,11 @@ for step in "${steps[@]}"; do
   case $step in
     boundary)
       # Every self-test first, so a broken checker cannot pass everything.
-      for t in scripts/tests/*.test.sh; do run "$t"; done
+      for t in scripts/tests/*.test.sh; do
+        # Needs mdbook and lychee, which only the docs step requires; it runs there.
+        [[ $t == scripts/tests/check-docs-links.test.sh ]] && continue
+        run "$t"
+      done
       run scripts/check-boundary.sh
       ;;
     hygiene)
@@ -178,7 +194,7 @@ for step in "${steps[@]}"; do
       fi
       run cargo build --workspace --target wasm32-unknown-unknown --locked
       run cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings
-      # Only #[wasm_bindgen_test] tests run here; see CONTRIBUTING.
+      # Only #[wasm_bindgen_test] tests run here; see docs/reference/checks.md.
       run cargo test --workspace --target wasm32-unknown-unknown --locked
       # Each wasm canary (crates/*/tests/wasm_*.rs) must actually run on wasm32.
       # Without its #[wasm_bindgen_test] attribute, wasm32 reports "no tests to
@@ -205,6 +221,31 @@ for step in "${steps[@]}"; do
         run pnpm --filter web --fail-if-no-match exec playwright install --with-deps chromium
         run pnpm --filter web --fail-if-no-match exec playwright test
       fi
+      ;;
+    docs)
+      if ! ((dry)); then
+        have=$(installed_version mdbook)
+        [[ $have == "v$MDBOOK_VERSION" ]] ||
+          die "mdbook ${have:-missing}, check.sh pins v$MDBOOK_VERSION; run scripts/check.sh --setup docs"
+        have=$(installed_version lychee)
+        [[ $have == "$LYCHEE_VERSION" ]] ||
+          die "lychee ${have:-missing}, check.sh pins $LYCHEE_VERSION; run scripts/check.sh --setup docs"
+      fi
+      run scripts/tests/check-docs-links.test.sh
+      run mdbook build
+      # The maker guide is its own book, built beside the contributor book and
+      # published only from the first public release (docs.yml drops it on main).
+      run mdbook build docs/user
+      # The maker book's source is its own directory, so mdBook copies its book.toml too.
+      run rm target/site/guide/book.toml
+      run scripts/check-docs-plain.sh
+      # mdBook copies every non-Markdown file under docs/ into the book, so the
+      # landing page lands there too, with its dev/ link dead; it belongs at the root.
+      run rm -r target/site/dev/site
+      run cp docs/site/index.html target/site/index.html
+      run scripts/check-docs-summary.sh
+      run scripts/check-docs-remote.sh target/site
+      run scripts/check-docs-links.sh target/site
       ;;
   esac
   endgroup

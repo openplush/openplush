@@ -6,4 +6,6 @@ This guide is for you if you sew plush and want to use OpenPlush to make your ow
 
 ## What is here
 
+- [Questions new makers ask](faq.md): cost, privacy and which files open.
+
 The guide describes what OpenPlush can do today and grows as the tool does. Every step of making a pattern gets its own page when that step is ready to use, and every message the tool can show you gets an explanation of what happened and what to do next.

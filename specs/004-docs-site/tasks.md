@@ -83,7 +83,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 ## Phase 4: Facts out of agent files (US4)
 
 - [ ] W024 [US4] Move to `docs/` (W-009): the geometry gotchas (`crates/AGENTS.md`) into `docs/explanation/meshes.md`; the crate ownership table into `docs/reference/crates/`; the merge-tier table (steward skill) into `docs/how-to/review-and-merge.md`; the rationale behind the code rules into `docs/reference/code-rules.md`. The agent files keep each directive as one line plus a link. The commands table stays in `AGENTS.md` behind an anchor and `docs/reference/commands.md` includes it (verify the out-of-root include; else make the page canonical and link from `AGENTS.md`). needs:W009
-- [ ] W025 [P] [US4] `docs/explanation/agents.md`: how agents work in this repo in plain words (Spec Kit flow, factory, steward, the merge gate) with links to the skills
+- [x] W025 [P] [US4] `docs/explanation/agents.md`: how agents work in this repo in plain words (Spec Kit flow, factory, steward, the merge gate) with links to the skills. As built: also the review on opening and standing authorizations; no glossary links, since the glossary (W021) is not on `main` yet; the tier table is left in `steward`, which W024 moves
 
 ## Phase 5: How the engine works (US1)
 
@@ -96,7 +96,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 
 - [ ] W030 `CONTRIBUTING.md` becomes a short pointer into the site; its human content moves to `docs/start/` and `docs/how-to/`. Assumes the plan's open question resolves to a pointer. needs:W018,W020
 - [ ] W031 [P] Split `docs/reference/crates.md` into `docs/reference/crates/<crate>.md`, one readable page each, with a short index. needs:W024
-- [ ] W032 [P] `docs/how-to/pull-requests.md` rewritten to the writing guide (IDs as links, purpose first); `docs/adr/README.md` gains "how to read an ADR". ADR bodies are records and are not edited
+- [x] W032 [P] `docs/how-to/pull-requests.md` rewritten to the writing guide (IDs as links, purpose first); `docs/adr/README.md` gains "how to read an ADR". ADR bodies are records and are not edited. As built: kept as a how-to on the how-to template, its reasoning inline under each step; task IDs became links to `tasks.md` or plain descriptions, and rules stated in `AGENTS.md` or `steward` are linked, not restated. The page is still partly explanation; splitting the reasoning into `docs/explanation/` is a follow-up
 - [ ] W033 [US1] `docs/tutorials/first-change.md`: a code-level first change, test first, on crates that exist today. Assumes the plan's open question resolves to "now". needs:W020
 
 ## Phase 7: Maker guide (US3)

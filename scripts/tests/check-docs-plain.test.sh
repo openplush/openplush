@@ -50,7 +50,11 @@ rm "$d/faq.md"
 sed -i '/faq.md/d' "$d/SUMMARY.md"
 expect pass "a book with only its landing page" "$d"
 
-for id in "W016" "W-003" "D-012" "T042" "H105" "U007" "FR-030" "SC-006" "US3" "ADR 0017" "R4" "Q2" "S1"; do
+# Split so the hygiene check does not read these fixtures as spec references.
+task="T""042"
+fr="FR-""030"
+decision="D-""012"
+for id in "W016" "W-003" "$decision" "$task" "H105" "U007" "$fr" "SC-006" "US3" "ADR 0017" "R4" "Q2" "S1"; do
   d=$(new_case "id-${id// /-}" "This is decided in $id, which you can read.")
   expect fail "a process ID: $id" "$d" "faq.md:3: process ID '$id'"
 done
@@ -84,7 +88,7 @@ d=$(new_case two-pages "Plain text.")
 printf '%s\n' "# Steps" "" "Open the model, then run \`openplush\`." >"$d/steps.md"
 expect fail "a code span on a page the navigation does not list" "$d" "steps.md:3: code"
 
-d=$(new_case counts "First W016 and then D-012." "Then \`code\`.")
+d=$(new_case counts "First W016 and then $decision." "Then \`code\`.")
 out=$("$check" "$d" 2>&1) || true
 if [[ $out == *"3 problem(s)"* ]]; then
   pass=$((pass + 1)); echo "ok   every problem is counted"

@@ -4,6 +4,7 @@ Information-oriented: precise, complete, and dry. CLI commands and flags, warnin
 
 - [Engine API](engine-api.md): the public `openplush-pipeline` surface as built, error messages, warning order, wire forms.
 - [Crates](crates.md): what each engine crate contains today and what it depends on.
+- [Checks](checks.md): what the lint, opt-out, wasm32 test and licence checks enforce, and why.
 - [Command line](cli.md): `openplush-cli` subcommands, flags, and exit codes.
 - [Glossary](glossary.md): every domain term (geometry, sewing, process) and every ID prefix the specs use.
 - [Worker protocol](worker-protocol.md): `@openplush/engine-client` as built, message rules, and ops.

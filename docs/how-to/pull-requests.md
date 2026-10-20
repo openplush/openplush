@@ -55,6 +55,8 @@ Each task is a test commit, then the implementation that makes it pass. A review
 
 The PR's `Reading order` section says where to start. Commit by commit, a 1,500-line PR is still a series of small, checkable steps.
 
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat(flatten): …`, `fix(mesh): …`, `docs(spec): …`.
+
 **Why not a PR per task.** A PR containing only a failing test cannot merge with green CI, and the ways to force it green (`#[ignore]`, `#[should_panic]`, commenting out the assertion) are all forbidden by the [workflow rules](https://github.com/openplush/openplush/blob/main/AGENTS.md#workflow). So a test and its implementation always travel together. Beyond that, splitting a capability into one PR per task buys a review of a part nobody can judge alone.
 
 ### 3. Name the branch and stack it
@@ -112,11 +114,13 @@ At the merge gate the stack sometimes turns out to make sense only as a whole: Z
 
 [`.github/pull_request_template.md`](https://github.com/openplush/openplush/blob/main/.github/pull_request_template.md) pre-fills the description with each required section as an HTML comment saying what goes there, so an unfilled section is visibly empty rather than silently absent. Fill every section.
 
+You are responsible for everything you submit, whoever or whatever wrote it; an AI coding agent's work is yours once you open the PR.
+
 `Skipped` is the section people leave empty because it feels like an admission. It is the most useful one: an unstated gap becomes a surprise later, and the [definition of done](https://github.com/openplush/openplush/blob/main/AGENTS.md#definition-of-done) asks for it precisely so deferral is a decision rather than an oversight.
 
 ### 5. Open it for its one review
 
-The automated review runs once, when the PR opens, and only the maintainer asks for another run. Each run costs the maintainer's subscription, and reruns used to be spent twice on one PR within ten minutes. How a finding is fixed, proven and answered is in [`steward`, Reviews](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md#reviews).
+The automated review runs once, when the PR opens, and only the maintainer asks for another run. Its findings arrive as review comments marked 🔴 blocking, 🟡 optional or 🟣 pre-existing; answer every 🔴, by fixing it or by replying with why not. Each run costs the maintainer's subscription, and reruns used to be spent twice on one PR within ten minutes. How a finding is fixed, proven and answered is in [`steward`, Reviews](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md#reviews).
 
 ### 6. Merge the stack bottom-up
 

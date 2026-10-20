@@ -7,7 +7,7 @@ An ADR records a decision that changes a principle or the project's shape, so th
 - A new dependency category (AGENTS.md, Licenses).
 - A dependency whose license is not on the allowlist (Constitution IX, T006).
 - A new sideways edge in the crate DAG (`crates/AGENTS.md`).
-- An exception to `unsafe_code = "forbid"` (CONTRIBUTING.md, Warnings are errors).
+- An exception to `unsafe_code = "forbid"` ([the workspace lints](../reference/checks.md#workspace-lints-clippy)).
 
 Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/plan.md`) instead.
 

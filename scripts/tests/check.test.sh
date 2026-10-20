@@ -67,10 +67,20 @@ expect_plan "docs step builds the book and checks its navigation" "docs" \
   "mdbook build" "scripts/check-docs-summary.sh"
 expect_plan "docs step checks the built site loads nothing remote" "docs" \
   "scripts/check-docs-remote.sh target/site/dev"
+expect_plan "docs step checks every link and anchor in the built site, after its self-test" "docs" \
+  "scripts/tests/check-docs-links.test.sh" "scripts/check-docs-links.sh target/site/dev"
+# The links self-test builds a book with mdbook and runs lychee, which CI's engine
+# setup does not install, so only the docs step runs it.
+out=$("$check" --dry-run boundary 2>&1)
+if [[ $out == *"scripts/tests/check-docs-remote.test.sh"* && $out != *"scripts/tests/check-docs-links.test.sh"* ]]; then
+  ok "boundary step leaves the links self-test to the docs step"
+else
+  bad "boundary step leaves the links self-test to the docs step" "$out"
+fi
 # The docs step needs mdbook, which CI's engine setup does not install.
 for args in "" all engine; do
   out=$("$check" --dry-run $args 2>&1)
-  if [[ $out != *"mdbook build"* && $out != *"scripts/check-docs-summary.sh"* && $out != *"scripts/check-docs-remote.sh"* ]]; then
+  if [[ $out != *"mdbook build"* && $out != *"scripts/check-docs-summary.sh"* && $out != *"scripts/check-docs-remote.sh"* && $out != *"scripts/check-docs-links.sh"* ]]; then
     ok "${args:-default} run leaves out the docs step"
   else
     bad "${args:-default} run leaves out the docs step" "$out"

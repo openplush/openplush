@@ -56,6 +56,24 @@ jobs:
         with:
           path: target/site/
 
+  determinism:
+    name: two builds of the site are identical
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: mdbook@0.5.4
+          fallback: none
+      - run: scripts/check.sh --setup docs
+      - run: mv target/site target/site-1
+      - run: scripts/check.sh docs
+      - run: diff -r target/site-1 target/site
+
   deploy:
     name: deploy to GitHub Pages
     needs: build

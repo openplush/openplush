@@ -9,6 +9,7 @@
 //! IDs are never user input; they come out of the mesh itself, so an out-of-range ID
 //! is a caller bug and indexing panics on it, like a slice.
 
+mod append;
 mod build;
 mod copies;
 mod validate;
@@ -142,13 +143,13 @@ impl ManifoldMesh {
     }
 
     /// Provenance of the corner at `h`'s origin in `h`'s face; `None` for a
-    /// boundary half-edge.
+    /// boundary half-edge or a corner of a hole fill's patch.
     pub fn corner_source(&self, h: HalfEdgeId) -> Option<SourceCorner> {
         self.corner_src[ix(h.index())]
     }
 
     /// UV of the corner at `h`'s origin in `h`'s face; `None` for a boundary
-    /// half-edge or a corner the source gave no UV.
+    /// half-edge, a corner the source gave no UV, or a corner of a hole fill's patch.
     pub fn corner_uv(&self, h: HalfEdgeId) -> Option<DVec2> {
         self.corner_uv[ix(h.index())]
     }

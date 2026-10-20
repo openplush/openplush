@@ -66,7 +66,7 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 5: Every decision prompt can be answered cold (US5)
 
-- [ ] F010 [P] [US5] `AGENTS.md`: a short "Decision prompts" rule: facts, where it lives (file and ID), one recommendation, the default if unanswered, linking the glossary; it applies to `AskUserQuestion` calls, ledger-issue comments and handoffs. The glossary terms are 004's W043
+- [x] F010 [P] [US5] `AGENTS.md`: a short "Decision prompts" rule: facts, where it lives (file and ID), one recommendation, the default if unanswered, linking the glossary; it applies to `AskUserQuestion` calls, ledger-issue comments and handoffs. The glossary terms are 004's W043. As built: one bullet in Workflow, beside the stop-and-ask rule, where a prompt arises; it links the glossary page rather than the entries W043 adds, so it holds before and after W043 lands
 
 ## Phase 6: A grant is given once and honoured the same way (US6)
 

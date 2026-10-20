@@ -12,6 +12,7 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 
 ## Workflow
 - Every non-trivial change maps to a task ID in a `tasks.md`. No task ID → stop and ask; never invent scope.
+- A decision prompt (an `AskUserQuestion` call, a ledger-issue comment, a handoff blocker) can be answered cold: the facts, with numbers where there are any; where the decision lives (file and ID); one recommendation; the default if nobody answers. Link project terms to the [glossary](docs/reference/glossary.md).
 - Trivial-change lane (no task ID): docs or typo fixes, comment fixes, dependency patch bumps, a fixture with its license entry, CI changes that don't alter gates.
 - Tests first: the failing test commit, then the implementation commit.
 - Never hand-edit Spec Kit files (`.specify/templates/`, `.specify/scripts/`, `.specify/extensions/`, `.claude/skills/speckit-*`); use `specify`.

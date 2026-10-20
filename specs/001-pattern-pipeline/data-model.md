@@ -335,7 +335,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 
 ## 12. Persistence (project file)
 - JSON document + embedded binary mesh (glb-style chunk). `schemaVersion` with forward migrations in `openplush-project`.
-- **Stable references**: seams and markings reference edges/faces by keys derived from **source provenance** (sorted pair of canonical source-vertex IDs, `<primitive>.<vertex>` each, in `SourceCorner` order; face = sorted source-corner triple; D-067) — not by `EdgeId`, which changes if repair settings change. The keys are built: their as-built form is the `openplush-project` row of [the crate reference](../../docs/reference/crates.md).
+- **Stable references**: seams and markings reference edges/faces by keys derived from **source provenance** (sorted pair of canonical source-vertex IDs, `<primitive>.<vertex>` each, in `SourceCorner` order; face = sorted source-corner triple; D-067) — not by `EdgeId`, which changes if repair settings change. Their as-built form is the `openplush-project` row of [the crate reference](../../docs/reference/crates.md).
 - Stored: source mesh, `RepairPlan` (re-applied deterministically), `SeamSet`, fabrics and region assignments, direction strokes, markings, scale, options.
 - Not stored: anything recomputable (charts, parameterizations, pieces). Optional cache block keyed by content hash for fast reopen.
 

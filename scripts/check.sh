@@ -161,6 +161,7 @@ for step in "${steps[@]}"; do
     hygiene)
       run scripts/check-hygiene.sh
       run scripts/check-opt-outs.sh
+      run scripts/check-docs-facts.sh
       ;;
     # Before the builds: it takes a second, and a stale count should not wait for clippy.
     status) run scripts/gen-status.py --check ;;

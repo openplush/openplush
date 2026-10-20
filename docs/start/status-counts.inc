@@ -5,4 +5,4 @@
 | [001 pattern pipeline](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md) | 102 of 189 |
 | [002 seam placement hints](https://github.com/openplush/openplush/blob/main/specs/002-seam-placement-hints/tasks.md) | 6 of 82 |
 | [003 source seam import](https://github.com/openplush/openplush/blob/main/specs/003-source-seam-import/tasks.md) | 15 of 71 |
-| [004 docs site](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/tasks.md) | 32 of 43 |
+| [004 docs site](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/tasks.md) | 32 of 42 |

@@ -1,6 +1,6 @@
 # Checks: what each one enforces
 
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the generated status counts, the tests that must also run on wasm32, and the dependency licence check. [Set up and run every check](../start/setup.md) says how to run them.
+This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the check for copied task counts, the generated status counts, the tests that must also run on wasm32, and the dependency licence check. [Set up and run every check](../start/setup.md) says how to run them.
 
 ## Entries
 
@@ -15,6 +15,17 @@ An opt-out of the `disallowed_types` or `disallowed_methods` lint needs a line i
 - `CLIPPY_CONF_DIR` in a `Cargo.toml` or `.cargo/config*`.
 
 It scans the files git tracks or would add, so ignored trees such as build output are skipped, and counts every textual mention of either lint name in a `.rs` file under `crates/` or `bindings/`, a `Cargo.toml` or a `.cargo/config*`, plus `clippy::style`, `clippy::all` and `warnings` lint levels. The script's header lists the exact patterns and what they miss. It is a tripwire for honest mistakes, not a sandbox.
+
+### Copied task counts (`hygiene`)
+
+A task count copied into prose is wrong the next time a task is ticked, and a review of that tick never opens the page. The counts live on the [status page](../start/status.md#by-feature), generated; every other page links there. `scripts/check-docs-facts.sh` reads `README.md`, `CONTRIBUTING.md`, `specs/README.md` and every `.md` and `.inc` file under `docs/`, except the generated `docs/start/status-counts.inc`, and fails, naming each file and line, on:
+
+- a number followed by "task", "tasks", "work item" or "work items". A zero-padded number is a feature, as in "003 tasks U008", and never matches;
+- "N of M" on a line that says "task", "ticked" or "work item", or in a table whose header row says so. Elsewhere, as in a count of pattern pieces, it passes.
+
+A number counts only when it stands alone, so dates (YYYY-MM-DD), version numbers and paper sizes such as A4 never match. The fix is a link to the status page instead of the number.
+
+It also warns, without failing, on each line outside the status page that says "not built", "not yet" or "planned", and prints how many there are: what is built is the status page's to say, so each one is a line to check by hand.
 
 ### Generated status counts (`status`)
 

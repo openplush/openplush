@@ -2,6 +2,7 @@
 
 [OpenPlush documentation](README.md)
 
+- [Project status](start/status.md)
 - [Architecture decision records](adr/README.md)
   - [0000 Template](adr/0000-template.md)
   - [0001 Preprocessing](adr/0001-preprocessing.md)

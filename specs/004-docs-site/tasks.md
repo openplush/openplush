@@ -73,7 +73,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 
 ## Phase 3: Onboarding path (US1) 🎯 MVP
 
-- [ ] W018 [US1] `docs/start/status.md`: the one status page (FR-015), by capability (import, repair, seams, flatten, layout, export, app) and feature. Replace every other status statement with a link: `README.md`, `CONTRIBUTING.md`, `specs/README.md`, `docs/reference/crates.md`
+- [x] W018 [US1] `docs/start/status.md`: the one status page (FR-015), by capability (import, repair, seams, flatten, layout, export, app) and feature. Replace every other status statement with a link: `README.md`, `CONTRIBUTING.md`, `specs/README.md`, `docs/reference/crates.md` — *2026-10-20: dated 2026-10-20; also rows for pattern and end to end, and a known-gaps list that took over the stale holes in `specs/README.md`, whose Implementation column went. `docs/explanation/architecture.md`'s Status column and `docs/reference/README.md` still state status: W022 or a follow-up*
 - [ ] W019 [P] [US1] `docs/start/README.md` "Start here": what OpenPlush is in three sentences, who each part is for, the path through the contributor book, where to ask
 - [ ] W020 [P] [US1] `docs/start/setup.md`: prerequisites and the three commands to a passing run of every gate (SC-001), verified by running them in a clean container and saying so in the PR
 - [ ] W021 [P] [US1] `docs/reference/glossary.md`: geometry terms, sewing terms, process terms, and an ID legend for every prefix in use (D-, T, H, U, W, FR-, SC-, US, S-, R, Q, W-)

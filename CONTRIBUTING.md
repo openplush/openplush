@@ -1,10 +1,10 @@
 # Contributing to OpenPlush
 
-Thanks for helping. OpenPlush is pre-alpha with no code yet, but both features are fully specified and planned, so there is concrete work to pick up:
+Thanks for helping. What is built and what is not is on the [status page](docs/start/status.md); every feature is specified and planned, so there is concrete work to pick up:
 
-- **The most useful contribution right now is test models.** `fixtures/` holds only generated shapes (a cube, a sphere, a capsule, and the defect corpus), so several success criteria cannot be measured until real plush models arrive. A model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change — it becomes a regression oracle and it is the only way to verify that feature 002's hints land where experienced makers actually cut. No code needed.
-- **Engine work** starts at [001 tasks](specs/001-pattern-pipeline/tasks.md) `T001`–`T008` (research spikes) and `T009`–`T021` (workspace setup). `T007` is the highest-value spike: the exact-seam-parity decision rests the whole pattern stage on it and nobody has verified it yet.
-- **Spec and plan review** is still welcome. Five minor defaults remain open in 001, and every fabric preset value is currently a guess.
+- **The most useful contribution right now is test models.** Several success criteria cannot be measured until real plush models arrive ([what the corpus lacks](docs/start/status.md#known-gaps)). A model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change — it becomes a regression oracle and it is the only way to verify that feature 002's hints land where experienced makers actually cut. No code needed.
+- **Engine work** starts at a ready task in a feature's `tasks.md`, such as [001's](specs/001-pattern-pipeline/tasks.md); the [status page](docs/start/status.md) says where each feature stands.
+- **Spec and plan review** is still welcome. Five minor defaults remain open in 001, and the fabric preset values need a sewist's review ([status](docs/start/status.md#known-gaps)).
 
 ## Lanes
 | Lane | Folder | You need |
@@ -104,7 +104,7 @@ The crate needs `[target.'cfg(target_arch = "wasm32")'.dev-dependencies] wasm-bi
 
 Name such a file `tests/wasm_<topic>.rs`. `scripts/check.sh wasm` treats every file with that name as a canary and fails if it runs no test on wasm32, which is what happens silently if the attribute goes missing.
 
-The engine crates in `crates/` are scaffolds until their tasks land. [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough once the pipeline exists.
+Which engine crates have code is on the [status page](docs/start/status.md). [001's quickstart](specs/001-pattern-pipeline/quickstart.md) is the end-to-end walkthrough.
 
 ### Warnings are errors
 CI runs clippy with `-D warnings`, so every warning blocks a merge. That is deliberate. The workspace lints (`[workspace.lints]` in `Cargo.toml` and `clippy.toml`) only flag things this project has decided are bugs:

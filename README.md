@@ -2,7 +2,7 @@
 
 Turn a 3D model into a sewable plush pattern. Free, open source, and it runs entirely on your device.
 
-> **Status: pre-alpha, not usable yet.** Two features are specified and planned, with 257 numbered tasks. The geometry core is built (vectors, robust predicates, triangle soup, the half-edge mesh, and the shared ID and proposal types); import, seams, flattening, layout, and export are not. What exists is described in [docs/](docs/) ([architecture](docs/explanation/architecture.md), [engine API](docs/reference/engine-api.md), [crates](docs/reference/crates.md)); what is planned is in the [specs index](specs/README.md).
+> **What is built today, and what is not:** the [project status](docs/start/status.md). What exists is described in [docs/](docs/) ([architecture](docs/explanation/architecture.md), [engine API](docs/reference/engine-api.md), [crates](docs/reference/crates.md)); what is planned is in the [specs index](specs/README.md).
 
 ## What it will do
 - Import a 3D model (OBJ, glTF) and set its real-world size.
@@ -22,7 +22,7 @@ The full set is in the [constitution](.specify/memory/constitution.md).
 
 ## Design documents
 
-Start at the [specs index](specs/README.md) — it shows what is specified, planned, and buildable, plus the known holes.
+Start at the [specs index](specs/README.md) — it shows what is specified and planned, plus the known holes. What is built is on the [status page](docs/start/status.md).
 
 **001 — pattern pipeline** (the product)
 

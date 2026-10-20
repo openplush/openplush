@@ -2,18 +2,18 @@
 
 OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spec-kit)). Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`.
 
-This index exists so you can tell at a glance what is specified, what is planned, and what is actually buildable.
+This index exists so you can tell at a glance what is specified and what is planned. What is built is on the [status page](../docs/start/status.md).
 
 ## Status
 
-| Feature | Spec | Planned | Tasks | Implementation |
-|---|---|---|---|---|
-| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 179 tasks | Phase 1 done except T017–T018 (need fixtures); Phase 2 done (T022–T032, T034–T042 and T175–T179 merged) except T033, deferred; Phase 3 (US1) next |
-| [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks | Blocked on 001 |
-| [003 source seam import](./003-source-seam-import/) | ✅ clarifications closed | ✅ | — | Blocked on 001 |
-| [004 docs site](./004-docs-site/) | Draft, no clarify session | ✅ decisions proposed | ✅ 36 tasks | Not started; independent of 001–003 |
+| Feature | Spec | Planned | Tasks |
+|---|---|---|---|
+| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 179 tasks |
+| [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks |
+| [003 source seam import](./003-source-seam-import/) | ✅ clarifications closed | ✅ | — |
+| [004 docs site](./004-docs-site/) | Draft, no clarify session | ✅ decisions proposed | ✅ 36 tasks |
 
-001 and 002 are fully specified and planned; 003 is specified and planned, with its tasks still to come. 001's workspace, CI gates and governance (Phase 1) are done, except the determinism and golden workflows (T017–T018), which need the fixture corpus. Spikes S6 (licenses) and, on synthetic charts, S7 (boundary-pinned flattening) are done too. Phase 2 (foundational types) is done except T033: geometry core, robust predicates, the triangle soup, the half-edge mesh with its validator and property tests, the element IDs and proposal types, and the error and warning channels (`EngineError`, `WarningSet`, `Staged`/`StageResult`) are merged; the test machinery, fixtures and binding skeletons (T032, T034–T039) are merged too; the golden compare (T033) waits for the first output to compare. The binding's protocol types (T179), the TypeScript generated from them (T041) and the engine client with its mock worker (T040) are merged. Next: US1 (Phase 3), tests first (T043–T049). The open spikes `T001`–`T005`, `T007` on real fixtures, and `T008` can run alongside.
+How far each feature's implementation has got, and what is built: the [status page](../docs/start/status.md).
 
 ## Reading order
 
@@ -60,11 +60,9 @@ Named so nobody implements them by accident:
 
 Worth knowing before planning a release:
 
-- **No fixtures exist.** 001 `T035`–`T037` and 002 `H001`–`H003`. Several success criteria cannot be evaluated at all until they do.
-- **No model ships with a known-good hand-made pattern** (002 `H004`). 002's headline claim, SC-001, is unmeasurable without one.
-- **001's fabric preset values are guesses** (research R7, spike `T008`). Plausible, not measured, and tagged `[verify]` throughout.
+- **Fixtures and models**: what the corpus still lacks, and what that leaves unmeasurable, is on the [status page](../docs/start/status.md#known-gaps).
+- **001's fabric preset values** in research R7 are tagged `[verify]` throughout; whether they are measured yet is on the [status page](../docs/start/status.md#known-gaps).
 - **Five minor spec defaults remain open** in 001, each with a default already wired into `project.schema.json`. Listed in 001's spec under "Open Clarifications".
-- **Spike `T007` (S7) is the highest-risk unknown**: the exact-seam-parity decision (D-013) rests the whole pattern stage on boundary-pinned flattening, and nobody has verified it stays injective on real meshes.
 
 ## Active feature pointer
 

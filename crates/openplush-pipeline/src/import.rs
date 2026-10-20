@@ -60,15 +60,20 @@ fn refusal(e: IoError) -> EngineError {
 
 #[cfg(test)]
 mod tests {
-    use openplush_mesh::MeshError;
+    use openplush_mesh::{FaceId, MeshError};
 
     use super::*;
 
     #[test]
-    fn a_soup_the_mesh_crate_refuses_is_mesh() {
+    fn a_soup_the_mesh_crate_refuses_is_mesh_carrying_that_refusal() {
+        let refused = MeshError::IndexOutOfRange {
+            triangle: FaceId::new(4),
+            index: 7,
+            vertex_count: 3,
+        };
         assert_eq!(
-            refusal(IoError::Mesh(MeshError::NoTriangles)),
-            EngineError::Mesh(MeshError::NoTriangles)
+            refusal(IoError::Mesh(refused.clone())),
+            EngineError::Mesh(refused)
         );
     }
 }

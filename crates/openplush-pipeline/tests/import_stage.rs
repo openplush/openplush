@@ -76,7 +76,15 @@ fn the_extension_comes_from_the_final_path_segment() -> Result<(), Box<dyn std::
 
 #[test]
 fn a_name_without_an_extension_is_an_unknown_format() {
-    for name in ["model", ".obj", "model.", "dir/.obj", ""] {
+    for name in [
+        "model",
+        ".obj",
+        "model.",
+        "dir/.obj",
+        "",
+        "tri.obj/",
+        "tri.obj/.",
+    ] {
         assert_eq!(
             import(&only(name, TRIANGLE_OBJ)),
             Err(EngineError::UnknownFormat { name: name.into() }),

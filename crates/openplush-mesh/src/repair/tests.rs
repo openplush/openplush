@@ -256,6 +256,59 @@ fn a_twisted_ring_is_cut_at_its_conflict_edge_into_an_open_strip_with_a_forced_s
         assert!(report.mandatory_seams().contains(&ends), "{e:?} is a seam");
     }
     assert_eq!(report.mandatory_seams().len(), 2);
+    // The conflict is listed by the copy its lower face kept: face 1 keeps vertices 2 and 3.
+    assert_eq!(report.orientation_conflicts(), [[v(2), v(3)]]);
+}
+
+#[test]
+fn with_vertex_splitting_off_the_build_cuts_the_conflict_and_refuses_its_shared_ends() {
+    // Nothing separates the cut's ends into fans, so the build itself cuts the edge and then
+    // refuses the two-fan vertex that leaves; the conflict is never left uncut.
+    let plan = without(|p| p.split_bowties = false);
+    assert_eq!(
+        into_manifold(&twisted_ring(), &plan).unwrap_err(),
+        MeshError::NonManifoldVertex { vertex: v(2) }
+    );
+}
+
+#[test]
+fn a_copy_groups_edges_are_ascending_whatever_order_their_faces_came_in() {
+    // The fin listed first gets the lower edge IDs, so the group must still be sorted.
+    let mut positions = tetra_positions();
+    positions.push(p(0.5, -1., 0.));
+    let mut triangles = vec![[0, 1, 4]];
+    triangles.extend(TETRA);
+    let (_, report) = repair(&soup(positions, &triangles)).unwrap();
+    let [group] = report.edge_copies() else {
+        panic!("{:?}", report.edge_copies());
+    };
+    assert_eq!(group.len(), 2);
+    assert!(group[0] < group[1], "{group:?}");
+}
+
+#[test]
+fn copy_groups_come_in_order_of_their_first_edge_whether_cut_or_paired() {
+    // A twisted ring (vertices 0 to 4) beside a fin on a tetrahedron moved to x + 10: the cut's
+    // group has the lower edges, and a pairing's group listed first would come out last unsorted.
+    let ring = twisted_ring();
+    let mut positions = ring.positions().to_vec();
+    positions.extend(
+        tetra_positions()
+            .into_iter()
+            .map(|q| p(q.x + 10., q.y, q.z)),
+    );
+    positions.push(p(10.5, -1., 0.));
+    let mut triangles = ring.triangle_indices().to_vec();
+    triangles.extend(TETRA.iter().map(|t| t.map(|i| i + 5)));
+    triangles.push([5, 6, 9]);
+    let (_, report) = repair(&soup(positions, &triangles)).unwrap();
+    let groups = report.edge_copies();
+    assert_eq!(groups.len(), 2, "{groups:?}");
+    assert!(groups[0][0] < groups[1][0], "{groups:?}");
+    assert!(
+        groups.iter().all(|g| g.len() == 2 && g[0] < g[1]),
+        "{groups:?}"
+    );
 }
 
 #[test]

@@ -6,4 +6,4 @@ Task-focused pages for someone who already knows the basics: one goal per page, 
 - [Write a documentation page](write-docs.md): audience, kind, template, navigation, and the writing rules.
 - [Set up Spec Kit to author specs](author-specs.md): install `specify` and point it at a feature, for maintainers writing specs.
 
-Guides for using the app (import a model, mark seams, export a pattern) land here as those features ship.
+Guides for using the app (import a model, mark seams, export a pattern) are for makers, so they go in the maker guide under `docs/user/`, not here.

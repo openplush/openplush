@@ -1,6 +1,6 @@
 # How to scope and open a pull request
 
-The binding rules are in [`AGENTS.md`](../../AGENTS.md#commits-and-prs); the decision is [ADR 0013](../adr/0013-intent-sized-pull-requests.md). This page explains the reasoning and works through the cases you will actually hit.
+The binding rules are in [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs); the decision is [ADR 0013](../adr/0013-intent-sized-pull-requests.md). This page explains the reasoning and works through the cases you will actually hit.
 
 ## Why one intent per PR
 
@@ -201,9 +201,9 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 
 ## Tooling
 
-- [`.github/pull_request_template.md`](../../.github/pull_request_template.md) pre-fills the description with the required sections as HTML comments, so an unfilled section is visibly empty rather than silently absent.
+- [`.github/pull_request_template.md`](https://github.com/openplush/openplush/blob/main/.github/pull_request_template.md) pre-fills the description with the required sections as HTML comments, so an unfilled section is visibly empty rather than silently absent.
 - No CI job judges whether a PR is one intent; reviewers do. A PR whose `Intent` needs "and" is split.
-- [`.github/workflows/merge-gate.yml`](../../.github/workflows/merge-gate.yml) ([ADR 0015](../adr/0015-merge-gate.md)) computes the PR's tier from its diff ([ADR 0014](../adr/0014-auto-merge-tiers.md)), judges every merge condition on the current head, keeps one comment per PR saying which fail, and applies `merge:ready` and auto-merge when all hold. Tier C waits for the maintainer. Nobody enables auto-merge by hand.
+- [`.github/workflows/merge-gate.yml`](https://github.com/openplush/openplush/blob/main/.github/workflows/merge-gate.yml) ([ADR 0015](../adr/0015-merge-gate.md)) computes the PR's tier from its diff ([ADR 0014](../adr/0014-auto-merge-tiers.md)), judges every merge condition on the current head, keeps one comment per PR saying which fail, and applies `merge:ready` and auto-merge when all hold. Tier C waits for the maintainer. Nobody enables auto-merge by hand.
 
 ## Checklist before opening
 
@@ -212,7 +212,7 @@ Agent harnesses assign their own branch names (`claude/<slug>-<id>`). Those are 
 - [ ] CI green at the tip — not green because a test was weakened
 - [ ] One story; no spec change, refactor or chore mixed in
 - [ ] Branch is `NNN/NN-slug` (or `chore/slug`); stacked on its parent if it depends on unmerged work
-- [ ] No golden snapshot updated to make a test pass ([`AGENTS.md`](../../AGENTS.md))
+- [ ] No golden snapshot updated to make a test pass ([`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md))
 - [ ] Task IDs referenced, or the change is in the trivial-change lane
 - [ ] `Skipped` section filled in honestly
 - [ ] Public changes have their as-built docs, or `Docs` says n/a

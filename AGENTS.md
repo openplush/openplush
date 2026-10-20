@@ -63,6 +63,8 @@ All gates for the lane you touched pass locally, any public change has its as-bu
 - Absolute dates (YYYY-MM-DD). Decisions go in the plan's Decision Ledger; principle changes need an ADR (MADR).
 - `specs/` records intent and decisions; `docs/` and rustdoc describe what exists. Once code lands it is the source of truth: the spec section it implements points to the as-built docs and stops changing.
 - A PR that changes public behaviour updates its docs in the same PR: rustdoc for `openplush-pipeline` items; `docs/reference/` for error and warning strings, CLI, worker protocol, and project schema; `docs/explanation/architecture.md` for a new stage, crate, or dependency edge. No public change, no docs.
+- A PR that changes what a maker sees or does in the app updates the maker guide (`docs/user/`) in the same PR.
+- Writing a page: follow the [`docs` skill](.claude/skills/docs/SKILL.md); the rules live in [docs/how-to/write-docs.md](docs/how-to/write-docs.md).
 
 ## Commits and PRs
 Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).

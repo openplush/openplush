@@ -65,7 +65,7 @@ expect_plan "workflows step lints the workflows with actionlint alone" "workflow
 expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
 expect_plan "docs step builds the book and checks its navigation" "docs" \
   "mdbook build" "scripts/check-docs-summary.sh"
-# The docs step stays out of the default and group runs until CI's cost is decided.
+# The docs step needs mdbook, which CI's engine setup does not install.
 for args in "" all engine; do
   out=$("$check" --dry-run $args 2>&1)
   if [[ $out != *"mdbook build"* && $out != *"scripts/check-docs-summary.sh"* ]]; then

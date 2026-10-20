@@ -7,7 +7,12 @@ src = "docs"
 build-dir = "target/site/dev"
 # An entry for a missing page fails the build instead of creating an empty one.
 create-missing = false
+# The default `index` preprocessor renames README.md to index.html but leaves
+# links to README.md pointing at a missing README.html; only `links` is re-enabled.
+use-default-preprocessors = false
 
 [output.html]
 git-repository-url = "https://github.com/openplush/openplush"
-edit-url-template = "https://github.com/openplush/openplush/edit/main/docs/{path}"
+edit-url-template = "https://github.com/openplush/openplush/edit/main/{path}"
+
+[preprocessor.links]

@@ -10,4 +10,4 @@ Organised by [Diátaxis](https://diataxis.fr): four kinds of documentation, beca
 | [explanation/](explanation/) | Why things are the way they are | Why seam lengths are pinned exactly (D-013) |
 | [adr/](adr/) | Architecture decision records | New dependency categories, principle changes |
 
-Specs and plans live in [`specs/`](../specs/), not here: they say what will be built and why. These pages describe what exists.
+Specs and plans live in [`specs/`](https://github.com/openplush/openplush/tree/main/specs/), not here: they say what will be built and why. These pages describe what exists.

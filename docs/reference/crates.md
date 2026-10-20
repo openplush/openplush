@@ -1,6 +1,6 @@
 # Crates
 
-What each engine crate contains **today**, and what it actually depends on. Which crate *should* own a new piece of code is a rule, kept in [`crates/AGENTS.md`](../../crates/AGENTS.md#where-code-goes); the allowed dependency graph is in the [plan](../../specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced) and enforced by `scripts/check-boundary.sh`. Signatures and item docs: `cargo doc --workspace --no-deps --open`.
+What each engine crate contains **today**, and what it actually depends on. Which crate *should* own a new piece of code is a rule, kept in [`crates/AGENTS.md`](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md#where-code-goes); the allowed dependency graph is in the [plan](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced) and enforced by `scripts/check-boundary.sh`. Signatures and item docs: `cargo doc --workspace --no-deps --open`.
 
 ## Crates with code
 

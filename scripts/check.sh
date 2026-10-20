@@ -3,7 +3,7 @@
 # exactly what CI runs.
 #
 # Usage:
-#   scripts/check.sh --setup          install the pinned tools (cargo-deny, the
+#   scripts/check.sh --setup          install the pinned tools (cargo-deny, mdbook, lychee, the
 #                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
 #   scripts/check.sh --setup <steps>  install only what those steps need, then run them
 #   scripts/check.sh                  run every gate
@@ -15,8 +15,11 @@
 # Tests: scripts/tests/check.test.sh
 set -euo pipefail
 
-# Keep in step with .github/workflows/engine.yml (scripts/tests/check.test.sh checks).
+# Keep DENY_VERSION and ACTIONLINT_VERSION in step with .github/workflows/engine.yml
+# (scripts/tests/check.test.sh checks).
 DENY_VERSION=0.20.2
+MDBOOK_VERSION=0.5.4
+LYCHEE_VERSION=0.24.2
 ACTIONLINT_VERSION=1.7.9
 # sha256 of each release tarball, from the release's checksums file.
 ACTIONLINT_SHA256=(
@@ -118,6 +121,14 @@ if ((setup)); then
   run rustup toolchain install
   if needs deny && { ((dry)) || [[ $(installed_version cargo-deny) != "$DENY_VERSION" ]]; }; then
     run cargo install cargo-deny --version "$DENY_VERSION" --locked
+  fi
+  if needs docs; then
+    if ((dry)) || [[ $(installed_version mdbook) != "v$MDBOOK_VERSION" ]]; then
+      run cargo install mdbook --version "$MDBOOK_VERSION" --locked
+    fi
+    if ((dry)) || [[ $(installed_version lychee) != "$LYCHEE_VERSION" ]]; then
+      run cargo install lychee --version "$LYCHEE_VERSION" --locked
+    fi
   fi
   if needs wasm; then
     wb=$(wasm_bindgen_version)

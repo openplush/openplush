@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 
 use openplush_geom::DVec3;
-use openplush_geom::epsilon::ModelTolerances;
+use openplush_geom::epsilon::{self, ModelTolerances};
 
 use crate::halfedge::is_sliver;
 
@@ -85,7 +85,7 @@ fn relax(
 }
 
 /// The first edge, in vertex order, whose two triangles `(a, b, c)` and `(b, a, d)` would be
-/// better as `(a, d, c)` and `(d, b, c)`: the angles opposite it sum past π, chord `c`–`d`
+/// better as `(a, d, c)` and `(d, b, c)`: the angles opposite it sum clearly past π (`DELAUNAY_COT`), chord `c`–`d`
 /// is new, and neither new triangle is a sliver or folds against the other.
 fn swappable(
     patch: &Patch,
@@ -104,7 +104,7 @@ fn swappable(
         }
         let [a, b] = shared(patch.tris[t1], c);
         let p = |i: usize| patch.pos[i];
-        if cot(p(c), p(a), p(b)) + cot(p(d), p(a), p(b)) >= 0.0 {
+        if cot(p(c), p(a), p(b)) + cot(p(d), p(a), p(b)) >= -epsilon::DELAUNAY_COT {
             continue;
         }
         let n1 = (p(d) - p(a)).cross(p(c) - p(a));

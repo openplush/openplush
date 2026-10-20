@@ -492,17 +492,26 @@ fn mesh_locates_a_broken_invariant_by_its_element() {
         element,
     };
     assert_eq!(
-        mesh_locations(broken(MeshElement::Vertex(VertexId::new(4)))).vertices,
-        [VertexId::new(4)]
+        mesh_locations(broken(MeshElement::Vertex(VertexId::new(4)))),
+        ErrorLocations {
+            vertices: vec![VertexId::new(4)],
+            ..ErrorLocations::default()
+        }
     );
     assert_eq!(
-        mesh_locations(broken(MeshElement::Face(FaceId::new(6)))).faces,
-        [FaceId::new(6)]
+        mesh_locations(broken(MeshElement::Face(FaceId::new(6)))),
+        ErrorLocations {
+            faces: vec![FaceId::new(6)],
+            ..ErrorLocations::default()
+        }
     );
     // A half-edge is located by its edge: half-edges 6 and 7 are edge 3.
     assert_eq!(
-        mesh_locations(broken(MeshElement::HalfEdge(HalfEdgeId::new(7)))).edges,
-        [EdgeId::new(3)]
+        mesh_locations(broken(MeshElement::HalfEdge(HalfEdgeId::new(7)))),
+        ErrorLocations {
+            edges: vec![EdgeId::new(3)],
+            ..ErrorLocations::default()
+        }
     );
     assert_eq!(
         mesh_locations(broken(MeshElement::Storage("he_next"))),

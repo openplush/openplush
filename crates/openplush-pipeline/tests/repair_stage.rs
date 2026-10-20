@@ -24,6 +24,61 @@ const PAIR: &str = "v 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nf 1 2 3\nf 1 3 4\n";
 /// Three triangles on one edge, 1-2.
 const BOOK: &str = "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 -1 0\nv 0 0 1\nf 1 2 3\nf 2 1 4\nf 1 2 5\n";
 
+/// The tetrahedron with its last face wound the wrong way.
+const FLIPPED: &str = "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nf 1 3 2\nf 1 2 4\nf 2 3 4\nf 1 3 4\n";
+/// The tetrahedron with its first vertex given twice, the copy used by the last face.
+const UNWELDED: &str =
+    "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nv 0 0 0\nf 1 3 2\nf 1 2 4\nf 2 3 4\nf 5 4 3\n";
+
+#[test]
+fn validate_is_the_mesh_crates_report() -> Result<(), Setup> {
+    for text in [TETRA, PAIR, BOOK, FLIPPED, UNWELDED] {
+        let s = soup(text)?;
+        assert_eq!(validate(&s).value, openplush_mesh::validate(&s), "{text}");
+    }
+    Ok(())
+}
+
+#[test]
+fn repair_follows_every_step_the_plan_turns_off() -> Result<(), Setup> {
+    let off: [fn(&mut RepairPlan); 5] = [
+        |p| p.weld = false,
+        |p| p.drop_degenerates = false,
+        |p| p.split_non_manifold_edges = false,
+        |p| p.split_bowties = false,
+        |p| p.fix_orientation = false,
+    ];
+    for text in [TETRA, PAIR, BOOK, FLIPPED, UNWELDED] {
+        let s = soup(text)?;
+        for turn_off in off {
+            let mut plan = RepairPlan::default();
+            turn_off(&mut plan);
+            let staged = repair(&s, &plan).map(|staged| staged.value);
+            assert_eq!(
+                staged,
+                into_manifold(&s, &plan).map_err(EngineError::Mesh),
+                "{text} {plan:?}"
+            );
+        }
+    }
+    // The plan reaches repair: with orientation left alone, the flipped face is refused.
+    let plan = RepairPlan {
+        fix_orientation: false,
+        ..RepairPlan::default()
+    };
+    let err = repair(&soup(FLIPPED)?, &plan)
+        .err()
+        .ok_or("a flipped face is refused")?;
+    assert!(
+        matches!(
+            err,
+            EngineError::Mesh(MeshError::InconsistentOrientation { .. })
+        ),
+        "{err:?}"
+    );
+    Ok(())
+}
+
 #[test]
 fn validate_reports_and_never_warns() -> Result<(), Setup> {
     let clean = validate(&soup(TETRA)?);

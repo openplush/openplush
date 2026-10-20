@@ -5,7 +5,7 @@ use std::error::Error;
 
 use openplush_pipeline::{
     ChartFailure, ChartId, EdgeId, EngineError, ErrorLocations, FaceId, Format, PieceId, Proposal,
-    ProposalId, ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
+    ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
 };
 
 fn dart(chart: u32, edge: u32) -> Result<Proposal, Box<dyn Error>> {
@@ -66,6 +66,12 @@ fn import_and_seam_variants() -> Result<Vec<(EngineError, &'static str)>, Box<dy
                 edge: EdgeId::new(7),
             },
             "FoldedChart",
+        ),
+        (
+            EngineError::Seams(SeamsError::UnknownEdge {
+                edge: EdgeId::new(8),
+            }),
+            "Seams",
         ),
     ])
 }
@@ -291,4 +297,105 @@ fn seam_parity_and_offset_failed_locate_their_own_element() {
         ..ErrorLocations::default()
     };
     assert_eq!(offset.locations(), piece);
+}
+
+fn seams_locations(inner: SeamsError) -> ErrorLocations {
+    EngineError::Seams(inner).locations()
+}
+
+#[test]
+fn seams_locates_the_elements_its_inner_error_names() {
+    let (edge, chart, chain, vertex) = (
+        EdgeId::new(4),
+        ChartId::new(2),
+        SeamChainId::new(6),
+        VertexId::new(9),
+    );
+    let only_edge = ErrorLocations {
+        edges: vec![edge],
+        ..ErrorLocations::default()
+    };
+    for inner in [
+        SeamsError::MandatorySeam { edge },
+        SeamsError::UnknownEdge { edge },
+        SeamsError::NotASeam { edge },
+        SeamsError::NotAWalk { edge },
+    ] {
+        assert_eq!(seams_locations(inner.clone()), only_edge, "{inner:?}");
+    }
+    assert_eq!(
+        seams_locations(SeamsError::ChartNotClosed { chart }),
+        ErrorLocations {
+            charts: vec![chart],
+            ..ErrorLocations::default()
+        }
+    );
+    assert_eq!(
+        seams_locations(SeamsError::FoldedChart { chart, edge }),
+        ErrorLocations {
+            edges: vec![edge],
+            charts: vec![chart],
+            ..ErrorLocations::default()
+        }
+    );
+    for inner in [
+        SeamsError::UnpairedBoundarySeam { chain },
+        SeamsError::CopyGroupMismatch { chain },
+    ] {
+        assert_eq!(
+            seams_locations(inner.clone()),
+            ErrorLocations {
+                chains: vec![chain],
+                ..ErrorLocations::default()
+            },
+            "{inner:?}"
+        );
+    }
+    for inner in [
+        SeamsError::UnknownVertex { vertex },
+        SeamsError::DartNotAnchored { vertex },
+        SeamsError::DartTouchesSeam { vertex },
+    ] {
+        assert_eq!(
+            seams_locations(inner.clone()),
+            ErrorLocations {
+                vertices: vec![vertex],
+                ..ErrorLocations::default()
+            },
+            "{inner:?}"
+        );
+    }
+}
+
+#[test]
+fn seams_locates_both_picks_of_a_missing_path_sorted() {
+    let (a, b) = (VertexId::new(9), VertexId::new(3));
+    assert_eq!(
+        seams_locations(SeamsError::NoPath { from: a, to: b }),
+        ErrorLocations {
+            vertices: vec![b, a],
+            ..ErrorLocations::default()
+        }
+    );
+}
+
+#[test]
+fn seams_refusals_about_a_proposal_or_dart_as_a_whole_locate_nothing() {
+    for inner in [
+        SeamsError::EmptyProposal,
+        SeamsError::EmptyDart,
+        SeamsError::BadProposalId { text: "x".into() },
+    ] {
+        assert_eq!(
+            seams_locations(inner.clone()),
+            ErrorLocations::default(),
+            "{inner:?}"
+        );
+    }
+}
+
+#[test]
+fn seams_offers_no_proposals() {
+    let e = EngineError::Seams(SeamsError::EmptyProposal);
+    assert!(e.proposals().is_empty());
 }

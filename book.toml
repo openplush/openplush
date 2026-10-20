@@ -15,4 +15,8 @@ use-default-preprocessors = false
 git-repository-url = "https://github.com/openplush/openplush"
 edit-url-template = "https://github.com/openplush/openplush/edit/main/{path}"
 
+# A runnable Rust block makes book.js fetch play.rust-lang.org on page load.
+[output.html.playground]
+runnable = false
+
 [preprocessor.links]

@@ -38,6 +38,7 @@ Depend downward only (DAG in `specs/001-pattern-pipeline/plan.md`). `bindings/*`
 
 ## WASM constraints
 Every crate in `crates/` must build for `wasm32-unknown-unknown`.
+- `usize` is 32 bits there, tests included: no `usize` value, literal or shift past `u32::MAX`; use `u64` where the value needs it. `scripts/check.sh wasm-check` (in `engine`) builds every test binary for wasm32, since `cargo check` and clippy never reach the codegen that reports an overflowing shift.
 - No `std::fs`, `std::thread`, `std::time::Instant`, `rayon`, or OS randomness. `faer` with `default-features = false`.
 - Long operations expose step-wise sessions (`step() -> Progress`). No loop runs > ~50 ms without a yield point.
 - A panic cannot be caught on `wasm32-unknown-unknown` (`panic = "abort"`): it traps the instance. So no engine code relies on `catch_unwind`; a panic is a bug, and the shell reports it as a worker crash (`EngineCrashed`), as the native CLI exits 101 ([ADR 0009](../docs/adr/0009-wasm-panic-is-a-worker-crash.md)). `openplush-wasm` must install a panic hook that forwards the message to the worker console.

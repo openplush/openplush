@@ -47,8 +47,8 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 |---|---|
 | Install the pinned tools | `scripts/check.sh --setup` |
 | Every gate CI runs | `scripts/check.sh` |
-| Engine: boundary, hygiene, fmt, clippy, tests, generated TS types | `scripts/check.sh engine` |
-| One step | `scripts/check.sh <boundary\|hygiene\|fmt\|clippy\|test\|types\|deny\|wasm\|shell>` |
+| Engine: boundary, hygiene, fmt, clippy, tests, generated TS types, test build for wasm32 | `scripts/check.sh engine` |
+| One step | `scripts/check.sh <boundary\|hygiene\|fmt\|clippy\|test\|types\|wasm-check\|deny\|wasm\|shell>` |
 | See the exact commands | `scripts/check.sh --dry-run <steps>` |
 | One crate's tests | `cargo test -p openplush-<crate>` |
 
@@ -77,5 +77,5 @@ Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-r
 - Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused) or `chore/slug`. The slug names the intent, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.
 - Session branches (`claude/…`, `codex/…`, `copilot/…`) are not PR branches. If you cannot push the real name, put it and the stack position in the PR title and body.
 - Interdependent intents are stacked (X, then bug fix Y, then feature Z on both): branch from the parent, PR base = parent, fill the `Stack` section, link the child from the parent. A stack never spans features or mixes chores with feature work. At the merge gate, a stack whose intents only make sense together may be folded into one PR by merging each child into its parent upward; the remaining PR lists every intent, and the folded PRs are closed with a link to it.
-- Who merges is the PR's tier ([ADR 0014](docs/adr/0014-auto-merge-tiers.md)): the merge gate ([ADR 0015](docs/adr/0015-merge-gate.md)) computes it from the diff and enables auto-merge on tier A, and on tier B 24 h after CI goes green; the maintainer merges tier C. Agents never enable auto-merge or apply `merge:ready`; they fix what the gate's comment names. The tier table is in `steward`.
+- Who merges is the PR's tier ([ADR 0014](docs/adr/0014-auto-merge-tiers.md)): the merge gate ([ADR 0015](docs/adr/0015-merge-gate.md)) computes it from the diff and enables auto-merge on tier A, and on tier B 24 h after CI goes green; the maintainer merges tier C, or an agent under a time-boxed standing authorization ([ADR 0016](docs/adr/0016-standing-merge-authorization.md)). Agents never enable auto-merge or apply `merge:ready`; they fix what the gate's comment names. The tier table is in `steward`.
 - Merge commits only, bottom-up, and only a PR whose base is `main`. A fix to a lower slice is merged upward; never rebase or force-push a stack under review.

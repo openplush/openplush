@@ -17,7 +17,20 @@ The documentation has two books, for two readers who never share a page:
 - **This book is for contributors**: anyone changing OpenPlush, in Rust, TypeScript, test models or the docs.
 - **The maker guide is for makers**: people using OpenPlush to sew a plush. It needs no programming.
 
-Inside the project, contributors work in four lanes, the Rust engine, the TypeScript web app, test models and the docs, and each needs different skills; [the lanes](https://github.com/openplush/openplush/blob/main/CONTRIBUTING.md#lanes) list them.
+### The lanes
+
+Contributors work in four lanes, each with its own folder and skills:
+
+| Lane | Folder | You need |
+|---|---|---|
+| Engine | `crates/` | Rust; geometry helps |
+| Web app | `apps/`, `packages/` | TypeScript and Three.js; no Rust |
+| Test models | `fixtures/` | 3D modelling or sewing; no code |
+| Docs | `docs/` | Writing; sewing expertise is especially welcome |
+
+The rules for the two code lanes are in [`crates/AGENTS.md`](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md) and [`apps/AGENTS.md`](https://github.com/openplush/openplush/blob/main/apps/AGENTS.md). They are written for AI coding agents and apply to people too.
+
+A test model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change: the engine's output can be checked against it, and it is the only way to check that seam hints land where experienced makers actually cut. Offer one with the [test model issue form](https://github.com/openplush/openplush/issues/new?template=fixture.yml); the [known gaps](status.md#known-gaps) say what the models in `fixtures/` lack.
 
 ### The path through this book
 
@@ -25,9 +38,9 @@ Read in this order; each step builds on the one before.
 
 1. **Set up**: [install the tools and run every check](setup.md), so you know your machine matches what CI runs.
 2. **See where things stand**: the [project status](status.md), by capability and by feature.
-3. **Learn how the engine works**: the [architecture](../explanation/architecture.md), stage by stage and why each stage's output type is its guarantee; then the [crates](../reference/crates.md) and the [engine API](../reference/engine-api.md).
+3. **Learn how the engine works**: the [architecture](../explanation/architecture.md), stage by stage and why each stage's output type is its guarantee; then the [crates](../reference/crates.md) and the [engine API](../reference/engine-api.md). [Feature 001's quickstart](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/quickstart.md) walks one model through the whole pipeline as planned.
 4. **Make a first change**: [your first engine change, test first](../tutorials/first-change.md), an exercise you throw away, so a real task's steps are familiar.
-5. **Pick a task**: work is planned per feature as a numbered list in `tasks.md`, starting from the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). Pick one that is ready: the [glossary](../reference/glossary.md#process) says what makes a task ready and what each marker on its line means.
+5. **Pick a task**: work is planned per feature as a numbered list in `tasks.md`, starting from the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). Pick one that is ready: the [glossary](../reference/glossary.md#process) says what makes a task ready and what each marker on its line means. A docs or typo fix and a few other trivial changes need no task; [the workflow rules](https://github.com/openplush/openplush/blob/main/AGENTS.md#workflow) list them.
 6. **Make the change**: [scope and open a pull request](../how-to/pull-requests.md), test first, one intent per pull request; for a docs change, [write a documentation page](../how-to/write-docs.md).
 7. **Learn how the project is run**: the [constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md), whose principles every review enforces, [governance](https://github.com/openplush/openplush/blob/main/GOVERNANCE.md), the roles and how decisions are made, and [who merges a pull request](../adr/0014-auto-merge-tiers.md), by the risk of what it touches.
 8. **Look things up**: the [reference](../reference/README.md), with the [glossary](../reference/glossary.md) for every domain term and ID prefix.

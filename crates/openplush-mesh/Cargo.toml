@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 openplush-geom = { path = "../openplush-geom" }
+faer = { version = "0.24.4", default-features = false, features = ["sparse-linalg"] }
 thiserror = "2.0.21"
 
 # Native only: proptest pulls in getrandom, which does not build for

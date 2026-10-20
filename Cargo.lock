@@ -737,6 +737,7 @@ dependencies = [
 name = "openplush-mesh"
 version = "0.0.0"
 dependencies = [
+ "faer",
  "openplush-geom",
  "proptest",
  "thiserror",

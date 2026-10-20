@@ -29,8 +29,8 @@ Every capability is reachable from the CLI. This is the path golden tests take, 
 openplush-cli validate fixtures/meshes/capsule.obj --json out/report.json
 
 # Repair, with the plan written out so it is reproducible
+# Every step is on by default; --no-<step> turns one off, --fill <primitive>.<vertex> fills a loop (D-070)
 openplush-cli repair fixtures/defects/non-manifold-edge.obj \
-  --weld --fix-orientation --fill-holes auto \
   --plan-out out/repair-plan.json -o out/repaired.obj
 
 # A full pattern from a prepared seam set

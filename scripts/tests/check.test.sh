@@ -48,9 +48,16 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "hygiene step checks every lint opt-out against the allowlist" "hygiene" \
   "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh"
-expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows" "engine" \
+expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows, wasm-check" "engine" \
   "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
-  "scripts/gen-ts-types.sh --check" "actionlint"
+  "scripts/gen-ts-types.sh --check" "actionlint" \
+  "cargo test --workspace --target wasm32-unknown-unknown --no-run --locked"
+# usize is 32 bits on wasm32, so a test can build natively and not there: a shift
+# past u32::MAX is a hard error that only codegen reports, which cargo check and
+# clippy never reach. wasm-check builds every test binary for wasm32 without
+# running one, so it needs no test runner and the engine group can carry it.
+expect_plan "wasm-check builds every test binary for wasm32" "wasm-check" \
+  "cargo test --workspace --target wasm32-unknown-unknown --no-run --locked"
 # The lint must give the same answer on every machine, so the optional
 # shellcheck and pyflakes passes (present on CI runners, not everywhere) are off.
 expect_plan "workflows step lints the workflows with actionlint alone" "workflows" \
@@ -96,7 +103,7 @@ out=$("$check" --dry-run --setup deny 2>&1)
 if [[ $out != *"actionlint_"* ]]; then ok "setup for deny skips actionlint"; else bad "setup for deny skips actionlint" "$out"; fi
 
 out=$("$check" --dry-run engine 2>&1)
-if [[ $out != *"cargo deny"* && $out != *"pnpm"* ]]; then
+if [[ $out != *"cargo deny"* && $out != *"pnpm"* && $out != *"cargo test --workspace --target wasm32-unknown-unknown --locked"* ]]; then
   ok "engine group runs nothing else"
 else
   bad "engine group runs nothing else" "$out"

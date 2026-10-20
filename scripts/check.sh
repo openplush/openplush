@@ -16,8 +16,8 @@
 # Tests: scripts/tests/check.test.sh
 set -euo pipefail
 
-# Keep DENY_VERSION and ACTIONLINT_VERSION in step with .github/workflows/engine.yml
-# (scripts/tests/check.test.sh checks).
+# Keep DENY_VERSION and ACTIONLINT_VERSION in step with .github/workflows/engine.yml,
+# and MDBOOK_VERSION with .github/workflows/docs.yml (scripts/tests/check.test.sh checks).
 DENY_VERSION=0.20.2
 MDBOOK_VERSION=0.5.4
 LYCHEE_VERSION=0.24.2

@@ -123,6 +123,18 @@ if grep -q 'scripts/check.sh --setup engine' "$here/../../.github/workflows/engi
 else
   bad "engine.yml installs the engine tools with check.sh --setup engine" "$(grep -n 'check.sh' "$here/../../.github/workflows/engine.yml")"
 fi
+# The docs workflow installs the mdbook check.sh pins, and lychee through check.sh.
+docs_yml="$here/../../.github/workflows/docs.yml"
+if [[ -f $docs_yml ]] && grep -q "tool: mdbook@$mdbook\b" "$docs_yml"; then
+  ok "docs.yml installs mdbook $mdbook, as check.sh pins"
+else
+  bad "docs.yml installs mdbook $mdbook, as check.sh pins" "$(grep -n 'mdbook@' "$docs_yml" 2>&1)"
+fi
+if [[ -f $docs_yml ]] && grep -q 'scripts/check.sh --setup docs' "$docs_yml"; then
+  ok "docs.yml installs the docs tools with check.sh --setup docs"
+else
+  bad "docs.yml installs the docs tools with check.sh --setup docs" "$(grep -n 'check.sh' "$docs_yml" 2>&1)"
+fi
 # With steps named, --setup installs only what they need.
 expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="
 out=$("$check" --dry-run --setup engine 2>&1)

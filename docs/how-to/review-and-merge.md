@@ -13,10 +13,10 @@ Have your PR merged, by the merge gate or by the maintainer, depending on its ti
 
 ## Steps
 
-1. **Wait for the review summary.** The review runs when the PR opens or is marked ready for review. It posts a comment that starts `Review summary (PR N, head SHA)` and review comments on the lines it found something on, each marked 🔴 blocking, 🟡 optional or 🟣 pre-existing.
+1. **Wait for the review summary.** The review runs when the PR opens or is marked ready for review, except on a `docs(tasks): tick …` PR, a PR from a `chore/` branch, and a PR that changes only files under `docs/`; the gate's comment then says the review was skipped by its rules. It posts a comment that starts `Review summary (PR N, head SHA)` and review comments on the lines it found something on, each marked 🔴 blocking, 🟡 optional or 🟣 pre-existing.
 2. **Answer every 🔴.** Fix it, with a test that fails before the fix and passes after, or reply on its thread saying why it stands. Answer the 🟡 findings in one comment on the PR, saying which you fixed and why the rest stay. A 🟣 finding was there before your PR and needs nothing.
 3. **Resolve each thread you answered.** The gate counts an unresolved thread as an unanswered finding.
-4. **Push your fixes in one go.** After a push the summary is for an older head, so the gate asks for a new review itself, once per head; you never add the `rereview` label. A push also removes `merge:ready`, and the gate judges the new head when its CI finishes.
+4. **Push your fixes in one go.** After a push the summary is for an older head, so the gate asks for a new review itself, once per head; you never add the `rereview` label. Only the maintainer adds it by hand, to ask for another run, or adds `mutation-audit` for a run that also checks that the tests catch deliberate bugs. A rerun reviews only what changed since the last summary. A push also removes `merge:ready`, and the gate judges the new head when its CI finishes.
 5. **Read the gate's comment.** It starts `Merge gate` and lists each condition with ✅ or ❌: not a draft, head in this repository, base is `main`, no conflict, the required checks green on this head, a review summary for this head with no 🔴, no unresolved thread, no changes requested by a reviewer, and the tier. Fix whatever has ❌. For a stacked PR, `base is main` turns ✅ when the PR below it merges.
 6. **Let the tier decide who merges.** The gate computes the tier from the diff: a PR's tier is the highest any of its paths or tasks reaches, and the gate can raise a tier label but never lower one.
 

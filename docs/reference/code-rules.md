@@ -4,7 +4,7 @@ The rules for Rust code in `crates/` and `bindings/`, each with the reason behin
 
 ## Entries
 
-In the order `crates/AGENTS.md` lists them.
+In the order `crates/AGENTS.md` lists them. "Constitution" and a numeral name a principle of the [project constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md).
 
 ### Where code goes
 

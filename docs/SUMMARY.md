@@ -36,6 +36,7 @@
 - [How-to guides](how-to/README.md)
   - [Scope and open a pull request](how-to/pull-requests.md)
   - [Get a pull request reviewed and merged](how-to/review-and-merge.md)
+  - [Set up the merge gate](how-to/set-up-merge-gate.md)
   - [Write a documentation page](how-to/write-docs.md)
   - [Set up Spec Kit to author specs](how-to/author-specs.md)
 - [Reference](reference/README.md)

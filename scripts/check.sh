@@ -7,8 +7,8 @@
 #                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
 #   scripts/check.sh --setup <steps>  install only what those steps need, then run them
 #   scripts/check.sh                  run every gate
-#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows deny wasm shell,
-#                                     or engine (= boundary hygiene fmt clippy test types workflows), or all
+#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell,
+#                                     or engine (= boundary hygiene fmt clippy test types workflows wasm-check), or all
 #   --dry-run                         print the commands instead of running them
 #
 # Needs: rustup, Node 22+ with pnpm, bash >= 4.3, jq, python3 >= 3.11.
@@ -36,16 +36,16 @@ for arg in "$@"; do
   case $arg in
     --dry-run) dry=1 ;;
     --setup) setup=1 ;;
-    engine) steps+=(boundary hygiene fmt clippy test types workflows) ;;
-    all) steps+=(boundary hygiene fmt clippy test types workflows deny wasm shell) ;;
-    boundary | hygiene | fmt | clippy | test | types | workflows | deny | wasm | shell) steps+=("$arg") ;;
+    engine) steps+=(boundary hygiene fmt clippy test types workflows wasm-check) ;;
+    all) steps+=(boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell) ;;
+    boundary | hygiene | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell) steps+=("$arg") ;;
     *)
-      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows deny wasm shell; groups: engine all)" >&2
+      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell; groups: engine all)" >&2
       exit 2
       ;;
   esac
 done
-((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test types workflows deny wasm shell)
+((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell)
 
 # run <command...>: print it; run it unless --dry-run.
 run() {
@@ -157,6 +157,12 @@ for step in "${steps[@]}"; do
           die "actionlint ${have:-missing}, check.sh pins $ACTIONLINT_VERSION; run scripts/check.sh --setup"
       fi
       run actionlint -shellcheck= -pyflakes= .github/workflows/*.yml
+      ;;
+    wasm-check)
+      # usize is 32 bits on wasm32, so code and tests that build natively can fail
+      # there: a shift past u32::MAX is a hard error only codegen reports, which
+      # cargo check and clippy never reach. Builds, runs nothing: no runner needed.
+      run cargo test --workspace --target wasm32-unknown-unknown --no-run --locked
       ;;
     deny)
       ((dry)) || command -v cargo-deny >/dev/null || die "cargo-deny not installed; run scripts/check.sh --setup"

@@ -16,7 +16,7 @@ For each edge, take the dihedral angle between its two incident faces. Above a t
 
 - **Why edges and not vertices**: a crease is a curve. Reporting vertices gives the maker dots to interpret; reporting chained polylines gives them something a seam can follow directly, which FR-030 requires.
 - **Chaining**: walk from each crease edge to adjacent crease edges, preferring the continuation with the smallest turning angle. Stop at junctions, and emit junctions as their own short hints so a T-junction is not arbitrarily resolved into one arm.
-- **Filtering**: drop chains shorter than a physical length (provisional 10 mm at target scale). This is what prevents the faceted-model hint flood that SC-010 caps — a cube's 12 edges survive, an icosphere's hundreds of near-coplanar edges do not.
+- **Filtering**: drop chains shorter than a physical length (20 mm at target scale, H-011). Chaining by smallest turning angle already merges a faceted model's edges into few long chains, and the mean-fold threshold keeps a coarse sphere or icosphere silent at the default; the length filter drops the single-facet chains that remain (spike H1: 45 concave chains on the quadruped become 13).
 - **Note on units**: dihedral angle is scale-independent [solid], so FR-007's physical-units rule applies to the *length* filter, not to the angle. Both still move when the model is resized, because the length filter is in millimetres.
 
 **Rejected**: per-face normal clustering (segments the surface but loses the curve), and curvature-derivative ridge extraction (Ohtake et al. 2004 — sharper on smooth organic surfaces, far more sensitive to mesh noise, and overkill when the target is "where would a sewist cut").
@@ -32,12 +32,12 @@ A concave crease earns its own category because it carries a different consequen
 
 ### Dart candidates
 
-**Decision**: integrated absolute Gaussian curvature over a geodesic neighbourhood, thresholded, clustered, one hint per cluster.
+**Decision**: integrated Gaussian curvature over a geodesic neighbourhood (the signed sum of angle defects, taken in absolute value afterwards, H-011), thresholded, clustered, one hint per cluster.
 
 Gaussian curvature is the right signal because it *is* the obstruction to flattening. A region with concentrated curvature cannot be flattened without stretching or a dart, and the angle defect at a vertex quantifies exactly how much material has to go somewhere [solid].
 
 - Discrete Gaussian curvature as angle defect: `K_v = 2*pi − (sum of interior angles at v)`.
-- Integrate over a geodesic disk of physical radius (provisional 15 mm) so the result describes the *shape* rather than the mesh resolution. Without this, a dense mesh and a coarse mesh of the same object produce different hints, which breaks the identity stability FR-008 expects.
+- Integrate over a geodesic disk of physical radius (15 mm, H-011) so the result describes the *shape* rather than the mesh resolution. Without this, a dense mesh and a coarse mesh of the same object produce different hints, which breaks the identity stability FR-008 expects.
 - Cluster adjacent over-threshold vertices and emit one hint per cluster, located at the maximum-defect vertex — which is also precisely the cone point that 001's dart suggestion (data-model section 5) walks toward.
 
 **The honest limit** [likely]: this detects *where a dart is needed*, not *which dart*. Direction, length, and width come from 001's existing dart machinery when the maker accepts. So for this category, FR-030's "follows the whole flagged feature" means the cluster region, not a specific dart polygon — and the spec should be read that way.

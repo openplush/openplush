@@ -89,3 +89,5 @@ Before its first merge under a grant, the agent posts the grant verbatim on the 
 ## More information
 
 The grant of 2026-10-19 set none of these bounds; under them, its merges after its end time (about 01:45 UTC) would not have been allowed.
+
+[ADR 0018](0018-hands-off-merging.md), the same day, supersedes everything here about merging: the merge gate merges tier C itself, and an agent never merges, grant or no grant. The clause on accepting decisions under a grant that says it covers them stands.

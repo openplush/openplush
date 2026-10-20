@@ -87,7 +87,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 
 ## Phase 5: How the engine works (US1)
 
-- [ ] W026 [P] [US1] `docs/explanation/pipeline.md`: one model followed through every stage, the crate that owns each, what can fail there (FR-022)
+- [x] W026 [P] [US1] `docs/explanation/pipeline.md`: one model followed through every stage, the crate that owns each, what can fail there (FR-022). As built: follows the capsule fixture; with no glossary or status page on main, terms are plain prose and unbuilt stages link to the specs index's status table
 - [ ] W027 [P] [US1] `docs/explanation/flattening.md`: what flattening does and why seam lengths are pinned exactly
 - [ ] W028 [P] [US1] `docs/explanation/seams.md`: seams, charts, darts and openings, and why a chart must be a disk
 - [ ] W029 [P] [US1] `docs/explanation/sewing.md`: sewing concepts for programmers (allowance, grain, nap, notches)

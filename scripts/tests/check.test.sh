@@ -28,7 +28,8 @@ expect_plan() {
 
 expect_plan "default runs every gate" "" \
   "cargo fmt --check" "cargo clippy --workspace --all-targets --locked -- -D warnings" \
-  "cargo test --workspace --locked" "scripts/gen-ts-types.sh --check" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "cargo deny --locked check" \
+  "cargo test --workspace --locked" "scripts/gen-ts-types.sh --check" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" \
+  "scripts/gen-status.py --check" "cargo deny --locked check" \
   "cargo build --workspace --target wasm32-unknown-unknown --locked" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
@@ -48,10 +49,14 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "hygiene step checks every lint opt-out against the allowlist" "hygiene" \
   "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh"
-expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows, wasm-check" "engine" \
-  "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
+expect_plan "engine group is boundary, hygiene, status, fmt, clippy, test, types, workflows, wasm-check" "engine" \
+  "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "scripts/gen-status.py --check" \
+  "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
   "scripts/gen-ts-types.sh --check" "actionlint" \
   "cargo test --workspace --target wasm32-unknown-unknown --no-run --locked"
+# The status page's task counts are generated; the step fails when the committed
+# include differs from a fresh run, as the types step does for the TypeScript types.
+expect_plan "status step checks the generated task counts" "status" "scripts/gen-status.py --check"
 # usize is 32 bits on wasm32, so a test can build natively and not there: a shift
 # past u32::MAX is a hard error that only codegen reports, which cargo check and
 # clippy never reach. wasm-check builds every test binary for wasm32 without

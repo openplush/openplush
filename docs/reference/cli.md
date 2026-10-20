@@ -1,6 +1,6 @@
 # Command line (`openplush-cli`)
 
-The headless shell: every engine capability as file-in, file-out (Constitution II). This page lists what exists **today**. The planned surface is in the [quickstart](../../specs/001-pattern-pipeline/quickstart.md#1-engine-headless-constitution-ii).
+The headless shell: every engine capability as file-in, file-out (Constitution II). This page lists what exists **today**. The planned surface is in the [quickstart](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/quickstart.md#1-engine-headless-constitution-ii).
 
 ```zsh
 cargo run -p openplush-cli -- --help
@@ -8,7 +8,7 @@ cargo run -p openplush-cli -- --help
 
 ## Status
 
-The arguments parse and are validated. **No subcommand runs a stage yet**: each one exits 1 with `openplush-cli: the {stage} stage is not built yet` on stderr and writes nothing. Each one is wired up by the task that builds its stage.
+The arguments parse and are validated. **No subcommand runs a stage yet**: each one exits 1 with `openplush-cli: the {stage} stage is not built yet` on stderr and writes nothing. Each one is wired up by the task that builds its stage. Which stages are built is on the [status page](../start/status.md).
 
 ## Subcommands
 

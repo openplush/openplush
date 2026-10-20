@@ -15,7 +15,7 @@ Publish `docs/` as a static site with two parts: a contributor guide ordered as 
 
 | Field | Value |
 |---|---|
-| Tools | mdBook 0.5.x (MPL-2.0), lychee (Apache-2.0 OR MIT), rustdoc from the pinned toolchain. All pinned exactly; installed by `scripts/check.sh --setup` and in CI by the already-pinned `taiki-e/install-action` |
+| Tools | mdBook 0.5.x (MPL-2.0), lychee (Apache-2.0 OR MIT), rustdoc from the pinned toolchain. All pinned exactly; installed by `scripts/check.sh --setup` and in CI by the already-pinned `taiki-e/install-action` (lychee support there `[verify]`, W006) |
 | Hosting | GitHub Pages, deployed by Actions from `main`; default address `https://openplush.github.io/openplush/` |
 | Testing | Shell checks under `scripts/` with their tests as `scripts/tests/*.test.sh`, run by `scripts/check.sh docs` and the `shell` step |
 | Constraints | No remote resources (Constitution VIII); byte-identical builds (V); licences on the allow-list or ADR-accepted (IX) |
@@ -59,7 +59,7 @@ specs/004-docs-site/
 book.toml                      # contributor book: src = "docs", build-dir = "target/site/dev"
 docs/SUMMARY.md                # contributor navigation, hand-curated, journey-ordered (W-004)
 docs/start/                    # NEW: start here, status, setup
-docs/explanation/              # + pipeline, meshes, seams, flattening, sewing, agents, principles
+docs/explanation/              # + pipeline, meshes, seams, flattening, sewing, agents
 docs/how-to/write-docs.md      # NEW: the writing guide, the one home for doc rules (W-011)
 docs/reference/glossary.md     # NEW: terms and ID legend
 docs/reference/crates/         # crates.md split one page per crate
@@ -129,7 +129,7 @@ The deploy job removes `target/site/guide/` before upload until W-003 is lifted,
 | 6 | Reference reshape | Mixed |
 | 7 | Maker guide skeleton and FAQ | Auto-merge tier; publishing is a maintainer decision |
 
-Phases 3, 5 and 7 can run in parallel once Phases 1 and 2 are in.
+Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
 
 ## Decision Ledger
 

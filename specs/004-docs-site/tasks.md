@@ -47,7 +47,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 
 ## Phase 0: Decisions
 
-- [ ] W001 `docs/adr/0016-docs-site.md`: mdBook for both books (W-001); OFL-1.1 accepted for font files in the published docs site only (W-007); CI-only tooling outside Constitution IX, ratifying `Swatinem/rust-cache` (W-008); a licence record for the `cargo install`ed tools (mdbook MPL-2.0, lychee Apache-2.0 OR MIT). Considered options from research R1 and R4. `human:merge`
+- [ ] W001 `docs/adr/0017-docs-site.md`: mdBook for both books (W-001); OFL-1.1 accepted for font files in the published docs site only (W-007); CI-only tooling outside Constitution IX, ratifying `Swatinem/rust-cache` (W-008); a licence record for the `cargo install`ed tools (mdbook MPL-2.0, lychee Apache-2.0 OR MIT). Considered options from research R1 and R4. `human:merge`
 
 ## Phase 1: Authoring standards (US4)
 

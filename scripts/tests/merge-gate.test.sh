@@ -74,7 +74,7 @@ ready | jq -c '.comments[0].body |= sub("🔴 0"; "🔴 1") | .threads += [{isRe
   expect "a 🔴 with its thread open is not ready" "$(failing "review" "1 🔴 thread")"
 ready | jq -c '.comments[0].body |= sub("🔴 0"; "🔴 1") | .threads += [{isResolved: true, comments: [{body: "🔴 wrong sign"}, {body: "fixed in abc"}]}]' |
   expect "a 🔴 whose thread is resolved passes" '.ready'
-ready | jq -c '.comments += [{user: {login: "github-actions[bot]"}, body: "**Review summary (PR 7, head 1111111111111111111111111111111111111111)**\n\nFindings: 🔴 2 / 🟡 0 / 🟣 0."}] | .threads += [{isResolved: false, comments: [{body: "🔴 later"}]}]' |
+ready | jq -c --arg head "$head" '.comments += [{user: {login: "github-actions[bot]"}, body: "**Review summary (PR 7, head \($head))**\n\nFindings: 🔴 2 / 🟡 0 / 🟣 0."}] | .threads += [{isResolved: false, comments: [{body: "🔴 later"}]}]' |
   expect "the newest summary is the one read" "$(failing "review" "2 🔴")"
 ready | jq -c --arg head "$head" '.comments[0].body = "**Review summary (PR 7, head \($head))**\n\nno counts here"' | expect "an unreadable summary is not ready" "$(failing "review" "count not found")"
 ready | jq -c '.comments[0].body = "**Review summary (PR 7, head x)**\n\nFindings: 🔴 0"' | expect "a summary naming no head is not ready" "$(failing "review" "head not found")"

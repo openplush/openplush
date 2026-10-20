@@ -3,6 +3,7 @@
 Task-focused pages for someone who already knows the basics: one goal per page, the steps to reach it, nothing else.
 
 - [Size and open a pull request](pull-requests.md): sizing by intent, stacking, branch names, and the PR template.
+- [Get a pull request reviewed and merged](review-and-merge.md): the review, the merge gate's conditions, and which tier merges how.
 - [Write a documentation page](write-docs.md): audience, kind, template, navigation, and the writing rules.
 - [Set up Spec Kit to author specs](author-specs.md): install `specify` and point it at a feature, for maintainers writing specs.
 

@@ -322,7 +322,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 - **Texture transfer (v0.2)**: per piece, rasterize triangles in pattern space at print DPI, sampling the source texture with the preserved corner UVs. Bleed into the allowance by dilation so print-on-fabric has no white edge. Embedded in SVG as an `<image>` under a `<clipPath>` of the cut line.
 
 ## 10. Units and Scale
-- `ImportOptions.units` declared or inferred (heuristic on bbox size) and confirmed by the user.
+- The model's units are declared or inferred (heuristic on bbox size) and confirmed by the user, and reach the engine only as the `Scale` below; import takes no units (D-064).
 - `Scale` is a single uniform factor applied at the pattern stage. Flattening output is in model units × scale; physical constraints (allowance, min piece size, min curvature radius) are evaluated in mm after scaling.
 - **Supported range** (FR-006, D-040): 75 mm to 1000 mm in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
 - **Shrink compensation** (FR-056, D-012): an optional uniform percentage `shrink_pct`, applied as a second uniform factor at the pattern stage, so a stretch fabric sewn and stuffed lands nearer the model's size. It is **uniform only** — one number, every direction, every piece. Direction-dependent compensation is out of scope (D-014), and so is any attempt to predict the stuffed shape (D-012). The maker sets this from experience with their fabric; the tool does not infer it.

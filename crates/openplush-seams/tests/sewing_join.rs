@@ -8,7 +8,7 @@
 )]
 mod common;
 
-use common::{Setup, repaired_with_report};
+use common::{Grid, Setup, repaired_with_report};
 use openplush_geom::DVec3;
 use openplush_mesh::{EdgeId, HalfEdgeId, ManifoldMesh, RepairReport};
 use openplush_seams::{
@@ -232,5 +232,138 @@ fn two_copies_meeting_at_a_shared_vertex_are_separate_chains_ending_at_copy_ends
     assert_eq!(graph.chains().len(), 2);
     assert!(graph.nodes().all(|(_, n)| n == SeamNode::CopyEnd));
     assert_eq!(graph.nodes().count(), 2);
+    Ok(())
+}
+
+/// The tetrahedron with a fin along two consecutive body edges, 0-1 and 1-3: each spine edge
+/// is a copy group, and the body's copies and the fin's each form a two-edge chain.
+fn two_edge_fin() -> Result<(ManifoldMesh, RepairReport), Setup> {
+    repaired_with_report(
+        vec![
+            p(0., 0., 0.),
+            p(1., 0., 0.),
+            p(0., 1., 0.),
+            p(0., 0., 1.),
+            p(0.5, -1., 0.5),
+        ],
+        vec![
+            [0, 2, 1],
+            [0, 1, 3],
+            [1, 2, 3],
+            [0, 3, 2],
+            [0, 1, 4],
+            [1, 3, 4],
+        ],
+    )
+}
+
+/// Six pages on one spine, three coincident copies of it, each pair of pages a manifold edge.
+fn triple_book() -> Result<(ManifoldMesh, RepairReport), Setup> {
+    let mut positions = vec![p(0., 0., 0.), p(1., 0., 0.)];
+    let mut triangles = Vec::new();
+    for k in 0..6u32 {
+        let t = f64::from(k) * std::f64::consts::FRAC_PI_3;
+        positions.push(p(0.5, t.cos(), t.sin()));
+        triangles.push(if k % 2 == 0 {
+            [0, 1, k + 2]
+        } else {
+            [1, 0, k + 2]
+        });
+    }
+    repaired_with_report(positions, triangles)
+}
+
+fn map_with(
+    mesh: &ManifoldMesh,
+    seams: &SeamSet,
+    groups: &[Vec<EdgeId>],
+) -> Result<(Result<SewingMap, SeamsError>, SeamChainId), Setup> {
+    let graph = SeamGraph::with_copies(mesh, seams, groups)?;
+    let first = graph.chains().first().ok_or("a chain")?.id();
+    Ok((SewingMap::new(mesh, seams, &graph, groups), first))
+}
+
+#[test]
+fn a_two_edge_fin_sews_chain_to_chain_with_three_sides_of_two_edges() -> Result<(), Setup> {
+    let (mesh, report) = two_edge_fin()?;
+    let mut seams = SeamSet::new();
+    mark_groups(&report, &mut seams, SeamKind::Mandatory)?;
+    let map = map(&mesh, &seams, &report)??;
+    let [bundle] = map.bundles() else {
+        panic!("one bundle: {:?}", map.bundles());
+    };
+    assert_eq!(bundle.chains().len(), 2);
+    assert_eq!(bundle.sides().len(), 3, "{bundle:?}");
+    assert!(bundle.sides().iter().all(|s| s.half_edges().len() == 2));
+    sides_run_together(&mesh, bundle);
+    Ok(())
+}
+
+#[test]
+fn a_group_covering_only_the_start_of_the_chain_is_a_mismatch() -> Result<(), Setup> {
+    let (mesh, report) = two_edge_fin()?;
+    let mut seams = SeamSet::new();
+    mark_groups(&report, &mut seams, SeamKind::Mandatory)?;
+    // Only the first spine edge's copies are grouped: the copy chain has two edges, the lead
+    // finds a partner for one of them.
+    let first_only = vec![report.edge_copies()[0].clone()];
+    let (map, lead) = map_with(&mesh, &seams, &first_only)?;
+    assert_eq!(map, Err(SeamsError::CopyGroupMismatch { chain: lead }));
+    Ok(())
+}
+
+#[test]
+fn a_copy_that_shares_only_one_end_with_the_lead_edge_is_a_mismatch() -> Result<(), Setup> {
+    // Every pair of edges meeting at one interior vertex, grouped as if they were copies. For
+    // some pair the lead's walk starts at the shared vertex, where a match on starting
+    // positions alone would sew the pair; none is a copy, so each is a mismatch.
+    let grid = Grid::sheet(4, 3)?;
+    let at = grid.at(2, 1)?;
+    let around: Vec<EdgeId> = grid.mesh.outgoing(at).map(|h| h.edge()).collect();
+    assert!(around.len() >= 4, "{around:?}");
+    for (i, &a) in around.iter().enumerate() {
+        for &b in &around[i + 1..] {
+            let mut seams = SeamSet::new();
+            seams.insert(a, SeamKind::Cut)?;
+            seams.insert(b, SeamKind::Cut)?;
+            let (map, lead) = map_with(&grid.mesh, &seams, &[vec![a, b]])?;
+            assert_eq!(
+                map,
+                Err(SeamsError::CopyGroupMismatch { chain: lead }),
+                "{a:?} {b:?}"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn three_coincident_copies_sew_into_one_bundle_of_six_sides() -> Result<(), Setup> {
+    let (mesh, report) = triple_book()?;
+    let mut seams = SeamSet::new();
+    mark_groups(&report, &mut seams, SeamKind::Cut)?;
+    let map = map(&mesh, &seams, &report)??;
+    let [bundle] = map.bundles() else {
+        panic!("one bundle: {:?}", map.bundles());
+    };
+    assert_eq!(bundle.chains().len(), 3);
+    assert_eq!(bundle.sides().len(), 6, "{bundle:?}");
+    sides_run_together(&mesh, bundle);
+    Ok(())
+}
+
+#[test]
+fn overlapping_groups_that_claim_one_chain_twice_are_a_mismatch() -> Result<(), Setup> {
+    let (mesh, report) = triple_book()?;
+    let mut seams = SeamSet::new();
+    mark_groups(&report, &mut seams, SeamKind::Cut)?;
+    let [x, y, z] = report.edge_copies()[0][..] else {
+        panic!("{:?}", report.edge_copies());
+    };
+    // `y` is in both groups; the first lead joins it, so the second cannot.
+    let (map, _) = map_with(&mesh, &seams, &[vec![x, y], vec![y, z]])?;
+    // The refused chain is the later lead, `z`'s, whose copy `y` was already taken.
+    let late = SeamChainId::new(z.index());
+    assert_eq!(map, Err(SeamsError::CopyGroupMismatch { chain: late }));
     Ok(())
 }

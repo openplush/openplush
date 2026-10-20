@@ -188,3 +188,60 @@ fn every_copy_of_a_split_edge_resolves() -> Result<(), Setup> {
     assert!(copies.iter().all(|e| grouped.contains(e)), "{copies:?}");
     Ok(())
 }
+
+#[test]
+fn the_lowest_source_vertex_names_a_vertex_whatever_its_corners_order() -> Result<(), Setup> {
+    // UNWELDED's faces in every cyclic order: the merged vertex's corners come round in a
+    // different order each time, and its name stays source vertex 0.
+    let faces = ["f 1 3 2", "f 1 2 4", "f 2 3 4", "f 5 4 3"];
+    let vertices = "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nv 0 0 0\n";
+    let mut seen = None;
+    for shift in 0..faces.len() {
+        let mut text = vertices.to_owned();
+        for k in 0..faces.len() {
+            text.push_str(faces[(k + shift) % faces.len()]);
+            text.push('\n');
+        }
+        let m = mesh(&text)?;
+        let p = Provenance::new(&m);
+        let mut keys: Vec<EdgeKey> = (0..u32::try_from(m.edge_count())?)
+            .map(|e| p.edge_key(EdgeId::new(e)).ok_or("an edge has no key"))
+            .collect::<Result<_, _>>()?;
+        keys.sort();
+        assert!(
+            keys.iter().all(|k| !k.ends().contains(&corner(4))),
+            "{keys:?}"
+        );
+        assert_eq!(
+            *seen.get_or_insert_with(|| keys.clone()),
+            keys,
+            "shift {shift}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn every_resolution_is_strictly_ascending() -> Result<(), Setup> {
+    use openplush_testkit::fixtures::{self, Kind};
+    let plan = RepairPlan {
+        drop_degenerates: false,
+        ..RepairPlan::default()
+    };
+    for (kind, name) in [(Kind::Defect, "duplicate-face"), (Kind::Mesh, "capsule")] {
+        let soup = obj::read(&fixtures::load(kind, name)?)?;
+        for plan in [RepairPlan::default(), plan.clone()] {
+            let (m, _) = into_manifold(&soup, &plan)?;
+            let p = Provenance::new(&m);
+            for e in (0..u32::try_from(m.edge_count())?).map(EdgeId::new) {
+                let key = p.edge_key(e).ok_or("an edge has no key")?;
+                let landed = p.resolve_edge(key);
+                assert!(
+                    landed.windows(2).all(|w| w[0] < w[1]),
+                    "{name} {key}: {landed:?}"
+                );
+            }
+        }
+    }
+    Ok(())
+}

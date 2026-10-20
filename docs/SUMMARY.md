@@ -24,6 +24,7 @@
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
   - [The pipeline, one model at a time](explanation/pipeline.md)
+  - [Flattening and exact seam lengths](explanation/flattening.md)
 - [How-to guides](how-to/README.md)
   - [Scope and open a pull request](how-to/pull-requests.md)
   - [Write a documentation page](how-to/write-docs.md)

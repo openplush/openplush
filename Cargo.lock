@@ -771,6 +771,12 @@ dependencies = [
 [[package]]
 name = "openplush-project"
 version = "0.0.0"
+dependencies = [
+ "openplush-io",
+ "openplush-mesh",
+ "openplush-testkit",
+ "thiserror",
+]
 
 [[package]]
 name = "openplush-seams"

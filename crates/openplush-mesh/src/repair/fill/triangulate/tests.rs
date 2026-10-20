@@ -90,3 +90,106 @@ fn a_chord_the_mesh_already_has_is_not_used() {
     };
     assert_eq!(triangulate(&rim, &tol()), None);
 }
+
+/// The triangulation of a loop with no existing chords, sorted.
+fn free_triangulation(points: &[DVec3], across: &[DVec3]) -> Option<Vec<[usize; 3]>> {
+    let rim = Rim {
+        points,
+        across,
+        joined: &|_, _| false,
+    };
+    let mut tris = triangulate(&rim, &tol())?;
+    tris.sort();
+    Some(tris)
+}
+
+#[test]
+fn a_smaller_largest_angle_beats_a_smaller_area() {
+    // The bent square again, with the face across the closing edge 3-0 standing upright.
+    // Chord 1-3 keeps the flat half against it at a right angle; chord 0-2 tilts that half
+    // towards it, for a smaller worst crease and a larger area.
+    let points = [
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.0, 0.0, 0.0),
+        DVec3::new(1.0, 1.0, 1.0),
+        DVec3::new(0.0, 1.0, 0.0),
+    ];
+    let across = [DVec3::Z, DVec3::Z, DVec3::Z, -DVec3::X];
+    assert_eq!(
+        free_triangulation(&points, &across),
+        Some(vec![[0, 1, 2], [0, 2, 3]])
+    );
+}
+
+#[test]
+fn between_equal_largest_angles_the_smaller_area_wins() {
+    // The face across edge 0-1 is given the edge's own direction, so every triangle on that
+    // edge meets it at exactly a right angle and both chords tie on angle.
+    let points = [
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.0, 0.0, 1.0),
+        DVec3::new(1.0, 1.0, 0.0),
+        DVec3::new(0.0, 1.0, 0.0),
+    ];
+    let edge = DVec3::new(1.0, 0.0, 1.0).normalize().unwrap();
+    let across = [edge, DVec3::Z, DVec3::Z, DVec3::Z];
+    assert_eq!(
+        free_triangulation(&points, &across),
+        Some(vec![[0, 1, 2], [0, 2, 3]])
+    );
+}
+
+#[test]
+fn a_triangle_with_no_area_is_not_chosen() {
+    // Vertex 2 sits 2^-40 off chord 1-3, so triangle 1-2-3 is a sliver; the flat loop
+    // otherwise ties and would take it.
+    let off = 0.5 + 2f64.powi(-40);
+    let points = [
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.0, 0.0, 0.0),
+        DVec3::new(off, off, 0.0),
+        DVec3::new(0.0, 1.0, 0.0),
+    ];
+    assert_eq!(
+        free_triangulation(&points, &[DVec3::Z; 4]),
+        Some(vec![[0, 1, 2], [0, 2, 3]])
+    );
+}
+
+#[test]
+fn a_crease_inside_a_sub_loop_counts_towards_the_largest_angle() {
+    // A pentagon with vertex 1 dropped. Enumerating its five triangulations by hand, the
+    // fan around vertex 1 has the smallest worst crease (0.169); the fan 1-3, 0-3 creases
+    // 0.219 between triangles that only meet inside the sub-loop 0..=3.
+    let points = [
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(2.0, 0.0, -1.0),
+        DVec3::new(3.0, 2.0, 0.0),
+        DVec3::new(1.0, 3.0, 0.0),
+        DVec3::new(-1.0, 2.0, 0.0),
+    ];
+    assert_eq!(
+        free_triangulation(&points, &[DVec3::Z; 5]),
+        Some(vec![[0, 1, 4], [1, 2, 3], [1, 3, 4]])
+    );
+}
+
+#[test]
+fn a_tie_on_angle_goes_to_the_least_total_area() {
+    // Edge 0-1's across normal is the edge's direction, so every triangulation's worst
+    // angle is exactly 1 and area decides. The fan from vertex 0 has the least total area
+    // (5.15, against 5.56 next), though its last triangle is not the smallest apex.
+    let points = [
+        DVec3::new(0.0, 0.0, 0.0),
+        DVec3::new(1.0, 0.0, 1.0),
+        DVec3::new(1.5, 0.0, 0.5),
+        DVec3::new(1.5, 3.0, 0.0),
+        DVec3::new(-1.0, 1.0, 0.0),
+    ];
+    let edge = DVec3::new(1.0, 0.0, 1.0).normalize().unwrap();
+    let across = [edge, DVec3::Z, DVec3::Z, DVec3::Z, DVec3::Z];
+    assert_eq!(
+        free_triangulation(&points, &across),
+        Some(vec![[0, 1, 2], [0, 2, 3], [0, 3, 4]])
+    );
+}

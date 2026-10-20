@@ -121,3 +121,6 @@ fn outer_ring(mesh: &ManifoldMesh, v: VertexId, rim: &[VertexId]) -> Vec<DVec3> 
     near.dedup();
     near.into_iter().map(|w| mesh.position(w)).collect()
 }
+
+#[cfg(test)]
+mod tests;

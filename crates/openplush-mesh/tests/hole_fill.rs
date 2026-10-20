@@ -223,16 +223,31 @@ fn only_the_listed_loop_is_filled() -> Result<(), Setup> {
     Ok(())
 }
 
-#[test]
-fn a_loop_of_more_than_512_vertices_is_too_large() -> Result<(), Setup> {
-    let n = 513u32;
+/// A flat disc of `n` triangles fanned from its centre, so its rim is one loop of `n`.
+fn fan(n: u32) -> Result<TriangleSoup, Setup> {
     let mut positions = vec![DVec3::ZERO];
     for k in 0..n {
         let a = std::f64::consts::TAU * f64::from(k) / f64::from(n);
         positions.push(DVec3::new(a.cos(), a.sin(), 0.0));
     }
     let faces: Vec<[u32; 3]> = (0..n).map(|k| [0, 1 + k, 1 + (k + 1) % n]).collect();
-    let fan = soup(positions, &faces)?;
+    soup(positions, &faces)
+}
+
+#[test]
+fn a_loop_of_exactly_512_vertices_is_filled() -> Result<(), Setup> {
+    let fan = fan(512)?;
+    let (_, report) = into_manifold(&fan, &RepairPlan::default())?;
+    let rim = report.holes()[0].loop_ref();
+    let (m, report) = into_manifold(&fan, &filling(&[rim]))?;
+    filled_loop(&report, rim)?;
+    assert!(m.boundary_loops().is_empty());
+    Ok(())
+}
+
+#[test]
+fn a_loop_of_more_than_512_vertices_is_too_large() -> Result<(), Setup> {
+    let fan = fan(513)?;
     let (_, report) = into_manifold(&fan, &RepairPlan::default())?;
     let rim = report.holes()[0].loop_ref();
     assert_eq!(

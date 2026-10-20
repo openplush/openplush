@@ -121,3 +121,6 @@ fn solve(n: usize, lower: &BTreeMap<(usize, usize), f64>, rhs: &[DVec3]) -> Opti
         .collect();
     out.iter().all(|p| p.is_finite()).then_some(out)
 }
+
+#[cfg(test)]
+mod tests;

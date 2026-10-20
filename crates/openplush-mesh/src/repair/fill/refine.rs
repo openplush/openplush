@@ -141,3 +141,6 @@ fn cot(at: DVec3, p: DVec3, q: DVec3) -> f64 {
     let (u, v) = (p - at, q - at);
     u.dot(v) / u.cross(v).length()
 }
+
+#[cfg(test)]
+mod tests;

@@ -49,3 +49,7 @@ Chosen option: **3**, because it is the only one that stops splitting a capabili
 * Bad, because a defect a rerun would have caught after a fix is now caught only by the agent's local verification and CI. Every 🔴 fix must still be shown to work before pushing.
 * Supersedes the budget clause in [ADR 0003](0003-as-built-docs.md) ("`docs/` prose does not count against the 400-line PR budget"): there is no budget to count against. Docs still ship with the change.
 * The 400-line limit on a single module (`scripts/check-hygiene.sh`) is a code-structure rule, not a PR rule, and stays.
+
+## More information
+
+The single review per PR is amended by [ADR 0016](0016-hands-off-merging.md) for pushes after the review: the merge gate adds `rereview` once per head whose newest summary is for another head, so no head merges on a summary that did not read it. Agents still never add the label.

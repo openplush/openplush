@@ -89,4 +89,6 @@ One limit stays with the conventions rather than the gate: the review row accept
 
 The `dry-run` → `on` switch is the maintainer's, in the repository's Actions variables, and needs no PR.
 
+[ADR 0018](0018-hands-off-merging.md) supersedes two clauses: "tier C never gets the label" (the gate merges tier C; a new tier H is what the maintainer merges), and the review condition's acceptance of the newest summary whatever its head (the summary must name the current head, and the gate asks for a review when it does not). It also adds a condition: a human's "changes requested" blocks every tier.
+
 [ADR 0016](0016-hands-off-merging.md) supersedes two clauses: "tier C never gets the label" (the gate merges tier C; a new tier H is what the maintainer merges), and the review condition's acceptance of the newest summary whatever its head (the summary must name the current head, and the gate asks for a review when it does not). It also adds a condition: a human's "changes requested" blocks every tier.

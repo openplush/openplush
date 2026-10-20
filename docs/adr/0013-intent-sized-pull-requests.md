@@ -53,3 +53,7 @@ Chosen option: **3**, because it is the only one that stops splitting a capabili
 ## More information
 
 The single review per PR is amended by [ADR 0016](0016-hands-off-merging.md) for pushes after the review: the merge gate adds `rereview` once per head whose newest summary is for another head, so no head merges on a summary that did not read it. Agents still never add the label.
+
+## More information
+
+The single review per PR is amended by [ADR 0018](0018-hands-off-merging.md) for pushes after the review: the merge gate adds `rereview` once per head whose newest summary is for another head, so no head merges on a summary that did not read it. Agents still never add the label.

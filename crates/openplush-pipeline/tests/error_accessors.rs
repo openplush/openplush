@@ -520,7 +520,7 @@ fn mesh_refusals_about_the_whole_soup_locate_nothing() {
         },
         MeshError::TooLarge {
             what: Counted::Vertices,
-            count: 1 << 33,
+            count: 5,
         },
         MeshError::InvalidMaterial {
             primitive: 0,

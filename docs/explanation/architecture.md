@@ -34,7 +34,7 @@ The planned stages and their pre- and postconditions are in the [engine API cont
 
 Every stage returns `StageResult<T>`, which is `Result<Staged<T>, EngineError>`:
 
-- **`Err(EngineError)`**: a declared invariant is violated, and there is no output at all. A stage never returns partial or "fixed up" geometry, because a pattern that looks right and is wrong is only discovered after cutting fabric. Every error variant names *where* the problem is (edge, vertex, chart, piece, source vertex), so the UI can highlight it; the exceptions are `Parse`, located only by the file format, and `Cancelled`.
+- **`Err(EngineError)`**: a declared invariant is violated, and there is no output at all. A stage never returns partial or "fixed up" geometry, because a pattern that looks right and is wrong is only discovered after cutting fabric. Every error variant names *where* the problem is (edge, vertex, chart, piece, source vertex), so the UI can highlight it; the exceptions are `Parse`, located only by the file format, `Cancelled`, and the refusals `Mesh` and `Seams` carry about a whole soup or a whole proposal (no triangles, an unusable extent, an empty dart), which have no one element to point at.
 - **`Ok(Staged { value, warnings })`**: the output is valid but may sew badly. A `Warning` cannot exist without a remedy: `Remedy` is either `Actionable` (a seam edit the engine can make, offered for preview) or `Advisory` (a material or sizing change it will not make). Warnings never block export.
 
 Both are built (`openplush-pipeline`), and the `validate`, `repair` and `chart` stages return them; no stage raises a warning yet. Exact messages and ordering: [reference/engine-api.md](../reference/engine-api.md).

@@ -2,11 +2,11 @@ use std::collections::BTreeSet;
 
 use openplush_io::Format;
 use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
-
-use crate::locations::mesh_locations;
 use openplush_pattern::PieceId;
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
+
+use crate::locations::mesh_locations;
 
 /// A violated invariant: the stage produced no output. Every variant but
 /// `Cancelled` names where the problem is, so the UI can highlight it.

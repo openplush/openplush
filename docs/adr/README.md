@@ -7,7 +7,7 @@ An ADR records a decision that changes a principle or the project's shape, so th
 - A new dependency category (AGENTS.md, Licenses).
 - A dependency whose license is not on the allowlist (Constitution IX, T006).
 - A new sideways edge in the crate DAG (`crates/AGENTS.md`).
-- An exception to `unsafe_code = "forbid"` (CONTRIBUTING.md, Warnings are errors).
+- An exception to `unsafe_code = "forbid"` ([the workspace lints](../reference/checks.md#workspace-lints-clippy)).
 
 Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/plan.md`) instead.
 
@@ -27,5 +27,34 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0012](0012-export-reads-layout.md) | `openplush-export` may depend on `openplush-layout` | Accepted |
 | [0013](0013-intent-sized-pull-requests.md) | Size pull requests by intent, not by line count, and review each one once | Accepted |
 | [0014](0014-auto-merge-tiers.md) | Merge by tier: agents enable auto-merge on low-risk PRs, the maintainer merges the rest | Proposed |
-| [0015](0015-merge-gate.md) | A workflow computes the tier and enables auto-merge; agents never do | Proposed |
+| [0015](0015-merge-gate.md) | A workflow computes the tier and enables auto-merge; agents never do | Accepted |
 | [0016](0016-standing-merge-authorization.md) | A time-boxed standing authorization lets an agent merge tier C PRs | Accepted |
+| [0017](0017-docs-site.md) | Build the docs site with mdBook; accept OFL-1.1 fonts and CC BY 4.0 icons in the published site only; CI-only tooling is outside Constitution IX | Accepted |
+| [0018](0018-hands-off-merging.md) | The merge gate merges every tier; the maintainer keeps only the files that define the gate and the rules | Accepted |
+
+## How to read an ADR
+
+Every ADR follows the [template](0000-template.md), so its parts are always in the same place:
+
+- **Front matter**: the status, the date it was written, and who decided.
+- **Context and problem statement**: what forced the decision, with links to the spec, plan section, task or PR that raised it.
+- **Decision drivers**: the constitution principles and other forces the options were judged against.
+- **Considered options** and **Pros and cons of the options**: everything that was on the table, and why each won or lost.
+- **Decision outcome**: the chosen option and the reason. Read this first if you only want the answer. Its **Consequences** list what the decision costs as well as what it buys, and **Confirmation** names the gate, test or spike that shows it still holds.
+- **More information**: follow-up work and when to revisit.
+
+**Status** says how far to rely on it:
+
+| Status | Meaning |
+|---|---|
+| Proposed | Written and argued, not yet accepted by the maintainer. Work may follow it, but it can still change. |
+| Accepted | Binding. |
+| Rejected | Considered and turned down; kept so the question isn't reopened without new facts. |
+| Deprecated | No longer applies, with nothing replacing it. |
+| Superseded by ADR-NNNN | Replaced; read the newer ADR. |
+
+Once accepted, an ADR is a record of what was decided and why on its date: its body is not edited, and a change is a new ADR that supersedes it. It never describes the code as it is now: once code lands, the code and `docs/` are the source of truth ([ADR 0003](0003-as-built-docs.md)). To follow a decision to its work:
+
+- **Tasks**: the feature's `tasks.md` (`specs/<feature>/tasks.md`) cites the ADR on the tasks that implement or depend on it, and the plan's Decision Ledger records the smaller decisions made along the way.
+- **Code**: the as-built docs describe what exists, starting from the [architecture](../explanation/architecture.md) and the [crate reference](../reference/crates.md); the ADR's Context and Confirmation name the crates, workflows or gates it touches.
+- **History**: the PR that merged the ADR, and the PRs that cite it, carry the discussion.

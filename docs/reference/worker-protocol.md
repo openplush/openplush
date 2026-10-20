@@ -1,6 +1,6 @@
 # Worker protocol (`@openplush/engine-client`)
 
-What the shell ↔ worker protocol is **today**. The wire types are generated from `openplush-wasm`'s `serde` DTOs into `packages/engine-client/src/generated/` (`scripts/gen-ts-types.sh`, checked by `scripts/check.sh types`), so this page states only what the types do not. The [protocol contract](../../specs/001-pattern-pipeline/contracts/worker-protocol.md) describes the planned whole; where the two disagree about something built, this page and the code are right.
+What the shell ↔ worker protocol is **today**. The wire types are generated from `openplush-wasm`'s `serde` DTOs into `packages/engine-client/src/generated/` (`scripts/gen-ts-types.sh`, checked by `scripts/check.sh types`), so this page states only what the types do not. The [protocol contract](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md) describes the planned whole; where the two disagree about something built, this page and the code are right.
 
 ## Package surface
 

@@ -63,7 +63,42 @@ expect_plan "wasm-check builds every test binary for wasm32" "wasm-check" \
 expect_plan "workflows step lints the workflows with actionlint alone" "workflows" \
   "actionlint -shellcheck= -pyflakes= .github/workflows"
 expect_plan "default runs the workflows lint" "" "actionlint -shellcheck= -pyflakes="
+expect_plan "docs step builds the book and checks its navigation" "docs" \
+  "mdbook build" "scripts/check-docs-summary.sh"
+# mdBook copies every non-Markdown file under docs/, so the landing page also
+# lands inside the book, where its dev/ link is dead; the step drops that copy.
+expect_plan "docs step puts the landing page at the site root, not in the book" "docs" \
+  "cp docs/site/index.html target/site/index.html" "rm -r target/site/dev/site"
+expect_plan "docs step runs the links self-test" "docs" "scripts/tests/check-docs-links.test.sh"
+expect_plan "docs step builds the maker book and checks it for IDs and code" "docs" \
+  "mdbook build docs/user" "rm target/site/guide/book.toml" "scripts/check-docs-plain.sh"
+# The whole site, landing page included, not just the book under dev/.
+out=$("$check" --dry-run docs 2>&1)
+for cmd in "scripts/check-docs-remote.sh target/site" "scripts/check-docs-links.sh target/site"; do
+  if grep -qxF "+ $cmd" <<<"$out"; then ok "docs step runs $cmd"; else bad "docs step runs $cmd" "$out"; fi
+done
+# The links self-test builds a book with mdbook and runs lychee, which CI's engine
+# setup does not install, so only the docs step runs it.
+out=$("$check" --dry-run boundary 2>&1)
+if [[ $out == *"scripts/tests/check-docs-remote.test.sh"* && $out != *"scripts/tests/check-docs-links.test.sh"* ]]; then
+  ok "boundary step leaves the links self-test to the docs step"
+else
+  bad "boundary step leaves the links self-test to the docs step" "$out"
+fi
+# The docs step needs mdbook, which CI's engine setup does not install.
+for args in "" all engine; do
+  out=$("$check" --dry-run $args 2>&1)
+  if [[ $out != *"mdbook build"* && $out != *"scripts/check-docs-summary.sh"* && $out != *"scripts/check-docs-remote.sh"* && $out != *"scripts/check-docs-links.sh"* ]]; then
+    ok "${args:-default} run leaves out the docs step"
+  else
+    bad "${args:-default} run leaves out the docs step" "$out"
+  fi
+done
 expect_plan "setup installs the pinned cargo-deny" "--setup" "cargo install cargo-deny --version"
+mdbook=$(sed -n 's/^MDBOOK_VERSION=//p' "$check")
+lychee=$(sed -n 's/^LYCHEE_VERSION=//p' "$check")
+expect_plan "setup installs the pinned mdbook and lychee" "--setup" \
+  "cargo install mdbook --version $mdbook --locked" "cargo install lychee --version $lychee --locked"
 actionlint=$(sed -n 's/^ACTIONLINT_VERSION=//p' "$check")
 expect_plan "setup installs the pinned actionlint release" "--setup" \
   "actionlint/releases/download/v$actionlint/actionlint_${actionlint}_" "tar -xzf"
@@ -90,6 +125,28 @@ if grep -q 'scripts/check.sh --setup engine' "$here/../../.github/workflows/engi
 else
   bad "engine.yml installs the engine tools with check.sh --setup engine" "$(grep -n 'check.sh' "$here/../../.github/workflows/engine.yml")"
 fi
+# The docs workflow installs the mdbook check.sh pins, and lychee through check.sh.
+docs_yml="$here/../../.github/workflows/docs.yml"
+if [[ -f $docs_yml ]] && grep -q "tool: mdbook@$mdbook\b" "$docs_yml"; then
+  ok "docs.yml installs mdbook $mdbook, as check.sh pins"
+else
+  bad "docs.yml installs mdbook $mdbook, as check.sh pins" "$(grep -n 'mdbook@' "$docs_yml" 2>&1)"
+fi
+if [[ -f $docs_yml ]] && grep -q 'scripts/check.sh --setup docs' "$docs_yml"; then
+  ok "docs.yml installs the docs tools with check.sh --setup docs"
+else
+  bad "docs.yml installs the docs tools with check.sh --setup docs" "$(grep -n 'check.sh' "$docs_yml" 2>&1)"
+fi
+# The determinism job builds, moves the site aside, builds again, then diffs:
+# --setup docs installs the tools and runs the docs step, so it is the first build. The first build
+# moves outside target/, which rust-cache restores, so a stale copy can never stand in for it.
+want_runs=$'scripts/check.sh --setup docs\nmv target/site "$RUNNER_TEMP/site-1"\nscripts/check.sh docs\ndiff -r "$RUNNER_TEMP/site-1" target/site'
+got_runs=$([[ -f $docs_yml ]] && awk '/^  determinism:$/ {on = 1; next} on && /^  [a-z-]+:$/ {on = 0} on' "$docs_yml" | sed -n 's/^ *- run: //p' | grep -E '^(scripts/check.sh|mv |diff )')
+if [[ $got_runs == "$want_runs" ]]; then
+  ok "docs.yml builds the site twice and diffs the builds"
+else
+  bad "docs.yml builds the site twice and diffs the builds" "$got_runs"
+fi
 # With steps named, --setup installs only what they need.
 expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="
 out=$("$check" --dry-run --setup engine 2>&1)
@@ -97,6 +154,11 @@ if [[ $out != *"cargo install cargo-deny"* && $out != *"wasm-bindgen-cli"* ]]; t
   ok "setup for the engine group installs nothing for deny or wasm"
 else
   bad "setup for the engine group installs nothing for deny or wasm" "$out"
+fi
+if [[ $out != *"cargo install mdbook"* && $out != *"cargo install lychee"* ]]; then
+  ok "setup for the engine group installs nothing for docs"
+else
+  bad "setup for the engine group installs nothing for docs" "$out"
 fi
 expect_plan "setup for deny installs only cargo-deny" "--setup deny" "cargo install cargo-deny --version"
 out=$("$check" --dry-run --setup deny 2>&1)
@@ -111,7 +173,7 @@ fi
 
 status=0
 out=$("$check" --dry-run fmtt 2>&1) || status=$?
-if [[ $status -eq 2 && $out == *"unknown step"* ]]; then
+if [[ $status -eq 2 && $out == *"unknown step"* && $out == *" docs"* ]]; then
   ok "unknown step fails with exit 2"
 else
   bad "unknown step fails with exit 2 (got $status)" "$out"

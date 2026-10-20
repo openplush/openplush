@@ -8,9 +8,9 @@ deciders: maintainer (proposed by the implementing agent from spike S1, T001)
 
 ## Context and problem statement
 
-Research R2 picked `baby_shark` for three preprocessing jobs: isotropic remeshing before flattening (triangle quality drives solver conditioning), decimation for preview, and voxel remeshing as the opt-in last-resort repair ([data-model §3](../../specs/001-pattern-pipeline/data-model.md#3-non-manifold-handling-repair-pipeline)). Plan decision D-007 adopted it "pending S1". The plan's Technical Context also has flattening run on a remeshed proxy of at most ~30k triangles.
+Research R2 picked `baby_shark` for three preprocessing jobs: isotropic remeshing before flattening (triangle quality drives solver conditioning), decimation for preview, and voxel remeshing as the opt-in last-resort repair ([data-model §3](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#3-non-manifold-handling-repair-pipeline)). Plan decision D-007 adopted it "pending S1". The plan's Technical Context also has flattening run on a remeshed proxy of at most ~30k triangles.
 
-T001 (spike S1) asks whether the crate builds and runs on `wasm32-unknown-unknown`. If it doesn't, remeshing would be native-only and WASM would flatten the raw mesh, which changes what the interior solve (T080) can assume. This ADR records the answer and what the engine does about it. Evidence: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_shark_wasm/README.md).
+T001 (spike S1) asks whether the crate builds and runs on `wasm32-unknown-unknown`. If it doesn't, remeshing would be native-only and WASM would flatten the raw mesh, which changes what the interior solve (T080) can assume. This ADR records the answer and what the engine does about it. Evidence: [`research/s1_baby_shark_wasm/`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md).
 
 ## Decision drivers
 
@@ -104,7 +104,7 @@ Why not the others:
 
 ## More information
 
-* Evidence: [`research/s1_baby_shark_wasm/README.md`](../../research/s1_baby_shark_wasm/README.md) and [`results.md`](../../research/s1_baby_shark_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, and the size table.
+* Evidence: [`research/s1_baby_shark_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, and the size table.
 * Follow-ups for the lead's docs PR: D-007 status; the plan's Technical Context ("flattening runs on a remeshed proxy"); research R6 S1 result; tasks.md T001 and T002 (the remeshed-proxy dial); data-model §3 last-resort row; plan.md Primary dependencies (`baby_shark` pending S1) and Trade-offs ("remeshed flattening proxy"); research.md's `[verify]` note on rayon via baby_shark.
 * Revisit when (a) `baby_shark` publishes opt-out features, (b) S2 reports SLIM wall time on raw-size charts, or (c) fixture runs show T080 convergence failures on poorly shaped input. If (b) or (c) arrives before (a), option 5 is the preferred fallback [speculative].
 * Botsch, Kobbelt, "A Remeshing Approach to Multiresolution Modeling" (SGP 2004), the algorithm `IncrementalRemesher` implements.

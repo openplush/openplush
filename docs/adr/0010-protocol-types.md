@@ -8,7 +8,7 @@ deciders: maintainer (accepted 2026-10-15, in review of #85); proposed by the im
 
 ## Context and problem statement
 
-[contracts/worker-protocol.md](../../specs/001-pattern-pipeline/contracts/worker-protocol.md) says the shell's TypeScript types are generated from the Rust definitions, never hand-written, because two hand-kept copies of a protocol drift and the drift shows up as a wrong pattern. T179 defines those Rust definitions (the DTOs of the envelope, handles, progress and errors) and T041 needs a generator for them. A code generator is a new dependency category, so AGENTS.md asks for an ADR. The decision also fixes how the DTOs are encoded on the wire, because the generator and the encoder must agree on every shape.
+[contracts/worker-protocol.md](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md) says the shell's TypeScript types are generated from the Rust definitions, never hand-written, because two hand-kept copies of a protocol drift and the drift shows up as a wrong pattern. T179 defines those Rust definitions (the DTOs of the envelope, handles, progress and errors) and T041 needs a generator for them. A code generator is a new dependency category, so AGENTS.md asks for an ADR. The decision also fixes how the DTOs are encoded on the wire, because the generator and the encoder must agree on every shape.
 
 ## Decision drivers
 
@@ -77,6 +77,6 @@ T179's tests serialize each DTO and compare it with the contract's JSON shape, a
 
 ## More information
 
-* Contract: [worker-protocol.md](../../specs/001-pattern-pipeline/contracts/worker-protocol.md), §1 (numbers rule) and §6 (locations), amended 2026-10-15 with this ADR.
+* Contract: [worker-protocol.md](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md), §1 (numbers rule) and §6 (locations), amended 2026-10-15 with this ADR.
 * Tasks: T179 (the DTOs), T041 (the generator and its checks), T040 (`packages/engine-client`, the consumer). Ledger: D-033.
 * Revisit if a protocol type genuinely needs a 64-bit integer, if `ts-rs` gains a hard error for unsupported `serde` attributes (the text test could then go), or if message volume makes JSON measurable.

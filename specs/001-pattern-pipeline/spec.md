@@ -122,7 +122,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 ## Requirements *(mandatory)*
 
 ### Import & model health
-- **FR-001**: Accept OBJ (+MTL, textures), glTF 2.0 (`.gltf`/`.glb`) and binary FBX static meshes. *2026-10-16: MTL and texture files are read once texture transfer (FR-043) needs them; until then OBJ import keeps geometry and per-corner texture coordinates (D-034).* Skinned/animated data is ignored with a warning. STL and PLY are read too (D-064). *2026-10-20: the maintainer chose FBX (D-064, D-066 (9)): binary FBX 7.x, read by T190.*
+- **FR-001**: Accept OBJ (+MTL, textures), glTF 2.0 (`.gltf`/`.glb`) and binary FBX static meshes. *2026-10-16: MTL and texture files are read once texture transfer (FR-043) needs them; until then OBJ import keeps geometry and per-corner texture coordinates (D-034).* Skinned/animated data is ignored with a warning. STL and PLY are read too (D-064).
 - **FR-002**: Triangulate polygons; preserve per-corner texture coordinates and material assignment.
 - **FR-003**: Detect and report non-manifold edges/vertices, inconsistent orientation, degenerate/duplicate faces, holes, disconnected components, and self-intersections; each defect is locatable in 3D.
 - **FR-004**: Offer repair per defect class with a before/after report; never modify geometry without confirmation (or an explicit per-project auto-repair setting).

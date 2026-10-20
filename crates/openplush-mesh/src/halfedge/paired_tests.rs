@@ -4,6 +4,7 @@ use super::ManifoldMesh;
 use super::tests::{p, soup, tol};
 use crate::repair::degenerate::remove;
 use crate::repair::nonmanifold_edge::pair_edges;
+use crate::repair::orientation::Conflict;
 use crate::{FaceId, MeshError, PairedEdge, TriangleSoup, VertexId};
 
 fn f(i: u32) -> FaceId {
@@ -19,7 +20,62 @@ fn build(
     pairings: &[PairedEdge],
     sheets: &[[FaceId; 2]],
 ) -> Result<ManifoldMesh, MeshError> {
-    ManifoldMesh::from_paired_triangles(s, &tol(s), pairings, sheets)
+    ManifoldMesh::from_paired_triangles(s, &tol(s), pairings, sheets, &[])
+}
+
+fn tetra() -> TriangleSoup {
+    soup(
+        vec![p(0., 0., 0.), p(1., 0., 0.), p(0., 1., 0.), p(0., 0., 1.)],
+        vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [0, 3, 2]],
+    )
+}
+
+#[test]
+fn a_conflict_cut_splits_a_two_face_edge_into_two_boundary_copies() {
+    // Faces 0 and 1 share edge 0-1; cutting it opens the tetrahedron along that edge, and
+    // the cut's ends, still shared by the faces round them, make one two-edge boundary loop.
+    let s = tetra();
+    let cut = Conflict {
+        vertices: [v(0), v(1)],
+        faces: [f(0), f(1)],
+    };
+    let mesh = ManifoldMesh::from_paired_triangles(&s, &tol(&s), &[], &[], &[cut]).unwrap();
+    assert_eq!(mesh.edge_count(), 7);
+    let loops = mesh.boundary_loops();
+    assert_eq!(loops.len(), 1);
+    assert_eq!(loops[0].len(), 2);
+}
+
+#[test]
+fn a_conflict_cut_must_name_the_two_faces_of_a_two_face_edge() {
+    let s = tetra();
+    let wrong_face = Conflict {
+        vertices: [v(0), v(1)],
+        faces: [f(0), f(2)],
+    };
+    assert_eq!(
+        ManifoldMesh::from_paired_triangles(&s, &tol(&s), &[], &[], &[wrong_face]).unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(2),
+            a: v(0),
+            b: v(1)
+        }
+    );
+    let sheet = square_sheet();
+    let sheets = [[f(0), f(3)], [f(1), f(2)]];
+    let on_four_faces = Conflict {
+        vertices: [v(0), v(2)],
+        faces: [f(0), f(1)],
+    };
+    assert_eq!(
+        ManifoldMesh::from_paired_triangles(&sheet, &tol(&sheet), &[], &sheets, &[on_four_faces])
+            .unwrap_err(),
+        MeshError::PairingMismatch {
+            face: f(0),
+            a: v(0),
+            b: v(2)
+        }
+    );
 }
 
 /// A unit square, both sides: faces 0 and 1 are one layer, 3 and 2 the other, and

@@ -8,17 +8,23 @@ use openplush_geom::epsilon::ModelTolerances;
 use crate::validate::orientation::{closed_volumes, walk};
 use crate::{FaceId, MeshError, TriangleSoup, VertexId};
 
+/// An edge whose two faces no flips make agree: the surface is one-sided across it, so
+/// it is cut into a forced seam.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct Conflict {
+    /// The ends, smaller first.
+    pub(crate) vertices: [VertexId; 2],
+    /// Its two faces, lower first.
+    pub(crate) faces: [FaceId; 2],
+}
+
 /// What orienting changed, by the IDs of the soup it was given.
 #[derive(Debug, Default)]
 pub(crate) struct Oriented {
     /// Faces whose corners were reversed, sorted.
     pub(crate) flipped: Vec<FaceId>,
-    /// Edges, smaller end first and sorted, whose two faces no flips make agree.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "only tests read the conflict edges")
-    )]
-    pub(crate) conflicts: Vec<[VertexId; 2]>,
+    /// Conflict edges, sorted by their ends.
+    pub(crate) conflicts: Vec<Conflict>,
 }
 
 /// Turns faces over so every pair across a two-face edge agrees, walking from the
@@ -70,8 +76,16 @@ pub(crate) fn orient(
             .collect(),
         conflicts: walk
             .conflicts
-            .into_iter()
-            .map(|[a, b]| [VertexId::new(a), VertexId::new(b)])
+            .iter()
+            .map(|key| {
+                let mut faces: Vec<u32> = edges[key].iter().map(|u| u.face).collect();
+                faces.sort();
+                Conflict {
+                    vertices: key.map(VertexId::new),
+                    // INVARIANT: the walk reports a conflict only on an edge with two faces.
+                    faces: [FaceId::new(faces[0]), FaceId::new(faces[1])],
+                }
+            })
             .collect(),
     };
     Ok((turn_faces(soup, &turn), done))

@@ -3,10 +3,11 @@
 use openplush_geom::epsilon::ModelTolerances;
 
 use super::nonmanifold_edge::pair_edges;
+use super::orientation::Conflict;
 use super::{bowtie, cap, components, degenerate, orientation, weld};
 use crate::{
-    FaceId, HalfEdgeId, HoleReport, LoopRef, ManifoldMesh, MeshError, PairedEdge, RepairPlan,
-    RepairReport, TriangleSoup, VertexId,
+    EdgeId, FaceId, HalfEdgeId, HoleReport, LoopRef, ManifoldMesh, MeshError, PairedEdge,
+    RepairPlan, RepairReport, TriangleSoup, VertexId,
 };
 
 /// What the steps found that the build and the report still need.
@@ -15,6 +16,15 @@ struct Pending {
     sheets: Vec<[FaceId; 2]>,
     /// Edges cut loose by the pairings, as the vertices the soup now gives them.
     seams: Vec<[VertexId; 2]>,
+    /// Every edge the pairings or the orientation cuts split.
+    splits: Vec<SplitEdge>,
+}
+
+/// An edge repair splits: one face per copy, with the edge's ends as that face has them in
+/// the soup now, and whether the split is an orientation cut (every copy a boundary and a seam).
+struct SplitEdge {
+    copies: Vec<(FaceId, [VertexId; 2])>,
+    cut: bool,
 }
 
 /// The soup as the steps have left it, and the input face each of its faces came from.
@@ -89,21 +99,16 @@ pub fn into_manifold(
         .map(|p| stage.input_pairing(p))
         .filter(|p| !p.pairs.is_empty() || p.unpaired.is_some())
         .collect();
-    let mut seams = unpaired_edges(&pairings, &stage.soup, &stage.soup);
-    if plan.split_bowties {
-        let (split, copies) = bowtie::split(&stage.soup, &pairings)?;
-        seams = unpaired_edges(&pairings, &stage.soup, &split);
-        stage.soup = split;
-        report.vertex_copies = copies.copies;
-    }
-    // The pairings name the soup before the split, so they are stale after it.
-    let pairings = pair(plan.split_non_manifold_edges, &stage.soup, &sheets)?;
+    let mut conflicts = Vec::new();
     if plan.fix_orientation {
         let (oriented, done) = orientation::orient(&stage.soup, &tol)?;
         stage.soup = oriented;
-        // A conflict edge is left in the soup, so the build refuses it.
         report.flipped_faces = stage.input_faces(&done.flipped);
+        conflicts = done.conflicts;
     }
+    let (seams, splits) = split_vertices(&mut stage, plan, &pairings, &conflicts, &mut report)?;
+    // The pairings name the soup before the split, so they are stale after it.
+    let pairings = pair(plan.split_non_manifold_edges, &stage.soup, &sheets)?;
     report.components = components::split(&stage.soup)
         .into_iter()
         .map(|mut c| {
@@ -115,6 +120,7 @@ pub fn into_manifold(
         pairings,
         sheets,
         seams,
+        splits,
     };
     build(&stage, &tol, plan, pending, report)
 }
@@ -140,14 +146,71 @@ fn unpaired_edges(
 ) -> Vec<[VertexId; 2]> {
     pairings
         .iter()
-        .filter_map(|p| {
-            let face = p.unpaired?;
-            let was = before.triangle(face)?;
-            let now = after.triangle(face)?;
-            let at = |end: VertexId| was.iter().position(|&v| v == end).map(|i| now[i]);
-            Some([at(p.vertices[0])?, at(p.vertices[1])?])
-        })
+        .filter_map(|p| after_split(p.vertices, p.unpaired?, before, after))
         .collect()
+}
+
+/// Splits the vertices between fans, if the plan says so, and returns the unpaired edges and
+/// every split edge as the soup now numbers them.
+fn split_vertices(
+    stage: &mut Stage,
+    plan: &RepairPlan,
+    pairings: &[PairedEdge],
+    conflicts: &[Conflict],
+    report: &mut RepairReport,
+) -> Result<(Vec<[VertexId; 2]>, Vec<SplitEdge>), MeshError> {
+    let mut seams = unpaired_edges(pairings, &stage.soup, &stage.soup);
+    let mut splits = split_edges(pairings, conflicts);
+    if plan.split_bowties {
+        let (split, copies) = bowtie::split(&stage.soup, pairings, conflicts)?;
+        seams = unpaired_edges(pairings, &stage.soup, &split);
+        for s in &mut splits {
+            s.copies = s
+                .copies
+                .iter()
+                .filter_map(|&(face, edge)| {
+                    Some((face, after_split(edge, face, &stage.soup, &split)?))
+                })
+                .collect();
+        }
+        stage.soup = split;
+        report.vertex_copies = copies.copies;
+    }
+    Ok((seams, splits))
+}
+
+/// Every edge the pairings or the conflicts split, one face per copy: the first face of each
+/// pair and the unpaired face, or a conflict's two faces.
+fn split_edges(pairings: &[PairedEdge], conflicts: &[Conflict]) -> Vec<SplitEdge> {
+    let paired = pairings.iter().map(|p| SplitEdge {
+        copies: p
+            .pairs
+            .iter()
+            .map(|pair| pair[0])
+            .chain(p.unpaired)
+            .map(|face| (face, p.vertices))
+            .collect(),
+        cut: false,
+    });
+    let cut = conflicts.iter().map(|c| SplitEdge {
+        copies: c.faces.iter().map(|&face| (face, c.vertices)).collect(),
+        cut: true,
+    });
+    paired.chain(cut).collect()
+}
+
+/// `edge` of `face`, as the vertices that face has in `after` (the soup `before` split, same
+/// faces).
+fn after_split(
+    edge: [VertexId; 2],
+    face: FaceId,
+    before: &TriangleSoup,
+    after: &TriangleSoup,
+) -> Option<[VertexId; 2]> {
+    let was = before.triangle(face)?;
+    let now = after.triangle(face)?;
+    let at = |end: VertexId| was.iter().position(|&v| v == end).map(|i| now[i]);
+    Some([at(edge[0])?, at(edge[1])?])
 }
 
 /// Drops repeated-index faces and copies, then stitches caps, keeping `stage.origin` and
@@ -183,6 +246,7 @@ fn build(
         pairings,
         sheets,
         seams,
+        splits,
     } = pending;
     let (compact, map) = stage.soup.compacted();
     // INVARIANT: every vertex the pairings, copies and seams name is used by a face.
@@ -195,12 +259,29 @@ fn build(
             ..p.clone()
         })
         .collect();
-    let mesh = ManifoldMesh::from_paired_triangles(&compact, tol, &pairings, &sheets)?;
+    let splits: Vec<SplitEdge> = splits
+        .into_iter()
+        .map(|s| SplitEdge {
+            copies: s.copies.iter().map(|&(f, e)| (f, edge(e))).collect(),
+            cut: s.cut,
+        })
+        .collect();
+    // A cut whose faces still share both ends after the vertex split is cut by the build.
+    let conflicts: Vec<Conflict> = splits
+        .iter()
+        .filter(|s| s.cut && s.copies[0].1 == s.copies[1].1)
+        .map(|s| Conflict {
+            vertices: s.copies[0].1,
+            faces: [s.copies[0].0, s.copies[1].0],
+        })
+        .collect();
+    let mesh = ManifoldMesh::from_paired_triangles(&compact, tol, &pairings, &sheets, &conflicts)?;
     for copy in &mut report.vertex_copies {
         copy.of = renumber(copy.of);
         copy.copy = renumber(copy.copy);
     }
     let mut seams: Vec<[VertexId; 2]> = seams.into_iter().map(edge).collect();
+    resolve_splits(&mesh, &splits, &mut report, &mut seams);
     seams.sort();
     seams.dedup();
     report.mandatory_seams = seams;
@@ -236,4 +317,51 @@ fn holes(mesh: &ManifoldMesh) -> Vec<LoopRef> {
                 .map(LoopRef::new)
         })
         .collect()
+}
+
+/// Fills the report's edge copies and orientation conflicts from the split edges, as the
+/// mesh's IDs, and adds every copy of a cut to `seams`.
+fn resolve_splits(
+    mesh: &ManifoldMesh,
+    splits: &[SplitEdge],
+    report: &mut RepairReport,
+    seams: &mut Vec<[VertexId; 2]>,
+) {
+    let mut groups = Vec::new();
+    for s in splits {
+        let mut copies: Vec<EdgeId> = s
+            .copies
+            .iter()
+            .filter_map(|&(face, ends)| edge_of(mesh, face, ends))
+            .collect();
+        if s.cut {
+            report.orientation_conflicts.push(s.copies[0].1);
+            seams.extend(copies.iter().map(|&e| sorted_ends(mesh, e)));
+        }
+        copies.sort();
+        groups.push(copies);
+    }
+    groups.sort();
+    report.edge_copies = groups;
+    report.orientation_conflicts.sort();
+}
+
+/// The edge of `face` between `ends`, if it has one.
+fn edge_of(mesh: &ManifoldMesh, face: FaceId, ends: [VertexId; 2]) -> Option<EdgeId> {
+    let h = mesh.face_half_edge(face);
+    [h, mesh.next(h), mesh.prev(h)]
+        .into_iter()
+        .find(|&h| {
+            let (a, b) = (mesh.origin(h), mesh.dest(h));
+            [a, b] == ends || [b, a] == ends
+        })
+        .map(HalfEdgeId::edge)
+}
+
+/// An edge's ends, lower first.
+fn sorted_ends(mesh: &ManifoldMesh, e: EdgeId) -> [VertexId; 2] {
+    let h = e.half_edge();
+    let mut ends = [mesh.origin(h), mesh.dest(h)];
+    ends.sort();
+    ends
 }

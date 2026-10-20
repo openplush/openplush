@@ -150,7 +150,11 @@ for step in "${steps[@]}"; do
   case $step in
     boundary)
       # Every self-test first, so a broken checker cannot pass everything.
-      for t in scripts/tests/*.test.sh; do run "$t"; done
+      for t in scripts/tests/*.test.sh; do
+        # Needs mdbook and lychee, which only the docs step requires; it runs there.
+        [[ $t == scripts/tests/check-docs-links.test.sh ]] && continue
+        run "$t"
+      done
       run scripts/check-boundary.sh
       ;;
     hygiene)
@@ -223,10 +227,15 @@ for step in "${steps[@]}"; do
         have=$(installed_version mdbook)
         [[ $have == "v$MDBOOK_VERSION" ]] ||
           die "mdbook ${have:-missing}, check.sh pins v$MDBOOK_VERSION; run scripts/check.sh --setup docs"
+        have=$(installed_version lychee)
+        [[ $have == "$LYCHEE_VERSION" ]] ||
+          die "lychee ${have:-missing}, check.sh pins $LYCHEE_VERSION; run scripts/check.sh --setup docs"
       fi
+      run scripts/tests/check-docs-links.test.sh
       run mdbook build
       run scripts/check-docs-summary.sh
       run scripts/check-docs-remote.sh target/site/dev
+      run scripts/check-docs-links.sh target/site/dev
       ;;
   esac
   endgroup

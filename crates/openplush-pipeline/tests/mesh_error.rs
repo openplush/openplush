@@ -127,7 +127,19 @@ fn messages_naming_a_loop_are_pinned() {
         "the plan fills the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }), which the mesh does not have"
     );
     assert_eq!(
-        MeshError::HoleFillUnavailable { loop_ref }.to_string(),
-        "the plan fills the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }), and hole filling is not available"
+        MeshError::HoleNotFillable { loop_ref }.to_string(),
+        "the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }) has no fill: every triangulation of it reuses an edge, has no area, or does not solve"
+    );
+    assert_eq!(
+        MeshError::HoleOnSplit { loop_ref }.to_string(),
+        "the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }) runs along a split edge, so it is one side of a seam, not a hole"
+    );
+    assert_eq!(
+        MeshError::HoleTooLarge {
+            loop_ref,
+            vertices: 600
+        }
+        .to_string(),
+        "the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }) has 600 vertices, more than the 512 a fill takes"
     );
 }

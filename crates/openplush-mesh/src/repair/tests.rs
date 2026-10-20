@@ -343,7 +343,7 @@ fn a_tiny_separate_piece_is_a_detail_candidate() {
 }
 
 #[test]
-fn a_plan_that_fills_a_loop_is_refused_until_filling_exists_and_a_missing_loop_is_named() {
+fn a_plan_that_fills_a_loop_fills_it_and_a_missing_loop_is_named() {
     let s = soup(
         vec![p(0., 0., 0.), p(1., 0., 0.), p(1., 1., 0.), p(0., 1., 0.)],
         &[[0, 1, 2], [0, 2, 3]],
@@ -356,10 +356,9 @@ fn a_plan_that_fills_a_loop_is_refused_until_filling_exists_and_a_missing_loop_i
         }));
         plan
     };
-    assert!(matches!(
-        into_manifold(&s, &named(0)).unwrap_err(),
-        MeshError::HoleFillUnavailable { .. }
-    ));
+    let (_, report) = into_manifold(&s, &named(0)).unwrap();
+    assert!(report.holes()[0].filled());
+    assert!(!report.holes()[0].added_faces().is_empty());
     assert!(matches!(
         into_manifold(&s, &named(9)).unwrap_err(),
         MeshError::UnknownHoleLoop { .. }

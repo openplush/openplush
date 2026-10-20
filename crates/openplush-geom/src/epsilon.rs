@@ -38,6 +38,13 @@ pub const UV_CUT: f64 = 1e-5;
 /// between its faces and far above a wrapped surface's fraction of a degree.
 pub const FOLD_ANGLE: f64 = 5.0 * core::f64::consts::PI / 180.0;
 
+/// An edge is swapped for its other diagonal only when the cotangents of its two opposite
+/// angles sum below minus this. Dimensionless: cotangents do not scale with the model.
+/// Rounding leaves four cocircular points about 1e-16 either side of zero on both diagonals,
+/// so with no slack each swap would undo the last; 1e-9 is far above that and far below any
+/// angle a swap is meant to fix.
+pub const DELAUNAY_COT: f64 = 1e-9;
+
 /// Model-space tolerances for one model, derived from its bounding-box diagonal.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ModelTolerances {

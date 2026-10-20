@@ -26,9 +26,9 @@ The capsule's report is clean: one component, no boundary loop, no non-manifold 
 
 ### Repair: a soup becomes a manifold mesh
 
-`openplush-pipeline::repair` runs `openplush-mesh`'s `into_manifold` with a `RepairPlan`, the steps the maker allowed. It welds close vertices, drops faces that repeat an index or another face, pairs the faces on over-shared edges, orients the faces consistently, splits non-manifold vertices and components, and builds the half-edge `ManifoldMesh`, with a `RepairReport` of every change. This is the only way to get a `ManifoldMesh`, so unrepaired geometry cannot reach a later stage. An edge repair had to split becomes a mandatory seam, which the maker cannot remove (see [seams](seams.md)).
+`openplush-pipeline::repair` runs `openplush-mesh`'s `into_manifold` with a `RepairPlan`, the steps the maker allowed. It welds close vertices, drops faces that repeat an index or another face, pairs the faces on over-shared edges, orients the faces consistently, splits non-manifold vertices and components, builds the half-edge `ManifoldMesh`, and fills each hole the maker listed with a patch shaped to the surface around it, with a `RepairReport` of every change. This is the only way to get a `ManifoldMesh`, so unrepaired geometry cannot reach a later stage. An edge repair had to split becomes a mandatory seam, which the maker cannot remove (see [seams](seams.md)).
 
-What can fail: `EngineError::Mesh`, carrying the mesh crate's refusal. Examples are `NoTriangles`, a defect whose repair step the plan turned off reaching the build (a `NonManifoldEdge` or `InconsistentOrientation`, say), and a hole the maker asked to fill (`HoleFillUnavailable`), since hole filling is not built yet ([status](../start/status.md)).
+What can fail: `EngineError::Mesh`, carrying the mesh crate's refusal. Examples are `NoTriangles`, a defect whose repair step the plan turned off reaching the build (a `NonManifoldEdge` or `InconsistentOrientation`, say), and a listed hole the fill cannot close: too large (`HoleTooLarge`), running along a split edge's copy (`HoleOnSplit`), or with no patch that keeps every triangle sound (`HoleNotFillable`).
 
 The capsule needs nothing: the mesh has 98 vertices, 288 edges and 192 faces.
 

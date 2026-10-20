@@ -33,4 +33,9 @@ Facts measured 2026-10-20 on `main` at `684ff43`.
 
 ## R6. Ledger conflicts (#320)
 
-- Measured over the last 50 merged stacked PRs in the decision drafts that follow this plan (F-003). Options: one file per decision with a generated table; an append-only section; as is.
+- **Measured** `[solid]` on `main` at `e9845ce`: the last 50 merged PRs (#255–#324). For each, every merge commit inside its branch (a merge-up of the parent or `main`) was replayed with `git merge-tree --write-tree`, which reports the files that conflict.
+  - 28 of the 50 carried at least one merge-up; 16 of those had a conflicting one (20 conflicting merges).
+  - Files, counted once per PR: a `specs/*/tasks.md` in 9 (ticks and as-built notes on neighbouring lines); an index list in 7 (`docs/SUMMARY.md`, `docs/explanation/README.md`, `docs/start/README.md`, `docs/adr/README.md`, `docs/reference/crates.md`); a Decision Ledger row in `specs/*/plan.md` in 2 (#267, #300, both two rows added after the same last row); other content in 7.
+  - Limit: a PR whose author resolved a conflict by rebasing instead of merging leaves no merge commit and is not counted, so these are lower bounds.
+- **Decision**: proposed in plan.md, F-003.
+- **Alternatives**: one file per decision with a generated table (removes ledger conflicts, adds a generator and a file per row); an append-only section (still conflicts when two branches append after the same row).

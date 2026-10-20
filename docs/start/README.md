@@ -28,7 +28,7 @@ Contributors work in four lanes, each with its own folder and skills:
 | Test models | `fixtures/` | 3D modelling or sewing; no code |
 | Docs | `docs/` | Writing; sewing expertise is especially welcome |
 
-The rules for the two code lanes are in [`crates/AGENTS.md`](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md) and [`apps/AGENTS.md`](https://github.com/openplush/openplush/blob/main/apps/AGENTS.md). They are written for AI coding agents and apply to people too.
+The rules for the two code lanes are in [`crates/AGENTS.md`](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md) and [`apps/AGENTS.md`](https://github.com/openplush/openplush/blob/main/apps/AGENTS.md). They are written for AI coding agents and apply to people too. The reasons behind the engine's rules are in [Code rules for the engine](../reference/code-rules.md).
 
 A test model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change: the engine's output can be checked against it, and it is the only way to check that seam hints land where experienced makers actually cut. Offer one with the [test model issue form](https://github.com/openplush/openplush/issues/new?template=fixture.yml); the [known gaps](status.md#known-gaps) say what the models in `fixtures/` lack.
 

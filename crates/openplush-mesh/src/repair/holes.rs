@@ -2,13 +2,15 @@
 //! lists it to fill, so a loop is never filled without being asked: a silent fill is the
 //! invented geometry the engine refuses to produce.
 
-use crate::{LoopRef, ManifoldMesh, MeshError, RepairPlan};
+use crate::{HalfEdgeId, LoopRef, ManifoldMesh, MeshError, RepairPlan};
 
 /// A boundary loop, named for the plan, with whether the plan lists it as accidental (to fill).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Hole {
     pub(crate) loop_ref: LoopRef,
     pub(crate) accidental: bool,
+    /// Its boundary half-edges, in `next` order.
+    pub(crate) half_edges: Vec<HalfEdgeId>,
 }
 
 /// Every boundary loop of `mesh`, in order of its lowest half-edge, classified by
@@ -32,6 +34,7 @@ pub(crate) fn classify(mesh: &ManifoldMesh, plan: &RepairPlan) -> Result<Vec<Hol
             Some(Hole {
                 loop_ref,
                 accidental: plan.fill_holes.contains(&loop_ref),
+                half_edges,
             })
         })
         .collect();

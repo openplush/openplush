@@ -29,4 +29,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0014](0014-auto-merge-tiers.md) | Merge by tier: agents enable auto-merge on low-risk PRs, the maintainer merges the rest | Proposed |
 | [0015](0015-merge-gate.md) | A workflow computes the tier and enables auto-merge; agents never do | Proposed |
 | [0016](0016-standing-merge-authorization.md) | A time-boxed standing authorization lets an agent merge tier C PRs | Accepted |
-| [0017](0017-docs-site.md) | Build the docs site with mdBook; accept OFL-1.1 fonts and CC BY 4.0 icons in the published site only; CI-only tooling is outside Constitution IX | Proposed |
+| [0017](0017-docs-site.md) | Build the docs site with mdBook; accept OFL-1.1 fonts and CC BY 4.0 icons in the published site only; CI-only tooling is outside Constitution IX | Accepted |

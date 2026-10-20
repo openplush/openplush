@@ -37,7 +37,7 @@ The [`factory`](https://github.com/openplush/openplush/blob/main/.claude/skills/
 3. lands each one as a stacked PR, test commit first, with its local gates green;
 4. writes one comment on the feature's factory ledger issue (what it opened, skipped and merged, and why it stopped) and ends.
 
-A firing never asks a question. Anything that would need one is a skip or a stop, and every stop has a named reason: no ready task, a gate failing twice, a golden snapshot that would change, a task needing a decision or a spec change, or a usage limit. The firing does not wait for CI or review; the next firing picks the PR up. The maintainer reads the ledger, accepts decisions and ticks the `human:` work.
+A firing never asks a question. Anything that would need one is a skip or a stop, and every stop has a named reason: an unfilled placeholder such as `<window>` left in the kickoff (checked before anything else, so such a firing writes nothing), no ready task, a gate failing twice, a golden snapshot that would change, a task needing a decision or a spec change, or a usage limit. The firing does not wait for CI or review; the next firing picks the PR up. The maintainer reads the ledger, accepts decisions and ticks the `human:` work.
 
 ### Steward: driving a pull request
 

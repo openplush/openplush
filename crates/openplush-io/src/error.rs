@@ -5,7 +5,6 @@ use crate::Format;
 
 /// Every way an import fails.
 #[derive(Debug, Clone, PartialEq, Error)]
-#[non_exhaustive]
 pub enum IoError {
     /// The reader for `format` could not read the file.
     #[error("could not read the {} file: {detail}", .format.name())]

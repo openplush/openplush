@@ -4,6 +4,7 @@
 
 mod chart;
 mod error;
+mod import;
 mod locations;
 mod repair;
 mod stage;
@@ -11,6 +12,7 @@ mod warning;
 
 pub use chart::chart;
 pub use error::{EngineError, ErrorLocations};
+pub use import::{ImportFile, ImportFiles, import};
 pub use openplush_io::Format;
 pub use openplush_mesh::{
     ComponentId, CornerArray, Counted, EdgeId, FaceId, HalfEdgeId, LoopRef, ManifoldMesh,

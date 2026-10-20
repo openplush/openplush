@@ -57,6 +57,21 @@ fn parse_and_cancelled_have_no_locations_key() -> Result<(), serde_json::Error> 
 }
 
 #[test]
+fn unknown_format_has_no_locations_key() -> Result<(), serde_json::Error> {
+    let e = EngineError::UnknownFormat {
+        name: "bunny.3ds".into(),
+    };
+    assert_eq!(
+        wire(&e)?,
+        json!({
+            "code": "UnknownFormat",
+            "message": "cannot read \"bunny.3ds\": no reader for this file type"
+        })
+    );
+    Ok(())
+}
+
+#[test]
 fn non_finite_input_locates_source_vertices() -> Result<(), serde_json::Error> {
     let e = EngineError::NonFiniteInput {
         vertices: vec![

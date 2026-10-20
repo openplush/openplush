@@ -16,9 +16,11 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `Staged<T>` | struct | `value: T` plus `warnings: WarningSet`; warnings never turn `Ok` into `Err` |
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
+| `import(files)` | function | `StageResult<TriangleSoup>`: the primary file read by the reader its extension names; see [Stages](#stages) |
+| `ImportFiles`, `ImportFile` | structs | What `import` takes: the `primary` file and the `others` beside it, each a `name` (a relative path with `/` separators) and its `bytes` |
 | `validate(soup)` | function | `Staged<ValidationReport>`: every defect repair would meet, changing nothing; see [Stages](#stages) |
 | `repair(soup, plan)` | function | `StageResult<(ManifoldMesh, RepairReport)>`; see [Stages](#stages) |
-| `chart(mesh, seams)` | function | The first stage: `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
+| `chart(mesh, seams)` | function | `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
 | `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
 | `MeshError`, `MeshElement`, `HalfEdgeId`, `CornerArray`, `Counted`, `MaterialFault` | re-exports | From `openplush-mesh`: the refusal `EngineError::Mesh` carries and the types its variants name. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
@@ -27,7 +29,9 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 
 ## Stages
 
-`validate`, `repair` and `chart` exist; each later stage lands with the task that builds it.
+`import`, `validate`, `repair` and `chart` exist; each later stage lands with the task that builds it.
+
+**`import(&ImportFiles)`** reads the primary file with the reader its extension names: the extension of the name's final `/`-separated segment, as `std::path::Path::extension` reads it, compared ASCII case-insensitively. `obj` is OBJ, `stl` STL, `ply` PLY. Any other name, one with no extension (`model`, `.obj`, `model.`), and `gltf`, `glb` and `fbx` until their readers exist, is `UnknownFormat`. The bytes are never sniffed. A reader's refusal is `Parse`, naming that reader, `NonFiniteInput`, or `Mesh`. The `others` are carried and not read yet. Its warnings are empty.
 
 **`validate(&TriangleSoup)`** is the mesh crate's `validate`: a `ValidationReport` of every defect, never an error and never a change. Its warnings are empty.
 
@@ -42,6 +46,7 @@ Each `EngineError` variant carries the location of the problem. The messages are
 | Variant | Located by | Message |
 |---|---|---|
 | `Parse` | `format`, plus the reader's `detail` | `could not read the {format name} file: {detail}` |
+| `UnknownFormat` | nothing; carries the primary file's `name` | `cannot read "{name}": no reader for this file type` |
 | `NonFiniteInput` | every non-finite source vertex (`SourceCorner`) | `{n} source vertices have a NaN or infinite coordinate` |
 | `Mesh` | whatever the inner `MeshError` names, in the soup given to repair (no mesh exists when repair refuses; only `BrokenInvariant`, a bug-class check of debug builds, names the half-built mesh's IDs): its faces, its vertices, a hole loop by its `SourceCorner` in `source_vertices`, a broken invariant's element (a half-edge as its edge); a refusal about the soup as a whole names none | the inner error's message, unchanged, as in the `MeshError` table below |
 | `ChartNotDisk` | `chart`; carries `failure` and the `proposals` that fix it | `chart {chart} is not a topological disk` |
@@ -59,7 +64,7 @@ Format names: `OBJ`, `glTF`, `GLB`, `STL`, `PLY`.
 Three methods read an error the way the shell needs it. Each matches every variant explicitly, so a new variant does not compile until it has a code, locations and proposals.
 
 - **`code() -> &'static str`**: the variant name (`"Parse"`, `"ChartNotDisk"`, …, `"Cancelled"`). It is stable on the wire: a released code never changes.
-- **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
+- **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse`, `UnknownFormat` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
 - **`proposals() -> &[Proposal]`**: the fixes `ChartNotDisk` and `BoundaryNotRealizable` carry; empty for every other variant.
 
 `MeshError` is the error of building a soup or repairing one; `repair` returns it inside `Mesh`. Its messages are pinned in `crates/openplush-pipeline/tests/mesh_error.rs`. IDs and enums print in Rust `{:?}` (Debug) form: `VertexId(1)`, `FaceId(7)`, `Uvs`.

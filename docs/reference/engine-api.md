@@ -16,15 +16,21 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `Staged<T>` | struct | `value: T` plus `warnings: WarningSet`; warnings never turn `Ok` into `Err` |
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
+| `chart(mesh, seams)` | function | The first stage: `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
+| `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What `chart` takes and returns, from `openplush-mesh` and `-seams` |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
 | `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`, `mark_dart`) return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
-No stage function exists yet; each lands with the task that builds its stage.
+## Stages
+
+Only `chart` exists; each later stage lands with the task that builds it.
+
+**`chart(&ManifoldMesh, &SeamSet)`** splits the mesh along the seams into charts, each cut open along its seams for flattening, with the `SewingMap` of their seam sides. A mesh from `into_manifold` carries repair's copy groups (`ManifoldMesh::edge_copies`), which the map uses to sew a split edge's copies; the stage takes no others. It returns the first failure and no partial output, checking in this order: a seam on an edge the mesh lacks (`Seams`); then each chart in ID order, folded (`FoldedChart`) before not a disk (`ChartNotDisk`, with the one `CloseChart` proposal found, or none when no cut was found that leaves a disk); then a seam chain with no partner, or a copy group that does not line up (`Seams`). Its warnings are empty.
 
 ## Errors
 
-Each `EngineError` variant carries the location of the problem. The messages are part of the API: they are pinned by tests (`crates/openplush-pipeline/tests/error.rs`) and change only deliberately. IDs print as their index; lengths print in millimetres to three decimals.
+Each `EngineError` variant carries the location of the problem. The messages are part of the API: they are pinned by tests (`crates/openplush-pipeline/tests/error.rs`) and change only deliberately. IDs print as their index, except in `Seams`, which prints its inner error's message; lengths print in millimetres to three decimals.
 
 | Variant | Located by | Message |
 |---|---|---|
@@ -33,6 +39,7 @@ Each `EngineError` variant carries the location of the problem. The messages are
 | `NotManifold` | `edges`, `vertices` | `the mesh is not manifold at {e} edges and {v} vertices` |
 | `ChartNotDisk` | `chart`; carries `failure` and the `proposals` that fix it | `chart {chart} is not a topological disk` |
 | `FoldedChart` | `chart`, `edge` (the lowest edge it folds across) | `chart {chart} lies back over itself across edge {edge}` |
+| `Seams` | whatever the inner `SeamsError` names: its `edge`, `chart`, `chain` or `vertex` IDs; a refusal about a whole proposal or dart (`EmptyProposal`, `EmptyDart`, `BadProposalId`) names none | the inner error's message, unchanged, with IDs in Debug form as in the `SeamsError` table below |
 | `Flip` | `chart`, `faces` | `chart {chart} flattens with {n} inverted faces` |
 | `BoundaryNotRealizable` | `chart`; carries `residual_mm` and dart `proposals` | `chart {chart}'s seam lengths cannot close flat (residual {r} mm)` |
 | `SeamParity` | `chain`, both side lengths, the tolerance | `seam chain {chain}: sides {a} mm and {b} mm differ by more than {t} mm` |

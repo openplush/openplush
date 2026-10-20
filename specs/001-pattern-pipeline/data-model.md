@@ -105,7 +105,7 @@ pub struct LoopRef(SourceCorner);
 
 `RepairReport` lists everything repair did or found, so nothing is silent (Constitution VII, FR-004): the welded vertex groups; faces dropped as repeated-index or duplicate; the double-sided sheets; stitched caps and the faces re-triangulated with them; every paired non-manifold edge (pairs and unpaired face); every added vertex copy (bowtie); every flipped face; every orientation-conflict edge, cut into a forced seam (D-044); every component with its detail flag; every boundary loop by `LoopRef` with whether the plan filled it and the faces a fill added; the mandatory seams the above create; and every split edge as a copy group, the mesh's edges it became (D-060). Removals, flips and pairings name faces and vertices of the soup given to repair; additions (vertex copies, hole faces) name those of the repaired mesh.
 
-A fill is never silent: it appears in the report. A `fill_holes` entry naming a loop the mesh does not have (the source changed) is a typed error naming it, not a skipped entry.
+The mesh keeps the copy groups too (`ManifoldMesh::edge_copies`, D-062), because the chart stage has the mesh and the seams and nothing else. A fill is never silent: it appears in the report. A `fill_holes` entry naming a loop the mesh does not have (the source changed) is a typed error naming it, not a skipped entry.
 
 ## 4. Seams, Charts, and Sewing Correspondence
 

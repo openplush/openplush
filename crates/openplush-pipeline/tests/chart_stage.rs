@@ -95,13 +95,21 @@ fn sheet_seam(
 fn a_seam_across_a_sheet_gives_two_charts_and_one_sewn_seam() -> Result<(), Setup> {
     let (mesh, _) = mesh_of(&sheet(4, 2))?;
     let mut seams = SeamSet::new();
-    sheet_seam(&mesh, &mut seams, SeamKind::Cut, &[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1)])?;
+    sheet_seam(
+        &mesh,
+        &mut seams,
+        SeamKind::Cut,
+        &[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1)],
+    )?;
     let staged = chart(&mesh, &seams)?;
     let (charts, map) = staged.value;
-    assert!(staged.warnings.is_empty(), "no warnings yet");
+    assert_eq!(staged.warnings.iter().count(), 0, "no warnings yet");
     assert_eq!(charts.len(), 2);
     assert_eq!(charts[0].chart(), ChartId::new(0));
-    assert_eq!(charts.iter().map(|c| c.faces().len()).sum::<usize>(), mesh.face_count());
+    assert_eq!(
+        charts.iter().map(|c| c.faces().len()).sum::<usize>(),
+        mesh.face_count()
+    );
     let [bundle] = map.bundles() else {
         panic!("one bundle: {:?}", map.bundles());
     };
@@ -120,7 +128,8 @@ fn the_same_mesh_and_seams_give_the_same_charts() -> Result<(), Setup> {
 }
 
 #[test]
-fn a_tube_with_no_seam_is_not_a_disk_and_the_error_carries_the_cut_that_fixes_it() -> Result<(), Setup> {
+fn a_tube_with_no_seam_is_not_a_disk_and_the_error_carries_the_cut_that_fixes_it()
+-> Result<(), Setup> {
     let (mesh, _) = mesh_of(&tube(4, 2))?;
     let mut seams = SeamSet::new();
     let Err(EngineError::ChartNotDisk {
@@ -163,15 +172,16 @@ fn a_closed_mesh_with_no_seam_is_closed_and_the_error_carries_a_cut() -> Result<
 fn a_chart_folded_over_itself_is_refused_before_its_topology_is_judged() -> Result<(), Setup> {
     // Two triangles on one edge, the second folded back 2 degrees from lying on the first.
     let lift = 8.0 * 2.0_f64.to_radians().tan();
-    let book = format!(
-        "v 0 0 0\nv 10 0 0\nv 5 10 0\nv 5 8 {lift}\nf 1 2 3\nf 2 1 4\n"
-    );
+    let book = format!("v 0 0 0\nv 10 0 0\nv 5 10 0\nv 5 8 {lift}\nf 1 2 3\nf 2 1 4\n");
     let (mesh, _) = mesh_of(&book)?;
     let Err(EngineError::FoldedChart { chart: id, edge }) = chart(&mesh, &SeamSet::new()) else {
         panic!("a folded chart is refused");
     };
     assert_eq!(id, ChartId::new(0));
-    let (a, b) = (vertex_at(&mesh, 0., 0., 0.)?, vertex_at(&mesh, 10., 0., 0.)?);
+    let (a, b) = (
+        vertex_at(&mesh, 0., 0., 0.)?,
+        vertex_at(&mesh, 10., 0., 0.)?,
+    );
     assert_eq!(edge, edge_between(&mesh, a, b)?);
     Ok(())
 }
@@ -228,6 +238,9 @@ fn a_seam_on_only_the_fins_copy_has_nothing_to_sew_to() -> Result<(), Setup> {
         .ok_or("a boundary copy")?;
     let mut seams = SeamSet::new();
     seams.insert(rim, SeamKind::Mandatory)?;
+    // A cut elsewhere opens the closed body into a disk, so the sewing map is what refuses.
+    let (a, b) = (vertex_at(&mesh, 0., 1., 0.)?, vertex_at(&mesh, 0., 0., 1.)?);
+    seams.insert(edge_between(&mesh, a, b)?, SeamKind::Cut)?;
     assert_eq!(
         chart(&mesh, &seams),
         Err(EngineError::Seams(SeamsError::UnpairedBoundarySeam {

@@ -19,7 +19,7 @@ In pipeline order. "Built" means merged, with its tests; each stage is described
 | Pattern | Outlines and pattern pieces, per-edge [seam allowance](../reference/glossary.md#sewing), the seam-length parity check, real-world scale, the fabric type (`openplush-pattern`) | Fabric presets (waiting for measured values); notches, labels, grain and nap arrows; collapsing identical and mirror-image pieces |
 | Layout | Shelf packing on a roll, as-printed and flipped copies, page tiling for Letter and A4 with overlap, registration marks and a scale square (`openplush-layout`) | Fabric-aware rotation; optimised nesting (a later release) |
 | Export | True-scale SVG and tiled PDF, with the warning summary block (`openplush-export`) | Driven by the pipeline: no command or app produces a file yet |
-| End to end | `import`, `validate`, `repair` and `chart` through `openplush-pipeline` | The remaining stages and their memoisation; the CLI's commands (it parses arguments and runs nothing); the end-to-end and determinism tests |
+| End to end | `import`, `validate`, `repair` and `chart` through `openplush-pipeline`; `validate` and `repair` from the command line | The remaining stages and their memoisation; the CLI's `pattern` command (`validate` and `repair` run); the end-to-end and determinism tests |
 | App | `@openplush/engine-client`: the typed worker protocol, a mock worker, crash handling, and the first slice of the real worker host | The web app (`apps/web` does not exist); the WebAssembly binding exports no operation yet |
 
 Two crates have no code: `openplush-fields` and `openplush-decal`. `openplush-project` (the project file) has only the provenance keys a saved seam or marking will be stored by; the file itself is not built.

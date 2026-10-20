@@ -27,6 +27,12 @@ pub enum EngineError {
         /// The primary file's name, as the shell gave it.
         name: String,
     },
+    /// The file refers to another file the shell did not supply beside it.
+    #[error("the file refers to \"{uri}\", which was not supplied beside it")]
+    MissingResource {
+        /// The reference, as the file writes it.
+        uri: String,
+    },
     /// Source vertices with a NaN or infinite coordinate; import refuses rather than drops them.
     #[error("{} source vertices have a NaN or infinite coordinate", .vertices.len())]
     NonFiniteInput {
@@ -119,6 +125,7 @@ impl EngineError {
         match self {
             Self::Parse { .. } => "Parse",
             Self::UnknownFormat { .. } => "UnknownFormat",
+            Self::MissingResource { .. } => "MissingResource",
             Self::NonFiniteInput { .. } => "NonFiniteInput",
             Self::Mesh(_) => "Mesh",
             Self::ChartNotDisk { .. } => "ChartNotDisk",
@@ -133,12 +140,16 @@ impl EngineError {
         }
     }
 
-    /// Where the problem is; empty for `Parse`, `UnknownFormat` and `Cancelled`.
+    /// Where the problem is; empty for `Parse`, `UnknownFormat`, `MissingResource` and
+    /// `Cancelled`.
     #[must_use]
     pub fn locations(&self) -> ErrorLocations {
         let none = ErrorLocations::default();
         match self {
-            Self::Parse { .. } | Self::UnknownFormat { .. } | Self::Cancelled => none,
+            Self::Parse { .. }
+            | Self::UnknownFormat { .. }
+            | Self::MissingResource { .. }
+            | Self::Cancelled => none,
             Self::NonFiniteInput { vertices } => ErrorLocations {
                 source_vertices: sorted(vertices),
                 ..none
@@ -185,6 +196,7 @@ impl EngineError {
             | Self::BoundaryNotRealizable { proposals, .. } => proposals,
             Self::Parse { .. }
             | Self::UnknownFormat { .. }
+            | Self::MissingResource { .. }
             | Self::NonFiniteInput { .. }
             | Self::Mesh(_)
             | Self::FoldedChart { .. }

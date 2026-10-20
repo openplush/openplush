@@ -34,7 +34,6 @@ pub struct Imported {
 
 /// Something in the file that the soup does not carry. Indices are the file's own.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[non_exhaustive]
 pub enum Ignored {
     /// A skinned node, read in its bind pose.
     Skin {

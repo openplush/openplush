@@ -247,15 +247,15 @@
   "$defs": {
     "provenanceEdge": {
       "type": "string",
-      "description": "Sorted pair of canonical source-vertex IDs, for example 1204:1899. Stable across changes to repair settings."
+      "description": "Sorted pair of canonical source vertices, each <primitive>.<vertex> in decimal, sorted in numeric (primitive, vertex) order and joined by a colon, for example 0.9:0.1204 (D-067). A vertex is named by the lowest source vertex among its corners. Stable across changes to repair settings while the faces that carry it survive."
     },
     "provenanceFace": {
       "type": "string",
-      "description": "Sorted triple of canonical source-corner IDs."
+      "description": "Sorted triple of source corners, each <primitive>.<vertex>, in numeric (primitive, vertex) order, joined by colons, for example 0.7:0.40:1.2 (D-067)."
     },
     "boundaryLoopRef": {
       "type": "string",
-      "description": "Canonical representative provenance vertex of the loop, chosen by lowest ID for determinism."
+      "description": "The loop's lowest source corner, as <primitive>.<vertex>, for example 0.12 (D-067)."
     },
     "surfacePoint": {
       "type": "object",

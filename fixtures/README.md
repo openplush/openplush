@@ -4,7 +4,7 @@ Test models and reference data. Licenses for every file are in [`LICENSES.md`](L
 
 | Directory | Holds | Used by |
 |---|---|---|
-| `meshes/` | Clean, closed, outward-wound triangle meshes in millimetres: capsule, cube, sphere as OBJ; `near-symmetric.glb` and `asymmetric.glb` for symmetry detection, `faceted.glb` for the hint flood. `meshes/source-seams/` holds models whose UV cuts are their seam layout, as glTF and OBJ twins | Pipeline tests and the web app's end-to-end smoke test; source seam import |
+| `meshes/` | Clean, closed, outward-wound triangle meshes in millimetres: capsule, cube, sphere as OBJ; `near-symmetric.glb` and `asymmetric.glb` for symmetry detection, `faceted.glb` for the hint flood, `quadruped.glb` as the seam-hint tuning model. `meshes/source-seams/` holds models whose UV cuts are their seam layout, as glTF and OBJ twins | Pipeline tests and the web app's end-to-end smoke test; source seam import |
 | `defects/` | Exactly one model per repair defect class, each with only that defect | The defect-detection corpus: every file here must be detected and reported |
 | `seams/` | Reference seam sets (JSON) for the models in `meshes/`, so pattern tests need no UI. Every chart they leave is a disk, except under `seams/non-disk/`, whose sets deliberately leave a chart that is not | Seam, chart, and pattern tests |
 

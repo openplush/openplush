@@ -38,13 +38,16 @@ fn filling(loops: &[LoopRef]) -> RepairPlan {
 }
 
 fn tolerances(m: &ManifoldMesh) -> Result<ModelTolerances, Setup> {
-    let (mut lo, mut hi) = (DVec3::splat(f64::MAX), DVec3::splat(f64::MIN));
+    let (mut lo, mut hi) = ([f64::MAX; 3], [f64::MIN; 3]);
     for v in 0..u32::try_from(m.vertex_count())? {
         let p = m.position(VertexId::new(v));
-        lo = lo.min(p);
-        hi = hi.max(p);
+        for (i, c) in [p.x, p.y, p.z].into_iter().enumerate() {
+            lo[i] = lo[i].min(c);
+            hi[i] = hi[i].max(c);
+        }
     }
-    Ok(ModelTolerances::for_diagonal((hi - lo).length())?)
+    let span = DVec3::new(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+    Ok(ModelTolerances::for_diagonal(span.length())?)
 }
 
 /// A unit cube missing its top face (two triangles), so the top rim, corners 4 to 7, is a hole.

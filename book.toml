@@ -10,4 +10,4 @@ create-missing = false
 
 [output.html]
 git-repository-url = "https://github.com/openplush/openplush"
-edit-url-template = "https://github.com/openplush/openplush/edit/main/docs/{path}"
+edit-url-template = "https://github.com/openplush/openplush/edit/main/{path}"

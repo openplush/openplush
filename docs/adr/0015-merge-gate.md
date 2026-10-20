@@ -1,6 +1,6 @@
 ---
-status: Proposed
-date: 2026-10-19
+status: Accepted
+date: 2026-10-20
 deciders: Lavender (maintainer)
 ---
 
@@ -83,4 +83,8 @@ Chosen option: **2**. Option 1 is the hole ADR 0014 names. Option 3 puts a non-d
 
 ## More information
 
-Revisit after a week in `dry-run`: compare the gate's verdicts with the maintainer's, and count the PRs the thread proxy would have merged that the maintainer would not have.
+Accepted on 2026-10-20 after the first evening in `dry-run`. Every verdict was checked by hand against ADR 0014 and the PR's state on GitHub, and every one was right: tier C from `crates/` and `specs/` paths (#252, #253, #254), from `docs/adr/` (#257) and from `scripts/` (#258); tier A through the tick exception with `merge:ready` applied once CI was green and the review skipped (#256); "base is main" refused for a stacked PR (#253, #258) and granted once the parent merged; a verdict revoked on push and re-judged on the new head six minutes after its CI completed (#254). The verdicts are recorded in the 002 factory ledger (#241).
+
+One limit stays with the conventions rather than the gate: the review row accepts the newest review summary without checking that it was written for the current head, because a push starts no new review (steward). The rule that a push only fixes a 🔴 or a confirmed defect is what keeps that honest.
+
+The `dry-run` → `on` switch is the maintainer's, in the repository's Actions variables, and needs no PR.

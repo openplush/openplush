@@ -34,6 +34,7 @@ A PR's tier is the **highest** that any of its changed paths or tasks reaches. T
 * **C, the maintainer merges.** Any of:
   * a path under `crates/`, `specs/`, `.specify/`, `docs/adr/`, `.github/`, `.claude/`, `scripts/` or `bindings/`; an `AGENTS.md` or `CLAUDE.md`; `GOVERNANCE.md` or `CODE_OF_CONDUCT.md`;
   * a dependency manifest, lockfile or toolchain file: any `Cargo.toml`, `Cargo.lock`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `deny.toml`, `rust-toolchain.toml`, or `.cargo/`;
+  * a root rules file whose change passes CI silently: `clippy.toml` (the determinism lints Constitution V relies on), `rustfmt.toml`, `.gitattributes` (`eol=lf` and `binary`, which keep fixtures byte-identical), or a `LICENSE-*` file;
   * a decision: an ADR, or a Decision Ledger entry added or changed;
   * a task with a `human:` token, or a PR the maintainer labels `tier:C`.
 

@@ -1,6 +1,6 @@
 # Crates
 
-What each engine crate contains **today**, and what it actually depends on. Which crate *should* own a new piece of code is a rule, kept in [`crates/AGENTS.md`](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md#where-code-goes); the allowed dependency graph is in the [plan](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced) and enforced by `scripts/check-boundary.sh`. Signatures and item docs: `cargo doc --workspace --no-deps --open`.
+What each engine crate contains **today**, and what it actually depends on. Which crate *should* own a new piece of code is in [Which crate owns what](#which-crate-owns-what); the allowed dependency graph is in the [plan](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced) and enforced by `scripts/check-boundary.sh`. Signatures and item docs: `cargo doc --workspace --no-deps --open`.
 
 ## Crates with code
 
@@ -19,7 +19,26 @@ What each engine crate contains **today**, and what it actually depends on. Whic
 
 ## Crates with no public items
 
-`openplush-fields`, `openplush-decal` and `openplush-project` exist so the workspace and its boundary checks are in place. Each crate's purpose is in `crates/AGENTS.md`; whether it is built is on the [status page](../start/status.md).
+`openplush-fields`, `openplush-decal` and `openplush-project` exist so the workspace and its boundary checks are in place. Each crate's purpose is in [Which crate owns what](#which-crate-owns-what); whether it is built is on the [status page](../start/status.md).
+
+## Which crate owns what
+
+New code goes in the crate that owns its concern, whether or not that crate has code yet. The reasons behind the placement rules are in [Code rules](code-rules.md#where-code-goes).
+
+| Crate | Owns |
+|---|---|
+| `openplush-geom` | f64 vectors, robust predicates, the tolerance policy (`epsilon`), millimetre units |
+| `openplush-mesh` | `TriangleSoup`, validation, repair, half-edge `ManifoldMesh`, and `id_newtype!`, which defines `u32` ID newtypes |
+| `openplush-io` | bytes → `TriangleSoup` (OBJ, glTF, STL, PLY) |
+| `openplush-seams` | `SeamSet`, cut-graph completion, darts, symmetry |
+| `openplush-fields` | curvature, nap/grain direction fields |
+| `openplush-flatten` | charts, Tutte/LSCM init, SLIM/ARAP, distortion metrics |
+| `openplush-pattern` | allowance, notches, labels, grain, piece dedupe |
+| `openplush-decal` | markings, detail parts, texture transfer |
+| `openplush-layout` | page tiling, nesting adapter |
+| `openplush-export` | SVG/PDF → bytes |
+| `openplush-project` | project document, schema versions, migrations |
+| `openplush-pipeline` | the only public engine API; it re-exports the project document API |
 
 ## Bindings
 

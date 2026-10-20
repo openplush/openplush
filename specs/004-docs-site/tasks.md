@@ -83,7 +83,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 ## Phase 4: Facts out of agent files (US4)
 
 - [ ] W024 [US4] Move to `docs/` (W-009): the geometry gotchas (`crates/AGENTS.md`) into `docs/explanation/meshes.md`; the crate ownership table into `docs/reference/crates/`; the merge-tier table (steward skill) into `docs/how-to/review-and-merge.md`; the rationale behind the code rules into `docs/reference/code-rules.md`. The agent files keep each directive as one line plus a link. The commands table stays in `AGENTS.md` behind an anchor and `docs/reference/commands.md` includes it (verify the out-of-root include; else make the page canonical and link from `AGENTS.md`). needs:W009
-- [ ] W025 [P] [US4] `docs/explanation/agents.md`: how agents work in this repo in plain words (Spec Kit flow, factory, steward, the merge gate) with links to the skills
+- [x] W025 [P] [US4] `docs/explanation/agents.md`: how agents work in this repo in plain words (Spec Kit flow, factory, steward, the merge gate) with links to the skills. As built: also the review on opening and standing authorizations; no glossary links, since the glossary (W021) is not on `main` yet; the tier table is left in `steward`, which W024 moves
 
 ## Phase 5: How the engine works (US1)
 

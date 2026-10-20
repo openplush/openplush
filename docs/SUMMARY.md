@@ -23,6 +23,7 @@
   - [0017 Docs site](adr/0017-docs-site.md)
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
+  - [How agents work](explanation/agents.md)
 - [How-to guides](how-to/README.md)
   - [Scope and open a pull request](how-to/pull-requests.md)
   - [Write a documentation page](how-to/write-docs.md)

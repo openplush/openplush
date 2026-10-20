@@ -57,7 +57,7 @@ openplush/
 ├── crates/                          # ── ENGINE: pure Rust, no I/O, no UI ──
 │   ├── openplush-geom/                  # f64 vectors, robust predicates, epsilon policy
 │   ├── openplush-mesh/                  # TriangleSoup, validation, repair, HalfEdgeMesh
-│   ├── openplush-io/                    # bytes → TriangleSoup (OBJ, glTF, STL, PLY)
+│   ├── openplush-io/                    # bytes → TriangleSoup (OBJ, glTF, STL, PLY, FBX)
 │   ├── openplush-seams/                 # SeamSet, cut-graph completion, darts, symmetry
 │   ├── openplush-fields/                # curvature, direction fields (nap/grain)
 │   ├── openplush-flatten/               # charts, Tutte/LSCM init, SLIM/ARAP, metrics

@@ -98,6 +98,7 @@ impl ManifoldMesh {
             corner_uv: linked.corner_uv,
             materials: soup.materials().clone(),
             extra_uv_sets: soup.extra_uv_sets(),
+            edge_copies: Vec::new(),
         };
         mesh.refuse_split_fans()?;
         if cfg!(debug_assertions) {

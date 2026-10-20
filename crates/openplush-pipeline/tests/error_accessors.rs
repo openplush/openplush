@@ -40,6 +40,12 @@ fn import_and_seam_variants() -> Result<Vec<(EngineError, &'static str)>, Box<dy
             "Parse",
         ),
         (
+            EngineError::UnknownFormat {
+                name: "bunny.3ds".into(),
+            },
+            "UnknownFormat",
+        ),
+        (
             EngineError::NonFiniteInput {
                 vertices: vec![SourceCorner {
                     primitive: 0,
@@ -130,12 +136,12 @@ fn code_is_the_variant_name() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn only_parse_and_cancelled_have_no_locations() -> Result<(), Box<dyn Error>> {
+fn only_parse_unknown_format_and_cancelled_have_no_locations() -> Result<(), Box<dyn Error>> {
     for (e, code) in every_variant()? {
         let unlocated = e.locations() == ErrorLocations::default();
         assert_eq!(
             unlocated,
-            matches!(code, "Parse" | "Cancelled"),
+            matches!(code, "Parse" | "UnknownFormat" | "Cancelled"),
             "{code}: {:?}",
             e.locations()
         );

@@ -28,3 +28,4 @@ Smaller decisions go in the feature plan's Decision Ledger (`specs/<feature>/pla
 | [0013](0013-intent-sized-pull-requests.md) | Size pull requests by intent, not by line count, and review each one once | Accepted |
 | [0014](0014-auto-merge-tiers.md) | Merge by tier: agents enable auto-merge on low-risk PRs, the maintainer merges the rest | Proposed |
 | [0015](0015-merge-gate.md) | A workflow computes the tier and enables auto-merge; agents never do | Proposed |
+| [0016](0016-standing-merge-authorization.md) | A time-boxed standing authorization lets an agent merge tier C PRs | Proposed |

@@ -22,7 +22,7 @@ In pipeline order. "Built" means merged, with its tests; each stage is described
 | End to end | `import`, `validate`, `repair` and `chart` through `openplush-pipeline` | The remaining stages and their memoisation; the CLI's commands (it parses arguments and runs nothing); the end-to-end and determinism tests |
 | App | `@openplush/engine-client`: the typed worker protocol, a mock worker, crash handling, and the first slice of the real worker host | The web app (`apps/web` does not exist); the WebAssembly binding exports no operation yet |
 
-Three crates have no code: `openplush-fields`, `openplush-decal` and `openplush-project` (the project file).
+Two crates have no code: `openplush-fields` and `openplush-decal`. `openplush-project` (the project file) has only the provenance keys a saved seam or marking will be stored by; the file itself is not built.
 
 ### By feature
 

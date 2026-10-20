@@ -4,7 +4,7 @@ use openplush_geom::epsilon::ModelTolerances;
 
 use super::nonmanifold_edge::pair_edges;
 use super::orientation::Conflict;
-use super::{bowtie, cap, components, degenerate, holes, orientation, weld};
+use super::{bowtie, cap, components, degenerate, fill, holes, orientation, weld};
 use crate::{
     EdgeId, FaceId, HalfEdgeId, HoleReport, ManifoldMesh, MeshError, PairedEdge, RepairPlan,
     RepairReport, TriangleSoup, VertexId,
@@ -287,21 +287,20 @@ fn build(
     seams.sort();
     seams.dedup();
     report.mandatory_seams = seams;
-    let holes = holes::classify(&mesh, plan)?;
-    // Filling is not built yet: a loop classified accidental is refused, never left open silently.
-    if let Some(hole) = holes.iter().find(|h| h.accidental) {
-        return Err(MeshError::HoleFillUnavailable {
+    let mut holes = Vec::new();
+    for hole in holes::classify(&mesh, plan)? {
+        let added_faces = if hole.accidental {
+            fill::fill(&mut mesh, hole.loop_ref, &hole.half_edges, tol)?
+        } else {
+            Vec::new()
+        };
+        holes.push(HoleReport {
             loop_ref: hole.loop_ref,
+            filled: hole.accidental,
+            added_faces,
         });
     }
-    report.holes = holes
-        .into_iter()
-        .map(|h| HoleReport {
-            loop_ref: h.loop_ref,
-            filled: false,
-            added_faces: Vec::new(),
-        })
-        .collect();
+    report.holes = holes;
     Ok((mesh, report))
 }
 

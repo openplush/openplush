@@ -492,8 +492,15 @@ fn mesh_locates_a_loop_by_its_source_corner() {
         MeshError::UnknownHoleLoop {
             loop_ref: LoopRef::new(corner),
         },
-        MeshError::HoleFillUnavailable {
+        MeshError::HoleNotFillable {
             loop_ref: LoopRef::new(corner),
+        },
+        MeshError::HoleOnSplit {
+            loop_ref: LoopRef::new(corner),
+        },
+        MeshError::HoleTooLarge {
+            loop_ref: LoopRef::new(corner),
+            vertices: 600,
         },
     ] {
         assert_eq!(mesh_locations(inner), expected, "{inner:?}");

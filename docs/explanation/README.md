@@ -4,6 +4,7 @@ Understanding-oriented: the reasoning behind the design, for readers who want to
 
 - [Architecture](architecture.md): the engine as built: the stage chain and its types, errors versus warnings, IDs and provenance, determinism and tolerances.
 - [The pipeline, one model at a time](pipeline.md): one model followed through every stage, the crate that owns each, and what can fail there.
+- [Meshes: from triangle soup to half-edges](meshes.md): how a model is stored from import to repair, and the half-edge facts that catch people out.
 - [Seams, charts, darts and openings](seams.md): how seams cut a mesh into charts, what darts and openings are, and why a chart must be a disk.
 - [Flattening and exact seam lengths](flattening.md): what flattening does to a chart, and why every seam edge keeps its exact 3D length.
 - [Sewing concepts for programmers](sewing.md): seam allowance, grain, nap and notches, what each means for a pattern and where it lives in the engine.

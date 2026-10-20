@@ -254,3 +254,82 @@ fn a_patch_key_resolves_to_nothing_when_its_loop_is_not_filled() -> Result<(), S
     assert!(patch_keys > 0);
     Ok(())
 }
+
+/// Each patch vertex's key: the one end every edge round it shares.
+fn vertex_names(m: &ManifoldMesh, p: &Provenance<'_>) -> Result<Vec<(VertexId, VertexKey)>, Setup> {
+    let mut named = Vec::new();
+    for v in (0..u32::try_from(m.vertex_count())?).map(VertexId::new) {
+        let mut shared: Option<BTreeSet<VertexKey>> = None;
+        for h in m.outgoing(v) {
+            let key = p.edge_key(h.edge()).ok_or("an edge has no key")?;
+            let ends: BTreeSet<VertexKey> = key.ends().into_iter().collect();
+            shared = Some(match shared {
+                Some(s) => s.intersection(&ends).copied().collect(),
+                None => ends,
+            });
+        }
+        let shared = shared.ok_or("a vertex with no edge")?;
+        if let [name @ VertexKey::Patch { .. }] = shared.into_iter().collect::<Vec<_>>()[..] {
+            named.push((v, name));
+        }
+    }
+    Ok(named)
+}
+
+#[test]
+fn each_loop_numbers_its_patch_vertices_in_ascending_vertex_order() -> Result<(), Setup> {
+    let (m, report, _) = filled(&cut_sphere(0.6, 0.4)?)?;
+    let p = Provenance::new(&m, report.holes());
+    let named = vertex_names(&m, &p)?;
+    for hole in report.holes() {
+        let mine: Vec<(VertexId, u32)> = named
+            .iter()
+            .filter_map(|&(v, k)| match k {
+                VertexKey::Patch { rim, n } if rim == hole.loop_ref() => Some((v, n)),
+                _ => None,
+            })
+            .collect();
+        assert!(!mine.is_empty(), "{:?}", hole.loop_ref());
+        assert!(mine.windows(2).all(|w| w[0].0 < w[1].0), "{mine:?}");
+        let ns: Vec<u32> = mine.iter().map(|&(_, n)| n).collect();
+        let expected: Vec<u32> = (0..u32::try_from(ns.len())?).collect();
+        assert_eq!(ns, expected, "{:?}", hole.loop_ref());
+    }
+    Ok(())
+}
+
+#[test]
+fn every_key_resolves_to_itself_with_two_loops_filled() -> Result<(), Setup> {
+    let (m, report, _) = filled(&cut_sphere(0.6, 0.4)?)?;
+    let p = Provenance::new(&m, report.holes());
+    for e in edges(&m)? {
+        let key = p.edge_key(e).ok_or("an edge has no key")?;
+        assert_eq!(p.resolve_edge(key), vec![e], "{key}");
+    }
+    for f in faces(&m)? {
+        let key = p.face_key(f).ok_or("a face has no key")?;
+        assert_eq!(p.resolve_face(key), [f], "{key}");
+    }
+    Ok(())
+}
+
+#[test]
+fn filling_a_loop_leaves_every_key_of_the_open_mesh_as_it_was() -> Result<(), Setup> {
+    let soup = cut_sphere(0.6, 0.4)?;
+    let (open, open_report) = into_manifold(&soup, &RepairPlan::default())?;
+    let (m, report, _) = filled(&soup)?;
+    let (before, after) = (
+        Provenance::new(&open, open_report.holes()),
+        Provenance::new(&m, report.holes()),
+    );
+    for e in edges(&open)? {
+        let key = before.edge_key(e).ok_or("an edge has no key")?;
+        assert_eq!(after.edge_key(e), Some(key), "{key}");
+        assert_eq!(after.resolve_edge(key), vec![e], "{key}");
+    }
+    for f in faces(&open)? {
+        let key = before.face_key(f).ok_or("a face has no key")?;
+        assert_eq!(after.face_key(f), Some(key), "{key}");
+    }
+    Ok(())
+}

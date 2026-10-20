@@ -134,6 +134,23 @@ fn a_vertex_is_named_by_its_lowest_source_vertex() -> Result<(), Setup> {
 }
 
 #[test]
+fn a_face_key_names_each_corner_by_its_own_source_vertex() -> Result<(), Setup> {
+    // The last face's corner at the merged vertex comes from source vertex 4, the others' from
+    // source vertex 0: its key keeps 0.4, which the weld being off would also give it.
+    let m = mesh(UNWELDED)?;
+    let p = Provenance::new(&m, &[]);
+    let keys: Vec<FaceKey> = (0..u32::try_from(m.face_count())?)
+        .map(|f| p.face_key(FaceId::new(f)).ok_or("a face has no key"))
+        .collect::<Result<_, _>>()?;
+    assert!(
+        keys.contains(&FaceKey::new([corner(4), corner(3), corner(2)])),
+        "{keys:?}"
+    );
+    assert!(!keys.contains(&FaceKey::new([corner(0), corner(3), corner(2)])));
+    Ok(())
+}
+
+#[test]
 fn a_key_written_with_any_source_vertex_of_a_merged_vertex_resolves() -> Result<(), Setup> {
     let m = mesh(UNWELDED)?;
     let p = Provenance::new(&m, &[]);

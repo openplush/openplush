@@ -68,8 +68,9 @@ pub enum Ignored {
 ///
 /// Errors: [`IoError::Parse`] for a file the `gltf` crate refuses (including a required
 /// extension it does not implement), no scene, a node reached twice, a sparse accessor, an
-/// accessor of the wrong type or out of its view, an index past its primitive's last
-/// vertex, a short buffer, or a reference outside the supplied files;
+/// accessor of the wrong type, out of its view or with a stride shorter than its element,
+/// an index past its primitive's last vertex, a short buffer, or a reference outside the
+/// supplied files;
 /// [`IoError::MissingResource`] for a referenced file that was not supplied;
 /// [`IoError::NonFiniteInput`] naming every drawn vertex with a non-finite coordinate.
 pub fn read<'a>(

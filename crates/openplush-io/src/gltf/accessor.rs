@@ -86,6 +86,12 @@ fn components(acc: &Accessor<'_>, buffers: &[Cow<'_, [u8]>]) -> Result<Vec<f64>,
     let size = acc.data_type().size();
     let element = size * width;
     let stride = view.stride().unwrap_or(element);
+    // A shorter stride overlaps one element with the next, so each would read its neighbour's bytes.
+    if stride < element {
+        return Err(format!(
+            "accessor {index} has {element}-byte elements but its buffer view's stride is {stride}"
+        ));
+    }
     let past_view = || format!("accessor {index} runs past the end of its buffer view");
     let bytes = buffers
         .get(view.buffer().index())

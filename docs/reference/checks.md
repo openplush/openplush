@@ -26,7 +26,7 @@ Clippy runs with `-D warnings`, so every warning blocks a merge. The workspace l
 | `missing_docs` (`openplush-pipeline` only) | The public engine API documents every item. Elsewhere a doc comment is one line saying what the signature doesn't. |
 | `unreachable_pub` | An item is `pub(crate)` unless another crate calls it. |
 | `too_many_lines` (60), `too_many_arguments` (5) | Small units. A function that predates the limit carries `#[expect(clippy::too_many_lines, reason = …)]` until it is split. |
-| `unwrap_used`, `expect_used`, `panic` | No panics on data that comes from the user: a panic cannot be caught on wasm32 ([the WASM constraints](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md#wasm-constraints)). Allowed in `#[test]` functions and `#[cfg(test)]` modules. Code outside those, such as helpers in `tests/*.rs` and all of `openplush-testkit`, returns `Result` and uses `?`. |
+| `unwrap_used`, `expect_used`, `panic` | No panics on data that comes from the user: a panic cannot be caught on wasm32 ([Code rules, WASM constraints](code-rules.md#wasm-constraints)). Allowed in `#[test]` functions and `#[cfg(test)]` modules. Code outside those, such as helpers in `tests/*.rs` and all of `openplush-testkit`, returns `Result` and uses `?`. |
 | `disallowed_types`: `HashMap`, `HashSet` | Their iteration order is unspecified, which breaks byte-identical output. |
 | `disallowed_methods`: `sort_unstable*`, `select_nth_unstable*` | Equal elements end in an unspecified order, which has differed between x86_64 and wasm32 and between toolchains. Sort stably with a total order (`total_cmp`). |
 | `todo`, `unimplemented`, `dbg_macro` | Placeholders and debug output don't merge. |

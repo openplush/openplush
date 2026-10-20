@@ -233,9 +233,13 @@ for step in "${steps[@]}"; do
       fi
       run scripts/tests/check-docs-links.test.sh
       run mdbook build
+      # mdBook copies every non-Markdown file under docs/ into the book, so the
+      # landing page lands there too, with its dev/ link dead; it belongs at the root.
+      run rm -r target/site/dev/site
+      run cp docs/site/index.html target/site/index.html
       run scripts/check-docs-summary.sh
-      run scripts/check-docs-remote.sh target/site/dev
-      run scripts/check-docs-links.sh target/site/dev
+      run scripts/check-docs-remote.sh target/site
+      run scripts/check-docs-links.sh target/site
       ;;
   esac
   endgroup

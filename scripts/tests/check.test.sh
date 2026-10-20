@@ -135,10 +135,14 @@ if [[ -f $docs_yml ]] && grep -q 'scripts/check.sh --setup docs' "$docs_yml"; th
 else
   bad "docs.yml installs the docs tools with check.sh --setup docs" "$(grep -n 'check.sh' "$docs_yml" 2>&1)"
 fi
-if [[ -f $docs_yml ]] && grep -q 'diff -r target/site-1 target/site' "$docs_yml"; then
-  ok "docs.yml diffs two builds of the site"
+# The determinism job builds, moves the site aside, builds again, then diffs:
+# --setup docs installs the tools and runs the docs step, so it is the first build.
+want_runs=$'scripts/check.sh --setup docs\nmv target/site target/site-1\nscripts/check.sh docs\ndiff -r target/site-1 target/site'
+got_runs=$([[ -f $docs_yml ]] && awk '/^  determinism:$/ {on = 1; next} on && /^  [a-z-]+:$/ {on = 0} on' "$docs_yml" | sed -n 's/^ *- run: //p' | grep -E '^(scripts/check.sh|mv |diff )')
+if [[ $got_runs == "$want_runs" ]]; then
+  ok "docs.yml builds the site twice and diffs the builds"
 else
-  bad "docs.yml diffs two builds of the site" "$(grep -n 'diff' "$docs_yml" 2>&1)"
+  bad "docs.yml builds the site twice and diffs the builds" "$got_runs"
 fi
 # With steps named, --setup installs only what they need.
 expect_plan "setup for the engine group installs actionlint" "--setup engine" "actionlint_${actionlint}_" "actionlint -shellcheck="

@@ -69,6 +69,7 @@ jobs:
         with:
           tool: mdbook@0.5.4
           fallback: none
+      # --setup installs the docs tools, then runs the docs step: this is the first build.
       - run: scripts/check.sh --setup docs
       - run: mv target/site target/site-1
       - run: scripts/check.sh docs

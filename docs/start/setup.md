@@ -40,7 +40,7 @@ The machine must be Linux or macOS on x86_64 or arm64, the platforms the workflo
    scripts/check.sh all docs
    ```
 
-   `all` is every step CI runs: the crate boundary and the checkers' own tests, hygiene, formatting, clippy, the Rust tests, the generated TypeScript types, the workflow linter, a wasm32 test build, the dependency licence check, the WebAssembly tests, and the TypeScript install, licence check, typecheck and tests. `docs` builds this book and checks its navigation. Plain `scripts/check.sh` runs `all` without `docs`.
+   `all` is every step CI runs: the crate boundary and the checkers' own tests, hygiene, the status page's generated task counts, formatting, clippy, the Rust tests, the generated TypeScript types, the workflow linter, a wasm32 test build, the dependency licence check, the WebAssembly tests, and the TypeScript install, licence check, typecheck and tests. `docs` builds this book and checks its navigation. Plain `scripts/check.sh` runs `all` without `docs`.
 
    Every CI workflow calls this same script, so a step that passes on your machine passes in CI.
 
@@ -49,9 +49,9 @@ The machine must be Linux or macOS on x86_64 or arm64, the platforms the workflo
 The run ends with this line, and the command exits with status 0:
 
 ```text
-check: ok (boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs)
+check: ok (boundary hygiene status fmt clippy test types workflows wasm-check deny wasm shell docs)
 ```
 
 A missing or wrong-version tool stops the run with a message naming it and telling you to run `scripts/check.sh --setup`. To rerun only what failed, name its step, such as `scripts/check.sh clippy`; `scripts/check.sh --dry-run all` prints the exact commands each step runs.
 
-While you work on the engine, `scripts/check.sh engine` is the fast subset: boundary, hygiene, formatting, clippy, the tests, the generated TypeScript types (it fails if `packages/engine-client/src/generated/` differs from a fresh export), the workflow linter and the wasm32 test build, which compiles every test for wasm32 without running one and so needs no test runner. What each check enforces, and why, is in [the checks reference](../reference/checks.md).
+While you work on the engine, `scripts/check.sh engine` is the fast subset: boundary, hygiene, the status page's task counts, formatting, clippy, the tests, the generated TypeScript types (it fails if `packages/engine-client/src/generated/` differs from a fresh export), the workflow linter and the wasm32 test build, which compiles every test for wasm32 without running one and so needs no test runner. What each check enforces, and why, is in [the checks reference](../reference/checks.md).

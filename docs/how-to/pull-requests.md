@@ -30,7 +30,7 @@ Not one intent:
 
 No CI job judges whether a PR is one intent; reviewers do. A PR whose intent needs "and" to join two results is split.
 
-Every task the PR touches is finished, and ticked with its as-built note, in the same PR. There is no line budget; a large PR stays reviewable because of how its commits are laid out (step 2).
+Every task the PR touches is finished, and ticked with its as-built note, in the same PR, with the [status page's task counts](../reference/checks.md#generated-status-counts-status) regenerated. There is no line budget; a large PR stays reviewable because of how its commits are laid out (step 2).
 
 **Why one intent per PR.** This project's worst failure mode is a pattern that looks right and is wrong, and you find out after cutting fabric. Review is the main defence, and a reviewer catches that kind of defect by checking a stated outcome against its tests: does the boundary come out at its 3D lengths, does a developable chart flatten with zero distortion. That needs the whole capability in one place. The line budget this replaced cut capabilities into pieces that could not be judged alone: [boundary prescription](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md) landed as three PRs (closing the polygon, finding the boundary loop, and the curvature step), and none of them showed a chart's boundary laid flat. Each piece cost a review run, a CI run and a merge.
 

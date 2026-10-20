@@ -26,14 +26,18 @@ Three crates have no code: `openplush-fields`, `openplush-decal` and `openplush-
 
 ### By feature
 
-How far each feature's spec and plan have got, and its ticked tasks out of all the tasks in its `tasks.md`.
+How far each feature's spec and plan have got, and where its work stands.
 
-| Feature | Spec and plan | Tasks ticked | Where it stands |
-|---|---|---|---|
-| [001 pattern pipeline](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md) | Spec draft, its blocking questions answered 2026-10-13 and three minor defaults open; planned | 101 of 189 | Setup and foundations done except the determinism and golden workflows and the golden compare, which wait for output to compare. The first user story (seams in, printable pattern out) is mostly built engine-side, as above; its pipeline wiring, CLI and web shell are not. Later stories have barely started |
-| [002 seam-placement hints](https://github.com/openplush/openplush/blob/main/specs/002-seam-placement-hints/tasks.md) | Spec draft, its questions answered 2026-10-13; planned | 5 of 82 | Fixtures and two spikes (the default thresholds, symmetry) done; no code. Its crate needs 001's pipeline first |
-| [003 source seam import](https://github.com/openplush/openplush/blob/main/specs/003-source-seam-import/tasks.md) | Spec draft, its questions answered 2026-10-16 and 2026-10-17; planned | 15 of 71 | Fixtures and spikes done; materials carried on the soup and the mesh, and the UV-cut tolerance set. Reading materials waits for 001's glTF import |
-| [004 docs site](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/tasks.md) | Spec draft, no clarification session; planned; five decisions accepted, the rest proposed | 31 of 36 | The site decision, the writing guide and page templates, the agents' docs procedure, the book build with its navigation check, links out of the book pointing at GitHub, the onboarding pages (start here, setup, this page, the [glossary](../reference/glossary.md)), the engine-concept and agents explanations, the pull-request how-to, the contributor book's landing page, `CONTRIBUTING.md` as a pointer into the book, the [first-change tutorial](../tutorials/first-change.md), the link and network checks, the site's landing page, its workflow with the determinism job, the maker guide's first pages with the plain-language check, and the facts the agent files held moved into the book (meshes, code rules, commands, review and merge) done; publishing, the API reference and one page per crate not yet |
+| Feature | Spec and plan | Where it stands |
+|---|---|---|
+| [001 pattern pipeline](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md) | Spec draft, its blocking questions answered 2026-10-13 and three minor defaults open; planned | Setup and foundations done except the determinism and golden workflows and the golden compare, which wait for output to compare. The first user story (seams in, printable pattern out) is mostly built engine-side, as above; its pipeline wiring, CLI and web shell are not. Later stories have barely started |
+| [002 seam-placement hints](https://github.com/openplush/openplush/blob/main/specs/002-seam-placement-hints/tasks.md) | Spec draft, its questions answered 2026-10-13; planned | Fixtures and two spikes (the default thresholds, symmetry) done; no code. Its crate needs 001's pipeline first |
+| [003 source seam import](https://github.com/openplush/openplush/blob/main/specs/003-source-seam-import/tasks.md) | Spec draft, its questions answered 2026-10-16 and 2026-10-17; planned | Fixtures and spikes done; materials carried on the soup and the mesh, and the UV-cut tolerance set. Reading materials waits for 001's glTF import |
+| [004 docs site](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/tasks.md) | Spec draft, no clarification session; planned; five decisions accepted, the rest proposed | The site decision, the writing guide and page templates, the agents' docs procedure, the book build with its navigation check, links out of the book pointing at GitHub, the onboarding pages (start here, setup, this page, the [glossary](../reference/glossary.md)), the engine-concept and agents explanations, the pull-request how-to, the contributor book's landing page, `CONTRIBUTING.md` as a pointer into the book, the [first-change tutorial](../tutorials/first-change.md), the link and network checks, the site's landing page, its workflow with the determinism job, the maker guide's first pages with the plain-language check, the facts the agent files held moved into the book (meshes, code rules, commands, review and merge), and the task counts below generated from each `tasks.md` done; publishing, the API reference and one page per crate not yet |
+
+Each feature's ticked tasks, out of all the tasks in its `tasks.md`. `scripts/gen-status.py` writes this table from those files, and [the `status` check](../reference/checks.md#generated-status-counts-status) fails when it is out of date:
+
+{{#include status-counts.inc}}
 
 ### Known gaps
 

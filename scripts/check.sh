@@ -7,8 +7,9 @@
 #                                     wasm-bindgen-cli matching Cargo.lock, actionlint, the toolchain)
 #   scripts/check.sh --setup <steps>  install only what those steps need, then run them
 #   scripts/check.sh                  run every gate but docs
-#   scripts/check.sh <step|group>...  run some: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs,
-#                                     or engine (= boundary hygiene fmt clippy test types workflows wasm-check),
+#   scripts/check.sh <step|group>...  run some: boundary hygiene status fmt clippy test types workflows wasm-check deny wasm
+#                                     shell docs, or engine (= boundary hygiene status fmt clippy test types workflows
+#                                     wasm-check),
 #                                     or all (every step but docs)
 #   --dry-run                         print the commands instead of running them
 #
@@ -40,16 +41,16 @@ for arg in "$@"; do
   case $arg in
     --dry-run) dry=1 ;;
     --setup) setup=1 ;;
-    engine) steps+=(boundary hygiene fmt clippy test types workflows wasm-check) ;;
-    all) steps+=(boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell) ;;
-    boundary | hygiene | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell | docs) steps+=("$arg") ;;
+    engine) steps+=(boundary hygiene status fmt clippy test types workflows wasm-check) ;;
+    all) steps+=(boundary hygiene status fmt clippy test types workflows wasm-check deny wasm shell) ;;
+    boundary | hygiene | status | fmt | clippy | test | types | workflows | wasm-check | deny | wasm | shell | docs) steps+=("$arg") ;;
     *)
-      echo "check: unknown step '$arg' (steps: boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell docs; groups: engine all)" >&2
+      echo "check: unknown step '$arg' (steps: boundary hygiene status fmt clippy test types workflows wasm-check deny wasm shell docs; groups: engine all)" >&2
       exit 2
       ;;
   esac
 done
-((setup || ${#steps[@]})) || steps=(boundary hygiene fmt clippy test types workflows wasm-check deny wasm shell)
+((setup || ${#steps[@]})) || steps=(boundary hygiene status fmt clippy test types workflows wasm-check deny wasm shell)
 
 # run <command...>: print it; run it unless --dry-run.
 run() {
@@ -161,6 +162,8 @@ for step in "${steps[@]}"; do
       run scripts/check-hygiene.sh
       run scripts/check-opt-outs.sh
       ;;
+    # Before the builds: it takes a second, and a stale count should not wait for clippy.
+    status) run scripts/gen-status.py --check ;;
     fmt) run cargo fmt --check ;;
     clippy) run cargo clippy --workspace --all-targets --locked -- -D warnings ;;
     test) run cargo test --workspace --locked ;;

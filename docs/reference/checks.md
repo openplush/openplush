@@ -1,6 +1,6 @@
 # Checks: what each one enforces
 
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, and the dependency licence check. [Set up and run every check](../start/setup.md) says how to run them.
+This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the generated status counts, the tests that must also run on wasm32, and the dependency licence check. [Set up and run every check](../start/setup.md) says how to run them.
 
 ## Entries
 
@@ -15,6 +15,12 @@ An opt-out of the `disallowed_types` or `disallowed_methods` lint needs a line i
 - `CLIPPY_CONF_DIR` in a `Cargo.toml` or `.cargo/config*`.
 
 It scans the files git tracks or would add, so ignored trees such as build output are skipped, and counts every textual mention of either lint name in a `.rs` file under `crates/` or `bindings/`, a `Cargo.toml` or a `.cargo/config*`, plus `clippy::style`, `clippy::all` and `warnings` lint levels. The script's header lists the exact patterns and what they miss. It is a tripwire for honest mistakes, not a sandbox.
+
+### Generated status counts (`status`)
+
+The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. `scripts/gen-status.py` reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc`, which the page includes; the `status` step renders the counts again and fails, with a diff, when the committed file differs. After ticking a task, run `scripts/gen-status.py` and commit the include with the tick.
+
+A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, another bullet or no ID), and on a `tasks.md` with no task lines.
 
 ### Workspace lints (`clippy`)
 

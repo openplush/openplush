@@ -103,10 +103,11 @@ fn repair_is_the_mesh_crates_repair() -> Result<(), Setup> {
 }
 
 #[test]
-fn a_listed_hole_is_refused_as_mesh_naming_the_loop_by_its_source_corner() -> Result<(), Setup> {
+fn a_listed_loop_the_mesh_lacks_is_refused_as_mesh_naming_it_by_its_source_corner()
+-> Result<(), Setup> {
     let corner = SourceCorner {
         primitive: 0,
-        vertex: 0,
+        vertex: 9,
     };
     let plan = RepairPlan {
         fill_holes: BTreeSet::from([LoopRef::new(corner)]),
@@ -117,7 +118,7 @@ fn a_listed_hole_is_refused_as_mesh_naming_the_loop_by_its_source_corner() -> Re
         .ok_or("a fill is refused")?;
     assert_eq!(
         err,
-        EngineError::Mesh(MeshError::HoleFillUnavailable {
+        EngineError::Mesh(MeshError::UnknownHoleLoop {
             loop_ref: LoopRef::new(corner)
         })
     );

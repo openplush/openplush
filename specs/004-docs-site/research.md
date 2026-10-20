@@ -27,7 +27,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | Well-regarded contributor guides (rustc-dev-guide, the Servo book) order their sidebars by a contributor's path, not by folder | [solid] |
 | The `index` preprocessor renames `README.md` chapters to `index.html`, but body links are rewritten `.md` → `.html` with no existence check: `how-to/README.md` becomes a dead `how-to/README.html`, and `../AGENTS.md` becomes a dead `../AGENTS.html`. No warning is printed | [solid] tested |
 | `docs/` has 37 relative links that leave `docs/` (to `specs/`, `research/`, `.specify/`, `AGENTS.md`, `crates/AGENTS.md`, `.github/`) | [solid] audit |
-| Disabling the default `index` preprocessor makes README links consistent | [verify] W009 |
+| Disabling the default `index` preprocessor makes README links consistent: on mdBook 0.5.4, `[build] use-default-preprocessors = false` plus `[preprocessor.links]` writes `README.html`, links to `README.md` resolve, and `{{#include}}` still works. `[preprocessor] index = false` is rejected | [solid] tested 2026-10-20: dead relative hrefs in the built book 86 → 0 |
 | `mdbook-linkcheck2` 0.13 supports 0.5 but checks Markdown sources, so it misses the README breakage. lychee 0.24 (Apache-2.0 OR MIT) with `--offline` checks the built HTML | [likely] |
 | A ```` ```rust ```` block is a playground block by default and `book.js` then POSTs to `play.rust-lang.org` on page load; `runnable = false` stops it. MathJax loads from cdnjs but is off by default | [solid] tested |
 | The default theme's Source Code Pro font is OFL-1.1; Open Sans is Apache-2.0 | [solid] |
@@ -61,7 +61,8 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | Current Pages actions: `upload-pages-artifact@v5`, `deploy-pages@v5`. The deploy job needs `pages: write` and `id-token: write`; the `github-pages` environment can be restricted to `main` | [solid] |
 | GitHub's native PR previews for Pages are alpha and not public; `rossjrw/pr-preview-action` needs branch-based Pages and fails for forks | [solid] |
 | `Swatinem/rust-cache` is LGPL-3.0 and already pinned in `engine.yml`, `wasm.yml`, `review.yml` | [solid] |
-| `taiki-e/install-action` installs a pinned mdbook with checksum verification; lychee support there | [verify] W006 |
+| `taiki-e/install-action` installs a pinned mdbook with checksum verification (its `manifests/mdbook.json` lists 0.5.4 for Linux, macOS and Windows) | [solid] checked 2026-10-20 |
+| `taiki-e/install-action` does not offer lychee: it is absent from `TOOLS.md` and `manifests/lychee.json` does not exist on `main`. `scripts/check.sh --setup` installs it with `cargo install --locked`, as it does `cargo-deny` | [solid] checked 2026-10-20 |
 
 **Decisions**: rustdoc under `/dev/api/` with a generated index, gated on W-007; artifact previews (W-012).
 

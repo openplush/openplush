@@ -18,7 +18,7 @@ use openplush_seams::{
 fn map(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<Result<SewingMap, SeamsError>, Setup> {
     let graph = SeamGraph::new(mesh, seams)?;
     let charts = charts(mesh, seams)?;
-    let map = SewingMap::new(mesh, seams, &graph);
+    let map = SewingMap::new(mesh, seams, &graph, &[]);
     if let Ok(map) = &map {
         well_formed(mesh, &graph, &charts, map);
     }

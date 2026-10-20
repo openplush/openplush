@@ -615,3 +615,434 @@ fn missing_resource_names_the_reference() {
         "the file refers to \"model.bin\", which was not supplied beside it"
     );
 }
+
+/// `rest` placed after one mesh with these primitives, drawn by one node at the root.
+fn drawn(bin: &Bin, primitives: &str, node: &str) -> String {
+    bin.gltf(&format!(
+        r#""meshes":[{{"primitives":[{primitives}]}}],"nodes":[{{"mesh":0{node}}}],"scenes":[{{"nodes":[0]}}],"scene":0"#
+    ))
+}
+
+#[test]
+fn the_second_primitive_indexes_its_own_vertices() -> Result<(), Setup> {
+    let doc = triangle(
+        r#""nodes":[{"mesh":0},{"mesh":0,"translation":[0,0,1]}],"scenes":[{"nodes":[0,1]}],"scene":0"#,
+    );
+    assert_eq!(ids(&read(&doc)?.soup)?, vec![[0, 1, 2], [3, 4, 5]]);
+    Ok(())
+}
+
+#[test]
+fn every_axis_is_scaled_and_kept() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let p = bin.positions(&[[0.0, 0.0, 2.0], [1.0, 0.0, 2.0], [0.0, 1.0, 2.0]]);
+    let doc = drawn(
+        &bin,
+        &format!(r#"{{"attributes":{{"POSITION":{p}}}}}"#),
+        r#","scale":[1,2,3]"#,
+    );
+    let soup = read(&doc)?.soup;
+    assert_eq!(position(&soup, 1)?, [1.0, 0.0, 6.0]);
+    assert_eq!(position(&soup, 2)?, [0.0, 2.0, 6.0]);
+    Ok(())
+}
+
+fn turned(axis: [f64; 3]) -> Result<TriangleSoup, Setup> {
+    let s = std::f64::consts::FRAC_1_SQRT_2;
+    let q = [axis[0] * s, axis[1] * s, axis[2] * s, s];
+    let doc = triangle(&format!(
+        r#""nodes":[{{"mesh":0,"rotation":[{},{},{},{}]}}],"scenes":[{{"nodes":[0]}}],"scene":0"#,
+        q[0], q[1], q[2], q[3]
+    ));
+    Ok(read(&doc)?.soup)
+}
+
+fn near(p: [f64; 3], q: [f64; 3]) -> bool {
+    p.iter().zip(q).all(|(a, b)| (a - b).abs() < 1e-6)
+}
+
+#[test]
+fn quarter_turns_about_each_axis_move_points_the_right_way() -> Result<(), Setup> {
+    let about_x = turned([1.0, 0.0, 0.0])?;
+    assert!(
+        near(position(&about_x, 2)?, [0.0, 0.0, 1.0]),
+        "{:?}",
+        position(&about_x, 2)?
+    );
+    let about_y = turned([0.0, 1.0, 0.0])?;
+    assert!(
+        near(position(&about_y, 1)?, [0.0, 0.0, -1.0]),
+        "{:?}",
+        position(&about_y, 1)?
+    );
+    Ok(())
+}
+
+#[test]
+fn a_rotation_keeps_the_winding_and_a_flattening_scale_does_not_mirror() -> Result<(), Setup> {
+    let plain = ids(&read(&triangle(
+        r#""nodes":[{"mesh":0}],"scenes":[{"nodes":[0]}],"scene":0"#,
+    ))?
+    .soup)?;
+    assert_eq!(ids(&turned([0.0, 0.0, 1.0])?)?, plain);
+    let flat =
+        triangle(r#""nodes":[{"mesh":0,"scale":[1,1,0]}],"scenes":[{"nodes":[0]}],"scene":0"#);
+    assert_eq!(ids(&read(&flat)?.soup)?, plain);
+    Ok(())
+}
+
+#[test]
+fn a_texture_set_beyond_the_first_is_counted_even_without_the_first() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let p = bin.positions(&TRIANGLE);
+    let t1 = bin.uvs(&[[0.0, 0.0]; 3]);
+    let doc = drawn(
+        &bin,
+        &format!(r#"{{"attributes":{{"POSITION":{p},"TEXCOORD_1":{t1}}}}}"#),
+        "",
+    );
+    let soup = read(&doc)?.soup;
+    assert_eq!(soup.extra_uv_sets(), 1);
+    assert_eq!(soup.corner_uv(FaceId::new(0), 0), None);
+    Ok(())
+}
+
+#[test]
+fn uvs_of_another_length_than_the_positions_are_refused() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let p = bin.positions(&TRIANGLE);
+    let t = bin.uvs(&[[0.0, 0.0]; 2]);
+    let doc = drawn(
+        &bin,
+        &format!(r#"{{"attributes":{{"POSITION":{p},"TEXCOORD_0":{t}}}}}"#),
+        "",
+    );
+    let detail = parse_detail(read(&doc))?;
+    assert!(detail.contains("differ in length"), "{detail}");
+    assert!(detail.contains("mesh 0 primitive 0"), "{detail}");
+    Ok(())
+}
+
+#[test]
+fn a_non_finite_coordinate_on_any_axis_is_named() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let data: Vec<u8> = [
+        0.0f32,
+        0.0,
+        0.0,
+        1.0,
+        f32::NAN,
+        0.0,
+        0.0,
+        1.0,
+        f32::INFINITY,
+    ]
+    .iter()
+    .flat_map(|c| c.to_le_bytes())
+    .collect();
+    let p = bin.accessor(&data, (5126, "VEC3"), 3, r#","min":[0,0,0],"max":[1,1,0]"#);
+    let doc = drawn(&bin, &format!(r#"{{"attributes":{{"POSITION":{p}}}}}"#), "");
+    assert_eq!(
+        read(&doc).err(),
+        Some(IoError::NonFiniteInput {
+            vertices: vec![corner(0, 1), corner(0, 2)]
+        })
+    );
+    Ok(())
+}
+
+#[test]
+fn uvs_on_one_primitive_leave_the_others_corners_without() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let p = bin.positions(&TRIANGLE);
+    let t = bin.uvs(&[[0.25, 0.5]; 3]);
+    let doc = drawn(
+        &bin,
+        &format!(
+            r#"{{"attributes":{{"POSITION":{p},"TEXCOORD_0":{t}}}}},{{"attributes":{{"POSITION":{p}}}}}"#
+        ),
+        "",
+    );
+    let soup = read(&doc)?.soup;
+    let uv = soup
+        .corner_uv(FaceId::new(0), 0)
+        .ok_or("the first primitive lost its UVs")?;
+    assert_eq!([uv.x, uv.y], [0.25, 0.5]);
+    assert_eq!(soup.corner_uv(FaceId::new(1), 0), None);
+    Ok(())
+}
+
+/// One primitive whose `attribute` is an accessor of `bytes` typed `(component, kind)`
+/// with `extra` JSON; the positions are the triangle's unless `attribute` is `POSITION`.
+fn typed(attribute: &str, bytes: &[u8], ty: (u32, &str), extra: &str) -> String {
+    let mut bin = Bin::default();
+    let a = bin.accessor(bytes, ty, 3, extra);
+    let attributes = if attribute == "POSITION" {
+        format!(r#""POSITION":{a}"#)
+    } else {
+        let p = bin.positions(&TRIANGLE);
+        format!(r#""POSITION":{p},"{attribute}":{a}"#)
+    };
+    drawn(&bin, &format!(r#"{{"attributes":{{{attributes}}}}}"#), "")
+}
+
+#[test]
+fn an_attribute_of_a_type_it_does_not_allow_is_refused() -> Result<(), Setup> {
+    // Three-element bounds pass the crate's own validation, so the type check is the reader's.
+    let bounds = r#","min":[0,0,0],"max":[1,1,1]"#;
+    for doc in [
+        typed("POSITION", &[0; 48], (5126, "VEC4"), bounds),
+        typed(
+            "POSITION",
+            &[0; 9],
+            (5121, "VEC3"),
+            r#","normalized":true,"min":[0,0,0],"max":[1,1,1]"#,
+        ),
+        typed("TEXCOORD_0", &[0; 36], (5126, "VEC3"), ""),
+        typed(
+            "TEXCOORD_0",
+            &[0; 6],
+            (5120, "VEC2"),
+            r#","normalized":true"#,
+        ),
+        typed("TEXCOORD_0", &[0; 6], (5121, "VEC2"), ""),
+        typed(
+            "TEXCOORD_0",
+            &[0; 24],
+            (5126, "VEC2"),
+            r#","normalized":true"#,
+        ),
+    ] {
+        let detail = parse_detail(read(&doc))?;
+        assert!(detail.contains("does not allow"), "{detail}");
+    }
+    Ok(())
+}
+
+#[test]
+fn normalized_short_uvs_are_scaled_by_their_own_range() -> Result<(), Setup> {
+    let data: Vec<u8> = [0u16, 0, 0, 0, 0, 13107]
+        .iter()
+        .flat_map(|c| c.to_le_bytes())
+        .collect();
+    let doc = typed("TEXCOORD_0", &data, (5123, "VEC2"), r#","normalized":true"#);
+    let soup = read(&doc)?.soup;
+    let uv = soup.corner_uv(FaceId::new(0), 2).ok_or("no uv")?;
+    assert_eq!([uv.x, uv.y], [0.0, 0.2]);
+    Ok(())
+}
+
+#[test]
+fn indices_that_are_not_unsigned_integers_are_refused() -> Result<(), Setup> {
+    for (data, ty, extra) in [
+        (vec![0u8; 12], (5126, "SCALAR"), ""),
+        (vec![0u8; 3], (5120, "SCALAR"), ""),
+        (vec![0u8; 12], (5123, "VEC2"), ""),
+        (vec![0u8; 6], (5123, "SCALAR"), r#","normalized":true"#),
+    ] {
+        let mut bin = Bin::default();
+        let p = bin.positions(&TRIANGLE);
+        let i = bin.accessor(&data, ty, 3, extra);
+        let doc = drawn(
+            &bin,
+            &format!(r#"{{"attributes":{{"POSITION":{p}}},"indices":{i}}}"#),
+            "",
+        );
+        let detail = parse_detail(read(&doc))?;
+        assert!(
+            detail.contains("not unsigned integer indices"),
+            "{ty:?}: {detail}"
+        );
+    }
+    Ok(())
+}
+
+/// A document with `views` and `accessors` given as JSON over `bytes`, drawing accessor 0 as
+/// POSITION and, if given, accessor 1 as TEXCOORD_0.
+fn raw(bytes: &[u8], views: &str, accessors: &str, uvs: bool) -> String {
+    let uv = if uvs { r#","TEXCOORD_0":1"# } else { "" };
+    format!(
+        r#"{{"asset":{{"version":"2.0"}},"buffers":[{{"uri":"data:application/octet-stream;base64,{}","byteLength":{}}}],"bufferViews":[{views}],"accessors":[{accessors}],"meshes":[{{"primitives":[{{"attributes":{{"POSITION":0{uv}}}}}]}}],"nodes":[{{"mesh":0}}],"scenes":[{{"nodes":[0]}}],"scene":0}}"#,
+        STANDARD.encode(bytes),
+        bytes.len()
+    )
+}
+
+const POSITION_ACCESSOR: &str =
+    r#""componentType":5126,"type":"VEC3","count":3,"min":[0,0,0],"max":[1,1,1]"#;
+
+#[test]
+fn an_interleaved_view_is_read_by_its_stride() -> Result<(), Setup> {
+    let mut bytes = Vec::new();
+    for (p, t) in TRIANGLE.iter().zip([[0.1f32, 0.2], [0.3, 0.4], [0.5, 0.6]]) {
+        bytes.extend(p.iter().chain(&t).flat_map(|c| c.to_le_bytes()));
+    }
+    let doc = raw(
+        &bytes,
+        r#"{"buffer":0,"byteLength":60,"byteStride":20}"#,
+        &format!(
+            r#"{{"bufferView":0,{POSITION_ACCESSOR}}},{{"bufferView":0,"byteOffset":12,"componentType":5126,"type":"VEC2","count":3}}"#
+        ),
+        true,
+    );
+    let soup = read(&doc)?.soup;
+    assert_eq!(position(&soup, 2)?, [0.0, 1.0, 0.0]);
+    let uv = soup.corner_uv(FaceId::new(0), 2).ok_or("no uv")?;
+    assert!(
+        (uv.x - 0.5).abs() < 1e-7 && (uv.y - 0.6).abs() < 1e-7,
+        "{uv:?}"
+    );
+    Ok(())
+}
+
+#[test]
+fn an_accessor_offset_into_its_view_is_honoured() -> Result<(), Setup> {
+    let points = [
+        [9.0f32, 9.0, 9.0],
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+    ];
+    let bytes: Vec<u8> = points
+        .iter()
+        .flatten()
+        .flat_map(|c| c.to_le_bytes())
+        .collect();
+    let doc = raw(
+        &bytes,
+        r#"{"buffer":0,"byteLength":48}"#,
+        &format!(r#"{{"bufferView":0,"byteOffset":12,{POSITION_ACCESSOR}}}"#),
+        false,
+    );
+    let soup = read(&doc)?.soup;
+    assert_eq!(position(&soup, 0)?, [0.0, 0.0, 0.0]);
+    assert_eq!(position(&soup, 1)?, [1.0, 0.0, 0.0]);
+    Ok(())
+}
+
+#[test]
+fn an_accessor_or_view_past_its_bounds_is_refused_not_read() -> Result<(), Setup> {
+    let bytes: Vec<u8> = TRIANGLE
+        .iter()
+        .flatten()
+        .flat_map(|c| c.to_le_bytes())
+        .collect();
+    let past_buffer = raw(
+        &bytes,
+        r#"{"buffer":0,"byteLength":48}"#,
+        &format!(r#"{{"bufferView":0,{POSITION_ACCESSOR}}}"#),
+        false,
+    );
+    parse_detail(read(&past_buffer))?;
+    let four = r#""componentType":5126,"type":"VEC3","count":4,"min":[0,0,0],"max":[1,1,1]"#;
+    let past_view = raw(
+        &bytes,
+        r#"{"buffer":0,"byteLength":36}"#,
+        &format!(r#"{{"bufferView":0,{four}}}"#),
+        false,
+    );
+    let detail = parse_detail(read(&past_view))?;
+    assert!(
+        detail.contains("past the end of its buffer view"),
+        "{detail}"
+    );
+    let short_view = raw(
+        &bytes,
+        r#"{"buffer":0,"byteLength":32}"#,
+        &format!(r#"{{"bufferView":0,{POSITION_ACCESSOR}}}"#),
+        false,
+    );
+    let detail = parse_detail(read(&short_view))?;
+    assert!(
+        detail.contains("past the end of its buffer view"),
+        "{detail}"
+    );
+    Ok(())
+}
+
+#[test]
+fn a_data_uri_that_is_not_base64_is_refused() -> Result<(), Setup> {
+    for uri in [
+        "data:application/octet-stream,AAAAAAAAAAAAAAAA",
+        "data:application/octet-stream;base64,!!!!",
+    ] {
+        let (doc, _) = beside(uri);
+        let detail = parse_detail(read(&doc))?;
+        assert!(detail.contains("not base64 data"), "{uri}: {detail}");
+    }
+    Ok(())
+}
+
+#[test]
+fn empty_path_segments_are_skipped_and_a_missing_reference_is_named_as_written() -> Result<(), Setup>
+{
+    let (doc, bytes) = beside("x//y.bin");
+    let lookup = |name: &str| (name == "a/x/y.bin").then_some(bytes.as_slice());
+    assert_eq!(
+        gltf::read("a/b.gltf", doc.as_bytes(), &lookup)?
+            .soup
+            .triangle_count(),
+        1
+    );
+    let (doc, _) = beside("my%20model.bin");
+    assert_eq!(
+        read(&doc).err(),
+        Some(IoError::MissingResource {
+            uri: "my%20model.bin".into()
+        })
+    );
+    Ok(())
+}
+
+#[test]
+fn a_gltf_buffer_with_no_uri_needs_a_binary_chunk() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let p = bin.positions(&TRIANGLE);
+    let rest = format!(
+        r#""meshes":[{{"primitives":[{{"attributes":{{"POSITION":{p}}}}}]}}],"nodes":[{{"mesh":0}}],"scenes":[{{"nodes":[0]}}],"scene":0"#
+    );
+    let detail = parse_detail(read(&bin.document(&rest, None, bin.bytes.len())))?;
+    assert!(detail.contains("binary chunk"), "{detail}");
+    Ok(())
+}
+
+#[test]
+fn the_file_s_scene_is_drawn_when_it_is_not_scene_zero() -> Result<(), Setup> {
+    let doc = triangle(
+        r#""nodes":[{"mesh":0,"translation":[10,0,0]},{"mesh":0,"translation":[20,0,0]}],"scenes":[{"nodes":[0]},{"nodes":[1]}],"scene":1"#,
+    );
+    let soup = read(&doc)?.soup;
+    assert_eq!(soup.vertex_count(), 3);
+    assert_eq!(position(&soup, 0)?, [20.0, 0.0, 0.0]);
+    Ok(())
+}
+
+#[test]
+fn children_are_drawn_in_array_order() -> Result<(), Setup> {
+    let doc = triangle(
+        r#""nodes":[{"children":[1,2]},{"mesh":0,"translation":[0,0,1]},{"mesh":0,"translation":[0,0,2]}],"scenes":[{"nodes":[0]}],"scene":0"#,
+    );
+    let soup = read(&doc)?.soup;
+    assert_eq!(position(&soup, 0)?, [0.0, 0.0, 1.0]);
+    assert_eq!(position(&soup, 3)?, [0.0, 0.0, 2.0]);
+    Ok(())
+}
+
+#[test]
+fn a_mesh_with_morph_targets_on_one_primitive_is_listed_once() -> Result<(), Setup> {
+    let mut bin = Bin::default();
+    let p = bin.positions(&TRIANGLE);
+    let d = bin.positions(&[[0.0; 3]; 3]);
+    let doc = drawn(
+        &bin,
+        &format!(
+            r#"{{"attributes":{{"POSITION":{p}}},"targets":[{{"POSITION":{d}}}]}},{{"attributes":{{"POSITION":{p}}}}}"#
+        ),
+        "",
+    );
+    assert_eq!(
+        read(&doc)?.ignored,
+        vec![Ignored::MorphTargets { node: 0, mesh: 0 }]
+    );
+    Ok(())
+}

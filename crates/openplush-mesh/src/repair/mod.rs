@@ -4,6 +4,7 @@ pub(crate) mod bowtie;
 pub(crate) mod cap;
 pub(crate) mod components;
 pub(crate) mod degenerate;
+pub(crate) mod holes;
 pub(crate) mod nonmanifold_edge;
 pub(crate) mod orientation;
 pub(crate) mod plan;

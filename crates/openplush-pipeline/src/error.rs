@@ -1,7 +1,9 @@
 use std::collections::BTreeSet;
 
 use openplush_io::Format;
-use openplush_mesh::{EdgeId, FaceId, SourceCorner, VertexId};
+use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
+
+use crate::locations::mesh_locations;
 use openplush_pattern::PieceId;
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
@@ -25,18 +27,9 @@ pub enum EngineError {
         /// Every non-finite source vertex, used by a face or not.
         vertices: Vec<SourceCorner>,
     },
-    /// The mesh is not manifold where repair needed it to be.
-    #[error(
-        "the mesh is not manifold at {} edges and {} vertices",
-        .edges.len(),
-        .vertices.len()
-    )]
-    NotManifold {
-        /// Non-manifold edges.
-        edges: Vec<EdgeId>,
-        /// Non-manifold vertices.
-        vertices: Vec<VertexId>,
-    },
+    /// Repair refused the soup; the inner error says how, naming the soup's own elements.
+    #[error(transparent)]
+    Mesh(#[from] MeshError),
     /// A chart is not a topological disk, so it cannot flatten as one piece.
     #[error("chart {} is not a topological disk", .chart.index())]
     ChartNotDisk {
@@ -120,7 +113,7 @@ impl EngineError {
         match self {
             Self::Parse { .. } => "Parse",
             Self::NonFiniteInput { .. } => "NonFiniteInput",
-            Self::NotManifold { .. } => "NotManifold",
+            Self::Mesh(_) => "Mesh",
             Self::ChartNotDisk { .. } => "ChartNotDisk",
             Self::FoldedChart { .. } => "FoldedChart",
             Self::Seams(_) => "Seams",
@@ -143,11 +136,7 @@ impl EngineError {
                 source_vertices: sorted(vertices),
                 ..none
             },
-            Self::NotManifold { edges, vertices } => ErrorLocations {
-                edges: sorted(edges),
-                vertices: sorted(vertices),
-                ..none
-            },
+            Self::Mesh(inner) => mesh_locations(inner),
             // Proposal edges are not locations: proposals travel separately, as fixes.
             Self::ChartNotDisk { chart, .. } | Self::BoundaryNotRealizable { chart, .. } => {
                 ErrorLocations {
@@ -189,7 +178,7 @@ impl EngineError {
             | Self::BoundaryNotRealizable { proposals, .. } => proposals,
             Self::Parse { .. }
             | Self::NonFiniteInput { .. }
-            | Self::NotManifold { .. }
+            | Self::Mesh(_)
             | Self::FoldedChart { .. }
             | Self::Seams(_)
             | Self::Flip { .. }
@@ -262,7 +251,7 @@ fn seams_locations(error: &SeamsError) -> ErrorLocations {
     }
 }
 
-fn sorted<T: Ord + Copy>(ids: &[T]) -> Vec<T> {
+pub(crate) fn sorted<T: Ord + Copy>(ids: &[T]) -> Vec<T> {
     ids.iter()
         .copied()
         .collect::<BTreeSet<_>>()

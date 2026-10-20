@@ -7,7 +7,7 @@ How the engine is put together **as built today**, and why. Planned parts are ma
 OpenPlush turns a 3D model into a sewing pattern on the user's device. The work splits in two:
 
 - **The engine** (`crates/`): pure Rust geometry. It never touches the filesystem, the clock, threads, the network, or a browser API, so it runs identically as a native CLI and as WebAssembly in a browser worker.
-- **The shells** (`bindings/`, `apps/`, `packages/`): the CLI, the WASM facade, and the web app. They own all I/O and talk to the engine through one crate, `openplush-pipeline`. The CLI ([reference/cli.md](../reference/cli.md)) and the WASM facade exist as skeletons that call no stage yet; the web app is *planned*. Between the web app and the worker sits `packages/engine-client` ([reference/worker-protocol.md](../reference/worker-protocol.md)): it owns the worker and the request lifecycle, speaks only the protocol types generated from the facade's DTOs, and is the only package `apps/` may import for engine work.
+- **The shells** (`bindings/`, `apps/`, `packages/`): the CLI, the WASM facade, and the web app. They own all I/O and talk to the engine through one crate, `openplush-pipeline`. The CLI ([reference/cli.md](../reference/cli.md)) and the WASM facade exist as skeletons that call no stage yet, though the first stages exist; the web app is *planned*. Between the web app and the worker sits `packages/engine-client` ([reference/worker-protocol.md](../reference/worker-protocol.md)): it owns the worker and the request lifecycle, speaks only the protocol types generated from the facade's DTOs, and is the only package `apps/` may import for engine work.
 
 The boundary is enforced, not just intended: `scripts/check-boundary.sh` reads `cargo metadata` and the source, and fails CI if an engine crate reaches a browser or OS API or if a binding depends on any workspace crate but the pipeline. `crates/clippy.toml` bans the listed std filesystem, clock, thread, network and process items at compile time, so an aliased `use std::time;` cannot sneak past the text scan.
 
@@ -37,7 +37,7 @@ Every stage returns `StageResult<T>`, which is `Result<Staged<T>, EngineError>`:
 - **`Err(EngineError)`**: a declared invariant is violated, and there is no output at all. A stage never returns partial or "fixed up" geometry, because a pattern that looks right and is wrong is only discovered after cutting fabric. Every error variant names *where* the problem is (edge, vertex, chart, piece, source vertex), so the UI can highlight it; the exceptions are `Parse`, located only by the file format, and `Cancelled`.
 - **`Ok(Staged { value, warnings })`**: the output is valid but may sew badly. A `Warning` cannot exist without a remedy: `Remedy` is either `Actionable` (a seam edit the engine can make, offered for preview) or `Advisory` (a material or sizing change it will not make). Warnings never block export.
 
-Both are built (`openplush-pipeline`); no stage produces them yet. Exact messages and ordering: [reference/engine-api.md](../reference/engine-api.md).
+Both are built (`openplush-pipeline`), and the `validate`, `repair` and `chart` stages return them; no stage raises a warning yet. Exact messages and ordering: [reference/engine-api.md](../reference/engine-api.md).
 
 ## IDs and provenance
 

@@ -16,27 +16,34 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `Staged<T>` | struct | `value: T` plus `warnings: WarningSet`; warnings never turn `Ok` into `Err` |
 | `EngineError` | enum, `#[non_exhaustive]` | A violated invariant; no output exists. Variants below |
 | `ErrorLocations` | struct | What `EngineError::locations()` returns: the element IDs an error names, by category, sorted |
+| `validate(soup)` | function | `Staged<ValidationReport>`: every defect repair would meet, changing nothing; see [Stages](#stages) |
+| `repair(soup, plan)` | function | `StageResult<(ManifoldMesh, RepairReport)>`; see [Stages](#stages) |
 | `chart(mesh, seams)` | function | The first stage: `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
-| `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What `chart` takes and returns, from `openplush-mesh` and `-seams` |
+| `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
+| `MeshError`, `MeshElement`, `HalfEdgeId`, `CornerArray`, `Counted`, `MaterialFault` | re-exports | From `openplush-mesh`: the refusal `EngineError::Mesh` carries and the types its variants name. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
 | `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`, `mark_dart`) return. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
 ## Stages
 
-Only `chart` exists; each later stage lands with the task that builds it.
+`validate`, `repair` and `chart` exist; each later stage lands with the task that builds it.
+
+**`validate(&TriangleSoup)`** is the mesh crate's `validate`: a `ValidationReport` of every defect, never an error and never a change. Its warnings are empty.
+
+**`repair(&TriangleSoup, &RepairPlan)`** is the mesh crate's `into_manifold` and nothing else: the repaired mesh, which carries repair's copy groups, and the report of every change. A refusal is `Mesh`, in the mesh crate's order. Its warnings are empty.
 
 **`chart(&ManifoldMesh, &SeamSet)`** splits the mesh along the seams into charts, each cut open along its seams for flattening, with the `SewingMap` of their seam sides. A mesh from `into_manifold` carries repair's copy groups (`ManifoldMesh::edge_copies`), which the map uses to sew a split edge's copies; the stage takes no others. It returns the first failure and no partial output, checking in this order: a seam on an edge the mesh lacks (`Seams`); then each chart in ID order, folded (`FoldedChart`) before not a disk (`ChartNotDisk`, with the one `CloseChart` proposal found, or none when no cut was found that leaves a disk); then a seam chain with no partner, or a copy group that does not line up (`Seams`). Its warnings are empty.
 
 ## Errors
 
-Each `EngineError` variant carries the location of the problem. The messages are part of the API: they are pinned by tests (`crates/openplush-pipeline/tests/error.rs`) and change only deliberately. IDs print as their index, except in `Seams`, which prints its inner error's message; lengths print in millimetres to three decimals.
+Each `EngineError` variant carries the location of the problem. The messages are part of the API: they are pinned by tests (`crates/openplush-pipeline/tests/error.rs`) and change only deliberately. IDs print as their index, except in `Mesh` and `Seams`, which print their inner error's message; lengths print in millimetres to three decimals.
 
 | Variant | Located by | Message |
 |---|---|---|
 | `Parse` | `format`, plus the reader's `detail` | `could not read the {format name} file: {detail}` |
 | `NonFiniteInput` | every non-finite source vertex (`SourceCorner`) | `{n} source vertices have a NaN or infinite coordinate` |
-| `NotManifold` | `edges`, `vertices` | `the mesh is not manifold at {e} edges and {v} vertices` |
+| `Mesh` | whatever the inner `MeshError` names, in the soup given to repair (no mesh exists when repair refuses): its faces, its vertices, a hole loop by its `SourceCorner` in `source_vertices`, a broken invariant's element (a half-edge as its edge); a refusal about the soup as a whole names none | the inner error's message, unchanged, as in the `MeshError` table below |
 | `ChartNotDisk` | `chart`; carries `failure` and the `proposals` that fix it | `chart {chart} is not a topological disk` |
 | `FoldedChart` | `chart`, `edge` (the lowest edge it folds across) | `chart {chart} lies back over itself across edge {edge}` |
 | `Seams` | whatever the inner `SeamsError` names: its `edge`, `chart`, `chain` or `vertex` IDs; a refusal about a whole proposal or dart (`EmptyProposal`, `EmptyDart`, `BadProposalId`) names none | the inner error's message, unchanged, with IDs in Debug form as in the `SeamsError` table below |
@@ -54,6 +61,29 @@ Three methods read an error the way the shell needs it. Each matches every varia
 - **`code() -> &'static str`**: the variant name (`"Parse"`, `"ChartNotDisk"`, …, `"Cancelled"`). It is stable on the wire: a released code never changes.
 - **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
 - **`proposals() -> &[Proposal]`**: the fixes `ChartNotDisk` and `BoundaryNotRealizable` carry; empty for every other variant.
+
+`MeshError` is the error of building a soup or repairing one; `repair` returns it inside `Mesh`. Its messages are pinned in `crates/openplush-pipeline/tests/mesh_error.rs`. IDs and enums print in Rust `{:?}` (Debug) form: `VertexId(1)`, `FaceId(7)`, `Uvs`.
+
+| Variant | Carries | Message |
+|---|---|---|
+| `NonFiniteVertex` | the `vertex` | `vertex {vertex:?} has a non-finite coordinate` |
+| `IndexOutOfRange` | the `triangle`, the `index`, the `vertex_count` | `triangle {triangle:?} uses vertex index {index}, but there are only {vertex_count} vertices` |
+| `CornerCountMismatch` | the `array` (`Sources` or `Uvs`), `expected`, `found` | `expected {expected} per-corner {array:?} (three per triangle), found {found}` |
+| `TooLarge` | `what` was counted, the `count` | `{count} {what:?} exceed the u32 index space` |
+| `InvalidMaterial` | the lowest `primitive`, the `fault` (`Missing` or `OutOfRange`) | `source primitive {primitive}'s material entry is invalid: {fault:?}` |
+| `DegenerateTriangle` | the `triangle` | `triangle {triangle:?} repeats a vertex` |
+| `ZeroAreaTriangle` | the `triangle` | `triangle {triangle:?} has (near-)zero area` |
+| `DuplicateTriangle` | the later `triangle` and the `first` | `triangle {triangle:?} repeats the vertices of triangle {first:?}` |
+| `IsolatedVertex` | the `vertex` | `vertex {vertex:?} is not used by any triangle` |
+| `NonManifoldEdge` | the edge's ends `a` and `b` | `edge between {a:?} and {b:?} is shared by more than two triangles` |
+| `InconsistentOrientation` | the edge's ends `a` and `b` | `triangles sharing the edge between {a:?} and {b:?} have opposite orientations` |
+| `NoTriangles` | nothing | `the soup has no triangles` |
+| `UnusableExtent` | nothing | `the soup's extent is zero or too large to derive tolerances from` |
+| `UnknownHoleLoop` | the `loop_ref` | `the plan fills the loop {loop_ref:?}, which the mesh does not have` |
+| `HoleFillUnavailable` | the `loop_ref` | `the plan fills the loop {loop_ref:?}, and hole filling is not available` |
+| `PairingMismatch` | the `face` and the edge's ends `a`, `b` | `a pairing on the edge between {a:?} and {b:?} names triangle {face:?} wrongly` |
+| `NonManifoldVertex` | the `vertex` | `vertex {vertex:?} is non-manifold (its triangles form more than one fan)` |
+| `BrokenInvariant` | the `invariant` (1-5, or 0) and the `element` | `half-edge invariant {invariant} is broken at {element:?}` |
 
 `SeamsError` is the error of building a proposal, parsing its ID, changing a `SeamSet`, building a `SeamGraph`, closing a chart or marking an opening, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:
 

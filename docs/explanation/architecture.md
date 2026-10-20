@@ -11,7 +11,7 @@ OpenPlush turns a 3D model into a sewing pattern on the user's device. The work 
 
 The boundary is enforced, not just intended: `scripts/check-boundary.sh` reads `cargo metadata` and the source, and fails CI if an engine crate reaches a browser or OS API or if a binding depends on any workspace crate but the pipeline. `crates/clippy.toml` bans the listed std filesystem, clock, thread, network and process items at compile time, so an aliased `use std::time;` cannot sneak past the text scan.
 
-Why: a geometry change should never need a UI change, and the user's model never leaves their machine. Rationale: [constitution, Principles I and VIII](../../.specify/memory/constitution.md).
+Why: a geometry change should never need a UI change, and the user's model never leaves their machine. Rationale: [constitution, Principles I and VIII](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md).
 
 ## The pipeline: each stage's type is its guarantee
 
@@ -28,7 +28,7 @@ The engine is a chain of stages. Each stage's output type promises what the next
 
 `ManifoldMesh` has **no public constructor**: repair will be its only producer, so unrepaired geometry cannot reach the flattener by construction. `ManifoldMesh::debug_validate` checks all five half-edge invariants and is what the property tests run against every mesh they build.
 
-The planned stages and their pre- and postconditions are in the [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.md) and the [data model](../../specs/001-pattern-pipeline/data-model.md).
+The planned stages and their pre- and postconditions are in the [engine API contract](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/engine-api.md) and the [data model](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md).
 
 ## Errors and warnings are different channels
 
@@ -51,7 +51,7 @@ A `ProposalId` is different again: a hash of the edit itself (the kind of fix, w
 
 Same input, same output, to the byte, on every platform:
 
-- Ordered containers and total-order sorts on every output path, and plain IEEE-754 arithmetic (the rules: [AGENTS.md](../../AGENTS.md), Determinism), because one reordered seam changes the printed pattern.
+- Ordered containers and total-order sorts on every output path, and plain IEEE-754 arithmetic (the rules: [AGENTS.md](https://github.com/openplush/openplush/blob/main/AGENTS.md), Determinism), because one reordered seam changes the printed pattern.
 - Geometric predicates (`orient2d`, `orient3d`, `incircle`) are exact (`robust` crate, [ADR 0002](../adr/0002-robust-predicates.md)), so a near-degenerate triangle gets the same answer everywhere.
 - Tolerances come from `openplush_geom::epsilon` only, and come in two kinds kept apart by type:
   - **Model-space** (`ModelTolerances`): relative to the model's bounding-box diagonal, so the same shape at any size makes the same decisions.
@@ -61,4 +61,4 @@ Model units become millimetres through `Scale::to_mm`. `Mm::try_new` is public, 
 
 ## Crate layering
 
-Crates depend downward only; the graph and its rules are in the [plan's crate DAG](../../specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced), and `scripts/check-boundary.sh` enforces it. Which crates have code and which are scaffolds: [reference/crates.md](../reference/crates.md).
+Crates depend downward only; the graph and its rules are in the [plan's crate DAG](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced), and `scripts/check-boundary.sh` enforces it. Which crates have code and which are scaffolds: [reference/crates.md](../reference/crates.md).

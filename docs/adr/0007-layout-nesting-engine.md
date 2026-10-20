@@ -10,7 +10,7 @@ deciders: maintainer (proposed by the implementing agent from spike S4, T004)
 
 Research R2 picked `jagua-rs` as the v0.2 layout engine and `sparrow` (same author) as its optimizer. Data-model §6 passes layout one rotation set per fabric ({0°} napped, {0°, 180°} non-napped, {45°, 225°} bias; D-046 later dropped bias and gave felt any quarter turn) and a mirror axis for mirrored copies. FR-053 says layout honours those sets, and FR-062 defers optimised nesting past v0.1. S6 found that jagua-rs 1.1.0 and sparrow both pull `rayon`, which `deny.toml` bans.
 
-T004 (spike S4) asks: how big is jagua-rs on wasm32, and does it support discrete rotation sets? A size surprise would change the v0.1 layout design even though nesting is v0.2. This ADR records the answer, what v0.2 nesting will be built from, and what v0.1 must keep open. Evidence: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md).
+T004 (spike S4) asks: how big is jagua-rs on wasm32, and does it support discrete rotation sets? A size surprise would change the v0.1 layout design even though nesting is v0.2. This ADR records the answer, what v0.2 nesting will be built from, and what v0.1 must keep open. Evidence: [`research/s4_jagua_rs_wasm/`](https://github.com/openplush/openplush/blob/main/research/s4_jagua_rs_wasm/README.md).
 
 ## Decision drivers
 
@@ -93,7 +93,7 @@ Why not the others:
 
 ## More information
 
-* Evidence: [`research/s4_jagua_rs_wasm/README.md`](../../research/s4_jagua_rs_wasm/README.md) and [`results.md`](../../research/s4_jagua_rs_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, the size table, and the sparrow probe.
+* Evidence: [`research/s4_jagua_rs_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/s4_jagua_rs_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s4_jagua_rs_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, the size table, and the sparrow probe.
 * Upstream: propose the S4 patch to jagua-rs (`rayon` and `web-time` behind `spp`/`bpp`, `getrandom` dropped). For sparrow, a `license` field in `Cargo.toml` and a crates.io release would make it reconsiderable, but `rayon` and time-based termination remain [speculative].
 * Follow-ups for the lead's docs PR: research R6 S4 result; tasks.md T004; research R2 `jagua-rs` and `sparrow` rows; data-model §6 ("S4 confirms discrete rotation sets") and the napped tolerance row; plan v0.2 roadmap ("`jagua-rs` nesting"); research S6's `[verify]` note on `rayon` via jagua-rs and sparrow.
 * Revisit when (a) jagua-rs publishes the opt-out, (b) v0.2 nesting is specified, or (c) the upstream change is declined. If (c), option 4 is the preferred fallback over a fork [speculative].

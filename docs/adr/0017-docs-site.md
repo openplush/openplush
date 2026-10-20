@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-Feature 004 publishes `docs/` as a static site: a contributor book, a maker guide, and the workspace rustdoc under `/dev/api/` ([spec](../../specs/004-docs-site/spec.md), [plan](../../specs/004-docs-site/plan.md)). Three questions need an answer before its tasks land. Which generator builds the books? May the site carry the fonts the generators bundle, which are OFL-1.1 and not on the allow-list? And does Constitution IX govern tools that only run in CI, such as `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows, and the tools `cargo install` puts on a runner, which `cargo deny` never sees? This ADR records the plan's decisions W-001, W-007 and W-008 (task W001).
+Feature 004 publishes `docs/` as a static site: a contributor book, a maker guide, and the workspace rustdoc under `/dev/api/` ([spec](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/spec.md), [plan](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/plan.md)). Three questions need an answer before its tasks land. Which generator builds the books? May the site carry the fonts the generators bundle, which are OFL-1.1 and not on the allow-list? And does Constitution IX govern tools that only run in CI, such as `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows, and the tools `cargo install` puts on a runner, which `cargo deny` never sees? This ADR records the plan's decisions W-001, W-007 and W-008 (task W001).
 
 ## Decision drivers
 

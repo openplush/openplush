@@ -61,7 +61,8 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | Current Pages actions: `upload-pages-artifact@v5`, `deploy-pages@v5`. The deploy job needs `pages: write` and `id-token: write`; the `github-pages` environment can be restricted to `main` | [solid] |
 | GitHub's native PR previews for Pages are alpha and not public; `rossjrw/pr-preview-action` needs branch-based Pages and fails for forks | [solid] |
 | `Swatinem/rust-cache` is LGPL-3.0 and already pinned in `engine.yml`, `wasm.yml`, `review.yml` | [solid] |
-| `taiki-e/install-action` installs a pinned mdbook with checksum verification; lychee support there | [verify] W006 |
+| `taiki-e/install-action` installs a pinned mdbook with checksum verification (its `manifests/mdbook.json` lists 0.5.4 for Linux, macOS and Windows) | [solid] checked 2026-10-20 |
+| `taiki-e/install-action` does not offer lychee: it is absent from `TOOLS.md` and `manifests/lychee.json` does not exist on `main`. `scripts/check.sh --setup` installs it with `cargo install --locked`, as it does `cargo-deny` | [solid] checked 2026-10-20 |
 
 **Decisions**: rustdoc under `/dev/api/` with a generated index, gated on W-007; artifact previews (W-012).
 

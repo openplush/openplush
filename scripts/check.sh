@@ -226,6 +226,7 @@ for step in "${steps[@]}"; do
       fi
       run mdbook build
       run scripts/check-docs-summary.sh
+      run scripts/check-docs-remote.sh target/site/dev
       ;;
   esac
   endgroup

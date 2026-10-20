@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 
+use openplush_pipeline::MeshError;
 use openplush_pipeline::{
     ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PieceId, Proposal, ProposalId,
     ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
@@ -63,19 +64,16 @@ fn non_finite_input_names_every_source_vertex() {
 }
 
 #[test]
-fn not_manifold_names_its_edges_and_vertices() {
-    let e = EngineError::NotManifold {
-        edges: vec![EdgeId::new(3), EdgeId::new(8)],
-        vertices: vec![VertexId::new(5)],
+fn mesh_prints_its_inner_errors_message() {
+    let inner = MeshError::NonManifoldEdge {
+        a: VertexId::new(1),
+        b: VertexId::new(4),
     };
-    assert!(matches!(
-        &e,
-        EngineError::NotManifold { edges, vertices }
-            if *edges == [EdgeId::new(3), EdgeId::new(8)] && *vertices == [VertexId::new(5)]
-    ));
+    let e = EngineError::Mesh(inner);
+    assert_eq!(e.to_string(), inner.to_string());
     assert_eq!(
         e.to_string(),
-        "the mesh is not manifold at 2 edges and 1 vertices"
+        "edge between VertexId(1) and VertexId(4) is shared by more than two triangles"
     );
 }
 

@@ -8,7 +8,7 @@ deciders: maintainer (accepted 2026-10-15, in review of #84); proposed by the im
 
 ## Context and problem statement
 
-`crates/AGENTS.md` said "`openplush-wasm` wraps each export and converts panics to typed errors", and ADR 0006 planned to catch `i_overlay` panics at the allowance stage boundary. On the pinned toolchain (1.97.0), `wasm32-unknown-unknown` builds with `panic = "abort"`: a panic traps the instance and `catch_unwind` catches nothing. [`research/wasm_panic_probe/`](../../research/wasm_panic_probe/README.md) confirms this and shows that the trapped instance is unsafe to reuse. So the rule cannot be implemented as written. If native code caught a panic that the browser cannot, the same input would end in a typed error on one target and a crash on the other (Constitution V).
+`crates/AGENTS.md` said "`openplush-wasm` wraps each export and converts panics to typed errors", and ADR 0006 planned to catch `i_overlay` panics at the allowance stage boundary. On the pinned toolchain (1.97.0), `wasm32-unknown-unknown` builds with `panic = "abort"`: a panic traps the instance and `catch_unwind` catches nothing. [`research/wasm_panic_probe/`](https://github.com/openplush/openplush/blob/main/research/wasm_panic_probe/README.md) confirms this and shows that the trapped instance is unsafe to reuse. So the rule cannot be implemented as written. If native code caught a panic that the browser cannot, the same input would end in a typed error on one target and a crash on the other (Constitution V).
 
 The worker protocol has to say what the shell sees when the engine dies mid-request, and what happens to the requests and handles that were in flight.
 
@@ -32,7 +32,7 @@ Chosen option: **1**, because it is the only one that works on the pinned stable
 * **No engine code uses `catch_unwind`.** A panic stays what `crates/AGENTS.md` already says it is: a bug, allowed only behind an `// INVARIANT:`. The native CLI exits with Rust's panic code (101), which holds only while no build profile sets `panic = "abort"` (an abort exits by signal instead); the browser reports `EngineCrashed`. Both are "the engine crashed", on both targets.
 * **`openplush-wasm` installs a panic hook at start** that forwards the panic message to the worker console. Without it, the message is lost: the default hook writes to stderr, which has no destination on this target [likely]. Out of memory aborts without running the hook, so the host never depends on a message.
 * **Any exception from an export is a crash**, not only a `RuntimeError` from a trap: stack exhaustion throws `RangeError` (probe finding 6). The instance is never called again.
-* **The client fails every pending request with `EngineCrashed` and restarts the worker on the next request.** Handles carry the worker generation on the client side, so a handle from before the restart gets `StaleHandle` even if the new worker reuses its number. `StaleHandle` therefore has two sources: the binding (a released handle) and the client (an earlier generation). The mechanics (message order, listener detach, the `restarted` event, cancel and progress races) are in [worker-protocol §4](../../specs/001-pattern-pipeline/contracts/worker-protocol.md#worker-crash).
+* **The client fails every pending request with `EngineCrashed` and restarts the worker on the next request.** Handles carry the worker generation on the client side, so a handle from before the restart gets `StaleHandle` even if the new worker reuses its number. `StaleHandle` therefore has two sources: the binding (a released handle) and the client (an earlier generation). The mechanics (message order, listener detach, the `restarted` event, cancel and progress races) are in [worker-protocol §4](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md#worker-crash).
 * **`EngineCrashed` is listed in the binding's own code list**, next to `StaleHandle`, so the code has one Rust definition that T179(b) exports to TypeScript (`EngineErrorDto.code` itself stays a `string`, so an unknown code still displays). Only the host raises it.
 * **Replay.** The client commits a change to the project document only after the operation's success response. So the last committed document never contains the change that crashed, and replaying it after a restart cannot repeat the crash. Replay needs the project document API (US7). Until then, the shell reports the crash and the maker re-imports.
 
@@ -46,7 +46,7 @@ Chosen option: **1**, because it is the only one that works on the pinned stable
 
 ### Confirmation
 
-* [`research/wasm_panic_probe/`](../../research/wasm_panic_probe/README.md) records the commands, versions and output this ADR rests on.
+* [`research/wasm_panic_probe/`](https://github.com/openplush/openplush/blob/main/research/wasm_panic_probe/README.md) records the commands, versions and output this ADR rests on.
 * T040's tests against the mock worker:
   * a crash with N requests pending gives N `EngineCrashed` responses and no second terminal message for any id;
   * a cancel that races the crash is a no-op;
@@ -67,5 +67,5 @@ Chosen option: **1**, because it is the only one that works on the pinned stable
 
 ## More information
 
-* As built, once T040 and T099 land: `docs/reference/` gets the worker protocol page. Until then the contract is [`contracts/worker-protocol.md`](../../specs/001-pattern-pipeline/contracts/worker-protocol.md) §4 and §6.
+* As built, once T040 and T099 land: `docs/reference/` gets the worker protocol page. Until then the contract is [`contracts/worker-protocol.md`](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md) §4 and §6.
 * Changes ADR 0006 step 7, D-026, the T003 note, research.md's S3 recommendation 5 and data-model §7's Robustness bullet. Each said "catch panics at the stage boundary".

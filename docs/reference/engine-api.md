@@ -6,7 +6,7 @@ What the public engine API is **today**, and the facts about it that rustdoc doe
 cargo doc -p openplush-pipeline --no-deps --open
 ```
 
-The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.md) describes the full planned surface. Where this page and the contract disagree about something built, this page and the code are right.
+The [engine API contract](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/engine-api.md) describes the full planned surface. Where this page and the contract disagree about something built, this page and the code are right.
 
 ## Surface today
 
@@ -132,4 +132,4 @@ Two warnings equal in all four are kept once.
 
 ## Stability
 
-The versioning policy is in the [contract, section 7](../../specs/001-pattern-pipeline/contracts/engine-api.md#7-stability). As built, every public enum in this API is `#[non_exhaustive]` except `Remedy`, whose two variants are a deliberate closed set, so adding an error variant, warning code or target is not a breaking change.
+The versioning policy is in the [contract, section 7](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/engine-api.md#7-stability). As built, every public enum in this API is `#[non_exhaustive]` except `Remedy`, whose two variants are a deliberate closed set, so adding an error variant, warning code or target is not a breaking change.

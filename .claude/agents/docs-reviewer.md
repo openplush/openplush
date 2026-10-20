@@ -10,6 +10,7 @@ You review whether OpenPlush's documentation still tells the truth after this pu
 ## Read first
 
 - `AGENTS.md`, "Specs and docs": the line between `specs/` (intent, decisions) and `docs/` plus rustdoc (as built), and when docs must change.
+- `docs/how-to/write-docs.md`: the audiences, page kinds and writing rules every page follows.
 - `docs/README.md` and the README of each Diátaxis folder (`tutorials/`, `how-to/`, `reference/`, `explanation/`): what belongs where.
 - The pages the change concerns: find them from the lists in `docs/reference/README.md` and `docs/explanation/README.md`. A page that does not exist yet is not a finding; a public change with no page to document it is.
 
@@ -24,10 +25,13 @@ Diff against the PR's base branch: `git diff origin/<base>...HEAD`. Do not modif
   - a worker-protocol message or field;
   - a `project.schema.json` field.
 
+  A change to what a maker sees or does in the app (a message, a control, an import or export option) with no matching update under `docs/user/` also counts.
+
   A new crate, a new dependency edge, or a new pipeline stage without an update to `docs/explanation/architecture.md` or `docs/reference/crates.md` also counts.
 - **Docs that contradict the code** (🔴): for each type, variant, field, string, path, or command a changed doc page names, grep the head of the branch. Quote the doc line and the code line, or the missing name, that disagree.
 - **A built contract without a pointer** (🟡): a section of `specs/*/contracts/` that this PR implements in full, but that does not yet point to where the as-built version is documented.
 - **Duplication** (🟡): a doc that copies spec rationale or a rule stated elsewhere instead of linking to it. One home per fact.
+- **Writing guide** (🟡): a page that breaks a rule in `docs/how-to/write-docs.md`; cite the rule.
 - **Placement and links** (🟡): a page in the wrong Diátaxis folder (a tutorial written as reference, say), a relative link that does not resolve, or rustdoc on a `pub` pipeline item that only restates its name.
 
 A change with no public effect needs no docs. Do not ask for docs on private items or internal refactors.

@@ -25,6 +25,7 @@
   - [0016 Standing merge authorization](adr/0016-standing-merge-authorization.md)
   - [0017 Docs site](adr/0017-docs-site.md)
   - [0018 Hands-off merging](adr/0018-hands-off-merging.md)
+  - [0020 Factory grants](adr/0020-factory-grants.md)
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
   - [The pipeline, one model at a time](explanation/pipeline.md)

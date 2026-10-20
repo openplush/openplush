@@ -96,7 +96,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 
 - [ ] W030 `CONTRIBUTING.md` becomes a short pointer into the site; its human content moves to `docs/start/` and `docs/how-to/`. Assumes the plan's open question resolves to a pointer. needs:W018,W020
 - [ ] W031 [P] Split `docs/reference/crates.md` into `docs/reference/crates/<crate>.md`, one readable page each, with a short index. needs:W024
-- [ ] W032 [P] `docs/how-to/pull-requests.md` rewritten to the writing guide (IDs as links, purpose first); `docs/adr/README.md` gains "how to read an ADR". ADR bodies are records and are not edited
+- [x] W032 [P] `docs/how-to/pull-requests.md` rewritten to the writing guide (IDs as links, purpose first); `docs/adr/README.md` gains "how to read an ADR". ADR bodies are records and are not edited. As built: kept as a how-to on the how-to template, its reasoning inline under each step; task IDs became links to `tasks.md` or plain descriptions, and rules stated in `AGENTS.md` or `steward` are linked, not restated. The page is still partly explanation; splitting the reasoning into `docs/explanation/` is a follow-up
 - [ ] W033 [US1] `docs/tutorials/first-change.md`: a code-level first change, test first, on crates that exist today. Assumes the plan's open question resolves to "now". needs:W020
 
 ## Phase 7: Maker guide (US3)

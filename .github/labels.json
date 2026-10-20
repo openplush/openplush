@@ -10,8 +10,9 @@
   { "name": "rereview",      "color": "bfd4f2", "description": "Run the automated review again on this PR (removed when it starts)" },
   { "name": "mutation-audit", "color": "bfd4f2", "description": "Also run the mutation auditor in the automated review (removed when it starts)" },
   { "name": "factory",       "color": "c5def5", "description": "Ledger issue for unattended factory firings on one feature" },
-  { "name": "tier:A",        "color": "0e8a16", "description": "Agent enables auto-merge once CI is green and no 🔴 is open (ADR 0014)" },
+  { "name": "tier:A",        "color": "0e8a16", "description": "The merge gate enables auto-merge once CI is green and no 🔴 is open (ADR 0015)" },
   { "name": "tier:B",        "color": "fbca04", "description": "Expected output changed: auto-merge 24 h after CI is green (ADR 0014)" },
-  { "name": "tier:C",        "color": "b60205", "description": "The maintainer merges: engine, specs, decisions, gates, dependencies (ADR 0014)" },
+  { "name": "tier:C",        "color": "d93f0b", "description": "Engine, specs, decisions, dependencies: the merge gate merges once ready (ADR 0018)" },
+  { "name": "tier:H",        "color": "b60205", "description": "The maintainer merges: the gate, CI, scripts, agent rules, ADRs, the constitution, licences (ADR 0018)" },
   { "name": "merge:ready",   "color": "0e8a16", "description": "The merge gate's verdict: every condition holds on the current head (ADR 0015). Set by the gate only" }
 ]

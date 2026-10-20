@@ -71,9 +71,6 @@ mod tests {
             index: 7,
             vertex_count: 3,
         };
-        assert_eq!(
-            refusal(IoError::Mesh(refused.clone())),
-            EngineError::Mesh(refused)
-        );
+        assert_eq!(refusal(IoError::Mesh(refused)), EngineError::Mesh(refused));
     }
 }

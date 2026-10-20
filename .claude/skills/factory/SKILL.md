@@ -38,7 +38,7 @@ Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and sta
 
 ## What it never does
 
-Merge a PR itself, enable auto-merge, or apply `merge:ready` (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
+Merge a PR itself, unless a standing authorization covers it (`steward`, Merging); enable auto-merge, or apply `merge:ready` (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; accept a decision, unless the standing authorization says it covers decisions; add scope without a task ID; add `rereview` or `mutation-audit` (only the maintainer requests a rerun).
 
 ## Stop conditions
 
@@ -62,11 +62,12 @@ One GitHub issue per feature, titled `Factory ledger: <feature>`, labelled `fact
 **Firing <date> <time UTC>**
 Opened: #N (<ID>, stacked on #M), …
 Skipped: <ID> (<reason>), …
+Merged: #N (<merge SHA>), … under the grant in <ledger comment link>, or none
 Stopped: <reason>
 Next ready: <ID> or none
 ```
 
-The maintainer reads the ledger, accepts decisions and ticks `human:` work in `tasks.md`, and merges tier C PRs bottom-up. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
+The maintainer reads the ledger, accepts decisions and ticks `human:` work in `tasks.md`, and merges tier C PRs bottom-up, except those a standing authorization lets the firing merge. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
 
 ## Scheduling
 

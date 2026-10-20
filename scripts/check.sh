@@ -236,6 +236,8 @@ for step in "${steps[@]}"; do
       # The maker guide is its own book, built beside the contributor book and
       # published only from the first public release (docs.yml drops it on main).
       run mdbook build docs/user
+      # The maker book's source is its own directory, so mdBook copies its book.toml too.
+      run rm target/site/guide/book.toml
       run scripts/check-docs-plain.sh
       # mdBook copies every non-Markdown file under docs/ into the book, so the
       # landing page lands there too, with its dev/ link dead; it belongs at the root.

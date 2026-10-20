@@ -113,9 +113,8 @@ impl SewingMap {
                 ids.push(chains[j].id());
                 sides.extend(sides_of(mesh, &chart_of, &copy));
             }
-            if ids.len() == 1 && mesh.face(walk[0]).is_none()
-                || mesh.face(walk[0].twin()).is_none() && ids.len() == 1
-            {
+            let on_boundary = mesh.face(walk[0]).is_none() || mesh.face(walk[0].twin()).is_none();
+            if ids.len() == 1 && on_boundary {
                 return Err(SeamsError::UnpairedBoundarySeam { chain: lead.id() });
             }
             ids.sort();

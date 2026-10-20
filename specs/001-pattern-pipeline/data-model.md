@@ -51,6 +51,8 @@ pub struct ManifoldMesh {
     corner_uv: Vec<Option<DVec2>>,   // original texture coords, preserved through repair
     corner_src: Vec<SourceCorner>,   // provenance: (source primitive, source vertex index)
                                      // OBJ primitive: a run of `f` lines between `o`/`g`/`usemtl` lines (D-034)
+    // per mesh
+    edge_copies: Vec<Vec<EdgeId>>,   // repair's copy groups (§3a, D-060), set only by repair (D-062)
 }
 ```
 

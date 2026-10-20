@@ -22,7 +22,7 @@ The [engine API contract](../../specs/001-pattern-pipeline/contracts/engine-api.
 | `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
 | `MeshError`, `MeshElement`, `HalfEdgeId`, `CornerArray`, `Counted`, `MaterialFault` | re-exports | From `openplush-mesh`: the refusal `EngineError::Mesh` carries and the types its variants name. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
-| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`, `mark_dart`) return. Variants below |
+| `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`, `mark_dart`) return, and what `chart` wraps in `EngineError::Seams`. Variants below |
 | `Format`, `SourceCorner`, `VertexId`, `EdgeId`, `FaceId`, `ComponentId`, `ChartId`, `SeamChainId`, `PieceId`, `Proposal`, `ProposalId`, `ProposalKind`, `SeamKind`, `SeamReason`, `ChartFailure` | re-exports | From `openplush-io`, `-mesh`, `-seams` and `-pattern`, so a shell can name everything an error or warning carries without a second dependency |
 
 ## Stages
@@ -85,7 +85,7 @@ Three methods read an error the way the shell needs it. Each matches every varia
 | `NonManifoldVertex` | the `vertex` | `vertex {vertex:?} is non-manifold (its triangles form more than one fan)` |
 | `BrokenInvariant` | the `invariant` (1-5, or 0) and the `element` | `half-edge invariant {invariant} is broken at {element:?}` |
 
-`SeamsError` is the error of building a proposal, parsing its ID, changing a `SeamSet`, building a `SeamGraph`, closing a chart or marking an opening, not of a stage; its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:
+`SeamsError` is the error of building a proposal, parsing its ID, changing a `SeamSet`, building a `SeamGraph`, closing a chart or marking an opening; the `chart` stage returns it inside `Seams`. Its messages are pinned the same way, in `crates/openplush-pipeline/tests/seams_error.rs`:
 
 | Variant | Carries | Message |
 |---|---|---|

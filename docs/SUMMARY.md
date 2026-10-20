@@ -33,5 +33,6 @@
   - [Command line](reference/cli.md)
   - [Crates](reference/crates.md)
   - [Engine API](reference/engine-api.md)
+  - [Glossary](reference/glossary.md)
   - [Worker protocol](reference/worker-protocol.md)
 - [Tutorials](tutorials/README.md)

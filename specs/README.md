@@ -2,18 +2,16 @@
 
 OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spec-kit)). Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`.
 
-This index exists so you can tell at a glance what is specified and what is planned. What is built is on the [status page](../docs/start/status.md).
+This index lists the features and how to read their files. How far each feature's spec, plan and implementation have got is on the [status page](../docs/start/status.md).
 
-## Status
+## Features
 
-| Feature | Spec | Planned | Tasks |
-|---|---|---|---|
-| [001 pattern pipeline](./001-pattern-pipeline/) | ✅ Q1–Q3 closed | ✅ | ✅ 179 tasks |
-| [002 seam-placement hints](./002-seam-placement-hints/) | ✅ Q1–Q3 closed | ✅ | ✅ 82 tasks |
-| [003 source seam import](./003-source-seam-import/) | ✅ clarifications closed | ✅ | — |
-| [004 docs site](./004-docs-site/) | Draft, no clarify session | ✅ decisions proposed | ✅ 36 tasks |
-
-How far each feature's implementation has got, and what is built: the [status page](../docs/start/status.md).
+| Feature | What it specifies |
+|---|---|
+| [001 pattern pipeline](./001-pattern-pipeline/) | A 3D model in, a printable plush sewing pattern out |
+| [002 seam-placement hints](./002-seam-placement-hints/) | Where on the model seams are likely to help, shown before the maker draws them |
+| [003 source seam import](./003-source-seam-import/) | Seams and fabric regions read from the model's own UV map and materials |
+| [004 docs site](./004-docs-site/) | A documentation site for contributors and makers |
 
 ## Reading order
 
@@ -62,7 +60,7 @@ Worth knowing before planning a release:
 
 - **Fixtures and models**: what the corpus still lacks, and what that leaves unmeasurable, is on the [status page](../docs/start/status.md#known-gaps).
 - **001's fabric preset values** in research R7 are tagged `[verify]` throughout; whether they are measured yet is on the [status page](../docs/start/status.md#known-gaps).
-- **Five minor spec defaults remain open** in 001, each with a default already wired into `project.schema.json`. Listed in 001's spec under "Open Clarifications".
+- **001's minor spec defaults** are open questions, each with a default already wired into `project.schema.json`. Listed in 001's spec under "Open Clarifications".
 
 ## Active feature pointer
 

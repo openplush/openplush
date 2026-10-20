@@ -22,7 +22,7 @@ The full set is in the [constitution](.specify/memory/constitution.md).
 
 ## Design documents
 
-Start at the [specs index](specs/README.md) — it shows what is specified and planned, plus the known holes. What is built is on the [status page](docs/start/status.md).
+Start at the [specs index](specs/README.md) — it lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
 
 **001 — pattern pipeline** (the product)
 

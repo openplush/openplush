@@ -4,7 +4,7 @@ Thanks for helping. What is built and what is not is on the [status page](docs/s
 
 - **The most useful contribution right now is test models.** Several success criteria cannot be measured until real plush models arrive ([what the corpus lacks](docs/start/status.md#known-gaps)). A model that arrives with a **known-good hand-made sewing pattern** is worth more than any single code change — it becomes a regression oracle and it is the only way to verify that feature 002's hints land where experienced makers actually cut. No code needed.
 - **Engine work** starts at a ready task in a feature's `tasks.md`, such as [001's](specs/001-pattern-pipeline/tasks.md); the [status page](docs/start/status.md) says where each feature stands.
-- **Spec and plan review** is still welcome. Five minor defaults remain open in 001, and the fabric preset values need a sewist's review ([status](docs/start/status.md#known-gaps)).
+- **Spec and plan review** is still welcome. 001's spec lists the minor defaults still open, and the fabric preset values need a sewist's review ([status](docs/start/status.md#known-gaps)).
 
 ## Lanes
 | Lane | Folder | You need |

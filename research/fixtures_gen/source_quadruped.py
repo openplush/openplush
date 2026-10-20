@@ -95,11 +95,6 @@ class Animal:
         return low - BLEND * math.log(sum(math.exp((low - v) / BLEND) for v in values))
 
 
-def field(p: Vec, animal: Animal) -> float:
-    """Negative inside the animal."""
-    return animal.at(p)
-
-
 def gradient(p: Vec, animal: Animal) -> Vec:
     """Unit outward normal of the field at `p`; on a crease it is one side's, which is what a crease vertex needs."""
     g = []
@@ -108,7 +103,7 @@ def gradient(p: Vec, animal: Animal) -> Vec:
         hi = list(p)
         lo[d] -= GRADIENT_STEP
         hi[d] += GRADIENT_STEP
-        g.append(field((hi[0], hi[1], hi[2]), animal) - field((lo[0], lo[1], lo[2]), animal))
+        g.append(animal.at((hi[0], hi[1], hi[2])) - animal.at((lo[0], lo[1], lo[2])))
     n = math.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2)
     return (g[0] / n, g[1] / n, g[2] / n)
 
@@ -166,7 +161,7 @@ class Grid:
         for i in range(-X_CELLS, X_CELLS + 1):
             for j in range(self.ny + 1):
                 for k in range(self.nz + 1):
-                    v = field(self.point((abs(i), j, k)), animal)  # the x < 0 half samples its mirror: bit-identical
+                    v = animal.at(self.point((abs(i), j, k)))  # the x < 0 half samples its mirror: bit-identical
                     if v == 0.0:
                         raise ValueError(f"grid vertex {(i, j, k)} lies on the surface; move a part")
                     if v < 0.0 and (abs(i) == X_CELLS or j in (0, self.ny) or k in (0, self.nz)):
@@ -240,6 +235,6 @@ def quadruped() -> Mesh:
 
 
 def quadruped_files() -> dict[str, bytes]:
-    note = "quadruped: a symmetric animal with a muzzle fold, neck crease and head dome; surface nets over a hard union"
+    note = "quadruped: a symmetric animal with a muzzle fold, neck crease and head dome; dual contouring over a union of solids"
     m = quadruped()
     return {"meshes/quadruped.glb": glb_bytes("quadruped", note, m, [Primitive(m.faces)])}

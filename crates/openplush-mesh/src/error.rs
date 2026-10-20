@@ -110,11 +110,31 @@ pub enum MeshError {
         /// The loop named.
         loop_ref: LoopRef,
     },
-    /// `RepairPlan::fill_holes` names a loop, and filling is not built yet.
-    #[error("the plan fills the loop {loop_ref:?}, and hole filling is not available")]
-    HoleFillUnavailable {
+    /// A listed loop has no fill: every triangulation reuses an existing edge or has a
+    /// triangle with no area, or the patch does not settle or solve.
+    #[error(
+        "the loop {loop_ref:?} has no fill: every triangulation of it reuses an edge, has no area, or does not solve"
+    )]
+    HoleNotFillable {
         /// The loop named.
         loop_ref: LoopRef,
+    },
+    /// A listed loop runs along a copy of an edge repair split: one side of a seam, whose
+    /// partner the fill would leave unsewn.
+    #[error(
+        "the loop {loop_ref:?} runs along a split edge, so it is one side of a seam, not a hole"
+    )]
+    HoleOnSplit {
+        /// The loop named.
+        loop_ref: LoopRef,
+    },
+    /// A listed loop has more vertices than a fill takes.
+    #[error("the loop {loop_ref:?} has {vertices} vertices, more than the 512 a fill takes")]
+    HoleTooLarge {
+        /// The loop named.
+        loop_ref: LoopRef,
+        /// Its vertex count.
+        vertices: usize,
     },
     /// A pairing names a face that does not use the edge it pairs, or names a face twice; or a
     /// conflict cut is not on a two-face edge, names a face off it, or names a face already copied.

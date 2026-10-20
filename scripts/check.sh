@@ -233,6 +233,10 @@ for step in "${steps[@]}"; do
       fi
       run scripts/tests/check-docs-links.test.sh
       run mdbook build
+      # The maker guide is its own book, built beside the contributor book and
+      # published only from the first public release (docs.yml drops it on main).
+      run mdbook build docs/user
+      run scripts/check-docs-plain.sh
       # mdBook copies every non-Markdown file under docs/ into the book, so the
       # landing page lands there too, with its dev/ link dead; it belongs at the root.
       run rm -r target/site/dev/site

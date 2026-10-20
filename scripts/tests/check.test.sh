@@ -70,6 +70,8 @@ expect_plan "docs step builds the book and checks its navigation" "docs" \
 expect_plan "docs step puts the landing page at the site root, not in the book" "docs" \
   "cp docs/site/index.html target/site/index.html" "rm -r target/site/dev/site"
 expect_plan "docs step runs the links self-test" "docs" "scripts/tests/check-docs-links.test.sh"
+expect_plan "docs step builds the maker book and checks it for IDs and code" "docs" \
+  "mdbook build docs/user" "scripts/check-docs-plain.sh"
 # The whole site, landing page included, not just the book under dev/.
 out=$("$check" --dry-run docs 2>&1)
 for cmd in "scripts/check-docs-remote.sh target/site" "scripts/check-docs-links.sh target/site"; do

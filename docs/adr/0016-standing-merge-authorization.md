@@ -1,7 +1,7 @@
 ---
-status: Proposed
+status: Accepted
 date: 2026-10-20
-deciders: Lavender (maintainer)
+deciders: Lavender (maintainer): "accept ADR 0016", 2026-10-20
 ---
 
 # A time-boxed standing authorization lets an agent merge tier C PRs

@@ -168,6 +168,9 @@ jobs:
           # The job's own token: scoped to the permissions above, expires with
           # the job. Comments appear as github-actions[bot].
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The merge gate's App adds `rereview` for a head whose summary is
+          # stale; the action refuses a bot actor unless it is named here.
+          allowed_bots: openplush-merge-gate
           prompt: |
             REPO: ${{ github.repository }}
             PR: ${{ github.event.pull_request.number }}

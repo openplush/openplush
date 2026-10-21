@@ -33,7 +33,7 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 
 ## Stages
 
-`import`, `validate`, `repair` and `chart` exist; each later stage lands with the task that builds it.
+`import`, `validate`, `repair`, `chart` and `flatten` exist; each later stage lands with the task that builds it.
 
 **`import(&ImportFiles)`** reads the primary file with the reader its extension names: the extension of the name's final `/`-separated segment, as `std::path::Path::extension` reads it, compared ASCII case-insensitively. `obj` is OBJ, `stl` STL, `ply` PLY. Any other name, one with no extension (`model`, `.obj`, `model.`), and `gltf`, `glb` and `fbx` until their readers exist, is `UnknownFormat`. The bytes are never sniffed. A reader's refusal is `Parse`, naming that reader, `NonFiniteInput`, or `Mesh`. The `others` are carried and not read yet. Its warnings are empty.
 

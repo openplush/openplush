@@ -10,8 +10,8 @@ use crate::{EngineError, StageResult, Staged, WarningSet};
 /// One chart laid flat.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parameterization {
-    pub(crate) chart: ChartId,
-    pub(crate) uv: Vec<DVec2>,
+    chart: ChartId,
+    uv: Vec<DVec2>,
 }
 
 impl Parameterization {
@@ -44,6 +44,18 @@ pub fn flatten(mesh: &ManifoldMesh, charts: &[ChartMesh]) -> StageResult<Vec<Par
         value,
         warnings: WarningSet::default(),
     })
+}
+
+#[cfg(test)]
+impl Parameterization {
+    /// A layout written by hand, to reach states no flatten produces.
+    pub(crate) fn by_hand(chart: ChartId, uv: Vec<DVec2>) -> Self {
+        Self { chart, uv }
+    }
+
+    pub(crate) fn uv_mut(&mut self) -> &mut [DVec2] {
+        &mut self.uv
+    }
 }
 
 fn lay_flat(chart: &ChartMesh) -> Result<Parameterization, FlattenError> {

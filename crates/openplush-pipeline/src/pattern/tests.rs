@@ -38,9 +38,9 @@ impl Run {
         let layout = self
             .layouts
             .iter_mut()
-            .find(|l| l.chart == chart)
+            .find(|l| l.chart() == chart)
             .expect("a layout for the chart");
-        for p in &mut layout.uv {
+        for p in layout.uv_mut() {
             p.x *= x;
             p.y *= y;
         }
@@ -238,10 +238,10 @@ fn a_chart_with_two_boundary_loops_cannot_be_its_layout_s() {
     let ring = ChartMesh::new(&mesh, &seams, &found[0]);
     let graph = SeamGraph::with_copies(&mesh, &seams, mesh.edge_copies()).expect("no seams");
     let sewing = SewingMap::new(&mesh, &seams, &graph, mesh.edge_copies()).expect("no bundles");
-    let layout = Parameterization {
-        chart: ring.chart(),
-        uv: ring.xyz().iter().map(|p| DVec2::new(p.x, p.y)).collect(),
-    };
+    let layout = Parameterization::by_hand(
+        ring.chart(),
+        ring.xyz().iter().map(|p| DVec2::new(p.x, p.y)).collect(),
+    );
     let input = PatternInput {
         mesh: &mesh,
         charts: std::slice::from_ref(&ring),

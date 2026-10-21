@@ -5,9 +5,9 @@ use openplush_geom::units::{Mm, Scale};
 use crate::PatternError;
 
 /// Smallest supported longest finished dimension: the smallest plush that can still be turned and stuffed.
-const MIN_MM: f64 = 75.0;
+pub const MIN_MM: f64 = 75.0;
 /// Largest supported longest finished dimension; wearable scale is out of scope.
-const MAX_MM: f64 = 1000.0;
+pub const MAX_MM: f64 = 1000.0;
 
 /// How the maker sets the finished size.
 #[derive(Debug, Clone, Copy, PartialEq)]

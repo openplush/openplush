@@ -34,6 +34,8 @@ pub enum WarningCode {
     /// The file has parts the pattern does not follow: skins, morph targets, animations,
     /// or point and line primitives.
     ImportIgnored,
+    /// The finished size is outside the supported range of the longest dimension.
+    SizeOutOfRange,
     /// Declared first, sorts last: proves order follows the string.
     #[cfg(test)]
     TestZulu,
@@ -49,6 +51,7 @@ impl WarningCode {
         // Must stay injective: warnings order and deduplicate by this string.
         match self {
             Self::ImportIgnored => "import-ignored",
+            Self::SizeOutOfRange => "size-out-of-range",
             #[cfg(test)]
             Self::TestZulu => "test-zulu",
             #[cfg(test)]

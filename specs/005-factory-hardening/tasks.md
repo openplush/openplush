@@ -1,5 +1,6 @@
 ---
 description: "Task list for 005 factory hardening"
+kind: process
 ---
 
 # Tasks: Factory Hardening

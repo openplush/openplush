@@ -62,6 +62,7 @@ All gates for the lane you touched pass locally, any public change has its as-bu
 
 ## Specs and docs
 - Specs state what and why, never how; technology choices go in `plan.md` / `research.md`.
+- A feature with no maker-visible change (agents, merging, checks) keeps its `NNN` number and sets `kind: process` in its `tasks.md` front matter, so the status page counts it apart; `specs/README.md` lists it under Repository process.
 - Tag uncertain claims in research and plan docs: `[solid]`, `[likely]`, `[speculative]`, `[verify]`.
 - Absolute dates (YYYY-MM-DD). Decisions go in the plan's Decision Ledger; principle changes need an ADR (MADR).
 - `specs/` records intent and decisions; `docs/` and rustdoc describe what exists. Once code lands it is the source of truth: the spec section it implements points to the as-built docs and stops changing.

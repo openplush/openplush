@@ -12,9 +12,9 @@ The model followed here is the capsule in `fixtures/meshes/capsule.obj`: a close
 
 ### Import: bytes to a triangle soup
 
-`openplush-io` reads the file. `obj::read`, `stl::read` and `ply::read` each turn bytes into a `TriangleSoup`: positions, triangles, and for every triangle corner a `SourceCorner` recording which primitive and which vertex of the file it came from. Polygons are triangulated without moving or adding a vertex. The soup promises finite coordinates and in-range indices, and nothing about quality: holes, duplicates and non-manifold edges pass through to the next stage.
+`openplush-pipeline::import` picks the reader by the file name's extension, ignoring case: `obj`, `stl` or `ply`. Any other name, or one with no extension, is `UnknownFormat`, and the bytes are never sniffed ([stages](../reference/engine-api.md#stages)). `openplush-io` reads the file. `obj::read`, `stl::read` and `ply::read` each turn bytes into a `TriangleSoup`: positions, triangles, and for every triangle corner a `SourceCorner` recording which primitive and which vertex of the file it came from. Polygons are triangulated without moving or adding a vertex. The soup promises finite coordinates and in-range indices, and nothing about quality: holes, duplicates and non-manifold edges pass through to the next stage.
 
-What can fail, as `IoError`: `Parse` (the file cannot be read, with the line or byte where the reader can say), `NonFiniteInput` (every vertex with a NaN or infinite coordinate, by its place in the file), and `Mesh` (the triangles do not fit a soup at all). `EngineError` has matching `Parse` and `NonFiniteInput` variants, but the pipeline has no import stage yet: a shell calls the reader directly. glTF and GLB have no reader yet ([status](../start/status.md)).
+What can fail: `UnknownFormat` (no reader takes the name), and the reader's own `IoError`, which the stage maps one to one: `Parse` (the file cannot be read, with the line or byte where the reader can say, and the reader's format), `NonFiniteInput` (every vertex with a NaN or infinite coordinate, by its place in the file), and `Mesh` (the triangles do not fit a soup at all, carried unchanged). glTF and GLB have no reader yet ([status](../start/status.md)).
 
 The capsule reads as one OBJ primitive with 98 vertices and 192 triangles.
 

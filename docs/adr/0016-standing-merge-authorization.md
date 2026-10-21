@@ -10,7 +10,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-Tier C PRs wait for the maintainer to merge them ([ADR 0014](0014-auto-merge-tiers.md), [ADR 0015](0015-merge-gate.md)), and almost all engine work is tier C, so a stack of factory PRs stalls whenever the maintainer is away. On 2026-10-19 the maintainer granted, in a session, "don't ask for my input on blockers and merges and reviews, do it all yourself for the next 3 hours" (ledger [#233](https://github.com/openplush/openplush/issues/233)). Under that grant an agent merged ten tier C PRs (#252 to #270) and accepted decisions D-061 to D-063 on its own recommendation. The grant lived only in chat and the ledger, set no bounds, and was read as continuing past its end after a usage-limit pause. The maintainer asked, 2026-10-20, that agents may merge tier C PRs under a time-boxed standing authorization, with bounds written down.
+Tier C PRs wait for the maintainer to merge them ([ADR 0014](0014-auto-merge-tiers.md), [ADR 0015](0015-merge-gate.md)), and almost all engine work is tier C, so a stack of factory PRs stalls whenever the maintainer is away. On 2026-10-19 a three-hour grant given in a session let an agent merge ten tier C PRs (#252 to #270) and accept decisions D-061 to D-063 on its own recommendation (ledger [#233](https://github.com/openplush/openplush/issues/233)). The grant lived only in chat and the ledger, set no bounds, and was read as continuing past its end after a usage-limit pause. The maintainer decided, 2026-10-20, that agents may merge tier C PRs under a time-boxed standing authorization, with bounds written down.
 
 ## Decision drivers
 

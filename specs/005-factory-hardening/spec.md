@@ -82,7 +82,7 @@ A maintainer turning the gate on runs one diagnostic that lists every missing pr
 
 Every decision an agent raises states the facts, where the decision lives (file and ID), one recommendation, and what happens if nobody answers, with project terms linked to a glossary. Issue [#318](https://github.com/openplush/openplush/issues/318).
 
-**Why this priority**: The maintainer asked for a re-explanation three times in one session; a clear recommendation was accepted within minutes every time.
+**Why this priority**: A decision prompt that gives facts, the place it lives, one recommendation and a default can be answered without re-explanation.
 
 **Independent Test**: Read three decision prompts an agent raised (a question, a ledger comment, a handoff blocker); each has the four parts and every process term in it is in the glossary.
 
@@ -97,7 +97,7 @@ Every decision an agent raises states the facts, where the decision lives (file 
 
 The maintainer gives a factory run one structured, time-boxed grant (hours, features, whether it may merge, which paths, whether it may accept decisions). Every session reads it the same way, it never contradicts the merge decisions without saying so, and scheduled runs stop when it ends. Issue [#316](https://github.com/openplush/openplush/issues/316).
 
-**Why this priority**: A grant was restated about ten times in one day, an agent merged against ADR 0018, and a scheduled trigger fired for about 2 h after its grant ended. It needs a decision on what a grant may override before any code.
+**Why this priority**: Free-text grants were read inconsistently, an agent merged against ADR 0018, and a scheduled trigger fired after its grant ended (#316). It needs a decision on what a grant may override before any code.
 
 **Independent Test**: Start a run with a grant; a second session renews it with one word; scheduled firings after the grant's end do nothing but report that it expired.
 

@@ -12,7 +12,7 @@ Since 2026-10-13 a pull request has been "one reviewable slice": at most 400 cha
 
 Review runs cost the maintainer's subscription. They were spent twice on one PR within ten minutes, because the PR steward skill told agents to add the `rereview` label after fixing a 🔴 finding, sometimes with `mutation-audit` beside it, and each label is a separate trigger.
 
-The maintainer asked, 2026-10-18: "modify our entire approach to allow for ambiguously large prs. instead of splitting up work by the ~400 line counts, lets move to switching it up more by intents and clearly finishable sets of tasks that can be reviewed to help meet our epic features … I also need the amount of review agent runs to decrease more". And, on what an intent is: "a pr is solving an epic and has an intent … when i go digging for 'what brought this in' and 'what was the idea behind this' that needs to click … first X needs to happen, that Y bug get fixed, then you can implement feature Z with X and Y having gone first, but sometimes all of that gets pulled into a big PR when the merge gate is attempted".
+The maintainer set two goals on 2026-10-18: size a pull request by its intent, a finishable set of tasks toward an epic, so that `git blame` → PR answers what brought a change in and the idea behind it, with interdependent intents landing in order or folded together at the merge gate; and spend fewer automated review runs.
 
 ## Decision drivers
 

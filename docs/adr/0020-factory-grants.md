@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-On one day the maintainer restated a time-boxed grant about ten times across factory sessions ("N hour grant, can merge, no permission limits"), twice within a minute ([#316](https://github.com/openplush/openplush/issues/316)). Sessions read it differently: most kept treating PRs as "the maintainer merges"; one merged a PR before it read [ADR 0018](0018-hands-off-merging.md), then froze all merges and asked. An hourly scheduled firing kept running for about 2 h after its grant ended. ADR 0018 says agents never merge, grant or no grant, and the gate merges tiers A, B and C; [ADR 0016](0016-standing-merge-authorization.md)'s clause on accepting decisions under a grant still stands. On 2026-10-21 a 4-hour grant ran the other way on purpose: an agent merged 15 tier H PRs, each only once the gate showed every condition but the tier passing on its head, and main stayed green. The question: what is a grant's shape, what may it allow, and how does it end? Feature 005, decision F-002, task F001.
+Grants given as free text were read inconsistently across factory sessions ([#316](https://github.com/openplush/openplush/issues/316)): most sessions kept treating PRs as "the maintainer merges", one merged a PR against [ADR 0018](0018-hands-off-merging.md), and a scheduled firing kept running after its grant ended. ADR 0018 says agents never merge, grant or no grant, and the gate merges tiers A, B and C; [ADR 0016](0016-standing-merge-authorization.md)'s clause on accepting decisions under a grant still stands. A run that merged tier H PRs only once the gate showed every condition but the tier passing on their heads kept `main` green. The question: what is a grant's shape, what may it allow, and how does it end? Feature 005, decision F-002, task F001.
 
 ## Decision drivers
 
@@ -25,7 +25,7 @@ On one day the maintainer restated a time-boxed grant about ten times across fac
 
 ## Decision outcome
 
-Chosen option: **2**, the maintainer's choice of 2026-10-21. Option 1 leaves tier H waiting on a person for the length of every run, which is the stall #316 describes. Option 3 is what produced ten restatements and an unauthorised merge [solid]. Option 2 keeps the judgement in the gate's tested conditions (CI, a review of this head with no 🔴, no open thread, no changes requested, base `main`, no conflict) and lets the grant stand in for the one condition the gate leaves to a person: that someone chose to let tier H through.
+Chosen option: **2**, the maintainer's choice of 2026-10-21. Option 1 leaves tier H waiting on a person for the length of every run, which is the stall #316 describes. Option 3 is the free-text grant that sessions read inconsistently (#316) [solid]. Option 2 keeps the judgement in the gate's tested conditions (CI, a review of this head with no 🔴, no open thread, no changes requested, base `main`, no conflict) and lets the grant stand in for the one condition the gate leaves to a person: that someone chose to let tier H through.
 
 **The argument.** `/factory <features> grant hours=<N> merge=<yes|no> paths=<prefixes> decisions=<yes|no>`, or `/factory continue` to renew the last grant with a new start time. The field names above are syntax; a kickoff carries values, so it passes the placeholder rule.
 

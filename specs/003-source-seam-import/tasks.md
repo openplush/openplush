@@ -283,6 +283,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 - [ ] U066 [P] `docs/how-to/import-seams-from-a-model.md`: what counts as a cut, why a texture-only cut becomes a seam (keep texture cuts on a separate UV map), dead ends and how to fix them, and how names match fabrics
 - [ ] U067 Run quickstart.md scenarios 1 to 9 end to end, and point each implemented spec section to its as-built docs (ADR 0003)
 - [ ] U068 needs:U021 `specs/001-pattern-pipeline/contracts/engine-api.md` and `specs/001-pattern-pipeline/plan.md`: spec-only PR once U021 merges. Bump 001's engine-api version, add the Decision Ledger entry, and add the one-line pointer to this feature's contract (contract preamble). Separate from U021 because spec and implementation never share a PR
+- [ ] U072 [P] `crates/openplush-seams/src/source.rs`, `src/lib.rs`, the `source_*` tests in `crates/openplush-seams/tests/` and `crates/openplush-pipeline/tests/`, and `docs/reference/crates/openplush-seams.md`: rename `uv_cuts`/`UvCuts` to `source_seams`/`SourceSeams`, since the result now holds UV cuts, material boundaries, darts and projection points. A refactor with no behaviour change, so no failing-test commit: every test passes before and after, renamed with it. `tests/source_uv_cuts.rs` keeps its name because it tests the UV cuts. Requested by the maintainer on 2026-10-21
 
 ---
 

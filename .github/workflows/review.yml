@@ -222,7 +222,7 @@ jobs:
                Its first line is exactly
                `${{ env.SUMMARY_HEAD }}`
                (the job fails if no new comment starts that way). Then: every agent above
-               as ran or skipped, with the reason for each skip, the count of 🔴/🟡/🟣 findings, the mutation kill
+               as ran or skipped, with the reason for each skip, a line `Findings: 🔴 N, 🟡 N, 🟣 N.` (the merge gate reads it), the mutation kill
                count if the auditor ran, findings that do not map to a diff line, and
                "Nothing blocking" if that is true. Add no attribution footer to any comment.
                Post it even when there are no findings or a step failed: say what

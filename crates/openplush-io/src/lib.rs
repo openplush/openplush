@@ -1,6 +1,7 @@
 //! Bytes to `TriangleSoup`: OBJ, glTF, STL, PLY.
 
 mod error;
+pub mod gltf;
 pub mod obj;
 pub mod ply;
 pub mod stl;

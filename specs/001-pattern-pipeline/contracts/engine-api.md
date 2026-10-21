@@ -1,8 +1,8 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-18 | **Version**: 0.6 (draft) | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-18 | **Version**: 0.7 (draft) | **Status**: Draft contract
 
-*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built.
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built. 0.7 (2026-10-20) rewrites `flatten`: it takes the mesh, to name a dart's edges, and no `FlattenOptions`, and `BoundaryNotRealizable`'s residual is `residual`, in model units (D-068).
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
@@ -45,7 +45,7 @@ pub fn chart(mesh: &ManifoldMesh, seams: &SeamSet) -> StageResult<(Vec<ChartMesh
 pub fn propose_cuts(mesh: &ManifoldMesh, seams: &SeamSet, f: ChartFailure) -> StageResult<Vec<Proposal>>;
 
 // ── Flatten ───────────────────────────────────────────────────────────────
-pub fn flatten(charts: &[ChartMesh], opts: &FlattenOptions) -> StageResult<Vec<Parameterization>>;
+pub fn flatten(mesh: &ManifoldMesh, charts: &[ChartMesh]) -> StageResult<Vec<Parameterization>>;
 pub fn metrics(charts: &[ChartMesh], params: &[Parameterization], fabric: &Fabric) -> Staged<Vec<ChartMetrics>>;
 pub fn propose_darts(charts: &[ChartMesh], params: &[Parameterization], fabric: &Fabric) -> StageResult<Vec<Proposal>>;
 
@@ -122,7 +122,7 @@ pub enum EngineError {
     ChartNotDisk { chart: ChartId, failure: ChartFailure, proposals: Vec<Proposal> },
     FoldedChart  { chart: ChartId, edge: EdgeId },
     Flip         { chart: ChartId, faces: Vec<FaceId> },
-    BoundaryNotRealizable { chart: ChartId, residual_mm: f64, proposals: Vec<Proposal> },
+    BoundaryNotRealizable { chart: ChartId, residual: f64, proposals: Vec<Proposal> },
     SeamParity   { chain: SeamChainId, a_mm: f64, b_mm: f64, tolerance_mm: f64 },
     OffsetFailed { piece: PieceId, detail: String },
     ProposalNotOffered { id: ProposalId },

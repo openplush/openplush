@@ -38,6 +38,36 @@ fn the_longest_dimension_finishes_at_the_target() -> Result<(), Setup> {
     Ok(())
 }
 
+/// The tetrahedron with its axes rotated so `axis` (0 = x) holds the 2-unit side, moved off the
+/// origin, and its far vertex first in the file, so that vertex alone ends the longest side.
+fn turned(axis: usize) -> Result<ManifoldMesh, Setup> {
+    let corners = [
+        [0.0, 0.0, 2.0],
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 0.5, 0.0],
+    ];
+    let offset = [10.0, -5.0, 3.0];
+    let mut text = String::new();
+    for c in corners {
+        // A cyclic turn keeps the winding; z lands on `axis`.
+        let p: Vec<f64> = (0..3).map(|i| c[(i + 2 - axis) % 3] + offset[i]).collect();
+        text.push_str(&format!("v {} {} {}\n", p[0], p[1], p[2]));
+    }
+    text.push_str("f 2 4 3\nf 2 3 1\nf 3 4 1\nf 2 1 4\n");
+    let soup = openplush_io::obj::read(text.as_bytes())?;
+    Ok(into_manifold(&soup, &RepairPlan::default())?.0)
+}
+
+#[test]
+fn any_axis_can_hold_the_longest_side_wherever_the_model_sits() -> Result<(), Setup> {
+    for axis in 0..3 {
+        let scale = size(&turned(axis)?, longest(200.0)?)?.value;
+        assert_eq!(scale, Scale::mm_per_model_unit(100.0)?, "axis {axis}");
+    }
+    Ok(())
+}
+
 #[test]
 fn the_range_includes_both_ends() -> Result<(), Setup> {
     let mesh = tetra()?;

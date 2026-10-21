@@ -4,6 +4,7 @@
 
 mod chart;
 mod error;
+mod flatten;
 mod import;
 mod locations;
 mod repair;
@@ -12,7 +13,10 @@ mod warning;
 
 pub use chart::chart;
 pub use error::{EngineError, ErrorLocations};
+pub use flatten::{Parameterization, flatten};
 pub use import::{ImportFile, ImportFiles, import};
+pub use openplush_flatten::FlattenError;
+pub use openplush_geom::DVec2;
 pub use openplush_io::Format;
 pub use openplush_mesh::{
     ComponentId, CornerArray, Counted, DuplicateOrientation, EdgeId, FaceId, HalfEdgeId, LoopRef,

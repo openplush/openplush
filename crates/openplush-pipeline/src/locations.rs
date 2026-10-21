@@ -1,3 +1,4 @@
+use openplush_flatten::FlattenError;
 use openplush_mesh::{MeshElement, MeshError};
 
 use crate::ErrorLocations;
@@ -47,6 +48,32 @@ pub(crate) fn mesh_locations(error: &MeshError) -> ErrorLocations {
         | MeshError::InvalidMaterial { .. }
         | MeshError::NoTriangles
         | MeshError::UnusableExtent => none,
+    }
+}
+
+/// The chart `error` names and, where it has one, its face or inverted faces.
+pub(crate) fn flatten_locations(error: &FlattenError) -> ErrorLocations {
+    let none = ErrorLocations::default();
+    match error {
+        FlattenError::Unjudgeable { chart, face, .. }
+        | FlattenError::Degenerate { chart, face } => ErrorLocations {
+            faces: vec![*face],
+            charts: vec![*chart],
+            ..none
+        },
+        FlattenError::Flip { chart, faces } => ErrorLocations {
+            faces: sorted(faces),
+            charts: vec![*chart],
+            ..none
+        },
+        FlattenError::EmptyChart { chart }
+        | FlattenError::NotADisk { chart }
+        | FlattenError::SolveFailed { chart }
+        | FlattenError::BoundaryNotRealizable { chart, .. } => ErrorLocations {
+            charts: vec![*chart],
+            ..none
+        },
+        _ => none,
     }
 }
 

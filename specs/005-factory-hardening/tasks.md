@@ -47,7 +47,7 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 1: A kickoff with a blank field never starts (US1) 🎯 MVP
 
-- [ ] F003 [US1] `.claude/skills/factory/SKILL.md`: before any work, scan the arguments for placeholders as [contracts/factory-arguments.md](./contracts/factory-arguments.md) defines them, stop at the first and name the missing field; task-level blockers still skip and record. A worked example in the PR body (no skill test harness)
+- [x] F003 [US1] `.claude/skills/factory/SKILL.md`: before any work, scan the arguments for placeholders as [contracts/factory-arguments.md](./contracts/factory-arguments.md) defines them, stop at the first and name the missing field; task-level blockers still skip and record. A worked example in the PR body (no skill test harness). As built: the skill's Arguments section gives both shapes as patterns and scans only the arguments the firing received, never the skill's own `<feature>` notation; the field named is the label before the placeholder on its line, else the bracketed word; a kickoff stop writes nothing, not even the ledger comment, so its reason `kickoff: placeholder` is the session's output; `docs/explanation/agents.md` lists the new stop
 
 ## Phase 2: Every firing hands off, and a session stays short (US2)
 

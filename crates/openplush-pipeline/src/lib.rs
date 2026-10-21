@@ -9,6 +9,7 @@ mod import;
 mod locations;
 mod pattern;
 mod repair;
+mod size;
 mod stage;
 mod warning;
 
@@ -25,6 +26,7 @@ pub use openplush_mesh::{
     ManifoldMesh, MaterialFault, MeshElement, MeshError, RepairPlan, RepairReport, SourceCorner,
     TriangleSoup, Unmeasurable, ValidationReport, VertexId,
 };
+pub use openplush_pattern::scale::SizeTarget;
 pub use openplush_pattern::{
     CutCount, Fabric, FabricCategory, FabricId, FabricSpec, Outline, PatternError, PatternPiece,
     PieceId, StretchDirection,
@@ -37,5 +39,6 @@ pub use openplush_seams::{
 };
 pub use pattern::{PatternInput, PatternOptions, pattern};
 pub use repair::{repair, validate};
+pub use size::size;
 pub use stage::{StageResult, Staged};
 pub use warning::{NonBlank, Remedy, Warning, WarningCode, WarningSet, WarningTarget};

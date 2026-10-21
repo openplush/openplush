@@ -1,5 +1,7 @@
 # How to: set up the merge gate
 
+<!-- index: check every prerequisite with `scripts/gate-doctor.py`, fix what it names, then rehearse and go live; for the maintainer. -->
+
 This page takes a repository from no merge gate to one that comments on every pull request, and then to one that turns on auto-merge. The maintainer needs it once per repository, and again whenever the gate stops commenting.
 
 ## You will

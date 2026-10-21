@@ -100,6 +100,16 @@ r=$(new_case include)
 write "$r" docs/start/status-counts.inc "<!-- Generated; do not edit. -->" "" "${counts_table[@]}"
 expect pass "the generated include is ignored" "$r"
 
+r=$(new_case index-includes)
+for dir in adr explanation how-to reference tutorials; do
+  write "$r" "docs/$dir/index.inc" "${counts_table[@]}"
+done
+expect pass "the generated index includes are ignored" "$r"
+
+r=$(new_case other-folder-index)
+write "$r" docs/user/index.inc "${counts_table[@]}"
+expect fail "an index include outside the generated folders is checked" "$r" "docs/user/index.inc:3:"
+
 r=$(new_case hand-include)
 write "$r" docs/start/other-counts.inc "${counts_table[@]}"
 expect fail "a hand-kept include is checked" "$r" "docs/start/other-counts.inc:3:"

@@ -1,5 +1,7 @@
 # Tutorial: your first engine change, test first
 
+<!-- index: add a method to the engine's millimetre type, test first, and run every engine check. -->
+
 You will add one small method to the engine's millimetre type, writing its test before the code, and run the same checks CI runs. It takes about an hour, most of it waiting for the build, and at the end you have done every step of a real engine change on your own machine.
 
 ## You will
@@ -12,7 +14,7 @@ You will add one small method to the engine's millimetre type, writing its test 
 ## Before you start
 
 - [Set up and run every check](../start/setup.md) once, so the tools are installed and your machine gives the same answers as CI.
-- Skim the [crates](../reference/crates.md): this tutorial works in `openplush-geom`, the crate at the bottom of the engine, which every other crate builds on. It has no engine dependencies, so a change there builds fast and touches nothing else.
+- Skim the [crates](../reference/crates/README.md): this tutorial works in `openplush-geom`, the crate at the bottom of the engine, which every other crate builds on. It has no engine dependencies, so a change there builds fast and touches nothing else.
 
 This is an exercise: you throw the change away at the end. A change that is merged starts from a [task](../reference/glossary.md#process), and nothing in the engine needs this method yet.
 

@@ -1,5 +1,7 @@
 # How to scope and open a pull request
 
+<!-- index: sizing by intent, stacking, branch names, and the PR template. -->
+
 This page takes you from a set of finished tasks to pull requests a reviewer can judge: how to group the tasks into intents, lay out the commits, name and stack the branches, and merge. The binding rules live in [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs); this page links to them, explains the reasoning, and works through the cases you will actually hit.
 
 ## You will
@@ -161,4 +163,4 @@ Merge upward, don't rebase: rebasing forces a force-push on every branch above, 
 - CI is green at the tip, and not because a test was weakened or a golden snapshot updated ([`AGENTS.md`, Workflow](https://github.com/openplush/openplush/blob/main/AGENTS.md#workflow)).
 - Every box in the template's closing checklist is true.
 
-**Decisions**: [ADR 0013](../adr/0013-intent-sized-pull-requests.md) (intent-sized PRs, one review), [ADR 0014](../adr/0014-auto-merge-tiers.md) (merge tiers), [ADR 0015](../adr/0015-merge-gate.md) (merge gate), [ADR 0016](../adr/0016-standing-merge-authorization.md) (standing merge authorization), [ADR 0018](../adr/0018-hands-off-merging.md) (the gate merges tier C; tier H is the maintainer's).
+**Decisions**: [ADR 0013](../adr/0013-intent-sized-pull-requests.md) (intent-sized PRs, one review), [ADR 0014](../adr/0014-auto-merge-tiers.md) (merge tiers), [ADR 0015](../adr/0015-merge-gate.md) (merge gate), [ADR 0016](../adr/0016-standing-merge-authorization.md) (standing merge authorization), [ADR 0018](../adr/0018-hands-off-merging.md) (the gate merges tier C; tier H is the maintainer's), [ADR 0020](../adr/0020-factory-grants.md) (factory grants, and merging tier H under one).

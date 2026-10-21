@@ -8,7 +8,7 @@ OpenPlush is pre-alpha: nothing a maker can use exists yet. The engine stages ex
 
 ### By capability
 
-In pipeline order. "Built" means merged, with its tests; each stage is described in [the architecture](../explanation/architecture.md) and its crate in [the crate reference](../reference/crates.md).
+In pipeline order. "Built" means merged, with its tests; each stage is described in [the architecture](../explanation/architecture.md) and its crate in [the crate reference](../reference/crates/README.md).
 
 | Capability | Built | Not built yet |
 |---|---|---|

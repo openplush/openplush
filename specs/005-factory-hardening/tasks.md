@@ -70,12 +70,12 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 6: A grant is given once and honoured the same way (US6)
 
-- [ ] F011 [US6] `.claude/skills/factory/SKILL.md`: `/factory` reads the grant argument and `continue`, as ADR 0020 sets, and states the grant in the handoff's kickoff. needs:F001,F004
-- [ ] F012 [US6] `.claude/skills/factory/SKILL.md`, Scheduling: a firing after the grant's end does no work, reports the expiry and turns its scheduled task off. needs:F011
+- [x] F011 [US6] `.claude/skills/factory/SKILL.md`: `/factory` reads the grant argument and `continue`, as ADR 0020 sets, and states the grant in the handoff's kickoff. needs:F001,F004. As built: Arguments gains Grant (syntax, record, continue, renew); a new Merging under a grant section holds ADR 0020's merge rule; the firing writes `ends=` into the grant record and the kickoff, so a fresh session or a scheduled firing continues the same clock; the ledger comment gains `Grant:`, `Merged:` and `Accepted:` lines. AGENTS.md, `steward`, the tier table, the agents explanation and the glossary name the exception with a link
+- [x] F012 [US6] `.claude/skills/factory/SKILL.md`, Scheduling: a firing after the grant's end does no work, reports the expiry and turns its scheduled task off. needs:F011. As built: an End check in One firing runs after the grant is read and again at each step boundary; past `ends=` the firing turns off each enabled scheduled task whose prompt is its kickoff and stops with `grant expired` (a new Stop conditions row), and its kickoff becomes `/factory continue`. Scheduling fires the handoff's kickoff, never `/factory continue`
 
 ## Phase 7: Stacked PRs stop conflicting on shared lists (US7)
 
-- [ ] F013 [US7] Generate the folder index lists, as 004's W044 does; the ledger stays as it is (F-003). needs:W044
+- [x] F013 [US7] Generate the folder index lists, as 004's W044 does; the ledger stays as it is (F-003). needs:W044. As built: W044 (#354) generates them; nothing else to apply
 
 ## Dependencies and execution order
 

@@ -1,5 +1,7 @@
 # Glossary
 
+<!-- index: every domain term (geometry, sewing, process) and every ID prefix the specs use. -->
+
 Every domain term and ID prefix the contributor pages use, as this repository uses it: geometry from the engine's code and specs, sewing from feature 001's spec, process from the agent files, the skills and the ADRs.
 
 ## Entries
@@ -35,14 +37,14 @@ Each section is in alphabetical order.
 - **Decision ledger**: the table in each feature's `plan.md` that lists the feature's decisions, each with its date, ID, what was decided, and its status (proposed, or accepted by the maintainer).
 - **Factory**: the unattended task factory. Each run, a *firing*, starts as `/factory <feature>`, takes the next ready [tasks](#process) of a feature, opens a stacked pull request for each, and stops at a named condition instead of asking a question ([the factory skill](https://github.com/openplush/openplush/blob/main/.claude/skills/factory/SKILL.md)).
 - **Fixture**: a test model or data file under `fixtures/`, such as a mesh, a model with exactly one repair defect, or a reference seam set. A *golden* fixture is a stage's expected output, and a pull request that changes one is [tier B](../how-to/review-and-merge.md#tiers). What each folder holds, and how the files are generated: [the fixtures README](https://github.com/openplush/openplush/blob/main/fixtures/README.md).
-- **Grant**, or **standing authorization**: a permission the maintainer gives an agent session in their own words, bounded in time and scope; it never lets an agent merge ([Standing authorizations](../explanation/agents.md#standing-authorizations)).
+- **Grant**, or **standing authorization**: a time-boxed permission the maintainer gives a [factory](#process) run as one argument (hours, features, merge, paths, decisions); one that allows merging lets the run merge a [tier H](#process) pull request the merge gate shows ready but for its tier ([Standing authorizations](../explanation/agents.md#standing-authorizations), [ADR 0020](../adr/0020-factory-grants.md)).
 - **Plan**: a feature's `plan.md`: how it will be built, with the architecture, the technology choices, the decision ledger and the order of work.
 - **Spec**: a feature's `spec.md`: what the feature does and why, as user stories, numbered requirements and success criteria, with no technology choices.
 - **Stack position**: the `NN` in a branch named `NNN/NN-slug`: a pull request's place in its feature's sequence, assigned when the pull request opens and never reused ([Name the branch and stack it](../how-to/pull-requests.md#3-name-the-branch-and-stack-it)).
 - **Steward**: the procedure an agent follows to drive a pull request through CI, review findings, stacks and merges ([the steward skill](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md)).
 - **Task**: one numbered line in a feature's `tasks.md`: a piece of work, the files it touches, and a tick when it is done. Markers on the line: `[P]` can run in parallel with its neighbours; `[US1]` names the user story it serves; `needs:` lists tasks that must be ticked first; `blocked:` names a proposed decision only the maintainer can clear; `human:` means a person must do it, and no agent picks it up. A task is **ready** when it is unticked, has no `blocked:` or `human:` token, every task in its `needs:` is ticked, and the phases before it are done.
-- **Tier**: who merges a pull request, set by the riskiest path or task it touches: **A**, **B** and **C** merge through the merge gate, **H** only by the maintainer. Which paths fall in each, and the gate's conditions, are in [Get a pull request reviewed and merged](../how-to/review-and-merge.md#tiers) ([ADR 0014](../adr/0014-auto-merge-tiers.md), [ADR 0015](../adr/0015-merge-gate.md), [ADR 0018](../adr/0018-hands-off-merging.md)).
-- **Tier H**: the [tier](#process) only the maintainer merges ([which paths](../how-to/review-and-merge.md#tiers), [why](../explanation/agents.md#the-merge-gate-tiers-and-who-merges)).
+- **Tier**: who merges a pull request, set by the riskiest path or task it touches: **A**, **B** and **C** merge through the merge gate, **H** by the maintainer or under a grant. Which paths fall in each, and the gate's conditions, are in [Get a pull request reviewed and merged](../how-to/review-and-merge.md#tiers) ([ADR 0014](../adr/0014-auto-merge-tiers.md), [ADR 0015](../adr/0015-merge-gate.md), [ADR 0018](../adr/0018-hands-off-merging.md)).
+- **Tier H**: the [tier](#process) the maintainer merges, or a factory run under a [grant](#process) that allows it ([which paths](../how-to/review-and-merge.md#tiers), [why](../explanation/agents.md#the-merge-gate-tiers-and-who-merges)).
 
 ### ID prefixes
 

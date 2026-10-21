@@ -1,5 +1,7 @@
 # Title: the topic, as a noun phrase
 
+<!-- index: one line for the folder's list of pages: what the reader gets from this page. -->
+
 One or two sentences: the question this page answers and who asks it.
 
 ## The short answer

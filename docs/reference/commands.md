@@ -1,5 +1,7 @@
 # Commands
 
+<!-- index: the commands that run every check, a group or one step. -->
+
 The commands that run every check, a group of them, or one; the table is the same one agents read in `AGENTS.md`, included here so it has one home.
 
 ## Entries

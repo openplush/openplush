@@ -1,5 +1,7 @@
 # Title: the result the reader ends with
 
+<!-- index: one line for the folder's list of pages: what the reader gets from this page. -->
+
 One or two sentences: what the reader builds and why it is worth an hour.
 
 ## You will

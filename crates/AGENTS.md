@@ -3,7 +3,7 @@
 Applies in addition to the root `AGENTS.md`. Each rule's reason is in [`docs/reference/code-rules.md`](../docs/reference/code-rules.md), under the same heading.
 
 ## Where code goes
-- Put code in the crate that owns its concern: [the ownership table](../docs/reference/crates.md#which-crate-owns-what).
+- Put code in the crate that owns its concern: [the ownership table](../docs/reference/crates/README.md#which-crate-owns-what).
 - Depend downward only (DAG in `specs/001-pattern-pipeline/plan.md`). A new sideways edge needs an ADR.
 - `bindings/*` depend on `openplush-pipeline` only.
 

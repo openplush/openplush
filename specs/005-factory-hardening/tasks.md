@@ -75,7 +75,7 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 7: Stacked PRs stop conflicting on shared lists (US7)
 
-- [ ] F013 [US7] Generate the folder index lists, as 004's W044 does; the ledger stays as it is (F-003). needs:W044
+- [x] F013 [US7] Generate the folder index lists, as 004's W044 does; the ledger stays as it is (F-003). needs:W044. As built: W044 (#354) generates them; nothing else to apply
 
 ## Dependencies and execution order
 

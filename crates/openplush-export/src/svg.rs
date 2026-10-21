@@ -119,7 +119,7 @@ fn text(out: &mut String, line: &Line, y: f64) {
     let indent = if line.indent { INDENT_COLUMNS } else { 0 };
     let x = GAP_MM + columns_wide(indent);
     out.push_str(&format!(
-        "<text x=\"{x:.3}\" y=\"{y:.3}\" font-family=\"monospace\" font-size=\"{TEXT_MM:.3}\" xml:space=\"preserve\">"
+        "<text x=\"{x:.3}\" y=\"{y:.3}\" font-family=\"monospace\" font-size=\"{TEXT_MM:.3}\">"
     ));
     for c in line.text.iter().map(|&b| char::from(b)) {
         match c {

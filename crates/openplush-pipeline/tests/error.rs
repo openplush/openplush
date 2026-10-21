@@ -6,8 +6,9 @@ use std::error::Error;
 
 use openplush_pipeline::MeshError;
 use openplush_pipeline::{
-    ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PatternError, PieceId, Proposal,
-    ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
+    ChartFailure, ChartId, EdgeId, EngineError, ExportError, FaceId, Format, LayoutError,
+    PatternError, PieceId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError,
+    SourceCorner, VertexId,
 };
 
 fn dart(chart: u32, edge: u32) -> Result<Proposal, Box<dyn Error>> {
@@ -200,6 +201,57 @@ fn stage_input_mismatch_names_the_chart() {
         e.to_string(),
         "chart 4: the layouts or sewing map given do not belong to the charts given"
     );
+}
+
+#[test]
+fn layout_carries_its_refusal_whole_and_locates_a_piece_too_wide() {
+    let e = EngineError::Layout(LayoutError::PieceTooWide {
+        piece: PieceId::new(1),
+        width_mm: 112.0,
+        roll_mm: 50.0,
+    });
+    assert_eq!(
+        e.to_string(),
+        "piece 1 is 112.000 mm wide but the roll is 50.000 mm"
+    );
+    assert_eq!(e.locations().pieces, vec![PieceId::new(1)]);
+    let rotation = EngineError::Layout(LayoutError::UnsupportedRotation {
+        piece: PieceId::new(2),
+        rotation_deg: 45.0,
+    });
+    assert_eq!(rotation.locations().pieces, vec![PieceId::new(2)]);
+    for e in [
+        LayoutError::NoPieces,
+        LayoutError::BadRollWidth,
+        LayoutError::TooManyPages {
+            width_mm: 9000.0,
+            length_mm: 9000.0,
+        },
+    ] {
+        assert!(EngineError::Layout(e).locations().pieces.is_empty());
+    }
+}
+
+#[test]
+fn export_carries_its_refusal_whole_and_locates_the_piece_it_names() {
+    let unknown = EngineError::Export(ExportError::UnknownPiece {
+        piece: PieceId::new(3),
+    });
+    assert_eq!(
+        unknown.to_string(),
+        "the sheet places piece 3, which was not given"
+    );
+    assert_eq!(unknown.locations().pieces, vec![PieceId::new(3)]);
+    let twice = EngineError::Export(ExportError::DuplicatePiece {
+        piece: PieceId::new(5),
+    });
+    assert_eq!(twice.to_string(), "piece 5 was given more than once");
+    assert_eq!(twice.locations().pieces, vec![PieceId::new(5)]);
+    let unprintable = EngineError::Export(ExportError::Unprintable {
+        text: "\u{2192}".into(),
+        character: '\u{2192}',
+    });
+    assert!(unprintable.locations().pieces.is_empty());
 }
 
 #[test]

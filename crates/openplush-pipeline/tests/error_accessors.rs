@@ -4,9 +4,9 @@ use std::collections::BTreeMap;
 use std::error::Error;
 
 use openplush_pipeline::{
-    ChartFailure, ChartId, EdgeId, EngineError, ErrorLocations, FaceId, FlattenError, Format,
-    PatternError, PieceId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError,
-    SourceCorner, VertexId,
+    ChartFailure, ChartId, EdgeId, EngineError, ErrorLocations, ExportError, FaceId, FlattenError,
+    Format, LayoutError, PatternError, PieceId, Proposal, ProposalId, ProposalKind, SeamChainId,
+    SeamKind, SeamsError, SourceCorner, VertexId,
 };
 use openplush_pipeline::{
     CornerArray, Counted, HalfEdgeId, LoopRef, MaterialFault, MeshElement, MeshError,
@@ -137,6 +137,20 @@ fn flatten_and_later_variants() -> Vec<(EngineError, &'static str)> {
                 chart: ChartId::new(3),
             },
             "StageInputMismatch",
+        ),
+        (
+            EngineError::Layout(LayoutError::PieceTooWide {
+                piece: PieceId::new(2),
+                width_mm: 112.0,
+                roll_mm: 50.0,
+            }),
+            "Layout",
+        ),
+        (
+            EngineError::Export(ExportError::UnknownPiece {
+                piece: PieceId::new(4),
+            }),
+            "Export",
         ),
         (
             EngineError::ProposalNotOffered {

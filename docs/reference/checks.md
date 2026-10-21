@@ -1,7 +1,6 @@
 # Checks: what each one enforces
 
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the generated status counts, the tests that must also run on wasm32, and the dependency licence check. [Set up and run every check](../start/setup.md) says how to run them.
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
+This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, the generated status counts, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
 
 ## Entries
 
@@ -17,18 +16,17 @@ An opt-out of the `disallowed_types` or `disallowed_methods` lint needs a line i
 
 It scans the files git tracks or would add, so ignored trees such as build output are skipped, and counts every textual mention of either lint name in a `.rs` file under `crates/` or `bindings/`, a `Cargo.toml` or a `.cargo/config*`, plus `clippy::style`, `clippy::all` and `warnings` lint levels. The script's header lists the exact patterns and what they miss. It is a tripwire for honest mistakes, not a sandbox.
 
-### Generated status counts (`status`)
-
-The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. `scripts/gen-status.py` reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc`, which the page includes; the `status` step renders the counts again and fails, with a diff, when the committed file differs. After ticking a task, run `scripts/gen-status.py` and commit the include with the tick.
-
-A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
 ### ADR lifecycle (`hygiene`)
+
 An ADR that another one amends or supersedes must say so, and the newer one must name it, so a reader who lands on either finds the other. `scripts/check-adr-lifecycle.sh` reads every `docs/adr/NNNN-*.md` and fails when:
+
 - an Accepted ADR amends or supersedes one that is still Proposed;
 - an Accepted ADR amends or supersedes one that does not record it, by a "Superseded by ADR-NNNN" status or a line naming the newer ADR with "amended" or "superseded";
 - an ADR says another amends or supersedes it, and that other ADR does not name it;
 - an ADR has no status, two ADRs share a number, or an amendment names an ADR that does not exist.
+
 Each failure names both ADRs and the fix. An ADR's status is the maintainer's decision and its body is a record, so a finding only the maintainer can settle is not fixed by editing the ADR: it gets a line, with its reason, in [`scripts/adr-lifecycle-exceptions.txt`](https://github.com/openplush/openplush/blob/main/scripts/adr-lifecycle-exceptions.txt), and a line whose finding is gone fails as stale. The script's header lists the phrasings it reads as an amendment ("Supersedes, in ADR 0014: …", "amended by", "Changes ADR 0006 …") and what it misses.
+
 The check also prints, without failing, the Proposed rows of every feature plan's Decision Ledger, sorted, as a reminder of the decisions waiting on the maintainer.
 
 ### Workspace lints (`clippy`)
@@ -79,6 +77,12 @@ How an npm licence expression is judged:
 | `AND` mixed with `OR` | never: stricter than `cargo deny` on purpose, until a real dependency needs it |
 
 IDs are case-sensitive. A missing licence, `SEE LICENSE IN …`, `UNLICENSED` and a `licenses` array of more than one entry all fail.
+
+### Generated status counts (`docs`)
+
+The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. Before it builds the book, the `docs` step runs `scripts/gen-status.py`, which reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc` for the page to include. The file is git-ignored and never committed, so a tick needs no regeneration and no pull request conflicts on it.
+
+A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails the build, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
 
 ### Agent attribution (pull requests, CI only)
 

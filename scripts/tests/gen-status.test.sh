@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Tests for scripts/gen-status.py: each case builds a throwaway specs/ tree and
-# asserts what the generator writes, and whether --check accepts it.
+# asserts what the generator writes.
 #
-# What matters: a tick without regenerating fails --check and regenerating clears
-# it, the output is byte-identical run to run, and a line that looks like a task
+# What matters: a tick shows in the next run's counts, the output is
+# byte-identical run to run, and a line that looks like a task
 # but is not one, or a tasks.md with no tasks, fails rather than being miscounted.
 set -euo pipefail
 export LC_ALL=C
@@ -19,12 +19,11 @@ fail=0
 ok() { pass=$((pass + 1)); echo "ok   $1"; }
 bad() { fail=$((fail + 1)); echo "FAIL $1"; [[ -n ${2:-} ]] && while IFS= read -r l; do echo "     | $l"; done <<<"$2"; return 0; }
 
-# expect <pass|fail> <case name> <root> <--check or ""> [<text the failure output must contain>]
+# expect <pass|fail> <case name> <root> [<text the failure output must contain>]
 expect() {
-  local want=$1 name=$2 root=$3 args=() pattern=${5:-}
-  [[ $4 == --check ]] && args=(--check)
+  local want=$1 name=$2 root=$3 pattern=${4:-}
   local out status=0
-  out=$("$gen" "${args[@]}" "$root" 2>&1) || status=$?
+  out=$("$gen" "$root" 2>&1) || status=$?
   if [[ $want == pass && $status -eq 0 ]] ||
     [[ $want == fail && $status -eq 1 && ( -z $pattern || $out == *"$pattern"* ) ]]; then
     ok "$name"
@@ -65,7 +64,6 @@ want="| Feature | Tasks ticked |
 | [010 later feature]($gh/010-later-feature/tasks.md) | 2 of 3 |"
 got=$(grep -v '^<!--' "$r/$inc" | sed '/^$/d')
 if [[ $got == "$want" ]]; then ok "one row per feature, in directory order, ticked of all"; else bad "one row per feature, in directory order, ticked of all" "$got"; fi
-expect pass "a fresh include passes --check" "$r" --check
 
 # Directory listings come in creation or hash order, so a few names may list sorted by chance.
 r="$tmp/order"
@@ -78,17 +76,8 @@ if [[ $got == "$want" ]]; then ok "rows in sorted directory order"; else bad "ro
 
 r=$(new_case stale)
 sed -i 's/^- \[ \] Q003/- [x] Q003/' "$r/specs/002-first-feature/tasks.md"
-expect fail "a tick without regenerating fails --check" "$r" --check "2 of 3"
-expect fail "the --check failure names the fix" "$r" --check "run scripts/gen-status.py"
-before=$(cat "$r/$inc")
-"$gen" --check "$r" >/dev/null 2>&1 || true
-if [[ $(cat "$r/$inc") == "$before" ]]; then ok "--check writes nothing"; else bad "--check writes nothing"; fi
 "$gen" "$r" >/dev/null
-expect pass "regenerating after the tick passes --check" "$r" --check
-
-r=$(new_case missing)
-rm "$r/$inc"
-expect fail "a missing include fails --check" "$r" --check "status-counts.inc"
+if grep -qF "002-first-feature/tasks.md) | 2 of 3 |" "$r/$inc"; then ok "a tick shows in the next run"; else bad "a tick shows in the next run" "$(cat "$r/$inc")"; fi
 
 r=$(new_case twice)
 cp "$r/$inc" "$tmp/first.inc"
@@ -102,10 +91,10 @@ fi
 
 r=$(new_case empty)
 tasks "$r" 003-no-tasks
-expect fail "a tasks.md with no task lines fails" "$r" "" "specs/003-no-tasks/tasks.md"
+expect fail "a tasks.md with no task lines fails" "$r" "specs/003-no-tasks/tasks.md"
 r=$(new_case no-specs)
 rm -r "$r/specs"
-expect fail "no tasks.md at all fails" "$r" "" "no specs/*/tasks.md"
+expect fail "no tasks.md at all fails" "$r" "no specs/*/tasks.md"
 
 # Each looks like a task to a reader, so counting or skipping it silently would be wrong.
 for line in "- [X] Q009 upper-case" "  - [x] Q009 indented" "* [ ] Q009 other bullet" "- [x] no task ID" \
@@ -114,13 +103,13 @@ for line in "- [X] Q009 upper-case" "  - [x] Q009 indented" "* [ ] Q009 other bu
   r=$(new_case "malformed-${line//[^a-zA-Z0-9]/_}")
   cp "$r/$inc" "$tmp/before.inc"
   tasks "$r" 002-first-feature "- [x] Q001 done" "$line"
-  expect fail "a malformed task line fails: '$line'" "$r" "" "specs/002-first-feature/tasks.md:6"
+  expect fail "a malformed task line fails: '$line'" "$r" "specs/002-first-feature/tasks.md:6"
   if cmp -s "$tmp/before.inc" "$r/$inc"; then ok "a failed run writes nothing: '$line'"; else bad "a failed run writes nothing: '$line'"; fi
 done
 
 r=$(new_case link-bullet)
 tasks "$r" 002-first-feature "- [x] Q001 done" "- [the plan](plan.md) is a link, not a box"
-expect pass "a bullet that starts with a link is not a task box" "$r" ""
+expect pass "a bullet that starts with a link is not a task box" "$r"
 
 status=0
 out=$("$gen" --bogus "$tmp" 2>&1) || status=$?

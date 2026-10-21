@@ -10,8 +10,8 @@ use crate::{EngineError, StageResult, Staged, WarningSet};
 /// One chart laid flat.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parameterization {
-    chart: ChartId,
-    uv: Vec<DVec2>,
+    pub(crate) chart: ChartId,
+    pub(crate) uv: Vec<DVec2>,
 }
 
 impl Parameterization {

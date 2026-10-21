@@ -172,3 +172,6 @@ fn boundary_loop(chart: &ChartMesh) -> Option<Vec<VertexId>> {
     }
     (at == start && walk.len() == boundary.len()).then_some(walk)
 }
+
+#[cfg(test)]
+mod tests;

@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use openplush_flatten::FlattenError;
 use openplush_io::Format;
 use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
-use openplush_pattern::PieceId;
+use openplush_pattern::{PatternError, PieceId};
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
 
@@ -105,13 +105,22 @@ pub enum EngineError {
         /// The largest allowed difference, in millimetres.
         tolerance_mm: f64,
     },
-    /// The seam allowance could not be offset from the piece outline.
-    #[error("seam allowance for piece {} failed: {detail}", .piece.index())]
-    OffsetFailed {
-        /// The piece.
-        piece: PieceId,
-        /// Why the offset failed.
-        detail: String,
+    /// The pattern crate refused a piece's outlines, or the size; the inner error says how.
+    #[error("{source}")]
+    Pattern {
+        /// The piece being built, if any.
+        piece: Option<PieceId>,
+        /// The refusal, whole.
+        source: PatternError,
+    },
+    /// A stage was given outputs of different runs, such as layouts of other charts.
+    #[error(
+        "chart {}: the layouts or sewing map given do not belong to the charts given",
+        .chart.index()
+    )]
+    StageInputMismatch {
+        /// The first chart whose inputs do not match.
+        chart: ChartId,
     },
     /// A proposal was applied that the current state does not offer; nothing was applied.
     #[error("proposal {} is no longer offered", .id.to_hex())]
@@ -141,7 +150,8 @@ impl EngineError {
             Self::Flip { .. } => "Flip",
             Self::BoundaryNotRealizable { .. } => "BoundaryNotRealizable",
             Self::SeamParity { .. } => "SeamParity",
-            Self::OffsetFailed { .. } => "OffsetFailed",
+            Self::Pattern { .. } => "Pattern",
+            Self::StageInputMismatch { .. } => "StageInputMismatch",
             Self::ProposalNotOffered { .. } => "ProposalNotOffered",
             Self::Cancelled => "Cancelled",
         }
@@ -185,8 +195,12 @@ impl EngineError {
                 chains: vec![*chain],
                 ..none
             },
-            Self::OffsetFailed { piece, .. } => ErrorLocations {
-                pieces: vec![*piece],
+            Self::Pattern { piece, .. } => ErrorLocations {
+                pieces: piece.iter().copied().collect(),
+                ..none
+            },
+            Self::StageInputMismatch { chart } => ErrorLocations {
+                charts: vec![*chart],
                 ..none
             },
             Self::ProposalNotOffered { id } => ErrorLocations {
@@ -212,7 +226,8 @@ impl EngineError {
             | Self::Flatten(_)
             | Self::Flip { .. }
             | Self::SeamParity { .. }
-            | Self::OffsetFailed { .. }
+            | Self::Pattern { .. }
+            | Self::StageInputMismatch { .. }
             | Self::ProposalNotOffered { .. }
             | Self::Cancelled => &[],
         }

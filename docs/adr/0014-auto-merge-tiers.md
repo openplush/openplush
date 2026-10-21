@@ -10,7 +10,7 @@ deciders: Lavender (maintainer)
 
 Every PR waits for the maintainer to merge it, including tick PRs, docs fixes and shell changes that CI and the automated review have already passed. Factory firings open PRs hourly ([ADR 0013](0013-intent-sized-pull-requests.md), `.claude/skills/factory/SKILL.md`), so the merge queue grows faster than one person clears it, and stacked work waits on merges nobody needs to judge.
 
-The maintainer asked, 2026-10-19, for three tiers: "A: CI green + review no 🔴 → agent enables auto-merge; B: same, held 24 h, for golden/SVG/PDF output changes; C: crates/, specs/, ADRs, decisions, human: → maintainer merges", and for the automated review to skip `docs(tasks): tick` PRs, `chore/` PRs and docs-only PRs.
+The maintainer set three tiers on 2026-10-19: A, CI green and a review with no 🔴, which an agent may auto-merge; B, the same held 24 h, for golden, SVG or PDF output changes; and C, crates, specs, ADRs, decisions and `human:` work, which the maintainer merges. The automated review skips `docs(tasks): tick` PRs, `chore/` PRs and docs-only PRs.
 
 ## Decision drivers
 

@@ -851,6 +851,7 @@ dependencies = [
  "libm",
  "openplush-geom",
  "openplush-mesh",
+ "proptest",
  "thiserror",
 ]
 

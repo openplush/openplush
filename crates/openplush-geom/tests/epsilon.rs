@@ -2,11 +2,11 @@
 //! the bounding-box diagonal; physical tolerances are absolute millimetres; the two
 //! meet only through a named conversion (AGENTS.md, units).
 
-use openplush_geom::GeomError;
 use openplush_geom::epsilon::{
     FOLD_ANGLE, MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity, UV_CUT,
 };
 use openplush_geom::units::{Mm, Scale};
+use openplush_geom::{DVec2, GeomError};
 
 fn close(a: f64, b: f64) -> bool {
     (a - b).abs() <= 1e-15 * b.abs()
@@ -149,6 +149,18 @@ fn a_conversion_that_overflows_or_goes_negative_is_an_error() {
         unit.to_mm(f64::NAN),
         Err(GeomError::InvalidLength { .. })
     ));
+}
+
+#[test]
+fn a_flat_point_becomes_millimetres_through_a_scale_whatever_its_sign() -> Result<(), GeomError> {
+    let scale = Scale::mm_per_model_unit(100.0)?;
+    assert_eq!(
+        scale.point_to_mm(DVec2::new(1.5, -0.25)),
+        DVec2::new(150.0, -25.0)
+    );
+    let huge = Scale::mm_per_model_unit(1e300)?;
+    assert!(!huge.point_to_mm(DVec2::new(1e300, 0.0)).is_finite());
+    Ok(())
 }
 
 #[test]

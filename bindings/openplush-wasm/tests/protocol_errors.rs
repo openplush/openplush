@@ -5,8 +5,8 @@ use std::error::Error;
 
 use openplush_pipeline::MeshError;
 use openplush_pipeline::{
-    ChartFailure, ChartId, EdgeId, EngineError, FaceId, FlattenError, Format, PieceId, Proposal,
-    ProposalId, ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
+    ChartFailure, ChartId, EdgeId, EngineError, FaceId, FlattenError, Format, PatternError,
+    PieceId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
 };
 use openplush_wasm::protocol::{BindingCode, EngineErrorDto};
 use serde_json::{Value, json};
@@ -235,14 +235,16 @@ fn seam_parity_locates_its_chain() -> Result<(), serde_json::Error> {
 }
 
 #[test]
-fn offset_failed_locates_its_piece() -> Result<(), serde_json::Error> {
-    let e = EngineError::OffsetFailed {
-        piece: PieceId::new(2),
-        detail: "self-intersection".into(),
+fn pattern_locates_its_piece() -> Result<(), serde_json::Error> {
+    let e = EngineError::Pattern {
+        piece: Some(PieceId::new(2)),
+        source: PatternError::AllowanceNotSimple {
+            piece: PieceId::new(2),
+        },
     };
     let expected = json!({
-        "code": "OffsetFailed",
-        "message": "seam allowance for piece 2 failed: self-intersection",
+        "code": "Pattern",
+        "message": "piece 2: the seam allowances make a cut line that touches itself",
         "locations": { "pieces": [2] },
     });
     assert_eq!(wire(&e)?, expected);

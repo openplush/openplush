@@ -46,6 +46,18 @@ pub fn flatten(mesh: &ManifoldMesh, charts: &[ChartMesh]) -> StageResult<Vec<Par
     })
 }
 
+#[cfg(test)]
+impl Parameterization {
+    /// A layout written by hand, to reach states no flatten produces.
+    pub(crate) fn by_hand(chart: ChartId, uv: Vec<DVec2>) -> Self {
+        Self { chart, uv }
+    }
+
+    pub(crate) fn uv_mut(&mut self) -> &mut [DVec2] {
+        &mut self.uv
+    }
+}
+
 fn lay_flat(chart: &ChartMesh) -> Result<Parameterization, FlattenError> {
     let mut session = FlattenSession::new(chart.chart(), chart.xyz(), chart.faces())?;
     while !matches!(session.step()?, Progress::Done) {}

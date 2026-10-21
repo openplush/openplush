@@ -5,8 +5,8 @@ use std::error::Error;
 
 use openplush_pipeline::{
     ChartFailure, ChartId, EdgeId, EngineError, ErrorLocations, FaceId, FlattenError, Format,
-    PieceId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner,
-    VertexId,
+    PatternError, PieceId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError,
+    SourceCorner, VertexId,
 };
 use openplush_pipeline::{
     CornerArray, Counted, HalfEdgeId, LoopRef, MaterialFault, MeshElement, MeshError,
@@ -124,11 +124,19 @@ fn flatten_and_later_variants() -> Vec<(EngineError, &'static str)> {
             "SeamParity",
         ),
         (
-            EngineError::OffsetFailed {
-                piece: PieceId::new(2),
-                detail: "self-intersection".into(),
+            EngineError::Pattern {
+                piece: Some(PieceId::new(2)),
+                source: PatternError::AllowanceNotSimple {
+                    piece: PieceId::new(2),
+                },
             },
-            "OffsetFailed",
+            "Pattern",
+        ),
+        (
+            EngineError::StageInputMismatch {
+                chart: ChartId::new(3),
+            },
+            "StageInputMismatch",
         ),
         (
             EngineError::ProposalNotOffered {
@@ -285,7 +293,7 @@ fn boundary_not_realizable_locates_its_chart_not_its_darts() -> Result<(), Box<d
 }
 
 #[test]
-fn seam_parity_and_offset_failed_locate_their_own_element() {
+fn seam_parity_pattern_and_input_mismatch_locate_their_own_element() {
     let parity = EngineError::SeamParity {
         chain: SeamChainId::new(6),
         a_mm: 10.0,
@@ -298,15 +306,30 @@ fn seam_parity_and_offset_failed_locate_their_own_element() {
     };
     assert_eq!(parity.locations(), chain);
 
-    let offset = EngineError::OffsetFailed {
-        piece: PieceId::new(2),
-        detail: "self-intersection".into(),
+    let outline = EngineError::Pattern {
+        piece: Some(PieceId::new(2)),
+        source: PatternError::OutlineNotSimple { edge: 0, other: 2 },
     };
     let piece = ErrorLocations {
         pieces: vec![PieceId::new(2)],
         ..ErrorLocations::default()
     };
-    assert_eq!(offset.locations(), piece);
+    assert_eq!(outline.locations(), piece);
+
+    let unplaced = EngineError::Pattern {
+        piece: None,
+        source: PatternError::BadModelLength { model_length: 0.0 },
+    };
+    assert_eq!(unplaced.locations(), ErrorLocations::default());
+
+    let mismatch = EngineError::StageInputMismatch {
+        chart: ChartId::new(3),
+    };
+    let chart = ErrorLocations {
+        charts: vec![ChartId::new(3)],
+        ..ErrorLocations::default()
+    };
+    assert_eq!(mismatch.locations(), chart);
 }
 
 fn seams_locations(inner: SeamsError) -> ErrorLocations {

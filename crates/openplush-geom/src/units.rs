@@ -4,7 +4,7 @@
 //! (AGENTS.md: units). Nothing stops a caller from passing a model length to
 //! [`Mm::try_new`] on purpose; the type makes the conversion visible, not impossible.
 
-use crate::GeomError;
+use crate::{DVec2, GeomError};
 
 /// A length in millimetres. Always finite and not negative, so comparisons
 /// between lengths (seam parity, allowances) can never be fooled by a NaN.
@@ -53,5 +53,12 @@ impl Scale {
     /// negative or not finite, or if the product overflows.
     pub fn to_mm(self, model_length: f64) -> Result<Mm, GeomError> {
         Mm::try_new(model_length * self.0)
+    }
+
+    /// Converts a flat model-space position to millimetres. A coordinate may be negative; a
+    /// product that overflows is not finite, for the caller's outline check to refuse.
+    #[must_use]
+    pub fn point_to_mm(self, p: DVec2) -> DVec2 {
+        p * self.0
     }
 }

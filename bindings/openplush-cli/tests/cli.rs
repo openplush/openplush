@@ -68,28 +68,6 @@ fn a_non_positive_size_is_a_usage_error() {
 }
 
 #[test]
-fn pattern_fails_loudly_until_its_stage_exists() {
-    let out = cli(&[
-        "pattern",
-        "m.obj",
-        "--seams",
-        "s.json",
-        "--fabric",
-        "minky",
-        "--size-mm",
-        "300",
-        "--page",
-        "a4",
-        "-o",
-        "out",
-    ])
-    .expect("the binary runs");
-    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
-    assert!(stderr(&out).contains("not built yet"), "{}", stderr(&out));
-    assert!(out.stdout.is_empty());
-}
-
-#[test]
 fn repair_s_old_flags_are_gone() {
     for flag in ["--weld", "--fix-orientation", "--fill-holes=auto"] {
         let out = cli(&["repair", "m.obj", flag, "-o", "fixed.obj"]).expect("the binary runs");

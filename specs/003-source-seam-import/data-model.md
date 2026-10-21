@@ -36,6 +36,8 @@ pub struct SourceMaterials {
 
 `UV_CUT = 1e-5` lives in `openplush_geom::epsilon` beside the other tolerances, as the first tolerance that is neither model-relative nor physical. Its doc comment says why it is absolute.
 
+As built, UV cuts and projection points: [docs/reference/crates/openplush-seams.md](../../docs/reference/crates/openplush-seams.md#uv-cuts).
+
 ## 3. The import proposal
 
 Who owns what, following the crate DAG: edge detection and the dead-end check are in `openplush-seams` (`source.rs`), because they read the mesh and the seam graph. Regions and name matching are in `openplush-pattern` (`regions.rs`, 001 T137's module), because `Fabric` lives there. `openplush-pipeline` composes them into the types below, which are part of the public API.

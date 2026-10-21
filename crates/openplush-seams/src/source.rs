@@ -109,11 +109,13 @@ fn explain(add: &BTreeMap<EdgeId, SeamKind>) -> String {
     }
 }
 
-/// Every interior edge of `mesh`, not already in `seams`, where the corner UVs on its two sides
+/// The seams a source model implies: its UV cuts, its material boundaries and its projection points.
+///
+/// A UV cut is an interior edge, not already in `seams`, where the corner UVs on its two sides
 /// differ by more than [`UV_CUT`] in either coordinate at either endpoint. An edge is tested
 /// only when both its faces have a UV at every corner; a boundary edge is never a cut. A NaN
-/// difference reads as a cut, so a broken UV shows up rather than vanishing. Also every
-/// material boundary not already in `seams`, and the projection points.
+/// difference reads as a cut, so a broken UV shows up rather than vanishing. A material boundary
+/// is likewise left out when it is already in `seams`.
 ///
 /// # Errors
 /// `UnknownEdge`, naming the lowest, when `seams` has a seam on an edge `mesh` lacks.

@@ -68,3 +68,16 @@ fn out_of_range(finished_mm: f64) -> Warning {
         },
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_size_just_outside_the_range_prints_enough_digits_to_show_it() {
+        for (mm, shown) in [(1000.04, "1000.04 mm"), (74.96, "74.96 mm"), (74.9, "74.9 mm")] {
+            let w = out_of_range(mm);
+            assert!(w.explanation().contains(&format!("at {shown},")), "{}", w.explanation());
+        }
+    }
+}

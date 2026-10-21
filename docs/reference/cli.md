@@ -10,7 +10,7 @@ cargo run -p openplush-cli -- --help
 
 ## Status
 
-`validate`, `repair` and `pattern` run their stages. `pattern` writes the SVG and the PDF; `pieces.json`, `metrics.json` and `warnings.json` are not written yet. Which stages are built is on the [status page](../start/status.md).
+Which stages and outputs are built is on the [status page](../start/status.md).
 
 ## Subcommands
 
@@ -55,7 +55,8 @@ Nothing is written if repair fails. `-o` is written before `--plan-out`, so if t
 Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` into `-o`, which is created if missing. Nothing is written unless every stage succeeds.
 
 - The model is read as above and repaired with the default plan, every step on. A model that needs another plan is repaired first with `repair -o`, and that OBJ is patterned.
-- `--seams` is a seam-set file in the [`openplush-seam-set` format](https://github.com/openplush/openplush/blob/main/fixtures/README.md#seam-set-format), version 1. Each edge's two indices name source vertices (an OBJ or PLY position index), counted from `vertexIndexBase`, 0 or 1. Each is found on the repaired model through the corners repair kept from it. Exit 1, naming the seam by its place in the list (`seam 0` is the first):
+- `--seams` is a seam-set file in the [`openplush-seam-set` format](https://github.com/openplush/openplush/blob/main/fixtures/README.md#seam-set-format), version 1. Each edge's two indices are OBJ vertex indices (the order of `v` lines), counted from `vertexIndexBase`, 0 or 1. Each is found on the repaired model through the corners repair kept from it. Exit 1, naming the seam by its place in the list (`seam 0` is the first):
+  - an index below `vertexIndexBase`;
   - an index no vertex came from;
   - an index more than one vertex came from;
   - two vertices with no edge between them;

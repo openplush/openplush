@@ -34,7 +34,7 @@ fn edges(m: &ManifoldMesh) -> Result<Vec<EdgeId>, Setup> {
 /// Every key written against `from` that resolves in `to` lands on edges with the same two
 /// ends; returns how many resolved.
 fn land_on_the_same_edges(from: &ManifoldMesh, to: &ManifoldMesh) -> Result<usize, Setup> {
-    let (written, read) = (Provenance::new(from), Provenance::new(to));
+    let (written, read) = (Provenance::new(from, &[]), Provenance::new(to, &[]));
     let mut resolved = 0;
     for e in edges(from)? {
         let key = written.edge_key(e).ok_or("an edge has no key")?;

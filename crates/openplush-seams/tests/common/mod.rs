@@ -228,3 +228,20 @@ impl Grid {
         Ok(())
     }
 }
+
+/// The vertex of `mesh` at `p`, found by position so repair's numbering is not assumed.
+pub(crate) fn vertex_at(mesh: &ManifoldMesh, p: DVec3) -> Result<VertexId, Setup> {
+    (0..u32::try_from(mesh.vertex_count())?)
+        .map(VertexId::new)
+        .find(|&v| mesh.position(v) == p)
+        .ok_or_else(|| format!("no vertex at {p:?}").into())
+}
+
+/// The edge of `mesh` between the points `p` and `q`.
+pub(crate) fn edge_between(mesh: &ManifoldMesh, p: DVec3, q: DVec3) -> Result<EdgeId, Setup> {
+    let (from, to) = (vertex_at(mesh, p)?, vertex_at(mesh, q)?);
+    mesh.outgoing(from)
+        .find(|&h| mesh.dest(h) == to)
+        .map(|h| h.edge())
+        .ok_or_else(|| format!("no edge {p:?} to {q:?}").into())
+}

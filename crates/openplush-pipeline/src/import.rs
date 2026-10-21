@@ -168,6 +168,26 @@ mod tests {
     }
 
     #[test]
+    fn its_texts_print_in_the_pdf_s_fonts() {
+        let w = ignored_warning(&[
+            Ignored::Skin { node: 2 },
+            Ignored::MorphTargets { node: 2, mesh: 1 },
+            Ignored::Animation { animation: 0 },
+            Ignored::Primitive {
+                node: 3,
+                mesh: 1,
+                primitive: 2,
+            },
+        ]);
+        let Remedy::Advisory { what_to_change } = w.remedy() else {
+            panic!("the remedy is not advisory");
+        };
+        for text in [w.explanation(), what_to_change.as_str()] {
+            assert!(text.chars().all(|c| (' '..='~').contains(&c)), "{text}");
+        }
+    }
+
+    #[test]
     fn each_kind_of_skipped_part_is_named() {
         assert_eq!(
             ignored_text(&[

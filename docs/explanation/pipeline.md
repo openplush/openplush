@@ -58,15 +58,15 @@ What can fail, as `PatternError`: a seam whose sides differ (`SeamParity`, which
 
 ### Layout: pieces on fabric and pages
 
-`openplush-layout` places the pieces. `shelf::pack` lays every copy of every piece across the fabric roll, by its cut line, into one `Sheet`: the fabric plan. `shelf::pack_templates` lays one template per piece for printing. `pages::tile` covers a sheet with the fewest Letter or A4 pages, overlapping 15 mm, each labelled by row and column, with registration marks on the shared edges.
+`openplush-layout` places the pieces. `shelf::pack` lays every copy of every piece across the fabric roll, by its cut line, into one `Sheet`: the fabric plan. `shelf::pack_templates` lays one template per piece for printing. `pages::tile` covers a sheet with the fewest Letter or A4 pages, overlapping 15 mm, each labelled by row and column, with registration marks on the shared edges. `openplush-pipeline::layout` runs `pack_templates`, because the print is what export reads.
 
 What can fail, as `LayoutError`: no pieces, a roll width not greater than zero, a piece wider than the roll, a rotation that is not a multiple of 90 degrees, or more than 26 pages across or down.
 
 ### Export: bytes the maker prints
 
-`openplush-export` writes what the maker prints. `svg::write` draws one sheet at true scale; `pdf::write` draws a tiled sheet as a PDF with a cover page (scale check, a map of the pages, and any unresolved warnings) and one page per tile, each with its label, registration marks and a scale-check square. Each piece shows a solid cut line and a dashed sewing line. The same input gives the same bytes.
+`openplush-export` writes what the maker prints. `svg::write` draws one sheet at true scale, with any unresolved warnings printed under it; `pdf::write` draws a tiled sheet as a PDF with a cover page (scale check, a map of the pages, and any unresolved warnings) and one page per tile, each with its label, registration marks and a scale-check square. Each piece shows a solid cut line and a dashed sewing line. The same input gives the same bytes. `openplush-pipeline`'s `export_svg` and `export_pdf` run them with the warnings they are given as summary rows, so neither file can print a pattern without its known problems.
 
-What can fail, as `ExportError`: a placement whose piece was not given (`UnknownPiece`), a piece given twice (`DuplicatePiece`), and warning text the PDF fonts cannot print (`Unprintable`).
+What can fail, as `ExportError`: a placement whose piece was not given (`UnknownPiece`), a piece given twice (`DuplicatePiece`), and warning text outside the Latin-1 both exports can print (`Unprintable`).
 
 ### Who calls the stages
 

@@ -6,8 +6,8 @@ What `openplush-pipeline` contains **today**, and what it actually depends on. W
 
 ## Public items
 
-The public API: `import` with `ImportFiles`, `validate`, `repair`, `chart`, `flatten` with `Parameterization`, `size` with `SizeTarget`, `pattern` with `PatternInput` and `PatternOptions`, `EngineError`, the warning types, `Staged`/`StageResult`, and re-exports. See [engine-api.md](../engine-api.md).
+The public API: `import` with `ImportFiles`, `validate`, `repair`, `chart`, `flatten` with `Parameterization`, `size` with `SizeTarget`, `pattern` with `PatternInput` and `PatternOptions`, `layout`, `export_svg`, `export_pdf`, `EngineError`, the warning types, `Staged`/`StageResult`, and re-exports. See [engine-api.md](../engine-api.md).
 
 ## Depends on
 
-`openplush-flatten`, `-geom`, `-io`, `-mesh`, `-pattern`, `-seams`, `thiserror`
+`openplush-export`, `-flatten`, `-geom`, `-io`, `-layout`, `-mesh`, `-pattern`, `-seams`, `thiserror`

@@ -17,9 +17,9 @@ pub enum ExportError {
         /// The piece.
         piece: PieceId,
     },
-    /// Summary text has a character the PDF's standard fonts cannot print: they read WinAnsi, so
-    /// printable ASCII and Latin-1.
-    #[error("{text:?} has {character:?}, which the PDF's fonts cannot print")]
+    /// Summary text has a character outside Latin-1: the PDF's standard fonts read WinAnsi, and
+    /// the SVG keeps to the same rule so both print the same lines.
+    #[error("{text:?} has {character:?}, which is outside the Latin-1 the exports can print")]
     Unprintable {
         /// The text, as given.
         text: String,

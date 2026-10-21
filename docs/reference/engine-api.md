@@ -29,6 +29,10 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 | `PatternInput` | struct | What `pattern` reads, all borrowed from one run: `mesh`, `charts`, `sewing`, `layouts` |
 | `PatternOptions` | struct | What `pattern` applies: `scale` (a `Scale`) and `fabric` (a `Fabric`) |
 | `size(mesh, target)` | function | `StageResult<Scale>`: the scale for the maker's finished size; see [Stages](#stages) |
+| `layout(pieces, opts)` | function | `StageResult<Vec<Sheet>>`: the print, one template per piece; see [Stages](#stages) |
+| `export_svg(sheet, pieces, warnings)`, `export_pdf(sheet, pieces, paper, warnings)` | functions | `StageResult<Vec<u8>>`: the sheet as SVG, or tiled as PDF, with every warning printed; see [Stages](#stages) |
+| `LayoutOptions`, `Sheet`, `Placement`, `Paper` | re-exports | From `openplush-layout`: the roll width, gap and mirroring (`LayoutOptions::new`), what `layout` returns and where it put each piece, and Letter or A4 |
+| `LayoutError`, `ExportError` | re-exports, enums, `#[non_exhaustive]` | From `openplush-layout` and `-export`: the refusals `EngineError::Layout` and `Export` carry. Their variants are those crates' own |
 | `SizeTarget` | re-export, enum | From `openplush-pattern`: `LongestDimension(Mm)`, or `Reference { model_length, finished }`, one measured distance in model units and what it finishes at |
 | `Scale`, `Mm` | re-exports | From `openplush-geom`: millimetres per model unit, `Scale::mm_per_model_unit`, and a checked length in millimetres |
 | `Fabric`, `FabricSpec`, `FabricCategory`, `FabricId`, `StretchDirection` | re-exports | From `openplush-pattern`: a fabric profile, built by `Fabric::new` from a `FabricSpec`, which refuses an unusable one |
@@ -45,7 +49,7 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 
 ## Stages
 
-`import`, `validate`, `repair`, `chart`, `flatten`, `size` and `pattern` exist; each later stage lands with the task that builds it.
+`import`, `validate`, `repair`, `chart`, `flatten`, `size`, `pattern`, `layout`, `export_svg` and `export_pdf` exist; each later stage lands with the task that builds it.
 
 **`import(&ImportFiles)`** reads the primary file with the reader its extension names: the extension of the name's final `/`-separated segment, as `std::path::Path::extension` reads it, compared ASCII case-insensitively. `obj` is OBJ, `stl` STL, `ply` PLY, and `gltf` and `glb` glTF; a `.gltf` file that is GLB inside is read as GLB. Any other name, one with no extension (`model`, `.obj`, `model.`), and `fbx` until its reader exists, is `UnknownFormat`. The bytes are never sniffed for the reader. A reader's refusal is `Parse`, naming that reader, `MissingResource`, `NonFiniteInput`, or `Mesh`. A glTF buffer `uri` is percent-decoded and resolved against the primary's directory, and the file of exactly that name in `others` is read. A `uri` with a scheme, an absolute path, a bad escape, or `..` above the primary's directory is `Parse`. One with no matching file is `MissingResource`. Other files are ignored. What the glTF reader does not apply is one `import-ignored` warning on the project: skins (read in the bind pose), morph targets (read as the base mesh), animations, and point and line primitives. Otherwise its warnings are empty.
 
@@ -60,6 +64,12 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 **`size(&ManifoldMesh, SizeTarget)`** returns the scale, in millimetres per model unit, that makes the model the size the maker asked for. The model's longest dimension is the longest side of the mesh's axis-aligned bounding box, in the file's axes. `LongestDimension(mm)` makes that side `mm` long. `Reference { model_length, finished }` makes a distance of `model_length` units measured on the model `finished` long. When the longest dimension finishes under 75 mm or over 1000 mm (both ends supported), it raises one `size-out-of-range` warning and still returns the scale. A reference length that is zero, negative or not finite is `Pattern { piece: None, BadModelLength }`; a scale or finished size that is zero or not finite is `Pattern { piece: None, BadScale }`. Both locate nothing.
 
 **`pattern(&PatternInput, &PatternOptions)`** makes one `PatternPiece` per chart, in chart order, piece `n` from chart `n`. The input is one run's mesh, charts, sewing map and layouts. The sewing line is the chart's one boundary loop, in millimetres: each flat position goes through `Scale::point_to_mm`, the one conversion of a flat position, and the loop runs with the interior on its left, so counter-clockwise, from the first boundary side, in face order, of the lowest chart face that has one. The cut line is the sewing line grown by the fabric's `default_allowance` on every edge. Each piece is cut once as printed, and may turn by the fabric's `rotations_deg()`. It returns the first failure and no pieces, checking in this order: inputs that do not belong together (`StageInputMismatch`: a layout that is not its chart's, at its index, with one position per chart vertex, or a sewing side outside the charts given); then every bundle in lead-chain order, each side's flat length against its first side's, summed in model units and converted once with `Scale::to_mm` (`SeamParity`, a flattener bug); then per chart, the sewing line and then the cut line (`Pattern`, naming the piece). Its warnings are empty.
+
+**`layout(&[PatternPiece], &LayoutOptions)`** is the print: `shelf::pack_templates`, one template of every piece on a roll `LayoutOptions`' width, in one `Sheet`. A refusal is `Layout`, naming the piece for `PieceTooWide` and `UnsupportedRotation` and nothing for `NoPieces` and `BadRollWidth`. Its warnings are empty.
+
+**`export_svg(&Sheet, &[PatternPiece], &WarningSet)`** is `svg::write`: the sheet at true scale, 1 user unit to 1 mm, with every warning in the set printed under it as summary rows. **`export_pdf(&Sheet, &[PatternPiece], Paper, &WarningSet)`** tiles the sheet on `paper` with `pages::tile` and calls `pdf::write`: a cover with the scale check, the page map and the summary rows, then one page per tile. The pieces are the ones the sheet places; a `Sheet` holds placements, not outlines. A sheet needing more than 26 pages across or down is `Layout` (`TooManyPages`), naming nothing. A placement whose piece was not given, or a piece given twice, is `Export`, naming the piece. Their warnings are empty.
+
+**Summary rows.** Both exports print every warning in the set, in its order, acknowledged or not: "unresolved" means not fixed. A row is the code's string; the target in words: `face {n}`, `edge {n}`, `seam chain {n}`, `piece {n}`, `component {n}`, or `the whole pattern`; the explanation; and the remedy's text, an `Actionable` proposal's explanation or an `Advisory`'s `what_to_change`. Each prints as `{n}. {code}: {target}`, then the explanation, then `Fix: {remedy}`. Every engine warning's text is printable ASCII, so `ExportError::Unprintable` is a bug if it ever appears.
 
 ## Errors
 
@@ -81,6 +91,8 @@ Each `EngineError` variant carries the location of the problem. The messages are
 | `SeamParity` | `chain`, both side lengths, the tolerance | `seam chain {chain}: sides {a} mm and {b} mm differ by more than {t} mm` |
 | `Pattern` | `piece`, when the refusal is about one; carries the `PatternError` whole | the inner error's message, unchanged |
 | `StageInputMismatch` | `chart`, the first whose inputs do not match | `chart {chart}: the layouts or sewing map given do not belong to the charts given` |
+| `Layout` | the inner `LayoutError`'s `piece`, for `PieceTooWide` and `UnsupportedRotation`; nothing for `NoPieces`, `BadRollWidth` and `TooManyPages` | the inner error's message, unchanged |
+| `Export` | the inner `ExportError`'s `piece`, for `UnknownPiece` and `DuplicatePiece`; nothing for `Unprintable` | the inner error's message, unchanged |
 | `ProposalNotOffered` | `id` | `proposal {16 hex digits} is no longer offered` |
 | `Cancelled` | nothing: the caller cancelled | `cancelled` |
 

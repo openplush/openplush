@@ -76,7 +76,7 @@ fn paths(svg: &str) -> Result<Vec<Vec<DVec2>>, Setup> {
 fn the_document_is_the_sheet_in_millimetres() -> Result<(), Setup> {
     let pieces = [piece(0, 1, 0.0)?];
     let s = sheet(&pieces, false)?;
-    let svg = text(write(&s, &pieces)?)?;
+    let svg = text(write(&s, &pieces, &[])?)?;
     assert!(svg.starts_with(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\""
     ));
@@ -91,7 +91,7 @@ fn the_document_is_the_sheet_in_millimetres() -> Result<(), Setup> {
 fn each_copy_draws_a_solid_cut_line_then_a_dashed_sewing_line() -> Result<(), Setup> {
     let pieces = [piece(0, 3, 0.0)?];
     let s = sheet(&pieces, false)?;
-    let svg = text(write(&s, &pieces)?)?;
+    let svg = text(write(&s, &pieces, &[])?)?;
     assert_eq!(svg.matches("<path class=\"cut\"").count(), 3);
     assert_eq!(svg.matches("<path class=\"sew\"").count(), 3);
     let cut = svg.find("<path class=\"cut\"").ok_or("no cut")?;
@@ -107,7 +107,7 @@ fn a_cut_line_is_written_exactly() -> Result<(), Setup> {
     // The sheet is 40 mm long and SVG's y runs down, so sheet y becomes 40 - y.
     let pieces = [piece(0, 1, 0.0)?];
     let s = sheet(&pieces, false)?;
-    let svg = text(write(&s, &pieces)?)?;
+    let svg = text(write(&s, &pieces, &[])?)?;
     assert!(svg.contains(
         " d=\"M 0.000 40.000 L 60.000 40.000 L 60.000 20.000 L 20.000 20.000 L 20.000 0.000 L 0.000 0.000 Z\""
     ));
@@ -119,7 +119,7 @@ fn every_path_is_the_placed_outline_flipped_to_print_the_right_way_up() -> Resul
     for (rotation, mirrored) in [(0.0, false), (90.0, false), (180.0, true), (270.0, true)] {
         let pieces = [piece(0, 2, rotation)?, piece(1, 1, rotation)?];
         let s = sheet(&pieces, mirrored)?;
-        let drawn = paths(&text(write(&s, &pieces)?)?)?;
+        let drawn = paths(&text(write(&s, &pieces, &[])?)?)?;
         let mut expected = Vec::new();
         for pl in s.placements() {
             let p = pieces
@@ -150,7 +150,7 @@ fn every_path_is_the_placed_outline_flipped_to_print_the_right_way_up() -> Resul
 fn the_same_input_writes_the_same_bytes() -> Result<(), Setup> {
     let pieces = [piece(0, 2, 90.0)?, piece(1, 1, 0.0)?];
     let s = sheet(&pieces, true)?;
-    assert_eq!(write(&s, &pieces)?, write(&s, &pieces)?);
+    assert_eq!(write(&s, &pieces, &[])?, write(&s, &pieces, &[])?);
     Ok(())
 }
 
@@ -159,7 +159,7 @@ fn a_placement_without_its_piece_is_refused() -> Result<(), Setup> {
     let placed = [piece(0, 1, 0.0)?, piece(1, 1, 0.0)?];
     let s = sheet(&placed, false)?;
     assert_eq!(
-        write(&s, &placed[..1]),
+        write(&s, &placed[..1], &[]),
         Err(ExportError::UnknownPiece {
             piece: PieceId::new(1)
         })
@@ -173,7 +173,7 @@ fn two_pieces_with_one_id_are_refused() -> Result<(), Setup> {
     let s = sheet(&pieces, false)?;
     let twice = [piece(0, 1, 0.0)?, piece(0, 1, 0.0)?];
     assert_eq!(
-        write(&s, &twice),
+        write(&s, &twice, &[]),
         Err(ExportError::DuplicatePiece {
             piece: PieceId::new(0)
         })

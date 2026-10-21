@@ -1,13 +1,15 @@
 use std::collections::BTreeSet;
 
+use openplush_export::ExportError;
 use openplush_flatten::FlattenError;
 use openplush_io::Format;
+use openplush_layout::LayoutError;
 use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
 use openplush_pattern::{PatternError, PieceId};
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
 
-use crate::locations::{flatten_locations, mesh_locations};
+use crate::locations::{export_locations, flatten_locations, layout_locations, mesh_locations};
 
 /// A violated invariant: the stage produced no output. Every variant but
 /// `Cancelled` names where the problem is, so the UI can highlight it.
@@ -122,6 +124,13 @@ pub enum EngineError {
         /// The first chart whose inputs do not match.
         chart: ChartId,
     },
+    /// The pieces cannot be laid out or tiled; the inner error says how, naming the piece where
+    /// it has one.
+    #[error(transparent)]
+    Layout(#[from] LayoutError),
+    /// A sheet cannot be written; the inner error says how, naming the piece where it has one.
+    #[error(transparent)]
+    Export(#[from] ExportError),
     /// A proposal was applied that the current state does not offer; nothing was applied.
     #[error("proposal {} is no longer offered", .id.to_hex())]
     ProposalNotOffered {
@@ -152,6 +161,8 @@ impl EngineError {
             Self::SeamParity { .. } => "SeamParity",
             Self::Pattern { .. } => "Pattern",
             Self::StageInputMismatch { .. } => "StageInputMismatch",
+            Self::Layout(_) => "Layout",
+            Self::Export(_) => "Export",
             Self::ProposalNotOffered { .. } => "ProposalNotOffered",
             Self::Cancelled => "Cancelled",
         }
@@ -203,6 +214,8 @@ impl EngineError {
                 charts: vec![*chart],
                 ..none
             },
+            Self::Layout(inner) => layout_locations(inner),
+            Self::Export(inner) => export_locations(inner),
             Self::ProposalNotOffered { id } => ErrorLocations {
                 proposal: Some(*id),
                 ..none
@@ -228,6 +241,8 @@ impl EngineError {
             | Self::SeamParity { .. }
             | Self::Pattern { .. }
             | Self::StageInputMismatch { .. }
+            | Self::Layout(_)
+            | Self::Export(_)
             | Self::ProposalNotOffered { .. }
             | Self::Cancelled => &[],
         }

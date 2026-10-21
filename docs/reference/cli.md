@@ -20,7 +20,7 @@ cargo run -p openplush-cli -- --help
 
 ### The model and the files beside it
 
-`<MODEL>` is read with the reader its extension names: OBJ, STL and PLY, each read alone; any other type exits 1 with `UnknownFormat` ([status](../start/status.md)). A `.gltf` (any case) is gathered with every regular file below its directory, recursively, so its buffers and images can be found, and is refused as `UnknownFormat` until a glTF reader exists. Those files are named by their path from that directory with `/` separators, in byte order of those names; symlinks are skipped, whatever their names, and the name of a file or directory that would be read, if it is not UTF-8, exits 1 rather than be renamed. The model and those files together may be at most 1 GiB (2³⁰ bytes); a larger set exits 1 before the file that passes the limit is read.
+`<MODEL>` is read with the reader its extension names: OBJ, STL, PLY and GLB, each read alone, and glTF; any other type exits 1 with `UnknownFormat` ([status](../start/status.md)). A `.gltf` (any case) is read with every regular file below its directory, recursively, so the buffers and images it names can be found; one it names but that is not there exits 1 with `MissingResource`. Those files are named by their path from that directory with `/` separators, in byte order of those names; symlinks are skipped, whatever their names, and the name of a file or directory that would be read, if it is not UTF-8, exits 1 rather than be renamed. The model and those files together may be at most 1 GiB (2³⁰ bytes); a larger set exits 1 before the file that passes the limit is read.
 
 ### `validate`
 

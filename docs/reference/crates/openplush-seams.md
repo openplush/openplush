@@ -6,12 +6,12 @@ What `openplush-seams` contains **today**, and what it actually depends on. What
 
 ## Public items
 
-- `Proposal` (built only by `Proposal::new`), `ProposalId`, `ProposalKind`, `SeamReason`
+- `Proposal` (built only by `Proposal::new`), `ProposalId`, `ProposalKind`, `SeamReason` (`Crease`, `SeamHint`, `SourceModel`, `SourceDart`)
 - `SeamKind`, `ChartFailure`
 - IDs `ChartId`, `SeamChainId`
 - `SeamSet` (`new`, `get`, `insert`, `remove`, `iter`, `len`, `is_empty`; edge flags in ascending edge order, with the mandatory-seam rule in its rustdoc)
 - `SeamsError`
-- `uv_cuts` and `UvCuts` (`edges`, `material_boundaries`, `shared_edges`, `faces_without_uv`, `projection_points`, `proposal`)
+- `uv_cuts` and `UvCuts` (`edges`, `material_boundaries`, `shared_edges`, `faces_without_uv`, `projection_points`, `proposal`, `darts`)
 
 ### Seam graph
 
@@ -61,14 +61,15 @@ What `openplush-seams` contains **today**, and what it actually depends on. What
 
 ### UV cuts and material boundaries
 
-`uv_cuts(mesh, seams)` returns the source model's UV cuts and material boundaries, plus the projection points where its UVs look auto-projected, as `UvCuts`, and refuses a seam on an edge the mesh does not have with `UnknownEdge`:
+`uv_cuts(mesh, seams)` returns the source model's UV cuts and material boundaries, the cuts among them that stop partway, plus the projection points where its UVs look auto-projected, as `UvCuts`, and refuses a seam on an edge the mesh does not have with `UnknownEdge`:
 
 - `edges()`, ascending: every interior edge not already in `seams` whose corner UVs on its two sides differ by more than `UV_CUT` in either coordinate at either endpoint (a NaN difference counts as a cut), tested only when both its faces have a UV at every corner, so a boundary edge or one beside a face without UVs is never a cut.
 - `faces_without_uv()`: how many faces lack a UV at some corner.
 - `material_boundaries()`, ascending: every interior edge not already in `seams` whose two faces both come from the file and differ in material (a face's material is its first corner's primitive's), a face with no material differing from one with a material; an edge beside a face repair added is never one.
 - `shared_edges()`: how many edges are both a cut and a material boundary.
 - `projection_points()`, ascending: every interior vertex with at least five faces round it, all with a UV at every corner, whose corner UVs there differ pairwise by the same rule, as an automatic projection leaves at a sphere's poles (and as five hand-marked seams meeting do too); they change no cut.
-- `proposal()`: one `ProposalKind::Seam { reason: SeamReason::SourceModel }` proposal, each boundary a `FabricBoundary` edge (one that is also a cut included, added once) and every other cut a `Cut` edge, or `None` when there are none.
+- `proposal()`: one `ProposalKind::Seam { reason: SeamReason::SourceModel }` proposal, each boundary a `FabricBoundary` edge (one that is also a cut included, added once) and every other cut a `Cut` edge, leaving out every edge of a dart below, or `None` when nothing is left.
+- `darts()`: one `ProposalKind::Seam { reason: SeamReason::SourceDart }` proposal per cut that stops partway, every edge a `Dart`, in ascending order of its tip. A tip is a `DartTip` node of the seam graph over the cuts, the boundaries and the `Mandatory` seams in `seams`, so a cut that ends on another cut, a boundary, a mandatory seam or the surface boundary has none; any other seam already in `seams` does not rescue it. The dart is the chain from the tip to the first junction, the surface boundary or a mandatory seam; a slit free at both ends is one dart at its lower tip. Its explanation reads "The cut marked in the model that ends at vertex *n* stops partway across the surface, so it will be sewn as a dart. If that is not meant, decline it and fix the cut in the modelling tool.", or, for a slit, "between vertices *a* and *b* … at both ends".
 
 ## Depends on
 

@@ -1,6 +1,8 @@
 //! Small generated meshes for the seams tests: a grid of quads laid flat, rolled into a tube, or
-//! closed into a torus, with seams placed by grid coordinates; and an octahedron.
+//! closed into a torus, with seams placed by grid coordinates, or a sheet cut by its corner UVs;
+//! and an octahedron.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::f64::consts::TAU;
 
 use openplush_geom::{DVec2, DVec3};
@@ -56,15 +58,21 @@ impl Layout {
         }
     }
 
-    /// Two counter-clockwise triangles per quad, split along the diagonal from `(c, r)` to
-    /// `(c + 1, r + 1)`.
-    fn mesh(self) -> Result<ManifoldMesh, Setup> {
+    /// The soup index of the vertex at column `c`, row `r`.
+    fn id(self, c: u32, r: u32) -> u32 {
+        let (across, down) = self.counts();
+        (r % down) * across + c % across
+    }
+
+    /// The positions, and two counter-clockwise triangles per quad, row by row, split along the
+    /// diagonal from `(c, r)` to `(c + 1, r + 1)`.
+    fn soup(self) -> (Vec<DVec3>, Vec<[u32; 3]>) {
         let (across, down) = self.counts();
         let positions = (0..down)
             .flat_map(|r| (0..across).map(move |c| (c, r)))
             .map(|(c, r)| self.point(c, r))
             .collect();
-        let id = |c: u32, r: u32| (r % down) * across + c % across;
+        let id = |c: u32, r: u32| self.id(c, r);
         let triangles: Vec<[u32; 3]> = (0..self.rows)
             .flat_map(|r| (0..self.cols).map(move |c| (c, r)))
             .flat_map(|(c, r)| {
@@ -72,8 +80,59 @@ impl Layout {
                 [[a, b, d], [a, d, e]]
             })
             .collect();
+        (positions, triangles)
+    }
+
+    fn mesh(self) -> Result<ManifoldMesh, Setup> {
+        let (positions, triangles) = self.soup();
         repaired(positions, triangles)
     }
+}
+
+/// Corner UVs, in triangle order then corner order, under which an edge is a UV cut exactly when
+/// it joins a pair in `cuts` (soup indices, smaller first) and one of its ends has more than one
+/// wedge: round each vertex, faces joined across an edge not in `cuts` share one UV, as the
+/// dead-end fixture's generator makes them.
+pub(crate) fn wedge_uvs(triangles: &[[u32; 3]], cuts: &BTreeSet<[u32; 2]>) -> Vec<Option<DVec2>> {
+    let mut around: BTreeMap<u32, Vec<usize>> = BTreeMap::new();
+    for (f, tri) in triangles.iter().enumerate() {
+        for &v in tri {
+            around.entry(v).or_default().push(f);
+        }
+    }
+    let find = |root: &[usize], mut i: usize| {
+        while root[i] != i {
+            i = root[i];
+        }
+        i
+    };
+    let mut wedge: BTreeMap<(u32, usize), u32> = BTreeMap::new();
+    for (&v, faces) in &around {
+        let mut root: Vec<usize> = (0..faces.len()).collect();
+        for i in 0..faces.len() {
+            for j in i + 1..faces.len() {
+                let joined = triangles[faces[i]].iter().any(|&w| {
+                    w != v
+                        && triangles[faces[j]].contains(&w)
+                        && !cuts.contains(&[v.min(w), v.max(w)])
+                });
+                if joined {
+                    let (a, b) = (find(&root, i), find(&root, j));
+                    root[a] = b;
+                }
+            }
+        }
+        for (i, &f) in faces.iter().enumerate() {
+            let group = u32::try_from(find(&root, i)).unwrap_or(u32::MAX);
+            wedge.insert((v, f), group);
+        }
+    }
+    triangles
+        .iter()
+        .enumerate()
+        .flat_map(|(f, tri)| tri.map(|v| (v, f)))
+        .map(|(v, f)| Some(DVec2::new(f64::from(v), 0.01 * f64::from(wedge[&(v, f)]))))
+        .collect()
 }
 
 /// `positions` and `triangles`, each corner its own source vertex, through repair.
@@ -196,6 +255,43 @@ impl Grid {
 
     pub(crate) fn torus(cols: u32, rows: u32) -> Result<Self, Setup> {
         Self::build(cols, rows, Shape::Torus)
+    }
+
+    /// A sheet whose corner UVs make the edges along each path of `cuts`, by `(column, row)`, UV
+    /// cuts. With `materials`, `(from_row, materials)`, the faces in rows `from_row` and above
+    /// are drawn by primitive 1 and the rest by primitive 0.
+    pub(crate) fn cut_sheet(
+        cols: u32,
+        rows: u32,
+        cuts: &[&[(u32, u32)]],
+        materials: Option<(u32, SourceMaterials)>,
+    ) -> Result<Self, Setup> {
+        let layout = Layout {
+            cols,
+            rows,
+            shape: Shape::Sheet,
+        };
+        let (positions, triangles) = layout.soup();
+        let pairs = cuts
+            .iter()
+            .flat_map(|path| path.windows(2))
+            .map(|w| {
+                let (a, b) = (layout.id(w[0].0, w[0].1), layout.id(w[1].0, w[1].1));
+                [a.min(b), a.max(b)]
+            })
+            .collect();
+        let uvs = Some(wedge_uvs(&triangles, &pairs));
+        let mesh = match materials {
+            None => repaired_with_uvs(positions, triangles, uvs)?.0,
+            Some((from_row, materials)) => {
+                let primitives: Vec<u32> = (0..u32::try_from(triangles.len())?)
+                    .map(|f| u32::from(f / (2 * cols) >= from_row))
+                    .collect();
+                let soup = soup_with_materials(positions, triangles, uvs, &primitives, materials)?;
+                openplush_mesh::into_manifold(&soup, &RepairPlan::default())?.0
+            }
+        };
+        Ok(Self { mesh, layout })
     }
 
     fn build(cols: u32, rows: u32, shape: Shape) -> Result<Self, Setup> {

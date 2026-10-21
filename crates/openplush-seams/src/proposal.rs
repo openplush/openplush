@@ -61,6 +61,8 @@ pub enum SeamReason {
     SeamHint,
     /// A cut in the source model's UV map, which marks where its maker wants a seam.
     SourceModel,
+    /// A cut in the source model that stops partway across the surface, so it is sewn as a dart.
+    SourceDart,
 }
 
 /// A proposal's identity: a 64-bit FNV-1a hash of its edit, so the same fix

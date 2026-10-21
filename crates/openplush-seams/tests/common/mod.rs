@@ -3,7 +3,7 @@
 
 use std::f64::consts::TAU;
 
-use openplush_geom::DVec3;
+use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{
     EdgeId, ManifoldMesh, RepairPlan, RepairReport, SourceCorner, TriangleSoup, VertexId,
 };
@@ -88,6 +88,15 @@ pub(crate) fn repaired_with_report(
     positions: Vec<DVec3>,
     triangles: Vec<[u32; 3]>,
 ) -> Result<(ManifoldMesh, RepairReport), Setup> {
+    repaired_with_uvs(positions, triangles, None)
+}
+
+/// As `repaired_with_report`, with `uvs` the corner UVs in triangle order then corner order.
+pub(crate) fn repaired_with_uvs(
+    positions: Vec<DVec3>,
+    triangles: Vec<[u32; 3]>,
+    uvs: Option<Vec<Option<DVec2>>>,
+) -> Result<(ManifoldMesh, RepairReport), Setup> {
     let corners = (0..)
         .take(3 * triangles.len())
         .map(|vertex| SourceCorner {
@@ -95,7 +104,7 @@ pub(crate) fn repaired_with_report(
             vertex,
         })
         .collect();
-    let soup = TriangleSoup::new(positions, triangles, corners, None)?;
+    let soup = TriangleSoup::new(positions, triangles, corners, uvs)?;
     Ok(openplush_mesh::into_manifold(
         &soup,
         &RepairPlan::default(),

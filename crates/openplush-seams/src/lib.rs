@@ -16,6 +16,7 @@ mod proposal;
 mod proposals;
 mod set;
 mod sewing_map;
+mod source;
 mod topology;
 
 pub use chart::{Chart, charts};
@@ -32,4 +33,5 @@ pub use proposal::{Proposal, ProposalId, ProposalKind, SeamReason};
 pub use proposals::close_chart;
 pub use set::SeamSet;
 pub use sewing_map::{ChainSide, SeamBundle, SewingMap};
+pub use source::{UvCuts, uv_cuts};
 pub use topology::check_disk;

@@ -66,7 +66,7 @@ Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` in
   - optional fields take the schema's defaults, including a 6 mm allowance and a 1500 mm roll;
   - an unknown field, a wrong type, a negative length or a zero roll width exits 1, naming the field, as does a fabric the engine refuses, with its reason.
 
-  Preset names arrive with fabric presets; until then a file is the only way to name a fabric. `fixtures/fabrics/woven.json` is a test fabric.
+  `fixtures/fabrics/woven.json` is a test fabric.
 - `--size-mm` is the finished length of the model's longest dimension: a finite number above 0, in millimetres. Outside 75 mm to 1000 mm the run still succeeds, with a `size-out-of-range` warning.
 - The print places one template of every piece on a roll as wide as the fabric's `rollWidthMm`, 10 mm apart, not mirrored. `pattern.svg` is that sheet at true scale. `pattern.pdf` tiles it on `--page`.
 - Every warning the stages raised prints in both files: under the SVG's sheet, and on the PDF's cover. Warnings never change the exit code.

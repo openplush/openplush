@@ -35,9 +35,9 @@ The [`factory`](https://github.com/openplush/openplush/blob/main/.claude/skills/
 1. looks at `main` and the open PRs, and first drives any open PR that has a blocking finding, red CI or a conflict;
 2. picks up to four ready tasks that touch different crates and share no file;
 3. lands each one as a stacked PR, test commit first, with its local gates green;
-4. writes one comment on the feature's factory ledger issue (what it opened, skipped and merged, and why it stopped) and ends.
+4. writes one comment on the feature's factory ledger issue (what it opened, skipped and merged, and why it stopped), then ends with a handoff: the state of its PRs, the next steps, the decisions it needs and a kickoff of five lines or fewer that starts the next firing in a fresh session.
 
-A firing never asks a question. Anything that would need one is a skip or a stop, and every stop has a named reason: an unfilled placeholder such as `<window>` left in the kickoff (checked before anything else, so such a firing writes nothing), no ready task, a gate failing twice, a golden snapshot that would change, a task needing a decision or a spec change, or a usage limit. The firing does not wait for CI or review; the next firing picks the PR up. The maintainer reads the ledger, accepts decisions and ticks the `human:` work.
+A firing never asks a question. Anything that would need one is a skip or a stop, and every stop has a named reason: an unfilled placeholder such as `<window>` left in the kickoff (checked before anything else, so such a firing writes nothing), no ready task, a gate failing twice, a golden snapshot that would change, a task needing a decision or a spec change, a usage limit, or the session's context growing past a set size. A session runs one firing, so long sessions do not drift, and its agents share one build directory whose WebAssembly output is removed after each step, so builds do not fill the disk. The firing does not wait for CI or review; the next firing picks the PR up. The maintainer reads the ledger, accepts decisions and ticks the `human:` work.
 
 ### Steward: driving a pull request
 

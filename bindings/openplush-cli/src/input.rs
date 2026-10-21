@@ -15,8 +15,8 @@ pub(crate) const CAP: u64 = 1 << 30;
 /// with `/` and listed in byte order of those names. Symlinks are not followed.
 ///
 /// # Errors
-/// `Io` for a file or directory that cannot be read; `TooLarge` as soon as the set passes
-/// `cap`, before the file that passes it is read.
+/// `Io` for a file or directory that cannot be read; `Name` for a file name that is not UTF-8;
+/// `TooLarge` as soon as the set passes `cap`, before the file that passes it is read.
 pub(crate) fn files(model: &Path, cap: u64) -> Result<ImportFiles, Failure> {
     let mut set = Gather {
         model,
@@ -37,14 +37,20 @@ pub(crate) fn files(model: &Path, cap: u64) -> Result<ImportFiles, Failure> {
         set.others
             .sort_by(|a, b| a.name.as_bytes().cmp(b.name.as_bytes()));
     }
-    let name = model
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_default();
+    let name = utf8(model, model.file_name())?;
     Ok(ImportFiles {
         primary: ImportFile { name, bytes },
         others: set.others,
     })
+}
+
+/// `name`, `path`'s last segment, as text; `Name` when it has none or is not UTF-8.
+fn utf8(path: &Path, name: Option<&std::ffi::OsStr>) -> Result<String, Failure> {
+    name.and_then(|n| n.to_str())
+        .map(str::to_owned)
+        .ok_or_else(|| Failure::Name {
+            path: path.to_path_buf(),
+        })
 }
 
 struct Gather<'p> {
@@ -76,7 +82,7 @@ impl Gather<'_> {
             let path = entry.path();
             // `file_type` does not follow a symlink, so a link is neither a file nor a directory.
             let kind = entry.file_type().map_err(io(&path))?;
-            let name = format!("{prefix}{}", entry.file_name().to_string_lossy());
+            let name = format!("{prefix}{}", utf8(&path, Some(&entry.file_name()))?);
             if kind.is_dir() {
                 self.walk(&path, &format!("{name}/"))?;
             } else if kind.is_file()

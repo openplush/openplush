@@ -9,6 +9,8 @@ use openplush_pipeline::EngineError;
 pub(crate) enum Failure {
     /// A file could not be read or written.
     Io { path: PathBuf, source: io::Error },
+    /// A file name that is not UTF-8, which the import set cannot name without renaming it.
+    Name { path: PathBuf },
     /// The files beside a model add up to more than the CLI reads.
     TooLarge {
         model: PathBuf,
@@ -23,6 +25,7 @@ impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io { path, source } => write!(f, "{}: {source}", path.display()),
+            Self::Name { path } => write!(f, "{}: the file name is not UTF-8", path.display()),
             Self::TooLarge { model, bytes, cap } => write!(
                 f,
                 "{} and the files beside it are {bytes} bytes, over the {cap}-byte limit",

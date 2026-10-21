@@ -160,6 +160,7 @@ for step in "${steps[@]}"; do
     hygiene)
       run scripts/check-hygiene.sh
       run scripts/check-opt-outs.sh
+      run scripts/check-adr-lifecycle.sh
       ;;
     fmt) run cargo fmt --check ;;
     clippy) run cargo clippy --workspace --all-targets --locked -- -D warnings ;;

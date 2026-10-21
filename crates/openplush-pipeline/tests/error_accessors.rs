@@ -28,6 +28,7 @@ fn dart(chart: u32, edge: u32) -> Result<Proposal, Box<dyn Error>> {
 fn every_variant() -> Result<Vec<(EngineError, &'static str)>, Box<dyn Error>> {
     let mut all = import_and_seam_variants()?;
     all.extend(flatten_and_later_variants());
+    all.extend(print_variants());
     Ok(all)
 }
 
@@ -91,6 +92,25 @@ fn import_and_seam_variants() -> Result<Vec<(EngineError, &'static str)>, Box<dy
     ])
 }
 
+fn print_variants() -> Vec<(EngineError, &'static str)> {
+    vec![
+        (
+            EngineError::Layout(LayoutError::PieceTooWide {
+                piece: PieceId::new(2),
+                width_mm: 112.0,
+                roll_mm: 50.0,
+            }),
+            "Layout",
+        ),
+        (
+            EngineError::Export(ExportError::UnknownPiece {
+                piece: PieceId::new(4),
+            }),
+            "Export",
+        ),
+    ]
+}
+
 fn flatten_and_later_variants() -> Vec<(EngineError, &'static str)> {
     vec![
         (
@@ -137,20 +157,6 @@ fn flatten_and_later_variants() -> Vec<(EngineError, &'static str)> {
                 chart: ChartId::new(3),
             },
             "StageInputMismatch",
-        ),
-        (
-            EngineError::Layout(LayoutError::PieceTooWide {
-                piece: PieceId::new(2),
-                width_mm: 112.0,
-                roll_mm: 50.0,
-            }),
-            "Layout",
-        ),
-        (
-            EngineError::Export(ExportError::UnknownPiece {
-                piece: PieceId::new(4),
-            }),
-            "Export",
         ),
         (
             EngineError::ProposalNotOffered {

@@ -1,5 +1,6 @@
-//! `validate` and `repair` run the engine on a model file and write what D-070 says: the health
-//! report and the plan as JSON, the repaired mesh as OBJ, and a refusal as its code and message.
+//! `validate` and `repair` run the engine on a model file and write what the CLI reference says:
+//! the health report and the plan as JSON, the repaired mesh as OBJ, and a refusal as its code
+//! and message.
 
 use std::fs;
 use std::path::{Path, PathBuf};

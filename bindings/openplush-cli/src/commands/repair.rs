@@ -40,7 +40,7 @@ fn plan_json(plan: &RepairPlan) -> Value {
     })
 }
 
-/// A loop's text, `<primitive>.<vertex>` (D-067).
+/// A loop's text, `<primitive>.<vertex>`, as the project schema writes it.
 fn loop_text(l: LoopRef) -> String {
     let c = l.corner();
     format!("{}.{}", c.primitive, c.vertex)

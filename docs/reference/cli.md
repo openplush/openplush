@@ -46,7 +46,7 @@ Starts from the default plan, every step on; each `--no-<step>` turns one off. `
 - `-o` gets the repaired mesh as OBJ: one `v` per vertex, one `vt` per corner that has a UV, and one `f` per face in face order, with `v/vt` for a corner that has a UV. Normals and materials are not written.
 - `--plan-out` gets the plan as the project schema's `repairPlan`: `weld`, `dropDegenerates`, `splitNonManifoldEdges`, `splitBowties`, `fixOrientation`, and `fillHoles` as loop strings.
 
-Nothing is written unless repair succeeds.
+Nothing is written unless repair succeeds. `-o` is written before `--plan-out`, so if the plan cannot be written the command exits 1 with the mesh already on disk.
 
 Values checked while parsing `pattern`:
 

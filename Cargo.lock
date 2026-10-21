@@ -833,6 +833,7 @@ dependencies = [
  "openplush-mesh",
  "openplush-pattern",
  "openplush-seams",
+ "proptest",
  "thiserror",
 ]
 

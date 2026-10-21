@@ -61,7 +61,7 @@ What `openplush-seams` contains **today**, and what it actually depends on. What
 
 ### UV cuts and material boundaries
 
-`uv_cuts(mesh, seams)` returns the source model's seams as `UvCuts`, and refuses a seam on an edge the mesh does not have with `UnknownEdge`:
+`uv_cuts(mesh, seams)` returns the source model's UV cuts and material boundaries, plus the projection points where its UVs look auto-projected, as `UvCuts`, and refuses a seam on an edge the mesh does not have with `UnknownEdge`:
 
 - `edges()`, ascending: every interior edge not already in `seams` whose corner UVs on its two sides differ by more than `UV_CUT` in either coordinate at either endpoint (a NaN difference counts as a cut), tested only when both its faces have a UV at every corner, so a boundary edge or one beside a face without UVs is never a cut.
 - `faces_without_uv()`: how many faces lack a UV at some corner.

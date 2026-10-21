@@ -109,7 +109,8 @@ fn explain(add: &BTreeMap<EdgeId, SeamKind>) -> String {
     }
 }
 
-/// The seams a source model implies: its UV cuts, its material boundaries and its projection points.
+/// The source model's UV cuts and material boundaries, plus the projection points where its UVs
+/// look auto-projected.
 ///
 /// A UV cut is an interior edge, not already in `seams`, where the corner UVs on its two sides
 /// differ by more than [`UV_CUT`] in either coordinate at either endpoint. An edge is tested

@@ -26,6 +26,7 @@
   - [0017 Docs site](adr/0017-docs-site.md)
   - [0018 Hands-off merging](adr/0018-hands-off-merging.md)
   - [0019 Spec maintenance model](adr/0019-spec-maintenance-model.md)
+  - [0020 Factory grants](adr/0020-factory-grants.md)
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
   - [The pipeline, one model at a time](explanation/pipeline.md)

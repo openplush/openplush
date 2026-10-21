@@ -1,5 +1,7 @@
 # How to write a documentation page
 
+<!-- index: audience, kind, template, navigation, and the writing rules. -->
+
 This page takes you from "I need to document this" to a page that passes review. Follow the steps in order: each one narrows the next. It is also the one home for the writing rules; the templates carry structure, and the agents' docs skill carries these steps and links back here.
 
 ## 1. Pick the audience
@@ -24,15 +26,27 @@ A page does one job. If you find yourself writing two, split the page.
 | Maker task | A maker reaching one goal in the app | `docs/user/` |
 | FAQ entry | A question every new maker asks, with a short answer | `docs/user/faq.md` |
 
-A decision record is not a page kind here: it is an ADR, written from [`docs/adr/0000-template.md`](../adr/0000-template.md) and indexed in [`docs/adr/README.md`](../adr/README.md).
+A decision record is not a page kind here: it is an ADR, written from [`docs/adr/0000-template.md`](../adr/0000-template.md). The table in [`docs/adr/README.md`](../adr/README.md) lists it from its H1 and the `status:` in its front matter, generated when the book is built, so a new ADR needs no row there.
 
 ## 3. Copy the template
 
 Copy the template for your kind from [`docs/_templates/`](../_templates/) into the folder from step 2 and rename it. Keep its headings and their order, and replace each one-line instruction with your text. If you have nothing for a heading, delete it rather than leave it empty.
 
+A tutorial, how-to, explanation or reference page keeps the template's index line, the first line after its H1:
+
+```markdown
+# How to write a documentation page
+
+<!-- index: audience, kind, template, navigation, and the writing rules. -->
+```
+
+It is one line on what the reader gets from the page, and it renders nowhere on the page itself: the folder's `README.md` lists the page as its H1, a colon, then that line. A page in one of those folders with no H1 or no index line fails the build, naming the file.
+
 ## 4. Place it in the navigation
 
 Add the page to its book's `SUMMARY.md`, next to the pages a reader meets just before and after it. A page in no `SUMMARY.md` fails the build; so does a page in both books. Templates are the one exception and never appear in navigation.
+
+The list in the folder's `README.md` follows `SUMMARY.md`'s order and is generated when the book is built, so you never edit it ([generated index lists](../reference/checks.md#generated-index-lists-docs)).
 
 ## 5. Write
 

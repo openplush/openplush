@@ -1,5 +1,7 @@
 # How to: set up Spec Kit to author specs
 
+<!-- index: install `specify` and point it at a feature, for maintainers writing specs. -->
+
 This page gets a clone ready to write or change a feature's spec, plan and tasks with [Spec Kit](https://github.com/github/spec-kit). Maintainers need it; a contributor picking up an existing task does not. [How agents work](../explanation/agents.md#from-an-idea-to-tasks-spec-kit) explains the Spec Kit flow itself.
 
 ## You will

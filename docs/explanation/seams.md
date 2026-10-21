@@ -1,5 +1,7 @@
 # Seams, charts, darts and openings
 
+<!-- index: how seams cut a mesh into charts, what darts and openings are, and why a chart must be a disk. -->
+
 This page explains how OpenPlush represents the maker's seams, how seams cut a mesh into charts that become pattern pieces, what darts and openings are, and why every chart must be a topological disk before it can flatten. Read it before changing `openplush-seams`, or when the chart stage refuses a seam layout.
 
 ## The short answer

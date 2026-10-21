@@ -1,5 +1,7 @@
 # Glossary
 
+<!-- index: every domain term (geometry, sewing, process) and every ID prefix the specs use. -->
+
 Every domain term and ID prefix the contributor pages use, as this repository uses it: geometry from the engine's code and specs, sewing from feature 001's spec, process from the agent files, the skills and the ADRs.
 
 ## Entries

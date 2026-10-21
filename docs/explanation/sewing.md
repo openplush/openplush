@@ -1,5 +1,7 @@
 # Sewing concepts for programmers
 
+<!-- index: seam allowance, grain, nap and notches, what each means for a pattern and where it lives in the engine. -->
+
 This page explains the four sewing ideas the engine has to get right: seam allowance, grain, nap and notches. For each one it says what it means for a pattern and where it lives in the engine. Read it before working on `openplush-pattern`, `openplush-layout` or `openplush-export` if you have never sewn.
 
 ## The short answer

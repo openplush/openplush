@@ -1,5 +1,7 @@
 # How to scope and open a pull request
 
+<!-- index: sizing by intent, stacking, branch names, and the PR template. -->
+
 This page takes you from a set of finished tasks to pull requests a reviewer can judge: how to group the tasks into intents, lay out the commits, name and stack the branches, and merge. The binding rules live in [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs); this page links to them, explains the reasoning, and works through the cases you will actually hit.
 
 ## You will

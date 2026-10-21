@@ -1,5 +1,7 @@
 # Meshes: from triangle soup to half-edges
 
+<!-- index: how a model is stored from import to repair, and the half-edge facts that catch people out. -->
+
 This page explains how OpenPlush stores a 3D model while it works on it, and the facts about that storage that catch people out. Read it before changing `openplush-mesh`, or any code that walks a mesh.
 
 ## The short answer

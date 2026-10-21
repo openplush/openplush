@@ -1,5 +1,7 @@
 # How to get a pull request reviewed and merged
 
+<!-- index: the review, the merge gate's conditions, and which tier merges how. -->
+
 This page takes an open pull request through the automated review and the merge gate to `main`. Use it once your PR is open; how to scope and open one is in [Scope and open a pull request](pull-requests.md).
 
 ## You will

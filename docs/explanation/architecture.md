@@ -1,5 +1,7 @@
 # Architecture
 
+<!-- index: the engine as built: the stage chain and its types, errors versus warnings, IDs and provenance, determinism and tolerances. -->
+
 How the engine is put together, and why. Which parts are built is on the [status page](../start/status.md); parts not built yet are described in the specs this page links. For what each crate exports, see [reference/crates.md](../reference/crates.md); for the public API, see [reference/engine-api.md](../reference/engine-api.md).
 
 ## Two halves, one seam between them

@@ -1,5 +1,7 @@
 # Code rules for the engine
 
+<!-- index: the rules for Rust code in `crates/` and `bindings/`, each with its reason. -->
+
 The rules for Rust code in `crates/` and `bindings/`, each with the reason behind it. Agents read the same rules as one-line directives in [`crates/AGENTS.md`](https://github.com/openplush/openplush/blob/main/crates/AGENTS.md); the lints that enforce some of them, and why each lint exists, are in [Checks](checks.md).
 
 ## Entries

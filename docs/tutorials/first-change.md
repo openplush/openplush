@@ -1,5 +1,7 @@
 # Tutorial: your first engine change, test first
 
+<!-- index: add a method to the engine's millimetre type, test first, and run every engine check. -->
+
 You will add one small method to the engine's millimetre type, writing its test before the code, and run the same checks CI runs. It takes about an hour, most of it waiting for the build, and at the end you have done every step of a real engine change on your own machine.
 
 ## You will

@@ -1,6 +1,8 @@
 # Checks: what each one enforces
 
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, the generated status counts, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
+<!-- index: what the lint, opt-out, wasm32 test and licence checks enforce, and why. -->
+
+This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, the generated status counts and index lists, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
 
 ## Entries
 
@@ -18,7 +20,7 @@ It scans the files git tracks or would add, so ignored trees such as build outpu
 
 ### Copied task counts (`hygiene`)
 
-A task count copied into prose is wrong the next time a task is ticked, and a review of that tick never opens the page. The counts live on the [status page](../start/status.md#by-feature), generated; every other page links there. `scripts/check-docs-facts.sh` reads `README.md`, `CONTRIBUTING.md`, `specs/README.md` and every `.md` and `.inc` file under `docs/`, except the generated `docs/start/status-counts.inc`, and fails, naming each file and line, on:
+A task count copied into prose is wrong the next time a task is ticked, and a review of that tick never opens the page. The counts live on the [status page](../start/status.md#by-feature), generated; every other page links there. `scripts/check-docs-facts.sh` reads `README.md`, `CONTRIBUTING.md`, `specs/README.md` and every `.md` and `.inc` file under `docs/`, except the generated `docs/start/status-counts.inc` and the [generated index lists](#generated-index-lists-docs), whose text it already reads in the pages they copy, and fails, naming each file and line, on:
 
 - a number followed by "task", "tasks", "work item" or "work items". A zero-padded number is a feature, as in "003 tasks U008", and never matches;
 - "N of M" on a line that says "task", "ticked" or "work item", or in a table whose header row says so. Elsewhere, as in a count of pattern pieces, it passes.
@@ -94,6 +96,15 @@ IDs are case-sensitive. A missing licence, `SEE LICENSE IN …`, `UNLICENSED` an
 The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. Before it builds the book, the `docs` step runs `scripts/gen-status.py`, which reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc` for the page to include. The file is git-ignored and never committed, so a tick needs no regeneration and no pull request conflicts on it. A bare `mdbook build` fails on the missing file; run `scripts/gen-status.py` first, or build through `scripts/check.sh docs`.
 
 A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails the build, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
+
+### Generated index lists (`docs`)
+
+The page lists in the `README.md` of `docs/explanation/`, `docs/how-to/`, `docs/reference/` and `docs/tutorials/`, and the table in [`docs/adr/README.md`](../adr/README.md), are generated, because parallel docs pull requests each added a line to the same hand-kept list and conflicted on it. Right after `scripts/gen-status.py`, the `docs` step runs `scripts/gen-indexes.py`, which writes an `index.inc` beside each of those `README.md` files for it to include. Like the status counts, the files are git-ignored and never committed, and a bare `mdbook build` fails without them.
+
+- **A folder's list** has one entry per page `docs/SUMMARY.md` lists in that folder, in `SUMMARY.md`'s order: the page's H1 as the link, a colon, then its index line, `<!-- index: <one line> -->`, which must be the first line after the H1. `SUMMARY.md` stays hand-kept, since its order is the reading order.
+- **The ADR table** has one row per `docs/adr/NNNN-*.md` but the template, in number order: the number, the H1, and the `status:` from the front matter. The `README.md` keeps the table's header row.
+
+The generator fails the build, naming the file and writing no include, on a listed page with no H1 or no index line, an ADR with no H1 or no `status:` in its front matter, and a folder `SUMMARY.md` lists no page in.
 
 ### Agent attribution (pull requests, CI only)
 

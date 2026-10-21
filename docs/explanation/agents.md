@@ -1,5 +1,7 @@
 # How agents work in this repo
 
+<!-- index: how AI agents take a feature from spec to merged pull request: Spec Kit, the factory, steward, the review on opening and the merge gate. -->
+
 AI coding agents write most of OpenPlush's pull requests. This page explains, for a contributor who wants to know how that is organised, what the agents do from a feature idea to a merged change, and what keeps a person in charge. The rules themselves live in the skills and ADRs this page links to; it explains them and never replaces them.
 
 ## The short answer

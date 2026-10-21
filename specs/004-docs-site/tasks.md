@@ -115,7 +115,7 @@ Facts copied by hand drift, and diff-scoped review never sees the file a change 
 - [ ] W040 [US2] `.github/workflows/review.yml` and `.claude/agents/docs-reviewer.md`: `docs-reviewer` also runs on `specs/*/tasks.md`, `README.md`, `CONTRIBUTING.md` and `docs/adr/`, and grades a status claim or copied task count outside the status page 🔴, as spec.md's "Status drift" edge case says
 - [ ] W041 [US2] `scripts/tests/report-tick-lag.test.sh` then `scripts/report-tick-lag.sh`: lists task IDs named in `main`'s commit subjects whose tasks are still unticked, sorted, with `--now` for tests. A report only, never a gate
 - [ ] W042 `docs/adr/0019-spec-maintenance-model.md`: the flow-forward hybrid in `AGENTS.md` "Specs and docs" (specs record intent, code and `docs/` describe what exists) and what enforces it (W037–W041). `human:decision`
-- [ ] W043 [US4] `docs/reference/glossary.md`: grant, fixture, factory, stack position and tier H, each linked from where agents raise decisions
+- [ ] W043 [US4] `docs/reference/glossary.md`: grant, fixture, factory, stack position and tier H, each linked from where agents raise decisions — *2026-10-20: fixture, grant (also as standing authorization), stack position and tier H added under Process, and factory sharpened (a run is a firing); each is a definition plus a link to its one home. Entries keep the page's section anchors (`glossary.md#process`). Left open, so unticked: the link from where agents raise decisions, which lands with 005's F010 (`AGENTS.md`, decision prompts, [#318](https://github.com/openplush/openplush/issues/318)); tick once that merges*
 
 ## Dependencies and execution order
 

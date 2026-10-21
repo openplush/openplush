@@ -64,7 +64,7 @@ What can fail, as `LayoutError`: no pieces, a roll width not greater than zero, 
 
 ### Export: bytes the maker prints
 
-`openplush-export` writes what the maker prints. `svg::write` draws one sheet at true scale; `pdf::write` draws a tiled sheet as a PDF with a cover page (scale check, a map of the pages, and any unresolved warnings) and one page per tile, each with its label, registration marks and a scale-check square. Each piece shows a solid cut line and a dashed sewing line. The same input gives the same bytes.
+`openplush-export` writes what the maker prints. `svg::write` draws one sheet at true scale, with any unresolved warnings printed under it; `pdf::write` draws a tiled sheet as a PDF with a cover page (scale check, a map of the pages, and any unresolved warnings) and one page per tile, each with its label, registration marks and a scale-check square. Each piece shows a solid cut line and a dashed sewing line. The same input gives the same bytes.
 
 What can fail, as `ExportError`: a placement whose piece was not given (`UnknownPiece`), a piece given twice (`DuplicatePiece`), and warning text the PDF fonts cannot print (`Unprintable`).
 

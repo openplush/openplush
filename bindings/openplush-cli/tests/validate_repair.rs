@@ -663,18 +663,26 @@ fn a_file_that_cannot_be_read_or_written_is_named_on_stderr() -> Result<(), Setu
 }
 
 #[test]
-fn a_gltf_named_without_a_directory_reads_the_working_directory() -> Result<(), Setup> {
+fn a_gltf_named_without_a_directory_reads_its_buffer_from_the_working_directory()
+-> Result<(), Setup> {
     let dir = scratch("bare-gltf")?;
-    fs::write(dir.join("model.gltf"), "{}")?;
+    let points = [0f32, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0];
+    let bin: Vec<u8> = points.iter().flat_map(|c| c.to_le_bytes()).collect();
+    let gltf = format!(
+        r#"{{"asset":{{"version":"2.0"}},"buffers":[{{"uri":"sub/tri.bin","byteLength":{len}}}],"bufferViews":[{{"buffer":0,"byteLength":{len}}}],"accessors":[{{"bufferView":0,"componentType":5126,"type":"VEC3","count":3,"min":[0,0,0],"max":[1,1,0]}}],"meshes":[{{"primitives":[{{"attributes":{{"POSITION":0}}}}]}}],"nodes":[{{"mesh":0}}],"scenes":[{{"nodes":[0]}}],"scene":0}}"#,
+        len = bin.len()
+    );
+    fs::create_dir_all(dir.join("sub"))?;
+    fs::write(dir.join("sub").join("tri.bin"), bin)?;
+    fs::write(dir.join("model.gltf"), gltf)?;
     let out = Command::new(env!("CARGO_BIN_EXE_openplush-cli"))
         .args(["validate", "model.gltf", "--json", "r.json"])
         .current_dir(&*dir)
         .output()?;
-    // No glTF reader yet: the set is gathered, and the engine then refuses the type.
-    assert!(
-        stderr(&out).starts_with("openplush-cli: UnknownFormat: "),
-        "{}",
-        stderr(&out)
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    assert_eq!(
+        json(&dir.join("r.json"))?["components"],
+        serde_json::json!([[0]])
     );
     Ok(())
 }

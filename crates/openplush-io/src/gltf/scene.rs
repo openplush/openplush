@@ -2,18 +2,9 @@
 
 use ::gltf::scene::Transform;
 use ::gltf::{Document, Node};
-use openplush_geom::DVec3;
 use openplush_geom::epsilon::UNIT_QUATERNION_TOLERANCE;
 
-/// A 4x4 transform in column-major order, `m[column][row]`, as glTF stores it.
-pub(super) type Mat = [[f64; 4]; 4];
-
-const IDENTITY: Mat = [
-    [1.0, 0.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0, 0.0],
-    [0.0, 0.0, 1.0, 0.0],
-    [0.0, 0.0, 0.0, 1.0],
-];
+use crate::affine::{IDENTITY, Mat, mul};
 
 /// The file's `scene`, else scene 0, walked depth first from its roots, children in array
 /// order; every node with its world transform.
@@ -89,28 +80,4 @@ fn trs(t: [f64; 3], [x, y, z, w]: [f64; 4], s: [f64; 3]) -> Mat {
         [a, b, d, 0.0]
     };
     [column(0), column(1), column(2), [t[0], t[1], t[2], 1.0]]
-}
-
-fn mul(a: &Mat, b: &Mat) -> Mat {
-    let mut m = [[0.0; 4]; 4];
-    for (column, out) in m.iter_mut().enumerate() {
-        for (row, cell) in out.iter_mut().enumerate() {
-            *cell = (0..4).map(|k| a[k][row] * b[column][k]).sum();
-        }
-    }
-    m
-}
-
-/// `p` moved by `m`.
-pub(super) fn apply(m: &Mat, [x, y, z]: [f64; 3]) -> DVec3 {
-    let row = |r: usize| m[0][r] * x + m[1][r] * y + m[2][r] * z + m[3][r];
-    DVec3::new(row(0), row(1), row(2))
-}
-
-/// True when `m` turns the space inside out, so a triangle's winding must be reversed.
-pub(super) fn mirrors(m: &Mat) -> bool {
-    let [a, b, c] = [m[0], m[1], m[2]];
-    let det = a[0] * (b[1] * c[2] - b[2] * c[1]) - b[0] * (a[1] * c[2] - a[2] * c[1])
-        + c[0] * (a[1] * b[2] - a[2] * b[1]);
-    det < 0.0
 }

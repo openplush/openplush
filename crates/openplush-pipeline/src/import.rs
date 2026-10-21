@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use openplush_io::gltf::{self, Ignored, Imported};
-use openplush_io::{IoError, obj, ply, stl};
+use openplush_io::{Ignored, Imported, IoError, gltf, obj, ply, stl};
 use openplush_mesh::TriangleSoup;
 
 use crate::{
@@ -140,7 +139,7 @@ fn ignored_text(ignored: &[Ignored]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use openplush_io::gltf::Ignored;
+    use openplush_io::Ignored;
     use openplush_mesh::{FaceId, MeshError};
 
     use super::*;

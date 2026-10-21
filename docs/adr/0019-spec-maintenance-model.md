@@ -1,6 +1,6 @@
 ---
-status: Proposed
-date: 2026-10-20
+status: Accepted
+date: 2026-10-21
 deciders: Lavender (maintainer)
 ---
 
@@ -77,4 +77,4 @@ What enforces it (004, Phase 8):
 
 ## More information
 
-Builds on ADR 0003. Decisions: W-016 (generated, not `mdbook-cmdrun`), W-017 (exceptions file) in `specs/004-docs-site/plan.md`. Default if unanswered: the checks still land as 004 tasks; this ADR stays Proposed and the model stays implicit in `AGENTS.md`. Revisit if the exceptions file grows past a handful of lines.
+Builds on ADR 0003. Decisions: W-016 (generated, not `mdbook-cmdrun`), W-017 (exceptions file) in `specs/004-docs-site/plan.md`. Accepted by the maintainer on 2026-10-21. Revisit if the exceptions file grows past a handful of lines.

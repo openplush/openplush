@@ -116,7 +116,7 @@ Facts copied by hand drift, and diff-scoped review never sees the file a change 
 - [x] W041 [US2] `scripts/tests/report-tick-lag.test.sh` then `scripts/report-tick-lag.sh`: lists task IDs named in `main`'s commit subjects whose tasks are still unticked, sorted, with `--now` for tests. A report only, never a gate. As built: an ID counts when it is a whole comma-separated item in parentheses, so a range or a word beside it is not read as a task; the ticks are read from the branch's own `tasks.md`, not the working tree; `--ref` defaults to `main`, else `origin/main`; on 2026-10-20 it lists one task on `main`, a partial slice of a 001 task
 - [x] W042 `docs/adr/0019-spec-maintenance-model.md`: the flow-forward hybrid in `AGENTS.md` "Specs and docs" (specs record intent, code and `docs/` describe what exists) and what enforces it (W037–W041). — *2026-10-21: accepted by the maintainer*
 - [x] W043 [US4] `docs/reference/glossary.md`: grant, fixture, factory, stack position and tier H, each linked from where agents raise decisions — *2026-10-20: fixture, grant (also as standing authorization), stack position and tier H added under Process, and factory sharpened (a run is a firing); each is a definition plus a link to its one home. Entries keep the page's section anchors (`glossary.md#process`). The link from where agents raise decisions landed with 005's F010: `AGENTS.md`'s decision-prompt rule links the glossary (#340)*
-- [ ] W044 [US2] `scripts/tests/gen-indexes.test.sh` then `scripts/gen-indexes.py`: each folder's index list in `docs/{explanation,how-to,reference,tutorials}/README.md` and the table in `docs/adr/README.md` are generated when the `docs` step builds the book, never committed, as the status counts are (W-018). Order comes from `docs/SUMMARY.md`, which stays hand-curated; the title from each page's H1; the one-line description from an index line at the top of each page; an ADR's status from its front matter. A page with no H1 or no index line fails the build, naming the file
+- [ ] W044 [US2] `scripts/tests/gen-indexes.test.sh` then `scripts/gen-indexes.py`: each folder's index list in `docs/{explanation,how-to,reference,tutorials}/README.md` and the table in `docs/adr/README.md` are generated when the `docs` step builds the book into git-ignored `.inc` files that the committed READMEs include (one `.gitignore` entry per include, beside `docs/start/status-counts.inc`), as W037's status counts are (W-018). Order comes from `docs/SUMMARY.md`, which stays hand-curated; the title from each page's H1; the one-line description from an index line at the top of each page; an ADR's status from its front matter. A page with no H1 or no index line fails the build, naming the file. needs:W037
 
 ## Dependencies and execution order
 
@@ -124,7 +124,7 @@ Facts copied by hand drift, and diff-scoped review never sees the file a change 
 - Phase 1 before any new page, so pages start from the templates.
 - Phase 2's W006 → W008 → W009 → W012 → W014 is the critical path to a published site.
 - Phases 3, 5 and 7 run in parallel once W008 is in. Phase 4 waits on W009 so moved content lands with working links.
-- Phase 8's W037 comes before W038, whose check exempts the include W037 generates. W039, W040, W041 and W043 are independent of each other; W042 records what they enforce.
+- Phase 8's W037 comes before W038, whose check exempts the include W037 generates. W039, W040, W041 and W043 are independent of each other; W042 records what they enforce. W044 reuses W037's generated-include pattern.
 
 ## Notes
 

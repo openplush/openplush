@@ -2,13 +2,13 @@
 
 No stored data; these are the shapes agents and scripts read and write.
 
-## Grant (US6, waits on F-002)
+## Grant (US6, ADR 0020)
 
 | Field | Type | Rule |
 |---|---|---|
 | hours | positive number | Ends at start + hours; a firing after that does no work |
 | features | list of `NNN` | Only these features' tasks are picked |
-| merge | yes / no | What "yes" may override is ADR 0020's to say |
+| merge | yes / no | "yes" lets the run merge a tier H PR only when the merge gate shows every condition but the tier passing (ADR 0020) |
 | paths | list of path prefixes | Paths the run may change beyond its tier's default |
 | decisions | yes / no | Whether the run may accept a Proposed decision |
 

@@ -104,23 +104,22 @@ The maintainer gives a factory run one structured, time-boxed grant (hours, feat
 **Acceptance Scenarios**:
 
 1. **Given** a grant argument, **When** a firing starts, **Then** it reads hours, features, merge, paths and decisions from it and states the grant in its handoff.
-2. **Given** a grant that allows something a merge decision forbids, **When** the firing reads it, **Then** what wins is the rule the accepted decision on grants sets, with no session deciding alone.
+2. **Given** a grant that allows something a merge decision forbids, **When** the firing reads it, **Then** what wins is the rule [ADR 0020](../../docs/adr/0020-factory-grants.md) sets, with no session deciding alone.
 3. **Given** a grant that has expired, **When** a scheduled firing starts, **Then** it does no work and the schedule is turned off.
 
 ---
 
 ### User Story 7 - Stacked PRs stop conflicting on shared lists (Priority: P3)
 
-Parallel and stacked PRs that each add a decision, a task or a page no longer conflict on the same ledger table or index list. Issue [#320](https://github.com/openplush/openplush/issues/320).
+Parallel and stacked PRs that each add a page no longer conflict on the same folder index list. The decision ledger stays as it is: it caused 2 of 16 measured conflicts (F-003, accepted 2026-10-21). Issue [#320](https://github.com/openplush/openplush/issues/320).
 
 **Why this priority**: Each conflict costs a merge-up push and a CI run, nearly every time; but the layout is a maintainer decision and the cost is time, not correctness.
 
-**Independent Test**: Two PRs stacked on one parent each add a decision and a page; both merge into the parent without a conflict on a shared file.
+**Independent Test**: Two PRs stacked on one parent each add a page to one folder; both merge into the parent without a conflict on the folder's index.
 
 **Acceptance Scenarios**:
 
-1. **Given** two PRs that each add a decision to one feature, **When** both merge, **Then** neither conflicts with the other in the ledger.
-2. **Given** two PRs that each add a page to one folder, **When** both merge, **Then** the folder's index list does not conflict and lists both pages.
+1. **Given** two PRs that each add a page to one folder, **When** both merge, **Then** the folder's index list does not conflict and lists both pages.
 
 ---
 
@@ -153,7 +152,7 @@ Parallel and stacked PRs that each add a decision, a task or a page no longer co
 - **FR-014**: A firing MUST accept a structured grant (hours, features, merge, paths, decisions) and a renewal of the last one (US6).
 - **FR-015**: What a grant may and may not override MUST be stated in one accepted decision, and the factory rules MUST match it (US6).
 - **FR-016**: A scheduled firing MUST do no work after its grant expires, and the schedule MUST be turned off (US6).
-- **FR-017**: Adding a decision or a page in two parallel PRs MUST NOT conflict on a shared ledger table or folder index (US7).
+- **FR-017**: Adding a page in two parallel PRs MUST NOT conflict on a shared folder index (US7).
 
 ### Key Entities
 
@@ -181,7 +180,7 @@ Parallel and stacked PRs that each add a decision, a task or a page no longer co
 - The factory runs as Claude Code sessions driven by `.claude/skills/factory/SKILL.md`; skills have no test harness, so their rules are shown by worked examples.
 - The maintainer's identity is the one in the repository's commit history; agent identities are the ones in the history check above.
 - The merge gate's stale-summary and changes-requested handling (ADR 0018) is correct and tested; this feature only confirms it.
-- US6 and US7 wait on decisions the maintainer accepts; until then their tasks are `human:decision` or `needs:` them.
+- US6 and US7 waited on decisions the maintainer accepted on 2026-10-21 (F-002, F-003).
 
 ## Out of scope
 

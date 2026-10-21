@@ -1,5 +1,7 @@
 # How to: the goal, as a verb phrase
 
+<!-- index: one line for the folder's list of pages: what the reader gets from this page. -->
+
 One or two sentences: the goal and when a reader needs it.
 
 ## You will

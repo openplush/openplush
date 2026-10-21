@@ -1,5 +1,7 @@
 # Engine API (`openplush-pipeline`)
 
+<!-- index: the public `openplush-pipeline` surface as built, error messages, warning order, wire forms. -->
+
 What the public engine API is **today**, and the facts about it that rustdoc does not show: user-visible strings, ordering rules, wire forms, and stability. Signatures and per-item docs live in rustdoc, which is generated from the code and cannot drift from it:
 
 ```zsh

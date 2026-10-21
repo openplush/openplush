@@ -234,9 +234,11 @@ for step in "${steps[@]}"; do
           die "lychee ${have:-missing}, check.sh pins $LYCHEE_VERSION; run scripts/check.sh --setup docs"
       fi
       run scripts/tests/check-docs-links.test.sh
-      # The status page includes counts generated from every tasks.md; never committed,
-      # so no tick on main can leave a copy stale.
+      # The status page includes counts generated from every tasks.md, and each folder's
+      # README its index list; never committed, so no tick on main can leave a copy
+      # stale and parallel docs pull requests never conflict on a list.
       run scripts/gen-status.py
+      run scripts/gen-indexes.py
       run mdbook build
       # The maker guide is its own book, built beside the contributor book and
       # published only from the first public release (docs.yml drops it on main).

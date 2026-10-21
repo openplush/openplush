@@ -1,5 +1,7 @@
 # Command line (`openplush-cli`)
 
+<!-- index: `openplush-cli` subcommands, flags, and exit codes. -->
+
 The headless shell: every engine capability as file-in, file-out (Constitution II). This page lists what exists **today**. The planned surface is in the [quickstart](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/quickstart.md#1-engine-headless-constitution-ii).
 
 ```zsh

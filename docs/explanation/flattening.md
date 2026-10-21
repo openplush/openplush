@@ -1,5 +1,7 @@
 # Flattening and exact seam lengths
 
+<!-- index: what flattening does to a chart, and why every seam edge keeps its exact 3D length. -->
+
 This page explains what flattening does to a chart, and why OpenPlush pins every seam edge to its exact 3D length instead of letting the flattener trade a little length for less distortion. Read it before changing `openplush-flatten`, or when a flattened piece looks more compressed than you expected.
 
 ## The short answer

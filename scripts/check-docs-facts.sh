@@ -4,7 +4,9 @@
 # the status page; every other page links to it.
 #
 # Reads README.md, CONTRIBUTING.md, specs/README.md and every *.md and *.inc under
-# docs/ (mdBook renders both), except the generated docs/start/status-counts.inc.
+# docs/ (mdBook renders both), except the generated docs/start/status-counts.inc
+# and docs/{adr,explanation,how-to,reference,tutorials}/index.inc, whose text is
+# copied from pages this check reads.
 #
 # Fails on a copied task count, case-insensitive:
 #   - a number then "task(s)" or "work item(s)". A zero-padded number is a feature
@@ -25,7 +27,7 @@ export LC_ALL=C
 root="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$root"
 status_page=docs/start/status.md
-generated=docs/start/status-counts.inc
+generated='docs/start/status-counts\.inc|docs/(adr|explanation|how-to|reference|tutorials)/index\.inc'
 
 # checked: every file this check reads, one per line, sorted.
 checked() {
@@ -33,7 +35,7 @@ checked() {
   for f in README.md CONTRIBUTING.md specs/README.md; do
     [[ -f $f ]] && echo "$f"
   done
-  [[ -d docs ]] && find docs -type f \( -name '*.md' -o -name '*.inc' \) | grep -vxF "$generated"
+  [[ -d docs ]] && find docs -type f \( -name '*.md' -o -name '*.inc' \) | grep -vxE "$generated"
   return 0
 }
 

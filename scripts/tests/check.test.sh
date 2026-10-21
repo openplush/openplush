@@ -60,6 +60,10 @@ out=$("$check" --dry-run docs 2>&1)
 gen=$(grep -nxF "+ scripts/gen-status.py" <<<"$out" | cut -d: -f1 || true)
 book=$(grep -nxF "+ mdbook build" <<<"$out" | cut -d: -f1 || true)
 if [[ -n $gen && -n $book && $gen -lt $book ]]; then ok "docs step generates the status counts before building the book"; else bad "docs step generates the status counts before building the book" "$out"; fi
+# The folder index lists and the ADR table are generated the same way, so parallel
+# docs pull requests never conflict on them.
+gen=$(grep -nxF "+ scripts/gen-indexes.py" <<<"$out" | cut -d: -f1 || true)
+if [[ -n $gen && -n $book && $gen -lt $book ]]; then ok "docs step generates the index lists before building the book"; else bad "docs step generates the index lists before building the book" "$out"; fi
 status=0
 out=$("$check" --dry-run status 2>&1) || status=$?
 if [[ $status -eq 2 ]]; then ok "status is not a step: the counts are never committed"; else bad "status is not a step (exit $status)" "$out"; fi
@@ -69,6 +73,13 @@ if git -C "$root" check-ignore -q docs/start/status-counts.inc && ! git -C "$roo
 else
   bad "the status counts include is ignored and untracked"
 fi
+for inc in docs/adr/index.inc docs/explanation/index.inc docs/how-to/index.inc docs/reference/index.inc docs/tutorials/index.inc; do
+  if git -C "$root" check-ignore -q "$inc" && ! git -C "$root" ls-files --error-unmatch "$inc" >/dev/null 2>&1; then
+    ok "the generated $inc is ignored and untracked"
+  else
+    bad "the generated $inc is ignored and untracked"
+  fi
+done
 # usize is 32 bits on wasm32, so a test can build natively and not there: a shift
 # past u32::MAX is a hard error that only codegen reports, which cargo check and
 # clippy never reach. wasm-check builds every test binary for wasm32 without

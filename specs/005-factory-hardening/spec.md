@@ -104,7 +104,7 @@ The maintainer gives a factory run one structured, time-boxed grant (hours, feat
 **Acceptance Scenarios**:
 
 1. **Given** a grant argument, **When** a firing starts, **Then** it reads hours, features, merge, paths and decisions from it and states the grant in its handoff.
-2. **Given** a grant that allows something a merge decision forbids, **When** the firing reads it, **Then** what wins is the rule the accepted decision on grants sets, with no session deciding alone.
+2. **Given** a grant that allows something a merge decision forbids, **When** the firing reads it, **Then** what wins is the rule [ADR 0020](../../docs/adr/0020-factory-grants.md) sets, with no session deciding alone.
 3. **Given** a grant that has expired, **When** a scheduled firing starts, **Then** it does no work and the schedule is turned off.
 
 ---

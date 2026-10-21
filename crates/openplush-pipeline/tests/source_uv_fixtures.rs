@@ -1,6 +1,7 @@
 //! UV cuts on the source-seam fixtures, imported and repaired as a shell would, against the
 //! reference layout matched by position: the capsule as glTF and as OBJ, and its hard-shaded twin,
-//! whose vertices are also split where only the normals differ. Here rather than in
+//! whose vertices are also split where only the normals differ; and the capsule's lack of
+//! projection points, its UVs being a marked unwrap. Here rather than in
 //! `openplush-seams` because reading the files needs `openplush-io`, a sibling of that crate.
 
 use std::collections::BTreeSet;
@@ -122,4 +123,13 @@ fn the_capsule_obj_cuts_are_exactly_the_reference_layout() -> Result<(), Setup> 
 #[test]
 fn hard_shading_splits_add_no_cut_to_the_reference_layout() -> Result<(), Setup> {
     assert_cuts_are_the_layout("capsule-hardshade.glb", HARDSHADE_GLB)
+}
+
+#[test]
+fn the_capsule_s_marked_unwrap_has_no_projection_point() -> Result<(), Setup> {
+    let mesh = mesh_of("capsule-uv.glb", CAPSULE_GLB)?;
+    let cuts = uv_cuts(&mesh, &SeamSet::new())?;
+    assert!(!cuts.edges().is_empty());
+    assert_eq!(cuts.projection_points(), &[] as &[VertexId]);
+    Ok(())
 }

@@ -41,5 +41,5 @@ Every ADR follows the [template](0000-template.md), so its parts are always in t
 Once accepted, an ADR is a record of what was decided and why on its date: its body is not edited, and a change is a new ADR that supersedes it. It never describes the code as it is now: once code lands, the code and `docs/` are the source of truth ([ADR 0003](0003-as-built-docs.md)). To follow a decision to its work:
 
 - **Tasks**: the feature's `tasks.md` (`specs/<feature>/tasks.md`) cites the ADR on the tasks that implement or depend on it, and the plan's Decision Ledger records the smaller decisions made along the way.
-- **Code**: the as-built docs describe what exists, starting from the [architecture](../explanation/architecture.md) and the [crate reference](../reference/crates.md); the ADR's Context and Confirmation name the crates, workflows or gates it touches.
+- **Code**: the as-built docs describe what exists, starting from the [architecture](../explanation/architecture.md) and the [crate reference](../reference/crates/README.md); the ADR's Context and Confirmation name the crates, workflows or gates it touches.
 - **History**: the PR that merged the ADR, and the PRs that cite it, carry the discussion.

@@ -247,15 +247,15 @@
   "$defs": {
     "provenanceEdge": {
       "type": "string",
-      "description": "Sorted pair of canonical source vertices, each <primitive>.<vertex> in decimal, sorted in numeric (primitive, vertex) order and joined by a colon, for example 0.9:0.1204 (D-067). A vertex is named by the lowest source vertex among its corners; a filled hole's patch vertex, which has none, is <loop>+<n>, vertex n of that loop's patch in decimal (0.12+3), and sorts after every source vertex, by loop and then n. As built: docs/reference/crates.md. Stable across changes to repair settings while the faces that carry it survive."
+      "description": "Sorted pair of canonical source vertices, each <primitive>.<vertex> in decimal, sorted in numeric (primitive, vertex) order and joined by a colon, for example 0.9:0.1204 (D-067). A vertex is named by the lowest source vertex among its corners; a filled hole's patch vertex, which has none, is <loop>+<n>, vertex n of that loop's patch in decimal (0.12+3), and sorts after every source vertex, by loop and then n. As built: docs/reference/crates/openplush-project.md. Stable across changes to repair settings while the faces that carry it survive."
     },
     "provenanceFace": {
       "type": "string",
-      "description": "Sorted triple of source corners, each <primitive>.<vertex>, in numeric (primitive, vertex) order, joined by colons, for example 0.7:0.40:1.2 (D-067). A patch corner is its vertex's <loop>+<n>, sorted as in provenanceEdge. As built: docs/reference/crates.md."
+      "description": "Sorted triple of source corners, each <primitive>.<vertex>, in numeric (primitive, vertex) order, joined by colons, for example 0.7:0.40:1.2 (D-067). A patch corner is its vertex's <loop>+<n>, sorted as in provenanceEdge. As built: docs/reference/crates/openplush-project.md."
     },
     "boundaryLoopRef": {
       "type": "string",
-      "description": "The loop's lowest source corner, as <primitive>.<vertex>, for example 0.12 (D-067). It is also the <loop> of the loop's patch vertices, <loop>+<n>, while the loop is filled. As built: docs/reference/crates.md."
+      "description": "The loop's lowest source corner, as <primitive>.<vertex>, for example 0.12 (D-067). It is also the <loop> of the loop's patch vertices, <loop>+<n>, while the loop is filled. As built: docs/reference/crates/openplush-project.md."
     },
     "surfacePoint": {
       "type": "object",

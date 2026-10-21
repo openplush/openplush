@@ -10,7 +10,7 @@ In the order `crates/AGENTS.md` lists them. "Constitution" and a numeral name a 
 
 ### Where code goes
 
-- **Put code in the crate that owns its concern**, from the [ownership table](crates.md#which-crate-owns-what). One responsibility per crate keeps each one small enough to test against its own oracle.
+- **Put code in the crate that owns its concern**, from the [ownership table](crates/README.md#which-crate-owns-what). One responsibility per crate keeps each one small enough to test against its own oracle.
 - **Depend downward only**, along the crate graph in the [plan](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced). A sideways edge needs an ADR, because two crates that reach into each other can no longer be changed or tested apart.
 - **`bindings/*` depend on `openplush-pipeline` only.** The pipeline is the one public engine API, so the command line and the browser run the same operations with the same errors (Constitution I and II); `scripts/check-boundary.sh` enforces it.
 

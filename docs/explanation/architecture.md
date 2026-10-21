@@ -2,7 +2,7 @@
 
 <!-- index: the engine as built: the stage chain and its types, errors versus warnings, IDs and provenance, determinism and tolerances. -->
 
-How the engine is put together, and why. Which parts are built is on the [status page](../start/status.md); parts not built yet are described in the specs this page links. For what each crate exports, see [reference/crates.md](../reference/crates.md); for the public API, see [reference/engine-api.md](../reference/engine-api.md).
+How the engine is put together, and why. Which parts are built is on the [status page](../start/status.md); parts not built yet are described in the specs this page links. For what each crate exports, see the [crate reference](../reference/crates/README.md); for the public API, see [reference/engine-api.md](../reference/engine-api.md).
 
 ## Two halves, one seam between them
 
@@ -63,4 +63,4 @@ Model units become millimetres through `Scale::to_mm`. `Mm::try_new` is public, 
 
 ## Crate layering
 
-Crates depend downward only; the graph and its rules are in the [plan's crate DAG](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced), and `scripts/check-boundary.sh` enforces it. Which crates have code and which are scaffolds: [reference/crates.md](../reference/crates.md).
+Crates depend downward only; the graph and its rules are in the [plan's crate DAG](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced), and `scripts/check-boundary.sh` enforces it. Which crates have code and which are scaffolds: the [crate reference](../reference/crates/README.md).

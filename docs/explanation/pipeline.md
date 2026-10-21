@@ -2,7 +2,7 @@
 
 <!-- index: one model followed through every stage, the crate that owns each, and what can fail there. -->
 
-This page follows one model from its file to a printed pattern, stage by stage: which crate does the work, what it hands on, and what can stop it. Read it to know where a change belongs and which error a failure there raises. The type each stage guarantees, and how errors differ from warnings, are on the [architecture](architecture.md) page; what each crate exports is in [reference/crates.md](../reference/crates.md).
+This page follows one model from its file to a printed pattern, stage by stage: which crate does the work, what it hands on, and what can stop it. Read it to know where a change belongs and which error a failure there raises. The type each stage guarantees, and how errors differ from warnings, are on the [architecture](architecture.md) page; what each crate exports is in the [crate reference](../reference/crates/README.md).
 
 ## The short answer
 

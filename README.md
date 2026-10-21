@@ -2,7 +2,7 @@
 
 Turn a 3D model into a sewable plush pattern. Free, open source, and it runs entirely on your device.
 
-> **What is built today, and what is not:** the [project status](docs/start/status.md). What exists is described in [docs/](docs/) ([architecture](docs/explanation/architecture.md), [engine API](docs/reference/engine-api.md), [crates](docs/reference/crates.md)); what is planned is in the [specs index](specs/README.md).
+> **What is built today, and what is not:** the [project status](docs/start/status.md). What exists is described in [docs/](docs/) ([architecture](docs/explanation/architecture.md), [engine API](docs/reference/engine-api.md), [crates](docs/reference/crates/README.md)); what is planned is in the [specs index](specs/README.md).
 
 ## What it will do
 - Import a 3D model (OBJ, glTF) and set its real-world size.

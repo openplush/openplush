@@ -195,8 +195,8 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 ### Seams (`openplush-seams`)
 
-- [ ] U039 [P] [US3] `crates/openplush-seams/tests/source_boundaries.rs`: failing tests. An interior edge is a material boundary when both faces come from the source and differ in `Option<MaterialIndex>`; a source face with no material next to a material face counts. An edge touching a repair-filled face is never a boundary (FR-024). An edge that is both a UV cut and a boundary appears once, as `FabricBoundary` (S-005), and the shared count includes it. Two materials that later map to one fabric still give a boundary
-- [ ] U040 [US3] `crates/openplush-seams/src/source.rs`: material-boundary detection merged with the UV cuts into the one seam proposal, with `FabricBoundary` winning on shared edges. Makes U039 pass
+- [x] U039 [P] [US3] `crates/openplush-seams/tests/source_boundaries.rs`: failing tests. An interior edge is a material boundary when both faces come from the source and differ in `Option<MaterialIndex>`; a source face with no material next to a material face counts. An edge touching a repair-filled face is never a boundary (FR-024). An edge that is both a UV cut and a boundary appears once, as `FabricBoundary` (S-005), and the shared count includes it. Two materials that later map to one fabric still give a boundary — *as built, also: faces of one material from two primitives give none, a boundary already in the `SeamSet` is left out, and the proposal's explanation counts the `Cut` and `FabricBoundary` edges*
+- [x] U040 [US3] `crates/openplush-seams/src/source.rs`: material-boundary detection merged with the UV cuts into the one seam proposal, with `FabricBoundary` winning on shared edges. Makes U039 pass — *`UvCuts::material_boundaries()` and `shared_edges()`, computed by `uv_cuts`, whose `proposal()` now carries both kinds; the UV-cut tests pass unchanged. Documented in `docs/reference/crates/openplush-seams.md`*
 
 ### Regions (`openplush-pattern`)
 

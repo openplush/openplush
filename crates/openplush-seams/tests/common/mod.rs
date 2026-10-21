@@ -5,7 +5,8 @@ use std::f64::consts::TAU;
 
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{
-    EdgeId, ManifoldMesh, RepairPlan, RepairReport, SourceCorner, TriangleSoup, VertexId,
+    EdgeId, ManifoldMesh, RepairPlan, RepairReport, SourceCorner, SourceMaterials, TriangleSoup,
+    VertexId,
 };
 use openplush_seams::{SeamKind, SeamSet};
 
@@ -109,6 +110,24 @@ pub(crate) fn repaired_with_uvs(
         &soup,
         &RepairPlan::default(),
     )?)
+}
+
+/// A soup of `positions` and `triangles` with corner UVs `uvs`, triangle `i` drawn by source
+/// primitive `primitives[i]`, and the file's `materials`; each corner its own source vertex.
+pub(crate) fn soup_with_materials(
+    positions: Vec<DVec3>,
+    triangles: Vec<[u32; 3]>,
+    uvs: Option<Vec<Option<DVec2>>>,
+    primitives: &[u32],
+    materials: SourceMaterials,
+) -> Result<TriangleSoup, Setup> {
+    let corners = primitives
+        .iter()
+        .flat_map(|&p| [p; 3])
+        .zip(0..)
+        .map(|(primitive, vertex)| SourceCorner { primitive, vertex })
+        .collect();
+    Ok(TriangleSoup::new(positions, triangles, corners, uvs)?.with_materials(materials, 0)?)
 }
 
 /// A closed octahedron: four points round the equator, then the top and the bottom.

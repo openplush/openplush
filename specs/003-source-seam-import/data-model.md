@@ -36,7 +36,7 @@ pub struct SourceMaterials {
 
 `UV_CUT = 1e-5` lives in `openplush_geom::epsilon` beside the other tolerances, as the first tolerance that is neither model-relative nor physical. Its doc comment says why it is absolute.
 
-As built, UV cuts and projection points: [docs/reference/crates/openplush-seams.md](../../docs/reference/crates/openplush-seams.md#uv-cuts).
+As built, UV cuts, material boundaries and projection points: [docs/reference/crates/openplush-seams.md](../../docs/reference/crates/openplush-seams.md#uv-cuts-and-material-boundaries).
 
 ## 3. The import proposal
 

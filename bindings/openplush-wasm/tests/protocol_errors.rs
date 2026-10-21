@@ -72,6 +72,21 @@ fn unknown_format_has_no_locations_key() -> Result<(), serde_json::Error> {
 }
 
 #[test]
+fn missing_resource_has_no_locations_key() -> Result<(), serde_json::Error> {
+    let e = EngineError::MissingResource {
+        uri: "tri.bin".into(),
+    };
+    assert_eq!(
+        wire(&e)?,
+        json!({
+            "code": "MissingResource",
+            "message": "the file refers to \"tri.bin\", which was not supplied beside it"
+        })
+    );
+    Ok(())
+}
+
+#[test]
 fn non_finite_input_locates_source_vertices() -> Result<(), serde_json::Error> {
     let e = EngineError::NonFiniteInput {
         vertices: vec![

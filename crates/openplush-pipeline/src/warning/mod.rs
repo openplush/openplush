@@ -31,6 +31,9 @@ impl NonBlank {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum WarningCode {
+    /// The file has parts the pattern does not follow: skins, morph targets, animations,
+    /// or point and line primitives.
+    ImportIgnored,
     /// Declared first, sorts last: proves order follows the string.
     #[cfg(test)]
     TestZulu,
@@ -45,6 +48,7 @@ impl WarningCode {
     pub const fn as_str(self) -> &'static str {
         // Must stay injective: warnings order and deduplicate by this string.
         match self {
+            Self::ImportIgnored => "import-ignored",
             #[cfg(test)]
             Self::TestZulu => "test-zulu",
             #[cfg(test)]

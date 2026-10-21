@@ -12,6 +12,8 @@ publish = false
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
 thiserror = "2.0.21"
+base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
+gltf = { version = "1.4.1", default-features = false, features = ["names"] }
 
 [dev-dependencies]
 openplush-testkit = { path = "../openplush-testkit" }

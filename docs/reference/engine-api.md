@@ -26,6 +26,7 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 | `FlattenError` | re-export, enum, `#[non_exhaustive]` | From `openplush-flatten`: the refusal `EngineError::Flatten` carries. Its variants are the flattener's own |
 | `DVec2` | re-export | From `openplush-geom`: the type of a flat position in `Parameterization::uv` |
 | `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
+| `DuplicateOrientation`, `Unmeasurable` | re-exports | From `openplush-mesh`: the enums `ValidationReport`'s duplicates and `unmeasurable()` carry |
 | `MeshError`, `MeshElement`, `HalfEdgeId`, `CornerArray`, `Counted`, `MaterialFault` | re-exports | From `openplush-mesh`: the refusal `EngineError::Mesh` carries and the types its variants name. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
 | `SeamsError` | re-export, enum, `#[non_exhaustive]` | From `openplush-seams`: what its APIs (`ProposalId::from_hex`, `Proposal::new`, `SeamSet`, `SeamGraph::new`, `close_chart`, `mark_opening`, `check_fold`, `SewingMap::new`, `shortest_path`, `mark_dart`) return, and what `chart` wraps in `EngineError::Seams`. Variants below |

@@ -173,3 +173,56 @@ fn the_same_rows_write_the_same_bytes() -> Result<(), Setup> {
     );
     Ok(())
 }
+
+/// Each text element's `x`, `y` and `font-size`, in document order.
+fn placed(svg: &str) -> Result<Vec<[f64; 3]>, Setup> {
+    let attr = |t: &str, name: &str| -> Result<f64, Setup> {
+        let v = t
+            .split(&format!(" {name}=\""))
+            .nth(1)
+            .and_then(|s| s.split('"').next())
+            .ok_or("no such attribute")?;
+        Ok(v.parse()?)
+    };
+    svg.split("<text")
+        .skip(1)
+        .map(|t| Ok([attr(t, "x")?, attr(t, "y")?, attr(t, "font-size")?]))
+        .collect()
+}
+
+#[test]
+fn the_summary_is_set_10_mm_in_and_under_on_a_5_mm_pitch_within_the_sheet_s_width()
+-> Result<(), Setup> {
+    let (sheet, pieces) = rectangle(100.0, 50.0, 200.0)?;
+    let long = SummaryRow::new(
+        "import-ignored".into(),
+        "the whole pattern".into(),
+        "word ".repeat(60),
+        "Nothing to change.".into(),
+    );
+    let warned = svg(&sheet, &pieces, &[long])?;
+    let width = size(&warned, "width")?;
+    assert_eq!(width, sheet.width_mm());
+    let at = placed(&warned)?;
+    assert_eq!(at[0], [10.0, sheet.length_mm() + 13.5, 3.5]);
+    assert_eq!(at[1][0], 16.3, "a continuing line is indented 3 columns");
+    for pair in at.windows(2) {
+        assert!((pair[1][1] - pair[0][1] - 5.0).abs() < 1e-9, "{pair:?}");
+    }
+    let last = at.last().ok_or("lines")?[1];
+    assert!((size(&warned, "height")? - (last + 10.0)).abs() < 1e-9);
+    // Courier's advance is 0.6 of the size: every line ends inside the right margin.
+    for (line, [x, _, font]) in texts(&warned).iter().zip(&at) {
+        let end = x + line.chars().count() as f64 * 0.6 * font;
+        assert!(end <= width - 10.0, "{line:?} ends at {end}");
+    }
+    Ok(())
+}
+
+#[test]
+fn a_narrow_sheet_s_summary_is_60_columns_wide_with_its_margins() -> Result<(), Setup> {
+    let (sheet, pieces) = rectangle(20.0, 50.0, 30.0)?;
+    let warned = svg(&sheet, &pieces, &[import_ignored()])?;
+    assert_eq!(size(&warned, "width")?, 60.0 * 0.6 * 3.5 + 20.0);
+    Ok(())
+}

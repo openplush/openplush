@@ -130,7 +130,7 @@ fn boundary_not_realizable_names_the_chart_and_carries_its_darts() -> Result<(),
     let fix = dart(6, 2)?;
     let e = EngineError::BoundaryNotRealizable {
         chart: ChartId::new(6),
-        residual_mm: 1.25,
+        residual: 1.25,
         proposals: vec![fix.clone()],
     };
     assert!(matches!(
@@ -140,7 +140,7 @@ fn boundary_not_realizable_names_the_chart_and_carries_its_darts() -> Result<(),
     ));
     assert_eq!(
         e.to_string(),
-        "chart 6's seam lengths cannot close flat (residual 1.250 mm)"
+        "chart 6's seam lengths cannot close flat (residual 1.250 in model units)"
     );
     Ok(())
 }

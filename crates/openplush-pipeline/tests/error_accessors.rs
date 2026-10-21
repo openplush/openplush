@@ -4,8 +4,9 @@ use std::collections::BTreeMap;
 use std::error::Error;
 
 use openplush_pipeline::{
-    ChartFailure, ChartId, EdgeId, EngineError, ErrorLocations, FaceId, Format, PieceId, Proposal,
-    ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
+    ChartFailure, ChartId, EdgeId, EngineError, ErrorLocations, FaceId, FlattenError, Format,
+    PieceId, Proposal, ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner,
+    VertexId,
 };
 use openplush_pipeline::{
     CornerArray, Counted, HalfEdgeId, LoopRef, MaterialFault, MeshElement, MeshError,
@@ -93,6 +94,12 @@ fn import_and_seam_variants() -> Result<Vec<(EngineError, &'static str)>, Box<dy
 fn flatten_and_later_variants() -> Vec<(EngineError, &'static str)> {
     vec![
         (
+            EngineError::Flatten(FlattenError::SolveFailed {
+                chart: ChartId::new(2),
+            }),
+            "Flatten",
+        ),
+        (
             EngineError::Flip {
                 chart: ChartId::new(1),
                 faces: vec![FaceId::new(4)],
@@ -102,7 +109,7 @@ fn flatten_and_later_variants() -> Vec<(EngineError, &'static str)> {
         (
             EngineError::BoundaryNotRealizable {
                 chart: ChartId::new(5),
-                residual_mm: 0.5,
+                residual: 0.5,
                 proposals: vec![],
             },
             "BoundaryNotRealizable",
@@ -249,7 +256,7 @@ fn proposals_come_from_the_two_variants_that_carry_them() -> Result<(), Box<dyn 
     let darts = vec![dart(6, 2)?, dart(6, 5)?];
     let not_realizable = EngineError::BoundaryNotRealizable {
         chart: ChartId::new(6),
-        residual_mm: 1.25,
+        residual: 1.25,
         proposals: darts.clone(),
     };
     assert_eq!(not_realizable.proposals(), darts.as_slice());
@@ -266,7 +273,7 @@ fn proposals_come_from_the_two_variants_that_carry_them() -> Result<(), Box<dyn 
 fn boundary_not_realizable_locates_its_chart_not_its_darts() -> Result<(), Box<dyn Error>> {
     let e = EngineError::BoundaryNotRealizable {
         chart: ChartId::new(6),
-        residual_mm: 1.25,
+        residual: 1.25,
         proposals: vec![dart(6, 2)?],
     };
     let expected = ErrorLocations {

@@ -5,8 +5,8 @@ use std::error::Error;
 
 use openplush_pipeline::MeshError;
 use openplush_pipeline::{
-    ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PieceId, Proposal, ProposalId,
-    ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
+    ChartFailure, ChartId, EdgeId, EngineError, FaceId, FlattenError, Format, PieceId, Proposal,
+    ProposalId, ProposalKind, SeamChainId, SeamKind, SourceCorner, VertexId,
 };
 use openplush_wasm::protocol::{BindingCode, EngineErrorDto};
 use serde_json::{Value, json};
@@ -175,13 +175,28 @@ fn chart_not_disk_carries_its_proposals_in_order() -> Result<(), Box<dyn Error>>
 fn boundary_not_realizable_without_darts_has_no_proposals_key() -> Result<(), serde_json::Error> {
     let e = EngineError::BoundaryNotRealizable {
         chart: ChartId::new(5),
-        residual_mm: 0.5,
+        residual: 0.5,
         proposals: vec![],
     };
     let expected = json!({
         "code": "BoundaryNotRealizable",
-        "message": "chart 5's seam lengths cannot close flat (residual 0.500 mm)",
+        "message": "chart 5's seam lengths cannot close flat (residual 0.500 in model units)",
         "locations": { "charts": [5] },
+    });
+    assert_eq!(wire(&e)?, expected);
+    Ok(())
+}
+
+#[test]
+fn flatten_locates_its_chart_and_face() -> Result<(), serde_json::Error> {
+    let e = EngineError::Flatten(FlattenError::Degenerate {
+        chart: ChartId::new(3),
+        face: FaceId::new(7),
+    });
+    let expected = json!({
+        "code": "Flatten",
+        "message": "face 7 of chart 3 has no measurable area",
+        "locations": { "faces": [7], "charts": [3] },
     });
     assert_eq!(wire(&e)?, expected);
     Ok(())

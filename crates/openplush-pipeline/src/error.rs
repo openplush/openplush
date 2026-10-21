@@ -1,12 +1,13 @@
 use std::collections::BTreeSet;
 
+use openplush_flatten::FlattenError;
 use openplush_io::Format;
 use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
 use openplush_pattern::PieceId;
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
 
-use crate::locations::mesh_locations;
+use crate::locations::{flatten_locations, mesh_locations};
 
 /// A violated invariant: the stage produced no output. Every variant but
 /// `Cancelled` names where the problem is, so the UI can highlight it.
@@ -63,6 +64,10 @@ pub enum EngineError {
     /// The seams cannot be applied to the mesh; the inner error says how and where.
     #[error(transparent)]
     Seams(#[from] SeamsError),
+    /// A chart's flatten refused it for a reason the pipeline has no variant of its own for;
+    /// the inner error says how, naming the chart and, where it has one, the face.
+    #[error(transparent)]
+    Flatten(FlattenError),
     /// Flattening inverted faces (det J ≤ 0).
     #[error("chart {} flattens with {} inverted faces", .chart.index(), .faces.len())]
     Flip {
@@ -73,14 +78,15 @@ pub enum EngineError {
     },
     /// The prescribed seam lengths cannot close into a flat outline.
     #[error(
-        "chart {}'s seam lengths cannot close flat (residual {residual_mm:.3} mm)",
+        "chart {}'s seam lengths cannot close flat (residual {residual:.3} in model units)",
         .chart.index()
     )]
     BoundaryNotRealizable {
         /// The chart.
         chart: ChartId,
-        /// How far the outline fails to close, in millimetres.
-        residual_mm: f64,
+        /// How far the outline fails to close, in model units: flattening runs before the
+        /// scale is applied.
+        residual: f64,
         /// The darts that would let it close.
         proposals: Vec<Proposal>,
     },
@@ -131,6 +137,7 @@ impl EngineError {
             Self::ChartNotDisk { .. } => "ChartNotDisk",
             Self::FoldedChart { .. } => "FoldedChart",
             Self::Seams(_) => "Seams",
+            Self::Flatten(_) => "Flatten",
             Self::Flip { .. } => "Flip",
             Self::BoundaryNotRealizable { .. } => "BoundaryNotRealizable",
             Self::SeamParity { .. } => "SeamParity",
@@ -168,6 +175,7 @@ impl EngineError {
                 ..none
             },
             Self::Seams(inner) => seams_locations(inner),
+            Self::Flatten(inner) => flatten_locations(inner),
             Self::Flip { chart, faces } => ErrorLocations {
                 faces: sorted(faces),
                 charts: vec![*chart],
@@ -201,6 +209,7 @@ impl EngineError {
             | Self::Mesh(_)
             | Self::FoldedChart { .. }
             | Self::Seams(_)
+            | Self::Flatten(_)
             | Self::Flip { .. }
             | Self::SeamParity { .. }
             | Self::OffsetFailed { .. }

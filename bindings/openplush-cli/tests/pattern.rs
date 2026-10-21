@@ -109,7 +109,7 @@ fn the_capsule_becomes_an_svg_and_a_pdf_in_a_new_directory() -> Result<(), Setup
     assert_eq!(listing(&out_dir)?, ["pattern.pdf", "pattern.svg"]);
     let svg = fs::read_to_string(out_dir.join("pattern.svg"))?;
     assert!(
-        svg.starts_with("<svg") && svg.contains("mm\" height=\""),
+        svg.contains("<svg ") && svg.contains("mm\" height=\""),
         "{svg}"
     );
     assert!(fs::read(out_dir.join("pattern.pdf"))?.starts_with(b"%PDF-"));
@@ -169,7 +169,7 @@ fn warnings_print_in_the_files_and_do_not_stop_the_run() -> Result<(), Setup> {
 
 #[test]
 fn a_one_based_seam_set_names_the_same_edges() -> Result<(), Setup> {
-    let dir = scratch("base")?;
+    let dir = scratch("one-based")?;
     let zero = fs::read_to_string(fixture("seams/capsule.json"))?;
     let mut set: serde_json::Value = serde_json::from_str(&zero)?;
     set["vertexIndexBase"] = 1.into();

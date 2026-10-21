@@ -43,11 +43,14 @@ pub(crate) fn parse(bytes: &[u8]) -> Result<SeamFile, String> {
 }
 
 fn seam(value: &Value) -> Result<Seam, String> {
+    let not_two = || "\"edge\" is not two integer indices".to_owned();
     let ends: Vec<u64> = value["edge"]
         .as_array()
-        .map(|e| e.iter().filter_map(Value::as_u64).collect())
-        .unwrap_or_default();
-    let edge = <[u64; 2]>::try_from(ends).map_err(|_| "\"edge\" is not two integer indices")?;
+        .ok_or_else(not_two)?
+        .iter()
+        .map(|i| i.as_u64().ok_or_else(not_two))
+        .collect::<Result<_, _>>()?;
+    let edge = <[u64; 2]>::try_from(ends).map_err(|_| not_two())?;
     let kind = match value["kind"].as_str() {
         Some("cut") => SeamKind::Cut,
         Some("dart") => SeamKind::Dart,

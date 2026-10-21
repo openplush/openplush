@@ -72,8 +72,8 @@ pub enum Ignored {
 /// Errors: [`IoError::Parse`] for a file the `gltf` crate refuses (including a required
 /// extension it does not implement), no scene, a node reached twice, a sparse accessor, an
 /// accessor of the wrong type, out of its view or with a stride shorter than its element,
-/// an index past its primitive's last vertex, a short buffer, or a reference outside the
-/// supplied files;
+/// an index past its primitive's last vertex, a non-finite `TEXCOORD_0` value, a short
+/// buffer, or a reference outside the supplied files;
 /// [`IoError::MissingResource`] for a referenced file that was not supplied;
 /// [`IoError::NonFiniteInput`] naming every drawn vertex with a non-finite coordinate.
 pub fn read<'a>(
@@ -169,13 +169,7 @@ impl Builder {
             .ok_or("no POSITION attribute")?;
         let points = accessor::floats(&positions, buffers, Use::Position)?;
         let count = points.len() / 3;
-        let uvs = primitive
-            .get(&Semantic::TexCoords(0))
-            .map(|a| accessor::floats(&a, buffers, Use::TexCoord))
-            .transpose()?;
-        if uvs.as_ref().is_some_and(|t| t.len() / 2 != count) {
-            return Err("TEXCOORD_0 and POSITION differ in length".into());
-        }
+        let uvs = texcoords(primitive, buffers, count)?;
         let indices = match primitive.indices() {
             Some(a) => accessor::indices(&a, buffers)?,
             None => (0..u32::try_from(count).map_err(|_| "too many vertices")?).collect(),
@@ -286,4 +280,26 @@ fn corner(primitive: u32, vertex: usize) -> SourceCorner {
 /// A file index as u32; the `gltf` crate reads every index from a u32 in the JSON.
 fn index(i: usize) -> u32 {
     u32::try_from(i).unwrap_or(u32::MAX)
+}
+
+/// The primitive's `TEXCOORD_0`, two values per vertex, if it has one.
+fn texcoords(
+    primitive: &Primitive<'_>,
+    buffers: &[Cow<'_, [u8]>],
+    count: usize,
+) -> Result<Option<Vec<f64>>, String> {
+    let Some(a) = primitive.get(&Semantic::TexCoords(0)) else {
+        return Ok(None);
+    };
+    let uvs = accessor::floats(&a, buffers, Use::TexCoord)?;
+    if uvs.len() / 2 != count {
+        return Err("TEXCOORD_0 and POSITION differ in length".into());
+    }
+    if let Some(v) = uvs
+        .chunks_exact(2)
+        .position(|uv| !(uv[0].is_finite() && uv[1].is_finite()))
+    {
+        return Err(format!("vertex {v} has a non-finite texture coordinate"));
+    }
+    Ok(Some(uvs))
 }

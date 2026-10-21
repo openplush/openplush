@@ -724,6 +724,25 @@ fn uvs_of_another_length_than_the_positions_are_refused() -> Result<(), Setup> {
 }
 
 #[test]
+fn a_non_finite_texture_coordinate_is_refused_naming_its_vertex() -> Result<(), Setup> {
+    for bad in [[f32::NAN, 0.0], [0.0, f32::INFINITY]] {
+        let mut bin = Bin::default();
+        let p = bin.positions(&TRIANGLE);
+        let t = bin.uvs(&[[0.0, 0.0], bad, [0.0, 1.0]]);
+        let doc = drawn(
+            &bin,
+            &format!(r#"{{"attributes":{{"POSITION":{p},"TEXCOORD_0":{t}}}}}"#),
+            "",
+        );
+        let detail = parse_detail(read(&doc))?;
+        assert!(detail.contains("vertex 1"), "{detail}");
+        assert!(detail.contains("texture coordinate"), "{detail}");
+        assert!(detail.contains("mesh 0 primitive 0"), "{detail}");
+    }
+    Ok(())
+}
+
+#[test]
 fn a_non_finite_coordinate_on_any_axis_is_named() -> Result<(), Setup> {
     let mut bin = Bin::default();
     let data: Vec<u8> = [

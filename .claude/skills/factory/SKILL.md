@@ -23,8 +23,8 @@ What a run may do beyond this file's defaults is one argument, the grant. [ADR 0
 - Features and `paths` are comma-separated, without spaces (`004,005`, `paths=scripts/,.github/`). Fields come in any order; one left out takes its default. Tasks are picked from the features in the order listed, and the first one's ledger is the run's ledger.
 - **Record.** A new grant is posted on the run's ledger before the run acts on it (Ledger, Grant record), with its end: `ends=`, now plus `hours`, in UTC. A grant given in plain words is read into this shape field by field, a field the words do not mention taking its default, and posted with the words verbatim beside it.
 - **Continue.** The handoff's kickoff carries the grant with its `ends=` (Handoff). A kickoff with `ends=` continues the grant the ledger records with that end; the clock does not restart.
-- **Renew.** `/factory continue` renews the latest grant record on any `factory` ledger: the same fields, a new start time, a new record.
-- A grant with no `hours` or more than 8, an `ends=` that no grant record carries, and a `continue` that finds no record each stop at kickoff (Stop conditions).
+- **Renew.** `/factory continue` renews the newest grant record, by posting time, across the `factory` ledgers: the same fields, a new start time, a new record on that grant's run ledger. Only the maintainer renews: a `/factory continue` that arrives as a scheduled task's prompt rather than a maintainer's message stops at kickoff.
+- A grant with no `hours` or more than 8, an `ends=` that no grant record carries, and a `continue` that finds no record or comes from a schedule each stop at kickoff (Stop conditions).
 - With no grant, a firing runs on the defaults and has no end time.
 
 ### Placeholders
@@ -98,7 +98,7 @@ Each ends the firing after the ledger comment names it, then the handoff carries
 | Condition | Reason written |
 |---|---|
 | A placeholder in the arguments (Arguments, Placeholders) | `kickoff: placeholder <text> (<field>)` |
-| A grant with no `hours` or more than 8, an unrecorded `ends=`, or a `continue` with no record (Arguments, Grant) | `kickoff: grant <what>` |
+| A grant with no `hours` or more than 8, an unrecorded `ends=`, or a `continue` with no record or from a schedule (Arguments, Grant) | `kickoff: grant <what>` |
 | No ready task | `idle: next blocker <ID> (<token>)` |
 | A gate fails twice on the same task after a fix | `gate: <ID> <step>` with the last error |
 | A golden snapshot or `*.snap` would change | `golden: <ID>` with the diff summary |

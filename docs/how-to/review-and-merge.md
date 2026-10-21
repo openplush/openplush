@@ -29,7 +29,7 @@ Have your PR merged, by the merge gate or by the maintainer, depending on its ti
 | B | `fixtures/golden/`, `*.snap`, or an expected SVG or PDF fixture | The gate, with auto-merge 24 h after the head's CI went green |
 | A | Everything else, and a `docs(tasks): tick …` PR whose diff touches only `specs/*/tasks.md` with ticks and as-built notes | The gate, with auto-merge once ready |
 
-"Ready" is every other condition in step 5 passing. The gate then labels the PR `merge:ready` and turns on auto-merge, with a merge commit. Tier H never gets the label; the comment says the maintainer merges it.
+"Ready" is every other condition in step 5 passing. The gate then labels the PR `merge:ready` and turns on auto-merge, with a merge commit. Tier H never gets the label; the comment says the maintainer merges it, and so may a factory run under a grant that allows merging, on this comment's verdict for every condition but the tier ([ADR 0020](../adr/0020-factory-grants.md)).
 
 ## Check it worked
 

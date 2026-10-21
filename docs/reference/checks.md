@@ -2,7 +2,7 @@
 
 <!-- index: what the lint, opt-out, wasm32 test and licence checks enforce, and why. -->
 
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, the generated status counts and index lists, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
+This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, the generated status counts, index lists and API pages, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
 
 ## Entries
 
@@ -105,6 +105,18 @@ The page lists in the `README.md` of `docs/explanation/`, `docs/how-to/`, `docs/
 - **The ADR table** has one row per `docs/adr/NNNN-*.md` but the template, in number order: the number, the H1, and the `status:` from the front matter. The `README.md` keeps the table's header row.
 
 The generator fails the build, naming the file and writing no include, on a listed page with no H1 or no index line, an ADR with no H1 or no `status:` in its front matter, and a folder `SUMMARY.md` lists no page in.
+
+### Generated API pages (`docs`)
+
+The site publishes the workspace rustdoc under `dev/api/`, beside the contributor book, as the [Rust API](api.md). Right after `mdbook build`, which empties `target/site/dev/`, the `docs` step runs `scripts/assemble-docs-api.sh`, which:
+
+- cleans cargo's doc directory, so a crate gone from the workspace leaves no pages;
+- documents each workspace crate with its own `cargo doc --no-deps --locked -p <crate>`, after the workspace crates it depends on, then in name order. rustdoc links an item of another workspace crate only if that crate's docs exist when it starts, so one parallel `cargo doc --workspace` linked differently from run to run, and two builds of the site must be identical;
+- copies the doc directory to `target/site/dev/api/` without rustdoc's `.lock`, and writes `api/index.html`, which stable rustdoc does not: every workspace crate in name order, with no date.
+
+It fails, leaving no `api/`, on a workspace crate rustdoc wrote no `index.html` for, on any dotfile besides `.lock`, which would otherwise be published unseen, and on a crate with more than one documented target, since the index links one page per crate.
+
+rustdoc links a source range as `lib.rs.html#11-16`, an anchor only its script reads. The link check reads such a range on a `.rs.html` page as its first line, `#11`, which rustdoc gives an id; a range-shaped anchor on any other page still fails.
 
 ### Agent attribution (pull requests, CI only)
 

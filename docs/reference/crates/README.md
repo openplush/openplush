@@ -2,7 +2,7 @@
 
 <!-- index: one page per engine crate on what it contains today and what it depends on, and which crate owns what. -->
 
-What each engine crate contains **today**, and what it actually depends on, one page per crate. Which crate *should* own a new piece of code is in [Which crate owns what](#which-crate-owns-what); the allowed dependency graph is in the [plan](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced) and enforced by `scripts/check-boundary.sh`. Signatures and item docs: `cargo doc --workspace --no-deps --open`.
+What each engine crate contains **today**, and what it actually depends on, one page per crate. Which crate *should* own a new piece of code is in [Which crate owns what](#which-crate-owns-what); the allowed dependency graph is in the [plan](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#crate-dependency-dag-enforced) and enforced by `scripts/check-boundary.sh`. Signatures and item docs: the [Rust API](../api.md).
 
 ## Crates with code
 

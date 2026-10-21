@@ -58,6 +58,10 @@ What `openplush-seams` contains **today**, and what it actually depends on. What
 - a walk anchored at neither end (`DartNotAnchored`, naming its first vertex as drawn, a single edge's lower end)
 - a tip or inner vertex on a seam or boundary (`DartTouchesSeam`, naming the first)
 
+### UV cuts
+
+`uv_cuts(mesh, seams)`, the source model's UV cuts as `UvCuts`: `edges()`, ascending, every interior edge not already in `seams` whose corner UVs on its two sides differ by more than `UV_CUT` in either coordinate at either endpoint (a NaN difference counts as a cut), tested only when both its faces have a UV at every corner, so a boundary edge or one beside a face without UVs is never a cut; and `faces_without_uv()`, how many faces lack a UV at some corner. `proposal()` turns the cuts into one `ProposalKind::Seam { reason: SeamReason::SourceModel }` proposal of `Cut` edges, or `None` when there are none. Refuses a seam on an edge the mesh does not have with `UnknownEdge`.
+
 ## Depends on
 
 `openplush-geom`, `openplush-mesh`, `libm`, `thiserror`

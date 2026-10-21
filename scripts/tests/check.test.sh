@@ -49,6 +49,7 @@ expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
 expect_plan "hygiene step checks lint opt-outs and the ADR lifecycle" "hygiene" \
   "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "scripts/check-adr-lifecycle.sh"
+expect_plan "hygiene step checks the docs for copied task counts" "hygiene" "scripts/check-docs-facts.sh"
 expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows, wasm-check" "engine" \
   "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
   "scripts/gen-ts-types.sh --check" "actionlint" \

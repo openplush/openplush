@@ -42,8 +42,8 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 0: Decisions
 
-- [ ] F001 `docs/adr/0020-factory-grants.md`, MADR, Proposed: the grant argument's fields ([data-model.md](./data-model.md#grant-us6-waits-on-f-002)), what a grant may and may not override with [ADR 0018](../../docs/adr/0018-hands-off-merging.md) named, scheduled triggers expiring with the grant, the options and one recommendation. No implementation until accepted. `human:decision` (F-002)
-- [ ] F002 The ledger layout (F-003): the options (one file per decision with a generated table, an append-only section, as is) with one recommendation in plan.md's ledger, and the measured count of ledger conflicts in the last 50 merged stacked PRs. `human:decision`
+- [x] F001 `docs/adr/0020-factory-grants.md`, MADR, Proposed: the grant argument's fields ([data-model.md](./data-model.md#grant-us6-waits-on-f-002)), what a grant may and may not override with [ADR 0018](../../docs/adr/0018-hands-off-merging.md) named, scheduled triggers expiring with the grant, the options and one recommendation. No implementation until accepted. (F-002) As built: accepted by the maintainer on 2026-10-21, as option 2 (a grant may merge a tier H PR the gate shows green but for its tier)
+- [x] F002 The ledger layout (F-003): the options (one file per decision with a generated table, an append-only section, as is) with one recommendation in plan.md's ledger, and the measured count of ledger conflicts in the last 50 merged stacked PRs. As built: accepted by the maintainer on 2026-10-21, as (c), the ledger as is
 
 ## Phase 1: A kickoff with a blank field never starts (US1) 🎯 MVP
 
@@ -70,12 +70,12 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 6: A grant is given once and honoured the same way (US6)
 
-- [ ] F011 [US6] `.claude/skills/factory/SKILL.md`: `/factory` reads the grant argument and `continue`, as ADR 0020 sets, and states the grant in the handoff's kickoff. needs:F001,F004 `blocked:F-002`
-- [ ] F012 [US6] `.claude/skills/factory/SKILL.md`, Scheduling: a firing after the grant's end does no work, reports the expiry and turns its scheduled task off. needs:F011 `blocked:F-002`
+- [ ] F011 [US6] `.claude/skills/factory/SKILL.md`: `/factory` reads the grant argument and `continue`, as ADR 0020 sets, and states the grant in the handoff's kickoff. needs:F001,F004
+- [ ] F012 [US6] `.claude/skills/factory/SKILL.md`, Scheduling: a firing after the grant's end does no work, reports the expiry and turns its scheduled task off. needs:F011
 
 ## Phase 7: Stacked PRs stop conflicting on shared lists (US7)
 
-- [ ] F013 [US7] Apply the accepted ledger layout to every feature's plan.md, with a generator and check if the layout is generated. needs:F002 `blocked:F-003`
+- [ ] F013 [US7] Generate the folder index lists, as 004's W044 does; the ledger stays as it is (F-003). needs:W044
 
 ## Dependencies and execution order
 

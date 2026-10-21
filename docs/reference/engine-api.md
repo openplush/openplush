@@ -162,7 +162,7 @@ A `Warning` has a code, a target, an explanation and a remedy, and cannot be bui
 | Code | Raised by | Target | Says |
 |---|---|---|---|
 | `import-ignored` (`ImportIgnored`) | `import`, for glTF | `Project` | `The file has parts the pattern does not follow: {parts}. The pattern is made from the triangles as modelled.`, each part one of `the skin on node {n}, read in its bind pose`, `the morph targets of mesh {m} (node {n}), read as the base mesh`, `animation {a}, not played`, `primitive {p} of mesh {m} (node {n}), which is points or lines`, joined by `; ` in walk order, animations last. Advisory: apply the pose or morph in the 3D tool and export again |
-| `size-out-of-range` (`SizeOutOfRange`) | `size` | `Project` | `The pattern's longest dimension finishes at {mm} mm, outside the supported 75 mm to 1000 mm.`, `{mm}` to one decimal. Advisory: `Resize the model so its longest dimension is between 75 mm and 1000 mm, or keep this size: the pattern is still made, but untested at this size.` |
+| `size-out-of-range` (`SizeOutOfRange`) | `size` | `Project` | `The pattern's longest dimension finishes at {mm} mm, outside the supported 75 mm to 1000 mm.`, `{mm}` to one decimal, or to as many more as it takes to show the size is outside the range (`1000.04`, never `1000.0`). Advisory: `Resize the model so its longest dimension is between 75 mm and 1000 mm, or keep this size: the pattern is still made, but untested at this size.` |
 
 **Order.** A `WarningSet` yields warnings in one total order, whatever order they were raised in:
 

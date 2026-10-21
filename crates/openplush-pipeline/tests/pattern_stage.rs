@@ -8,15 +8,14 @@ use std::fmt::Write as _;
 use openplush_io::obj;
 use openplush_mesh::{RepairPlan, into_manifold};
 use openplush_pipeline::{
-    ChartId, ChartMesh, DVec2, EngineError, Fabric, FabricCategory, FabricId, FabricSpec,
-    ManifoldMesh, Mm, Parameterization, PatternError, PatternInput, PatternOptions, PatternPiece,
-    PieceId, Scale, SeamKind, SeamSet, SewingMap, VertexId, chart, flatten, pattern,
+    ChartId, ChartMesh, DVec2, EngineError, ManifoldMesh, Parameterization, PatternError,
+    PatternInput, PatternOptions, PatternPiece, PieceId, Scale, SeamKind, SeamSet, SewingMap,
+    VertexId, chart, flatten, pattern,
 };
 
-type Setup = Box<dyn std::error::Error>;
+mod common;
 
-const CAPSULE_OBJ: &str = include_str!("../../../fixtures/meshes/capsule.obj");
-const CAPSULE_SEAMS: &str = include_str!("../../../fixtures/seams/capsule.json");
+use common::{CAPSULE_OBJ, Setup, fabric};
 
 /// Well above the rounding of a 2-triangle flatten scaled to 100 mm, far below a millimetre.
 const SAME_MM: f64 = 1e-6;
@@ -24,23 +23,6 @@ const SAME_MM: f64 = 1e-6;
 fn mesh_of(obj: &str) -> Result<ManifoldMesh, Setup> {
     let soup = obj::read(obj.as_bytes())?;
     Ok(into_manifold(&soup, &RepairPlan::default())?.0)
-}
-
-fn fabric(allowance_mm: f64) -> Result<Fabric, Setup> {
-    Ok(Fabric::new(FabricSpec {
-        id: FabricId::new(0),
-        name: "cotton".into(),
-        category: FabricCategory::Woven,
-        stretch_grain_pct: 0.0,
-        stretch_cross_pct: 0.0,
-        stretch_bias_pct: 0.0,
-        nap: false,
-        pile_len: Mm::try_new(0.0)?,
-        thickness: Mm::try_new(0.3)?,
-        frays: true,
-        default_allowance: Mm::try_new(allowance_mm)?,
-        roll_width: Mm::try_new(1500.0)?,
-    })?)
 }
 
 fn options(mm_per_unit: f64, allowance_mm: f64) -> Result<PatternOptions, Setup> {
@@ -186,45 +168,10 @@ fn no_charts_make_no_pieces() -> Result<(), Setup> {
     Ok(())
 }
 
-/// The capsule with its reference seams; seam edges name OBJ vertices by file order, matched to
-/// the repaired mesh by position.
+/// The capsule with its reference seams.
 fn capsule() -> Result<Run, Setup> {
     let mesh = mesh_of(CAPSULE_OBJ)?;
-    let positions: Vec<[f64; 3]> = CAPSULE_OBJ
-        .lines()
-        .filter_map(|line| line.strip_prefix("v "))
-        .map(|rest| {
-            let c: Vec<f64> = rest
-                .split_whitespace()
-                .map(str::parse)
-                .collect::<Result<_, _>>()?;
-            Ok([c[0], c[1], c[2]])
-        })
-        .collect::<Result<_, std::num::ParseFloatError>>()?;
-    let vertex = |i: usize| -> Result<VertexId, Setup> {
-        (0..u32::try_from(mesh.vertex_count())?)
-            .map(VertexId::new)
-            .find(|&v| {
-                let p = mesh.position(v);
-                [p.x, p.y, p.z] == positions[i]
-            })
-            .ok_or_else(|| format!("no vertex for OBJ index {i}").into())
-    };
-    let mut seams = SeamSet::new();
-    for pair in CAPSULE_SEAMS.split("\"edge\": [").skip(1) {
-        let (a, b) = pair
-            .split(']')
-            .next()
-            .and_then(|s| s.split_once(','))
-            .ok_or("malformed edge")?;
-        let (a, b) = (vertex(a.trim().parse()?)?, vertex(b.trim().parse()?)?);
-        let edge = mesh
-            .outgoing(a)
-            .find(|&h| mesh.dest(h) == b)
-            .ok_or("no such edge")?
-            .edge();
-        seams.insert(edge, SeamKind::Cut)?;
-    }
+    let seams = common::capsule_seams(&mesh)?;
     Run::of(mesh, &seams)
 }
 

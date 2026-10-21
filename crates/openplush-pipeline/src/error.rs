@@ -21,6 +21,12 @@ pub enum EngineError {
         /// What it refused, in the reader's words.
         detail: String,
     },
+    /// No reader takes the primary file's extension; no reader ran.
+    #[error("cannot read \"{name}\": no reader for this file type")]
+    UnknownFormat {
+        /// The primary file's name, as the shell gave it.
+        name: String,
+    },
     /// Source vertices with a NaN or infinite coordinate; import refuses rather than drops them.
     #[error("{} source vertices have a NaN or infinite coordinate", .vertices.len())]
     NonFiniteInput {
@@ -112,6 +118,7 @@ impl EngineError {
     pub fn code(&self) -> &'static str {
         match self {
             Self::Parse { .. } => "Parse",
+            Self::UnknownFormat { .. } => "UnknownFormat",
             Self::NonFiniteInput { .. } => "NonFiniteInput",
             Self::Mesh(_) => "Mesh",
             Self::ChartNotDisk { .. } => "ChartNotDisk",
@@ -126,12 +133,12 @@ impl EngineError {
         }
     }
 
-    /// Where the problem is; empty for `Parse` and `Cancelled`.
+    /// Where the problem is; empty for `Parse`, `UnknownFormat` and `Cancelled`.
     #[must_use]
     pub fn locations(&self) -> ErrorLocations {
         let none = ErrorLocations::default();
         match self {
-            Self::Parse { .. } | Self::Cancelled => none,
+            Self::Parse { .. } | Self::UnknownFormat { .. } | Self::Cancelled => none,
             Self::NonFiniteInput { vertices } => ErrorLocations {
                 source_vertices: sorted(vertices),
                 ..none
@@ -177,6 +184,7 @@ impl EngineError {
             Self::ChartNotDisk { proposals, .. }
             | Self::BoundaryNotRealizable { proposals, .. } => proposals,
             Self::Parse { .. }
+            | Self::UnknownFormat { .. }
             | Self::NonFiniteInput { .. }
             | Self::Mesh(_)
             | Self::FoldedChart { .. }

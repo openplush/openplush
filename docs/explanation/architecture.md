@@ -19,7 +19,7 @@ The engine is a chain of stages. Each stage's output type promises what the next
 
 | Stage | Output type | It guarantees | Owner |
 |---|---|---|---|
-| Import | `TriangleSoup` (`openplush-mesh`) | Finite coordinates, in-range indices, a provenance record for every triangle corner. Says nothing about mesh quality: holes, duplicates and non-manifold edges pass through | `openplush-io` |
+| Import | `TriangleSoup` (`openplush-mesh`) | Finite coordinates, in-range indices, a provenance record for every triangle corner. Says nothing about mesh quality: holes, duplicates and non-manifold edges pass through | `openplush-io`, run as `openplush-pipeline`'s `import` stage |
 | Validate | `ValidationReport` (`openplush-mesh`) | Every defect of the soup located by face, vertex or vertex pair, judged as repair will see the mesh; changes nothing and never fails | `openplush-mesh`, run as `openplush-pipeline`'s `validate` stage |
 | Repair | `ManifoldMesh` (`openplush-mesh`) | A consistently oriented 2-manifold, possibly with boundary, with no degenerate or zero-area face and no isolated vertex | `openplush-mesh`, run as `openplush-pipeline`'s `repair` stage |
 | Seams and charts | `Vec<ChartMesh>` and the `SewingMap` (`openplush-seams`), from `openplush-pipeline`'s `chart` stage | Every chart a topological disk that does not fold back over itself, cut open along its seams; every seam chain sewn to its partner sides, the copies of an edge repair split read from the mesh (`ManifoldMesh::edge_copies`, so `repair → chart` needs nothing else); else the first violated invariant, typed | `openplush-seams`, run as `openplush-pipeline`'s `chart` stage |
@@ -37,7 +37,7 @@ Every stage returns `StageResult<T>`, which is `Result<Staged<T>, EngineError>`:
 - **`Err(EngineError)`**: a declared invariant is violated, and there is no output at all. A stage never returns partial or "fixed up" geometry, because a pattern that looks right and is wrong is only discovered after cutting fabric. Every error variant names *where* the problem is (edge, vertex, chart, piece, source vertex), so the UI can highlight it; the exceptions are `Parse`, located only by the file format, `Cancelled`, and the refusals `Mesh` and `Seams` carry about a whole soup or a whole proposal (no triangles, an unusable extent, an empty dart), which have no one element to point at.
 - **`Ok(Staged { value, warnings })`**: the output is valid but may sew badly. A `Warning` cannot exist without a remedy: `Remedy` is either `Actionable` (a seam edit the engine can make, offered for preview) or `Advisory` (a material or sizing change it will not make). Warnings never block export.
 
-Both are built (`openplush-pipeline`), and the `validate`, `repair` and `chart` stages return them; no stage raises a warning yet. Exact messages and ordering: [reference/engine-api.md](../reference/engine-api.md).
+Both are built (`openplush-pipeline`), and the `import`, `validate`, `repair` and `chart` stages return them; no stage raises a warning yet. Exact messages and ordering: [reference/engine-api.md](../reference/engine-api.md).
 
 ## IDs and provenance
 

@@ -12,7 +12,7 @@ Pages are sorted by what you are doing when you open one, because a reader learn
 
 - [Explanation](explanation/README.md): why things are the way they are, such as [why seam lengths are pinned exactly](explanation/flattening.md).
 - [How-to guides](how-to/README.md): one goal each, such as [scoping and opening a pull request](how-to/pull-requests.md).
-- [Reference](reference/README.md): exact facts to look up, such as the [crates](reference/crates.md) and every term in the [glossary](reference/glossary.md).
+- [Reference](reference/README.md): exact facts to look up, such as the [crates](reference/crates/README.md) and every term in the [glossary](reference/glossary.md).
 - [Tutorials](tutorials/README.md): learning by doing, start to finish.
 - [Architecture decision records](adr/README.md): each decision, the options weighed and why one won.
 

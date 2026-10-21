@@ -17,7 +17,7 @@ Covers: representations per stage, the half-edge structure, non-manifold handlin
 | Pattern | `PatternPiece` ×N | param + fabric + scale | Simple polygons in mm; seam parity within max(1.0 mm, 0.5%) — hard (D-013) |
 | Layout | `Sheet` ×N | pieces + layout options | No overlaps; rotation sets honored |
 
-**Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>` (as built: `openplush_mesh::into_manifold`, which returns `MeshError`; see `docs/reference/crates.md`). Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
+**Typestate**: `ManifoldMesh` has no public constructor. The only way to get one is `repair::into_manifold(soup, &plan) -> Result<(ManifoldMesh, RepairReport), RepairError>` (as built: `openplush_mesh::into_manifold`, which returns `MeshError`; see `docs/reference/crates/openplush-mesh.md`). Downstream stages take `&ManifoldMesh`, so unrepaired data cannot reach the flattener by construction.
 
 ## 2. Half-Edge Structure
 
@@ -131,7 +131,7 @@ A **seam chain** is a maximal path between nodes; a cycle of chain vertices with
 
 ### ChartMesh (virtual cut)
 
-> **As built**: [`docs/reference/crates.md`](../../docs/reference/crates.md) (`openplush-seams`, `ChartMesh`) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
+> **As built**: [`docs/reference/crates/openplush-seams.md`](../../docs/reference/crates/openplush-seams.md#chart-meshes) (`ChartMesh`) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
 
 Charts = flood fill of faces across non-seam edges. Each chart is cut open into flat arrays shaped like the flattener's input (D-054), **duplicating vertices along seam edges inside the chart** — except dart tips, which stay single (a slit, not a separation). Provenance maps back to the global mesh:
 ```rust
@@ -145,7 +145,7 @@ pub struct ChartMesh {
 
 ### SewingMap — generalized to N sides
 
-> **As built**: [`docs/reference/crates.md`](../../docs/reference/crates.md) (`openplush-seams`, `SewingMap`) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
+> **As built**: [`docs/reference/crates/openplush-seams.md`](../../docs/reference/crates/openplush-seams.md#sewing-map) (`SewingMap`) and rustdoc. Frozen here as the original intent ([ADR 0003](../../docs/adr/0003-as-built-docs.md)).
 
 Each global seam edge has `k ≥ 2` sides. Standard seams: `k = 2`. **Inserted pieces** (ear sandwiched into a head seam, from step 3 non-manifold edges or user construction): `k = 4` (head-left, ear-front, ear-back, head-right).
 ```rust
@@ -335,7 +335,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 
 ## 12. Persistence (project file)
 - JSON document + embedded binary mesh (glb-style chunk). `schemaVersion` with forward migrations in `openplush-project`.
-- **Stable references**: seams and markings reference edges/faces by keys derived from **source provenance** (sorted pair of canonical source-vertex IDs, `<primitive>.<vertex>` each, in `SourceCorner` order; face = sorted source-corner triple; D-067) — not by `EdgeId`, which changes if repair settings change. Their as-built form is the `openplush-project` row of [the crate reference](../../docs/reference/crates.md).
+- **Stable references**: seams and markings reference edges/faces by keys derived from **source provenance** (sorted pair of canonical source-vertex IDs, `<primitive>.<vertex>` each, in `SourceCorner` order; face = sorted source-corner triple; D-067) — not by `EdgeId`, which changes if repair settings change. Their as-built form is [the `openplush-project` crate page](../../docs/reference/crates/openplush-project.md).
 - Stored: source mesh, `RepairPlan` (re-applied deterministically), `SeamSet`, fabrics and region assignments, direction strokes, markings, scale, options.
 - Not stored: anything recomputable (charts, parameterizations, pieces). Optional cache block keyed by content hash for fast reopen.
 

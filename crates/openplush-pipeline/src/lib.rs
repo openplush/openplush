@@ -4,6 +4,8 @@
 
 mod chart;
 mod error;
+mod flatten;
+mod import;
 mod locations;
 mod repair;
 mod stage;
@@ -11,11 +13,15 @@ mod warning;
 
 pub use chart::chart;
 pub use error::{EngineError, ErrorLocations};
+pub use flatten::{Parameterization, flatten};
+pub use import::{ImportFile, ImportFiles, import};
+pub use openplush_flatten::FlattenError;
+pub use openplush_geom::DVec2;
 pub use openplush_io::Format;
 pub use openplush_mesh::{
-    ComponentId, CornerArray, Counted, EdgeId, FaceId, HalfEdgeId, LoopRef, ManifoldMesh,
-    MaterialFault, MeshElement, MeshError, RepairPlan, RepairReport, SourceCorner, TriangleSoup,
-    ValidationReport, VertexId,
+    ComponentId, CornerArray, Counted, DuplicateOrientation, EdgeId, FaceId, HalfEdgeId, LoopRef,
+    ManifoldMesh, MaterialFault, MeshElement, MeshError, RepairPlan, RepairReport, SourceCorner,
+    TriangleSoup, Unmeasurable, ValidationReport, VertexId,
 };
 pub use openplush_pattern::PieceId;
 /// The error [`ProposalId::from_hex`] and [`Proposal::new`] return.

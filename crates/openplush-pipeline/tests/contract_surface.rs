@@ -17,3 +17,9 @@ fn validate_and_repair_take_a_soup_and_return_its_report_and_mesh() {
     let _: fn(&TriangleSoup) -> Staged<ValidationReport> = validate;
     let _: fn(&TriangleSoup, &RepairPlan) -> StageResult<(ManifoldMesh, RepairReport)> = repair;
 }
+
+#[test]
+fn import_takes_a_file_set_and_returns_a_soup() {
+    use openplush_pipeline::{ImportFiles, TriangleSoup, import};
+    let _: fn(&ImportFiles) -> StageResult<TriangleSoup> = import;
+}

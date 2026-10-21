@@ -1,6 +1,6 @@
 ---
 name: docs-reviewer
-description: Reviewer for OpenPlush's as-built documentation. Finds public behaviour that changed without its docs, docs that contradict the code, and docs that duplicate the specs. Use on any PR that touches a public surface (openplush-pipeline's API, error or warning strings, bindings, the worker protocol, the project schema) or docs/.
+description: Reviewer for OpenPlush's as-built documentation. Finds public behaviour that changed without its docs, docs that contradict the code, and docs that duplicate the specs. Use on any PR that touches a public surface (openplush-pipeline's API, error or warning strings, bindings, the worker protocol, the project schema), docs/ (ADRs included), a tasks.md, the README or CONTRIBUTING.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
@@ -28,6 +28,7 @@ Diff against the PR's base branch: `git diff origin/<base>...HEAD`. Do not modif
   A change to what a maker sees or does in the app (a message, a control, an import or export option) with no matching update under `docs/user/` also counts.
 
   A new crate, a new dependency edge, or a new pipeline stage without an update to `docs/explanation/architecture.md` or `docs/reference/crates.md` also counts.
+- **Status outside the status page** (🔴): a line in `README.md`, `CONTRIBUTING.md`, `specs/README.md` or any page under `docs/` other than `docs/start/status.md` that states what is built or not built, or copies a task count (`N tasks`, `N work items`, `N of M`). Cite the "Status drift" edge case in `specs/004-docs-site/spec.md` ("a page other than the status page that states what is built fails review and gets a link instead") and give the link to `docs/start/status.md` as the fix. An ADR's context, which records the state on its date, and a task's as-built note in `tasks.md` are not status claims. A PR that ticks a task in `specs/*/tasks.md` while `docs/start/status.md` still lists that work as not built also counts.
 - **Docs that contradict the code** (🔴): for each type, variant, field, string, path, or command a changed doc page names, grep the head of the branch. Quote the doc line and the code line, or the missing name, that disagree.
 - **A built contract without a pointer** (🟡): a section of `specs/*/contracts/` that this PR implements in full, but that does not yet point to where the as-built version is documented.
 - **Duplication** (🟡): a doc that copies spec rationale or a rule stated elsewhere instead of linking to it. One home per fact.

@@ -80,7 +80,7 @@ IDs are case-sensitive. A missing licence, `SEE LICENSE IN …`, `UNLICENSED` an
 
 ### Generated status counts (`docs`)
 
-The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. Before it builds the book, the `docs` step runs `scripts/gen-status.py`, which reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc` for the page to include. The file is git-ignored and never committed, so a tick needs no regeneration and no pull request conflicts on it.
+The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. Before it builds the book, the `docs` step runs `scripts/gen-status.py`, which reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc` for the page to include. The file is git-ignored and never committed, so a tick needs no regeneration and no pull request conflicts on it. A bare `mdbook build` fails on the missing file; run `scripts/gen-status.py` first, or build through `scripts/check.sh docs`.
 
 A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails the build, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
 

@@ -1,5 +1,6 @@
 //! UV cuts over random corner UVs and random existing seams on a tube, checked against cuts
-//! recomputed from the triangles by vertex index, and for the proposal's shape and determinism.
+//! recomputed from the triangles by vertex index, and for the shape of the seam proposal and the
+//! darts, which share the cuts between them, and determinism.
 //!
 //! Native only: proptest does not build for wasm32 (see Cargo.toml).
 #![cfg(not(target_arch = "wasm32"))]
@@ -170,20 +171,40 @@ fn check(corners: &[Corner], existing: &[u8]) -> Result<(), Setup> {
     assert!(cuts.edges().is_sorted_by(|a, b| a < b));
     assert!(cuts.edges().iter().all(|&e| seams.get(e).is_none()));
 
+    // A dead-ended cut is a dart and not an imported seam, so the seam proposal and the darts
+    // together hold every cut exactly once.
+    let darts = cuts.darts()?;
+    let mut in_darts = BTreeSet::new();
+    for d in &darts {
+        let kind = ProposalKind::Seam {
+            reason: SeamReason::SourceDart,
+        };
+        assert_eq!(d.kind(), &kind);
+        assert!(d.add().values().all(|&k| k == SeamKind::Dart));
+        for &e in d.add().keys() {
+            assert!(in_darts.insert(e), "{e:?} is in two darts");
+        }
+    }
     let proposal = cuts.proposal()?;
-    assert_eq!(proposal.is_some(), !cuts.edges().is_empty());
+    let in_seams: BTreeSet<EdgeId> = proposal
+        .iter()
+        .flat_map(|p| p.add().keys().copied())
+        .collect();
+    assert!(in_seams.is_disjoint(&in_darts));
+    assert!(in_seams.union(&in_darts).eq(cuts.edges()));
+    assert_eq!(proposal.is_some(), in_darts.len() < cuts.edges().len());
     if let Some(p) = &proposal {
         let kind = ProposalKind::Seam {
             reason: SeamReason::SourceModel,
         };
         assert_eq!(p.kind(), &kind);
-        assert!(p.add().keys().eq(cuts.edges()));
         assert!(p.add().values().all(|&k| k == SeamKind::Cut));
     }
 
     let again = uv_cuts(&mesh, &seams)?;
     assert_eq!(again, cuts);
     assert_eq!(again.proposal()?, proposal);
+    assert_eq!(again.darts()?, darts);
     Ok(())
 }
 

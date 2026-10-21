@@ -171,3 +171,29 @@ fn a_nested_file_is_named_by_its_whole_path_and_only_the_model_itself_is_left_ou
         ["sub/deeper/x.bin", "sub/model.gltf"]
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn a_file_name_that_is_not_utf8_is_refused_rather_than_renamed() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    let dir = scratch("utf8");
+    fs::write(dir.join("model.gltf"), "{}").expect("write");
+    let odd = dir.join(OsStr::from_bytes(b"\xff.bin"));
+    fs::write(&odd, "1").expect("write");
+    let refused = files(&dir.join("model.gltf"), CAP).expect_err("a non-UTF-8 neighbour");
+    assert!(
+        matches!(&refused, Failure::Name { path } if *path == odd),
+        "{refused:?}"
+    );
+    assert_eq!(
+        refused.to_string(),
+        format!("{}: the file name is not UTF-8", odd.display())
+    );
+    let model = dir.join(OsStr::from_bytes(b"\xfe.obj"));
+    fs::write(&model, "v 0 0 0\n").expect("write");
+    assert!(matches!(
+        files(&model, CAP),
+        Err(Failure::Name { path }) if path == model
+    ));
+}

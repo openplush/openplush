@@ -39,7 +39,7 @@ What enforces it (004, Phase 8):
 
 | Task | Mechanism | Kind |
 |---|---|---|
-| W037 | `scripts/gen-status.py` writes the status counts into a committed include; the `status` step regenerates and fails on a diff | Gate |
+| W037 | `scripts/gen-status.py` writes the status counts into an include the `docs` step generates before building the book; it is never committed, so it cannot go stale | Generated |
 | W038 | `scripts/check-docs-facts.sh` fails on a copied task count outside the include and warns on unlinked status words | Gate (hygiene) |
 | W039 | `scripts/check-adr-lifecycle.sh` fails when an Accepted ADR amends or supersedes one that does not record it, with exceptions in `scripts/adr-lifecycle-exceptions.txt` | Gate (hygiene) |
 | W040 | `docs-reviewer` runs on `tasks.md`, `README.md`, `CONTRIBUTING.md` and `docs/adr/`, and grades a status claim outside the status page 🔴 | Review |
@@ -49,13 +49,13 @@ What enforces it (004, Phase 8):
 
 * Good, because the three drifts found on 2026-10-20 become a failing check or a listed exception, not a reader's surprise.
 * Good, because the checks run on every PR over the whole tree, so the PR that makes a sentence false fails even when it never touched that sentence.
-* Bad, because a tick PR now also regenerates the include; one command, and the `status` step names it.
+* Bad, because a bare `mdbook build` needs the include generated first; `scripts/check.sh docs` does it.
 * Bad, because the copied-facts check matches patterns, so a count phrased another way passes; review (W040) is the backstop.
 * Bad, because ticks can still lag merged work; W041 reports the lag but never gates on it, since a tick waits on a person for `human:` tasks.
 
 ### Confirmation
 
-* `scripts/check.sh` runs the `status` step and the two hygiene checks on every PR; each has a test under `scripts/tests/` that fails before it and passes after.
+* `scripts/check.sh` generates the counts in its `docs` step and runs the two hygiene checks on every PR; each has a test under `scripts/tests/` that fails before it and passes after.
 * The tick-lag report's baseline is recorded in its PR; a growing lag is the signal to revisit.
 
 ## Pros and cons of the options

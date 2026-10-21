@@ -28,7 +28,8 @@ expect_plan() {
 
 expect_plan "default runs every gate" "" \
   "cargo fmt --check" "cargo clippy --workspace --all-targets --locked -- -D warnings" \
-  "cargo test --workspace --locked" "scripts/gen-ts-types.sh --check" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "cargo deny --locked check" \
+  "cargo test --workspace --locked" "scripts/gen-ts-types.sh --check" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" \
+  "cargo deny --locked check" \
   "cargo build --workspace --target wasm32-unknown-unknown --locked" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
@@ -52,6 +53,21 @@ expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workfl
   "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
   "scripts/gen-ts-types.sh --check" "actionlint" \
   "cargo test --workspace --target wasm32-unknown-unknown --no-run --locked"
+# The status page's task counts are generated when the book is built and never
+# committed, so no tick on main can leave a copy stale.
+out=$("$check" --dry-run docs 2>&1)
+gen=$(grep -nxF "+ scripts/gen-status.py" <<<"$out" | cut -d: -f1 || true)
+book=$(grep -nxF "+ mdbook build" <<<"$out" | cut -d: -f1 || true)
+if [[ -n $gen && -n $book && $gen -lt $book ]]; then ok "docs step generates the status counts before building the book"; else bad "docs step generates the status counts before building the book" "$out"; fi
+status=0
+out=$("$check" --dry-run status 2>&1) || status=$?
+if [[ $status -eq 2 ]]; then ok "status is not a step: the counts are never committed"; else bad "status is not a step (exit $status)" "$out"; fi
+root="$here/../.."
+if git -C "$root" check-ignore -q docs/start/status-counts.inc && ! git -C "$root" ls-files --error-unmatch docs/start/status-counts.inc >/dev/null 2>&1; then
+  ok "the status counts include is ignored and untracked"
+else
+  bad "the status counts include is ignored and untracked"
+fi
 # usize is 32 bits on wasm32, so a test can build natively and not there: a shift
 # past u32::MAX is a hard error that only codegen reports, which cargo check and
 # clippy never reach. wasm-check builds every test binary for wasm32 without

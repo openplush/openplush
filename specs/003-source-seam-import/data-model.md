@@ -93,6 +93,8 @@ There is no dead-end error. Each chain from a dead-end tip (data-model §2) to t
 - Its explanation names the tip's location and says the cut stops partway, so it will be sewn as a dart; decline it and fix the cut in the modelling tool if that was not meant.
 - `SeamReason::SourceDart` is new, beside `SourceModel`.
 
+As built, the dart proposals and their explanation: [docs/reference/crates/openplush-seams.md](../../docs/reference/crates/openplush-seams.md#uv-cuts-and-material-boundaries).
+
 On 2026-10-16 this section defined `EngineError::DeadEndCut { tips, chains }`. It was withdrawn on 2026-10-17 (spec Clarifications) before any code existed.
 
 ## 5. Re-import (FR-050 to FR-052)

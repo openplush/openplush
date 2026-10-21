@@ -1,26 +1,59 @@
-//! Seams read from the source model: the edges where its UV map is cut or its material changes.
+//! Seams read from the source model: the edges where its UV map is cut or its material changes,
+//! and the cuts among them that stop partway across the surface.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use openplush_geom::DVec2;
 use openplush_geom::epsilon::UV_CUT;
 use openplush_mesh::{EdgeId, FaceId, ManifoldMesh, MaterialIndex, VertexId};
 
-use crate::{Proposal, ProposalKind, SeamKind, SeamReason, SeamSet, SeamsError};
+use crate::{
+    Proposal, ProposalKind, SeamGraph, SeamKind, SeamNode, SeamReason, SeamSet, SeamsError,
+};
 
 /// At a projection point every incident edge is a cut, so each face round it is its own island
 /// there. Hand-marked layouts rarely bring five seams to one vertex, while a pole fan on a
 /// 12-segment sphere has twelve faces, and a false hint costs only one sentence of advice.
 const PROJECTION_MIN_FACES: usize = 5;
 
-/// The source model's UV cuts and material boundaries that are not seams yet, how many faces
-/// had no UVs to read, and where the UVs look like an automatic projection.
+/// The source model's UV cuts and material boundaries that are not seams yet, the cuts among
+/// them that stop partway, how many faces had no UVs to read, and where the UVs look like an
+/// automatic projection.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UvCuts {
     edges: Vec<EdgeId>,
     material_boundaries: Vec<EdgeId>,
+    dead_ends: Vec<DeadEnd>,
     faces_without_uv: u32,
     projection_points: Vec<VertexId>,
+}
+
+/// A chain of source seam edges from a tip, an interior vertex on no other source or mandatory
+/// seam, to the first vertex where three or more meet, the surface boundary, a mandatory seam, or
+/// a second tip.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct DeadEnd {
+    tip: VertexId,
+    /// The other end, when it is a tip too: a slit that touches nothing at either end.
+    far_tip: Option<VertexId>,
+    edges: Vec<EdgeId>,
+}
+
+impl DeadEnd {
+    fn explanation(&self) -> String {
+        let (at, ends) = match self.far_tip {
+            None => (format!("that ends at vertex {}", self.tip.index()), ""),
+            Some(far) => (
+                format!("between vertices {} and {}", self.tip.index(), far.index()),
+                " at both ends",
+            ),
+        };
+        format!(
+            "The cut marked in the model {at} stops partway across the surface{ends}, so it will \
+             be sewn as a dart. If that is not meant, decline it and fix the cut in the modelling \
+             tool."
+        )
+    }
 }
 
 impl UvCuts {
@@ -62,11 +95,19 @@ impl UvCuts {
 
     /// The cuts and boundaries as one proposal for [`SeamReason::SourceModel`], or `None` when
     /// there are none: each boundary a [`SeamKind::FabricBoundary`] seam, including one that is
-    /// also a cut, and every other cut a [`SeamKind::Cut`] seam.
+    /// also a cut, and every other cut a [`SeamKind::Cut`] seam. An edge of a [`darts`] chain is
+    /// left out, so declining that dart leaves its chain uncut.
+    ///
+    /// [`darts`]: Self::darts
     ///
     /// # Errors
     /// Whatever [`Proposal::new`] refuses, which cannot arise: it refuses only an empty edit.
     pub fn proposal(&self) -> Result<Option<Proposal>, SeamsError> {
+        let in_dart: BTreeSet<EdgeId> = self
+            .dead_ends
+            .iter()
+            .flat_map(|d| d.edges.iter().copied())
+            .collect();
         let mut add: BTreeMap<EdgeId, SeamKind> =
             self.edges.iter().map(|&e| (e, SeamKind::Cut)).collect();
         // The more specific kind wins; both are ordinary seams to the flattener.
@@ -75,6 +116,7 @@ impl UvCuts {
                 .iter()
                 .map(|&e| (e, SeamKind::FabricBoundary)),
         );
+        add.retain(|e, _| !in_dart.contains(e));
         if add.is_empty() {
             return Ok(None);
         }
@@ -91,6 +133,73 @@ impl UvCuts {
         };
         Proposal::new(kind, add, explanation).map(Some)
     }
+
+    /// One [`SeamReason::SourceDart`] proposal of [`SeamKind::Dart`] edges per cut that stops
+    /// partway, in ascending order of its tip, explained by naming the tip.
+    ///
+    /// A tip is an interior vertex on exactly one edge of the seam graph over the cuts, the
+    /// boundaries and the mandatory seams already in the project; no other seam already there
+    /// rescues it, because the file must be consistent on its own. The dart is the chain from the
+    /// tip to the first vertex where three or more of those edges meet, the surface boundary, or
+    /// a mandatory seam. A chain free at both ends is one dart, at its lower tip.
+    ///
+    /// # Errors
+    /// Whatever [`Proposal::new`] refuses, which cannot arise: a chain has at least one edge.
+    pub fn darts(&self) -> Result<Vec<Proposal>, SeamsError> {
+        let kind = ProposalKind::Seam {
+            reason: SeamReason::SourceDart,
+        };
+        self.dead_ends
+            .iter()
+            .map(|d| {
+                let add = d.edges.iter().map(|&e| (e, SeamKind::Dart)).collect();
+                Proposal::new(kind, add, d.explanation())
+            })
+            .collect()
+    }
+}
+
+/// The source edges that stop partway, in ascending tip order, judged on the seam graph over
+/// `edges`, `boundaries` and the mandatory seams in `seams`.
+fn dead_ends(
+    mesh: &ManifoldMesh,
+    seams: &SeamSet,
+    edges: &[EdgeId],
+    boundaries: &[EdgeId],
+) -> Result<Vec<DeadEnd>, SeamsError> {
+    // The source edges share one kind, so a cut running on along a boundary stays one chain,
+    // while a mandatory seam keeps its own and ends any cut that meets it.
+    let mut graph = SeamSet::new();
+    for (edge, kind) in seams.iter().filter(|&(_, k)| k == SeamKind::Mandatory) {
+        graph.insert(edge, kind)?;
+    }
+    for &edge in edges.iter().chain(boundaries) {
+        graph.insert(edge, SeamKind::Cut)?;
+    }
+    let graph = SeamGraph::new(mesh, &graph)?;
+    let tips: BTreeSet<VertexId> = graph
+        .nodes()
+        .filter(|&(_, node)| node == SeamNode::DartTip)
+        .map(|(v, _)| v)
+        .collect();
+    let mut found: Vec<DeadEnd> = graph
+        .chains()
+        .iter()
+        .filter(|chain| chain.kind() == SeamKind::Cut)
+        .filter_map(|chain| {
+            let vertices = chain.vertices();
+            let ends = [vertices.first()?, vertices.last()?];
+            let mut free = ends.into_iter().copied().filter(|v| tips.contains(v));
+            let (first, far) = (free.next()?, free.next());
+            Some(DeadEnd {
+                tip: far.map_or(first, |v| v.min(first)),
+                far_tip: far.map(|v| v.max(first)),
+                edges: chain.edges().to_vec(),
+            })
+        })
+        .collect();
+    found.sort_by_key(|d| d.tip);
+    Ok(found)
 }
 
 fn explain(add: &BTreeMap<EdgeId, SeamKind>) -> String {
@@ -109,8 +218,8 @@ fn explain(add: &BTreeMap<EdgeId, SeamKind>) -> String {
     }
 }
 
-/// The source model's UV cuts and material boundaries, plus the projection points where its UVs
-/// look auto-projected.
+/// The source model's UV cuts and material boundaries, the cuts among them that stop partway,
+/// plus the projection points where its UVs look auto-projected.
 ///
 /// A UV cut is an interior edge, not already in `seams`, where the corner UVs on its two sides
 /// differ by more than [`UV_CUT`] in either coordinate at either endpoint. An edge is tested
@@ -120,22 +229,24 @@ fn explain(add: &BTreeMap<EdgeId, SeamKind>) -> String {
 ///
 /// # Errors
 /// `UnknownEdge`, naming the lowest, when `seams` has a seam on an edge `mesh` lacks.
+/// `MandatorySeam` cannot arise: no cut or boundary is already a seam.
 pub fn uv_cuts(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<UvCuts, SeamsError> {
     seams.check_edges(mesh)?;
     let with_uv: Vec<bool> = (0..mesh.face_count() as u32)
         .map(|f| has_uvs(mesh, FaceId::new(f)))
         .collect();
-    let edges = (0..mesh.edge_count() as u32)
+    let edges: Vec<EdgeId> = (0..mesh.edge_count() as u32)
         .map(EdgeId::new)
         .filter(|&e| seams.get(e).is_none() && is_cut(mesh, &with_uv, e))
         .collect();
     let materials: Vec<Option<Option<MaterialIndex>>> = (0..mesh.face_count() as u32)
         .map(|f| source_material(mesh, FaceId::new(f)))
         .collect();
-    let material_boundaries = (0..mesh.edge_count() as u32)
+    let material_boundaries: Vec<EdgeId> = (0..mesh.edge_count() as u32)
         .map(EdgeId::new)
         .filter(|&e| seams.get(e).is_none() && is_material_boundary(mesh, &materials, e))
         .collect();
+    let dead_ends = dead_ends(mesh, seams, &edges, &material_boundaries)?;
     let bare = with_uv.iter().filter(|&&ok| !ok).count();
     let projection_points = (0..mesh.vertex_count() as u32)
         .map(VertexId::new)
@@ -144,6 +255,7 @@ pub fn uv_cuts(mesh: &ManifoldMesh, seams: &SeamSet) -> Result<UvCuts, SeamsErro
     Ok(UvCuts {
         edges,
         material_boundaries,
+        dead_ends,
         // Lossless: a mesh's face count fits in u32, as its IDs do.
         faces_without_uv: bare as u32,
         projection_points,

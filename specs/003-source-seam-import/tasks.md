@@ -230,12 +230,12 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 
 **Independent test**: import `dead-end.glb`. Exactly two dart proposals, one per tip in `dead-end.tips.json`; none for cut A; the imported seams don't contain the dart chains.
 
-- [ ] U051 [P] [US4] `crates/openplush-seams/tests/source_dead_ends.rs`: failing tests.
+- [x] U051 [P] [US4] `crates/openplush-seams/tests/source_dead_ends.rs`: failing tests. *As built, the meshes are sheets and a closed globe whose corner UVs are cut along chosen paths by the fixture generator's wedge rule (`wedge_uvs`, `Grid::cut_sheet` in `tests/common`). The fixture half, `dead-end.glb` and `.obj` against `dead-end.tips.json`, is `crates/openplush-pipeline/tests/source_dead_end_fixture.rs`, because reading the files needs `openplush-io`. FR-012 changed `source_props.rs`' property: the seam proposal and the darts together hold every cut exactly once*
   - Tips are interior vertices of seam-valence 1 in T070's graph over UV cuts ∪ material boundaries ∪ mandatory seams, with surface-boundary vertices as endpoints (research R3). A cut ending on another seam, a material boundary, an opening or a mandatory seam is not a tip (FR-013, US4 scenario 3). A seam already in the project doesn't rescue a tip (S-012).
   - Each tip's chain runs from the tip to the first vertex of seam-valence 3 or more, or to the surface boundary. There is one chain per tip, tips ascend, and a slit with two free ends is one chain, owned by its lower tip.
   - A pole-to-pole meridian on a closed sphere gives two tips, one per pole. Its chains meet at the equator junction if there is one; otherwise it is a single two-tip chain.
   - Once T060 and T067 land, also `dead-end.glb` against `dead-end.tips.json`.
-- [ ] U052 [US4] `crates/openplush-seams/src/source.rs` and `src/proposal.rs`:
+- [x] U052 [US4] `crates/openplush-seams/src/source.rs` and `src/proposal.rs`: *As built, `UvCuts::darts() -> Result<Vec<Proposal>, SeamsError>`, computed by `uv_cuts`. Tips are `SeamGraph`'s `DartTip` nodes over the cuts and boundaries (one kind) and the `Mandatory` seams in `seams` (their own kind, so a cut meeting one ends there). A mandatory seam's own free end is never a dart. `proposal()` leaves dart edges out. Documented in `docs/reference/crates/openplush-seams.md`*
   - The dead-end chains, reusing T070's free-endpoint classification with no second definition of an endpoint.
   - `SeamReason::SourceDart` and one `Proposal` per chain, every edge `SeamKind::Dart`. Its explanation names the tip and says the cut stops partway, so it will be sewn as a dart, and if not meant the maker can decline it and fix the cut in the modelling tool.
   - The chains are removed from the UV-cut seam proposal (FR-012).

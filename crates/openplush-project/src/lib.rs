@@ -4,4 +4,4 @@ mod error;
 mod provenance;
 
 pub use error::ProjectError;
-pub use provenance::{EdgeKey, FaceKey, Provenance};
+pub use provenance::{EdgeKey, FaceKey, Provenance, VertexKey};

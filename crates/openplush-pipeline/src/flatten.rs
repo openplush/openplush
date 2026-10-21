@@ -15,7 +15,7 @@ pub struct Parameterization {
 }
 
 impl Parameterization {
-    /// The chart laid flat.
+    /// Which of the chart stage's charts these positions belong to.
     #[must_use]
     pub fn chart(&self) -> ChartId {
         self.chart
@@ -85,13 +85,20 @@ fn refusal(mesh: &ManifoldMesh, chart: &ChartMesh, error: FlattenError) -> Engin
 fn dart_proposal(mesh: &ManifoldMesh, chart: &ChartMesh, path: &[VertexId]) -> Option<Proposal> {
     let mut add = BTreeMap::new();
     for pair in path.windows(2) {
-        // INVARIANT: the flattener walks the chart's own edges, so every pair has a chart face.
-        add.insert(chart_edge(mesh, chart, pair[0], pair[1])?, SeamKind::Dart);
+        let edge = chart_edge(mesh, chart, pair[0], pair[1]);
+        // INVARIANT: the flattener walks the chart's own edges, so every pair has a chart face;
+        // a release build offers no dart rather than a partial one.
+        debug_assert!(edge.is_some(), "dart step {pair:?} is not a chart edge");
+        add.insert(edge?, SeamKind::Dart);
+    }
+    if add.is_empty() {
+        return None;
     }
     let explanation = format!(
         "A dart of {} edges lets this piece's seam lengths close flat.",
         add.len()
     );
+    // INVARIANT: `Proposal::new` refuses only an empty `add`, ruled out above.
     Proposal::new(
         ProposalKind::Dart {
             chart: chart.chart(),

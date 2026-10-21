@@ -57,8 +57,9 @@ fn out_of_range(finished_mm: f64) -> Warning {
         WarningCode::SizeOutOfRange,
         WarningTarget::Project,
         text(format!(
-            "The pattern's longest dimension finishes at {finished_mm:.1} mm, outside the \
-             supported {MIN_MM} mm to {MAX_MM} mm."
+            "The pattern's longest dimension finishes at {} mm, outside the supported {MIN_MM} \
+             mm to {MAX_MM} mm.",
+            outside(finished_mm)
         )),
         Remedy::Advisory {
             what_to_change: text(format!(
@@ -69,15 +70,35 @@ fn out_of_range(finished_mm: f64) -> Warning {
     )
 }
 
+/// `mm` to one decimal, or to as many more as it takes to print a number outside the range, so
+/// the text never reads `1000.0 mm, outside ... 1000 mm`.
+fn outside(mm: f64) -> String {
+    (1..=6)
+        .map(|digits| format!("{mm:.digits$}"))
+        .find(|s| {
+            s.parse::<f64>()
+                .is_ok_and(|v| !(MIN_MM..=MAX_MM).contains(&v))
+        })
+        .unwrap_or_else(|| mm.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn a_size_just_outside_the_range_prints_enough_digits_to_show_it() {
-        for (mm, shown) in [(1000.04, "1000.04 mm"), (74.96, "74.96 mm"), (74.9, "74.9 mm")] {
+        for (mm, shown) in [
+            (1000.04, "1000.04 mm"),
+            (74.96, "74.96 mm"),
+            (74.9, "74.9 mm"),
+        ] {
             let w = out_of_range(mm);
-            assert!(w.explanation().contains(&format!("at {shown},")), "{}", w.explanation());
+            assert!(
+                w.explanation().contains(&format!("at {shown},")),
+                "{}",
+                w.explanation()
+            );
         }
     }
 }

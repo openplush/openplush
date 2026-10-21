@@ -261,15 +261,15 @@ fn each_row_names_its_target_in_words_and_its_remedy_s_text() -> Result<(), Setu
         (WarningTarget::Face(FaceId::new(3)), "face 3"),
         (WarningTarget::Edge(EdgeId::new(4)), "edge 4"),
         (WarningTarget::Chain(SeamChainId::new(5)), "seam chain 5"),
-        (WarningTarget::Piece(PieceId::new(0)), "piece 0"),
+        (WarningTarget::Piece(PieceId::new(8)), "piece 8"),
         (WarningTarget::Component(ComponentId::new(6)), "component 6"),
         (WarningTarget::Project, "the whole pattern"),
     ];
-    for (target, _) in targets {
+    for (n, (target, _)) in targets.iter().enumerate() {
         set.insert(Warning::new(
             WarningCode::ImportIgnored,
-            target,
-            text("Why.")?,
+            *target,
+            text(&format!("Why {n}."))?,
             advise()?,
         ));
     }
@@ -285,6 +285,10 @@ fn each_row_names_its_target_in_words_and_its_remedy_s_text() -> Result<(), Setu
     for (n, (_, words)) in targets.iter().enumerate() {
         let line = format!(">{}. import-ignored: {words}<", n + 1);
         assert!(svg.contains(&line), "{line} in {svg}");
+        assert!(
+            svg.contains(&format!(">Why {n}.<")),
+            "explanation {n} in {svg}"
+        );
     }
     assert!(
         svg.contains(">7. size-out-of-range: the whole pattern<"),
@@ -292,5 +296,53 @@ fn each_row_names_its_target_in_words_and_its_remedy_s_text() -> Result<(), Setu
     );
     assert!(svg.contains("Fix: Change it.<"), "{svg}");
     assert!(svg.contains("Fix: Add a dart at the crown.<"), "{svg}");
+    Ok(())
+}
+
+#[test]
+fn the_exports_print_the_warnings_and_raise_none_of_their_own() -> Result<(), Setup> {
+    let pieces = square(100.0)?;
+    let sheet = one_sheet(&pieces, 500.0)?;
+    let warnings = import_ignored()?;
+    assert!(
+        export_svg(&sheet, &pieces, &warnings)?
+            .warnings
+            .iter()
+            .next()
+            .is_none()
+    );
+    let pdf = export_pdf(&sheet, &pieces, Paper::A4, &warnings)?;
+    assert!(pdf.warnings.iter().next().is_none());
+    Ok(())
+}
+
+#[test]
+fn the_pdf_is_tiled_on_the_paper_asked_for() -> Result<(), Setup> {
+    let pieces = square(100.0)?;
+    let sheet = one_sheet(&pieces, 500.0)?;
+    let none = WarningSet::default();
+    let letter = String::from_utf8_lossy(&export_pdf(&sheet, &pieces, Paper::Letter, &none)?.value)
+        .into_owned();
+    let a4 =
+        String::from_utf8_lossy(&export_pdf(&sheet, &pieces, Paper::A4, &none)?.value).into_owned();
+    // Letter is 612 by 792 pt; A4 is about 595 by 842 pt.
+    assert!(letter.contains("/MediaBox [0 0 612 792]"), "{letter}");
+    assert!(!a4.contains("/MediaBox [0 0 612 792]"));
+    Ok(())
+}
+
+#[test]
+fn the_print_places_one_template_of_a_piece_cut_several_times() -> Result<(), Setup> {
+    use openplush_pipeline::CutCount;
+    let [piece] = <[PatternPiece; 1]>::try_from(square(100.0)?).map_err(|_| "one piece")?;
+    let thrice = PatternPiece::new(
+        piece.id(),
+        piece.sewing_line().clone(),
+        piece.cut_line().clone(),
+        CutCount::new(3, 0)?,
+        piece.rotations_deg().to_vec(),
+    )?;
+    let sheet = one_sheet(&[thrice], 500.0)?;
+    assert_eq!(sheet.placements().len(), 1);
     Ok(())
 }

@@ -82,13 +82,19 @@ impl Gather<'_> {
             let path = entry.path();
             // `file_type` does not follow a symlink, so a link is neither a file nor a directory.
             let kind = entry.file_type().map_err(io(&path))?;
-            let name = format!("{prefix}{}", utf8(&path, Some(&entry.file_name()))?);
+            let name = || {
+                Ok::<_, Failure>(format!(
+                    "{prefix}{}",
+                    utf8(&path, Some(&entry.file_name()))?
+                ))
+            };
             if kind.is_dir() {
-                self.walk(&path, &format!("{name}/"))?;
+                self.walk(&path, &format!("{}/", name()?))?;
             } else if kind.is_file()
                 && !(prefix.is_empty()
                     && Some(entry.file_name().as_os_str()) == self.model.file_name())
             {
+                let name = name()?;
                 let bytes = self.read(&path)?;
                 self.others.push(ImportFile { name, bytes });
             }

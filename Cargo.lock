@@ -825,9 +825,11 @@ dependencies = [
 name = "openplush-pipeline"
 version = "0.0.0"
 dependencies = [
+ "openplush-export",
  "openplush-flatten",
  "openplush-geom",
  "openplush-io",
+ "openplush-layout",
  "openplush-mesh",
  "openplush-pattern",
  "openplush-seams",

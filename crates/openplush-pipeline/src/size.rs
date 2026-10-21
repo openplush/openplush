@@ -68,3 +68,19 @@ fn out_of_range(finished_mm: f64) -> Warning {
         },
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn its_texts_print_in_the_pdf_s_fonts() {
+        let w = out_of_range(1234.5);
+        let Remedy::Advisory { what_to_change } = w.remedy() else {
+            panic!("the remedy is not advisory");
+        };
+        for text in [w.explanation(), what_to_change.as_str()] {
+            assert!(text.chars().all(|c| (' '..='~').contains(&c)), "{text}");
+        }
+    }
+}

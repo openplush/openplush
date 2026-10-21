@@ -8,6 +8,7 @@ use openplush_mesh::{ComponentId, EdgeId, FaceId};
 use openplush_pattern::PieceId;
 use openplush_seams::{Proposal, SeamChainId};
 
+pub(crate) mod summary;
 #[cfg(test)]
 mod tests;
 

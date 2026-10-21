@@ -9,9 +9,11 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+openplush-export = { path = "../openplush-export" }
 openplush-flatten = { path = "../openplush-flatten" }
 openplush-geom = { path = "../openplush-geom" }
 openplush-io = { path = "../openplush-io" }
+openplush-layout = { path = "../openplush-layout" }
 openplush-mesh = { path = "../openplush-mesh" }
 openplush-pattern = { path = "../openplush-pattern" }
 openplush-seams = { path = "../openplush-seams" }

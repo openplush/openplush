@@ -4,8 +4,10 @@
 
 mod chart;
 mod error;
+mod export;
 mod flatten;
 mod import;
+mod layout;
 mod locations;
 mod pattern;
 mod repair;
@@ -15,12 +17,17 @@ mod warning;
 
 pub use chart::chart;
 pub use error::{EngineError, ErrorLocations};
+pub use export::{export_pdf, export_svg};
 pub use flatten::{Parameterization, flatten};
 pub use import::{ImportFile, ImportFiles, import};
+pub use layout::layout;
+pub use openplush_export::ExportError;
 pub use openplush_flatten::FlattenError;
 pub use openplush_geom::DVec2;
 pub use openplush_geom::units::{Mm, Scale};
 pub use openplush_io::Format;
+pub use openplush_layout::pages::Paper;
+pub use openplush_layout::{LayoutError, LayoutOptions, Placement, Sheet};
 pub use openplush_mesh::{
     ComponentId, CornerArray, Counted, DuplicateOrientation, EdgeId, FaceId, HalfEdgeId, LoopRef,
     ManifoldMesh, MaterialFault, MeshElement, MeshError, RepairPlan, RepairReport, SourceCorner,

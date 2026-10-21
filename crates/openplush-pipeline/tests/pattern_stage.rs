@@ -125,6 +125,54 @@ fn a_unit_square_at_100_mm_a_unit_is_100_mm_square_and_112_mm_cut_at_6_mm() -> R
 }
 
 #[test]
+fn the_sewing_line_starts_at_the_first_boundary_side_of_the_lowest_face() -> Result<(), Setup> {
+    let run = Run::of(
+        mesh_of("v 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nf 1 2 3\nf 1 3 4\n")?,
+        &SeamSet::new(),
+    )?;
+    let [piece] = &pattern(&run.input(), &options(100.0, 6.0)?)?.value[..] else {
+        panic!("one piece");
+    };
+    // The square's diagonal is its one interior edge; face 0's first side not on it starts the line.
+    let faces = run.charts[0].faces();
+    let interior = |a: VertexId, b: VertexId| {
+        faces
+            .iter()
+            .filter(|(_, c)| c.contains(&a) && c.contains(&b))
+            .count()
+            == 2
+    };
+    let [a, b, c] = faces[0].1;
+    let (start, _) = [(a, b), (b, c), (c, a)]
+        .into_iter()
+        .find(|&(p, q)| !interior(p, q))
+        .ok_or("face 0 has a boundary side")?;
+    let want = run.layouts[0].uv()[start.index() as usize] * 100.0;
+    assert_eq!(piece.sewing_line().points()[0], want);
+    Ok(())
+}
+
+#[test]
+fn a_layout_beyond_the_charts_is_refused_as_a_mismatch() -> Result<(), Setup> {
+    let run = Run::of(
+        mesh_of("v 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nf 1 2 3\nf 1 3 4\n")?,
+        &SeamSet::new(),
+    )?;
+    let twice = [run.layouts[0].clone(), run.layouts[0].clone()];
+    let input = PatternInput {
+        layouts: &twice,
+        ..run.input()
+    };
+    assert_eq!(
+        pattern(&input, &options(1.0, 6.0)?).expect_err("an extra layout"),
+        EngineError::StageInputMismatch {
+            chart: ChartId::new(0)
+        }
+    );
+    Ok(())
+}
+
+#[test]
 fn no_charts_make_no_pieces() -> Result<(), Setup> {
     let mesh = mesh_of("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n")?;
     let (_, sewing) = chart(&mesh, &SeamSet::new())?.value;

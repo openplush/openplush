@@ -20,6 +20,12 @@ pub enum IoError {
         /// Every non-finite source vertex, used by a face or not, in file order.
         vertices: Vec<SourceCorner>,
     },
+    /// The file refers to another file the shell did not supply beside it.
+    #[error("the file refers to \"{uri}\", which was not supplied beside it")]
+    MissingResource {
+        /// The reference, as the file writes it.
+        uri: String,
+    },
     /// The triangles do not fit a `TriangleSoup`.
     #[error(transparent)]
     Mesh(#[from] MeshError),

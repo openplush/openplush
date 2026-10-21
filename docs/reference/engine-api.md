@@ -35,7 +35,7 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 
 `import`, `validate`, `repair`, `chart` and `flatten` exist; each later stage lands with the task that builds it.
 
-**`import(&ImportFiles)`** reads the primary file with the reader its extension names: the extension of the name's final `/`-separated segment, as `std::path::Path::extension` reads it, compared ASCII case-insensitively. `obj` is OBJ, `stl` STL, `ply` PLY. Any other name, one with no extension (`model`, `.obj`, `model.`), and `gltf`, `glb` and `fbx` until their readers exist, is `UnknownFormat`. The bytes are never sniffed. A reader's refusal is `Parse`, naming that reader, `NonFiniteInput`, or `Mesh`. The `others` are carried and not read yet. Its warnings are empty.
+**`import(&ImportFiles)`** reads the primary file with the reader its extension names: the extension of the name's final `/`-separated segment, as `std::path::Path::extension` reads it, compared ASCII case-insensitively. `obj` is OBJ, `stl` STL, `ply` PLY, and `gltf` and `glb` glTF; a `.gltf` file that is GLB inside is read as GLB. Any other name, one with no extension (`model`, `.obj`, `model.`), and `fbx` until its reader exists, is `UnknownFormat`. The bytes are never sniffed for the reader. A reader's refusal is `Parse`, naming that reader, `MissingResource`, `NonFiniteInput`, or `Mesh`. A glTF buffer `uri` is percent-decoded and resolved against the primary's directory, and the file of exactly that name in `others` is read. A `uri` with a scheme, an absolute path, a bad escape, or `..` above the primary's directory is `Parse`. One with no matching file is `MissingResource`. Other files are ignored. What the glTF reader does not apply is one `import-ignored` warning on the project: skins (read in the bind pose), morph targets (read as the base mesh), animations, and point and line primitives. Otherwise its warnings are empty.
 
 **`validate(&TriangleSoup)`** is the mesh crate's `validate`: a `ValidationReport` of every defect, never an error and never a change. Its warnings are empty.
 
@@ -53,6 +53,7 @@ Each `EngineError` variant carries the location of the problem. The messages are
 |---|---|---|
 | `Parse` | `format`, plus the reader's `detail` | `could not read the {format name} file: {detail}` |
 | `UnknownFormat` | nothing; carries the primary file's `name` | `cannot read "{name}": no reader for this file type` |
+| `MissingResource` | nothing; carries the `uri` as the file writes it | `the file refers to "{uri}", which was not supplied beside it` |
 | `NonFiniteInput` | every non-finite source vertex (`SourceCorner`) | `{n} source vertices have a NaN or infinite coordinate` |
 | `Mesh` | whatever the inner `MeshError` names, in the soup given to repair (no mesh exists when repair refuses; only `BrokenInvariant`, a bug-class check of debug builds, names the half-built mesh's IDs): its faces, its vertices, a hole loop by its `SourceCorner` in `source_vertices`, a broken invariant's element (a half-edge as its edge); a refusal about the soup as a whole names none | the inner error's message, unchanged, as in the `MeshError` table below |
 | `ChartNotDisk` | `chart`; carries `failure` and the `proposals` that fix it | `chart {chart} is not a topological disk` |
@@ -71,7 +72,7 @@ Format names: `OBJ`, `glTF`, `GLB`, `STL`, `PLY`.
 Three methods read an error the way the shell needs it. Each matches every variant explicitly, so a new variant does not compile until it has a code, locations and proposals.
 
 - **`code() -> &'static str`**: the variant name (`"Parse"`, `"ChartNotDisk"`, …, `"Cancelled"`). It is stable on the wire: a released code never changes.
-- **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse`, `UnknownFormat` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
+- **`locations() -> ErrorLocations`**: the element IDs in the "Located by" column, by category: `faces`, `edges`, `vertices`, `pieces`, `charts`, `chains`, `source_vertices` (`SourceCorner`s of the imported file) and `proposal` (an `Option<ProposalId>`). Each list is sorted ascending, without duplicates. `Parse`, `UnknownFormat`, `MissingResource` and `Cancelled` give empty locations. A proposal's own edges are not locations: they arrive with the proposal.
 - **`proposals() -> &[Proposal]`**: the fixes `ChartNotDisk` and `BoundaryNotRealizable` carry; empty for every other variant.
 
 `MeshError` is the error of building a soup or repairing one; `repair` returns it inside `Mesh`. Its messages are pinned in `crates/openplush-pipeline/tests/mesh_error.rs`. IDs and enums print in Rust `{:?}` (Debug) form: `VertexId(1)`, `FaceId(7)`, `Uvs`.
@@ -127,7 +128,11 @@ A `Warning` has a code, a target, an explanation and a remedy, and cannot be bui
 - **Remedy** is `Actionable { proposal }` or `Advisory { what_to_change }`, never optional.
 - **Targets**: `Face`, `Edge`, `Chain`, `Piece`, `Component`, or `Project`.
 
-**Codes.** `WarningCode` ships with no variants yet; each stage adds the codes it raises. Every code has a kebab-case string (`WarningCode::as_str`) that never changes once released, because acknowledgements are stored by it. Released codes will be listed here.
+**Codes.** Each stage adds the codes it raises. Every code has a kebab-case string (`WarningCode::as_str`) that never changes once released, because acknowledgements are stored by it.
+
+| Code | Raised by | Target | Says |
+|---|---|---|---|
+| `import-ignored` (`ImportIgnored`) | `import`, for glTF | `Project` | `The file has parts the pattern does not follow: {parts}. The pattern is made from the triangles as modelled.`, each part one of `the skin on node {n}, read in its bind pose`, `the morph targets of mesh {m} (node {n}), read as the base mesh`, `animation {a}, not played`, `primitive {p} of mesh {m} (node {n}), which is points or lines`, joined by `; ` in walk order, animations last. Advisory: apply the pose or morph in the 3D tool and export again |
 
 **Order.** A `WarningSet` yields warnings in one total order, whatever order they were raised in:
 

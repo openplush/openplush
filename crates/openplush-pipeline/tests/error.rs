@@ -6,8 +6,8 @@ use std::error::Error;
 
 use openplush_pipeline::MeshError;
 use openplush_pipeline::{
-    ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PieceId, Proposal, ProposalId,
-    ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
+    ChartFailure, ChartId, EdgeId, EngineError, FaceId, Format, PatternError, PieceId, Proposal,
+    ProposalId, ProposalKind, SeamChainId, SeamKind, SeamsError, SourceCorner, VertexId,
 };
 
 fn dart(chart: u32, edge: u32) -> Result<Proposal, Box<dyn Error>> {
@@ -164,18 +164,41 @@ fn seam_parity_names_the_chain_and_both_lengths() {
 }
 
 #[test]
-fn offset_failed_names_the_piece() {
-    let e = EngineError::OffsetFailed {
-        piece: PieceId::new(3),
-        detail: "the allowance crosses itself at a tight curve".into(),
+fn pattern_carries_its_refusal_whole_and_says_it_in_the_refusal_s_words() {
+    let e = EngineError::Pattern {
+        piece: Some(PieceId::new(3)),
+        source: PatternError::FoldConflict {
+            piece: PieceId::new(3),
+            edge: 7,
+        },
     };
     assert!(matches!(
         &e,
-        EngineError::OffsetFailed { piece, .. } if *piece == PieceId::new(3)
+        EngineError::Pattern { piece: Some(piece), source: PatternError::FoldConflict { edge: 7, .. } }
+            if *piece == PieceId::new(3)
     ));
     assert_eq!(
         e.to_string(),
-        "seam allowance for piece 3 failed: the allowance crosses itself at a tight curve"
+        "piece 3: the fold or edge-stitched edge 7 faces another part of the piece too closely"
+    );
+    let outline = EngineError::Pattern {
+        piece: Some(PieceId::new(1)),
+        source: PatternError::OutlineNotSimple { edge: 2, other: 9 },
+    };
+    assert_eq!(
+        outline.to_string(),
+        "outline edges 2 and 9 cross, touch, overlap or fold back"
+    );
+}
+
+#[test]
+fn stage_input_mismatch_names_the_chart() {
+    let e = EngineError::StageInputMismatch {
+        chart: ChartId::new(4),
+    };
+    assert_eq!(
+        e.to_string(),
+        "chart 4: the layouts or sewing map given do not belong to the charts given"
     );
 }
 

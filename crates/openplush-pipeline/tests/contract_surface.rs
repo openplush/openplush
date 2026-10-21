@@ -23,3 +23,9 @@ fn import_takes_a_file_set_and_returns_a_soup() {
     use openplush_pipeline::{ImportFiles, TriangleSoup, import};
     let _: fn(&ImportFiles) -> StageResult<TriangleSoup> = import;
 }
+
+#[test]
+fn pattern_takes_the_charts_with_their_layouts_and_options_and_returns_pieces() {
+    use openplush_pipeline::{PatternInput, PatternOptions, PatternPiece, pattern};
+    let _: fn(&PatternInput<'_>, &PatternOptions) -> StageResult<Vec<PatternPiece>> = pattern;
+}

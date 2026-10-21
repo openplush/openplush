@@ -42,7 +42,11 @@ fn the_longest_dimension_finishes_at_the_target() -> Result<(), Setup> {
 fn the_range_includes_both_ends() -> Result<(), Setup> {
     let mesh = tetra()?;
     for (mm, warned) in [(74.9, true), (75.0, false), (1000.0, false), (1000.1, true)] {
-        assert_eq!(!warnings(&mesh, longest(mm)?)?.is_empty(), warned, "{mm} mm");
+        assert_eq!(
+            !warnings(&mesh, longest(mm)?)?.is_empty(),
+            warned,
+            "{mm} mm"
+        );
     }
     Ok(())
 }

@@ -62,6 +62,7 @@
     - [openplush-wasm](reference/crates/openplush-wasm.md)
   - [Engine API](reference/engine-api.md)
   - [Glossary](reference/glossary.md)
+  - [Rust API](reference/api.md)
   - [Worker protocol](reference/worker-protocol.md)
 - [Tutorials](tutorials/README.md)
   - [Your first engine change, test first](tutorials/first-change.md)

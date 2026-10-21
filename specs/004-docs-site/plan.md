@@ -98,12 +98,14 @@ The URLs are fixed from the first deploy, so the release adds `/guide/` without 
 ```text
 mdbook build                 ─▶ target/site/dev/
 mdbook build docs/user       ─▶ target/site/guide/
-cargo doc --workspace --no-deps --locked ─▶ copy to target/site/dev/api/, drop .lock, write api/index.html
+cargo doc --no-deps --locked, one crate at a time ─▶ copy to target/site/dev/api/, drop .lock, write api/index.html
 cp docs/site/index.html      ─▶ target/site/
 checks: summary completeness (sources) · remote references (output) · plain language (maker sources) · lychee --offline (output)
 ```
 
 The deploy job removes `target/site/guide/` before upload until W-003 is lifted, so the checks always see the whole site but only the contributor part ships.
+
+As built, the rustdoc is documented one crate at a time, dependencies first: [Checks, Generated API pages](../../docs/reference/checks.md#generated-api-pages-docs).
 
 ### Writing standards (summary; the writing guide is their home)
 

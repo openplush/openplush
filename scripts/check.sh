@@ -240,6 +240,8 @@ for step in "${steps[@]}"; do
       run scripts/gen-status.py
       run scripts/gen-indexes.py
       run mdbook build
+      # After the book, whose build empties target/site/dev/.
+      run scripts/assemble-docs-api.sh
       # The maker guide is its own book, built beside the contributor book and
       # published only from the first public release (docs.yml drops it on main).
       run mdbook build docs/user

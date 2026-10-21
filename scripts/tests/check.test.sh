@@ -64,6 +64,16 @@ if [[ -n $gen && -n $book && $gen -lt $book ]]; then ok "docs step generates the
 # docs pull requests never conflict on them.
 gen=$(grep -nxF "+ scripts/gen-indexes.py" <<<"$out" | cut -d: -f1 || true)
 if [[ -n $gen && -n $book && $gen -lt $book ]]; then ok "docs step generates the index lists before building the book"; else bad "docs step generates the index lists before building the book" "$out"; fi
+# The workspace rustdoc joins the site under dev/api/ once the book is built, since
+# the book's build empties dev/, and before the checks read the whole site.
+api=$(grep -nxF "+ scripts/assemble-docs-api.sh" <<<"$out" | cut -d: -f1 || true)
+remote=$(grep -nxF "+ scripts/check-docs-remote.sh target/site" <<<"$out" | cut -d: -f1 || true)
+links=$(grep -nxF "+ scripts/check-docs-links.sh target/site" <<<"$out" | cut -d: -f1 || true)
+if [[ -n $api && -n $book && -n $remote && -n $links && $book -lt $api && $api -lt $remote && $api -lt $links ]]; then
+  ok "docs step assembles the API docs after the book and before the site checks"
+else
+  bad "docs step assembles the API docs after the book and before the site checks" "$out"
+fi
 status=0
 out=$("$check" --dry-run status 2>&1) || status=$?
 if [[ $status -eq 2 ]]; then ok "status is not a step: the counts are never committed"; else bad "status is not a step (exit $status)" "$out"; fi
@@ -116,7 +126,7 @@ fi
 # The docs step needs mdbook, which CI's engine setup does not install.
 for args in "" all engine; do
   out=$("$check" --dry-run $args 2>&1)
-  if [[ $out != *"mdbook build"* && $out != *"scripts/check-docs-summary.sh"* && $out != *"scripts/check-docs-remote.sh"* && $out != *"scripts/check-docs-links.sh"* ]]; then
+  if [[ $out != *"mdbook build"* && $out != *"scripts/assemble-docs-api.sh"* && $out != *"scripts/check-docs-summary.sh"* && $out != *"scripts/check-docs-remote.sh"* && $out != *"scripts/check-docs-links.sh"* ]]; then
     ok "${args:-default} run leaves out the docs step"
   else
     bad "${args:-default} run leaves out the docs step" "$out"

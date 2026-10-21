@@ -72,8 +72,8 @@ cmp out/pattern.svg out2/pattern.svg && echo "deterministic"
 The determinism CI job is this, for every fixture:
 
 ```sh
-openplush-cli          pattern "$f" --seams "$seams" -o native/
-node scripts/wasm-cli.mjs pattern "$f" --seams "$seams" -o wasm/
+openplush-cli          pattern "$f" --seams "$seams" --fabric fixtures/fabrics/woven.json --size-mm 300 -o native/
+node scripts/wasm-cli.mjs pattern "$f" --seams "$seams" --fabric fixtures/fabrics/woven.json --size-mm 300 -o wasm/
 cmp native/pattern.svg wasm/pattern.svg
 ```
 

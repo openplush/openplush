@@ -1,0 +1,14 @@
+{
+  "id": "woven",
+  "name": "Test woven cotton",
+  "category": "woven",
+  "stretchGrainPct": 0,
+  "stretchCrossPct": 0,
+  "stretchBiasPct": 0,
+  "nap": false,
+  "pileLenMm": 0,
+  "thicknessMm": 0.3,
+  "frays": true,
+  "defaultAllowanceMm": 6,
+  "rollWidthMm": 1100
+}

@@ -10,7 +10,7 @@ cargo run -p openplush-cli -- --help
 
 ## Status
 
-`validate` and `repair` run their stages. `pattern` parses and checks its arguments, then exits 1 with `openplush-cli: the pattern stage is not built yet` on stderr and writes nothing. Which stages are built is on the [status page](../start/status.md).
+Which stages and outputs are built is on the [status page](../start/status.md).
 
 ## Subcommands
 
@@ -18,7 +18,7 @@ cargo run -p openplush-cli -- --help
 |---|---|---|
 | `validate <MODEL>` | `--json <PATH>`: where to write the health report | import, validate |
 | `repair <MODEL>` | `--no-weld`, `--no-drop-degenerates`, `--no-split-non-manifold-edges`, `--no-split-bowties`, `--no-fix-orientation`; `--fill <LOOP>`, repeatable; `--plan-out <PATH>` (optional); `-o/--out <PATH>` | import, repair |
-| `pattern <MODEL>` | `--seams <PATH>`, `--fabric <NAME>`, `--size-mm <MM>`, `--page a4\|letter`, `-o/--out <DIR>` | pattern |
+| `pattern <MODEL>` | `--seams <PATH>`, `--fabric <PATH>`, `--size-mm <MM>`, `--page a4\|letter` (optional, `a4`), `-o/--out <DIR>` | import, repair, chart, flatten, size, pattern, layout, export |
 
 ### The model and the files beside it
 
@@ -50,18 +50,32 @@ Starts from the default plan, every step on; each `--no-<step>` turns one off. `
 
 Nothing is written if repair fails. `-o` is written before `--plan-out`, so if the plan cannot be written the command exits 1 with the mesh already on disk.
 
-Values checked while parsing `pattern`:
+### `pattern`
 
-- `--size-mm`: a finite number above 0, the target finished size in millimetres. Which dimension it measures is decided by the task that builds scaling.
-- `--page`: `a4` or `letter`.
+Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` into `-o`, which is created if missing. Nothing is written unless every stage succeeds.
 
-`--fabric` is not checked yet. It takes any name until fabric presets exist in the engine.
+- The model is read as above and repaired with the default plan, every step on. A model that needs another plan is repaired first with `repair -o`, and that OBJ is patterned.
+- `--seams` is a seam-set file in the [`openplush-seam-set` format](https://github.com/openplush/openplush/blob/main/fixtures/README.md#seam-set-format), version 1. Each edge's two indices are OBJ vertex indices (the order of `v` lines), counted from `vertexIndexBase`, 0 or 1. Each is found on the repaired model through the corners repair kept from it. Exit 1, naming the seam by its place in the list (`seam 0` is the first):
+  - an index below `vertexIndexBase`;
+  - an index no vertex came from;
+  - an index more than one vertex came from;
+  - two vertices with no edge between them;
+  - a `format`, `version`, `vertexIndexBase`, `edge` or `kind` the format does not allow.
+- `--fabric` is one JSON object in the project schema's `fabric` shape:
+  - required fields `id`, `name` and `category` (`woven`, `knit`, `pile`, `felt`);
+  - optional fields take the schema's defaults, including a 6 mm allowance and a 1500 mm roll;
+  - an unknown field, a wrong type, a negative length or a zero roll width exits 1, naming the field, as does a fabric the engine refuses, with its reason.
+
+  `fixtures/fabrics/woven.json` is a test fabric.
+- `--size-mm` is the finished length of the model's longest dimension: a finite number above 0, in millimetres. Outside 75 mm to 1000 mm the run still succeeds, with a `size-out-of-range` warning.
+- The print places one template of every piece on a roll as wide as the fabric's `rollWidthMm`, 10 mm apart, not mirrored. `pattern.svg` is that sheet at true scale. `pattern.pdf` tiles it on `--page`.
+- Every warning the stages raised prints in both files: under the SVG's sheet, and on the PDF's cover. Warnings never change the exit code.
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
 | 0 | Success |
-| 1 | The engine refused, a file could not be read or written, the model's set is over the size limit, or the stage is not built yet. stderr says which: an engine refusal is `openplush-cli: <code>: <message>`, with the [error's code and message](engine-api.md#errors); a file is `openplush-cli: <path>: <reason>` |
+| 1 | The engine refused, a file could not be read, used or written, or the model's set is over the size limit. stderr says which: an engine refusal is `openplush-cli: <code>: <message>`, with the [error's code and message](engine-api.md#errors); a file is `openplush-cli: <path>: <reason>` |
 | 2 | Usage error: an unknown flag or value, or a missing required argument. `clap` prints the usage |
 | 101 | The engine panicked: Rust's default panic exit, which holds while no build profile sets `panic = "abort"`. A panic is a bug, never a response to bad input ([ADR 0009](../adr/0009-wasm-panic-is-a-worker-crash.md)); please report it with the message from stderr |

@@ -1,0 +1,447 @@
+//! `pattern` runs a model through every stage with a seam-set file and a fabric file, and writes
+//! `pattern.svg` and `pattern.pdf` into its output directory; a bad seam or fabric file, or an
+//! engine refusal, writes nothing and exits 1.
+
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
+
+type Setup = Box<dyn std::error::Error>;
+
+fn fixture(path: &str) -> String {
+    format!("{}/../../fixtures/{path}", env!("CARGO_MANIFEST_DIR"))
+}
+
+/// A fresh directory for one test's files, removed when the test ends.
+struct Scratch(PathBuf);
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
+fn scratch(test: &str) -> Result<Scratch, Setup> {
+    let dir = std::env::temp_dir().join(format!(
+        "openplush-cli-pattern-{}-{test}",
+        std::process::id()
+    ));
+    if dir.exists() {
+        fs::remove_dir_all(&dir)?;
+    }
+    fs::create_dir_all(&dir)?;
+    Ok(Scratch(dir))
+}
+
+fn text(path: &Path) -> Result<String, Setup> {
+    path.to_str()
+        .map(str::to_owned)
+        .ok_or_else(|| "a non-UTF-8 path".into())
+}
+
+fn stderr(out: &Output) -> String {
+    String::from_utf8_lossy(&out.stderr).into_owned()
+}
+
+/// One run's inputs: the capsule and its reference seams and fabric unless a test swaps one.
+struct Run {
+    model: String,
+    seams: String,
+    fabric: String,
+    size_mm: String,
+    page: Option<&'static str>,
+}
+
+impl Run {
+    fn capsule() -> Self {
+        Self {
+            model: fixture("meshes/capsule.obj"),
+            seams: fixture("seams/capsule.json"),
+            fabric: fixture("fabrics/woven.json"),
+            size_mm: "200".into(),
+            page: Some("a4"),
+        }
+    }
+
+    fn write_to(&self, out: &Path) -> Result<Output, Setup> {
+        let mut args = vec![
+            "pattern".to_owned(),
+            self.model.clone(),
+            "--seams".into(),
+            self.seams.clone(),
+            "--fabric".into(),
+            self.fabric.clone(),
+            "--size-mm".into(),
+            self.size_mm.clone(),
+            "-o".into(),
+            text(out)?,
+        ];
+        if let Some(page) = self.page {
+            args.extend(["--page".to_owned(), page.to_owned()]);
+        }
+        Ok(Command::new(env!("CARGO_BIN_EXE_openplush-cli"))
+            .args(args)
+            .output()?)
+    }
+}
+
+/// Writes `contents` as `name` in `dir` and returns its path as text.
+fn file(dir: &Path, name: &str, contents: &str) -> Result<String, Setup> {
+    let path = dir.join(name);
+    fs::write(&path, contents)?;
+    text(&path)
+}
+
+fn listing(dir: &Path) -> Result<Vec<String>, Setup> {
+    let mut names = fs::read_dir(dir)?
+        .map(|e| Ok(e?.file_name().to_string_lossy().into_owned()))
+        .collect::<Result<Vec<_>, std::io::Error>>()?;
+    names.sort();
+    Ok(names)
+}
+
+#[test]
+fn the_capsule_becomes_an_svg_and_a_pdf_in_a_new_directory() -> Result<(), Setup> {
+    let dir = scratch("capsule")?;
+    let out_dir = dir.0.join("out").join("nested");
+    let out = Run::capsule().write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    assert_eq!(listing(&out_dir)?, ["pattern.pdf", "pattern.svg"]);
+    let svg = fs::read_to_string(out_dir.join("pattern.svg"))?;
+    assert!(
+        svg.contains("<svg ") && svg.contains("mm\" height=\""),
+        "{svg}"
+    );
+    assert!(fs::read(out_dir.join("pattern.pdf"))?.starts_with(b"%PDF-"));
+    Ok(())
+}
+
+#[test]
+fn the_same_inputs_give_the_same_bytes() -> Result<(), Setup> {
+    let dir = scratch("same")?;
+    let (a, b) = (dir.0.join("a"), dir.0.join("b"));
+    for out_dir in [&a, &b] {
+        let out = Run::capsule().write_to(out_dir)?;
+        assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    }
+    for name in ["pattern.svg", "pattern.pdf"] {
+        assert_eq!(fs::read(a.join(name))?, fs::read(b.join(name))?, "{name}");
+    }
+    Ok(())
+}
+
+#[test]
+fn the_page_is_a4_unless_letter_is_asked_for() -> Result<(), Setup> {
+    let dir = scratch("page")?;
+    let letter_box = "/MediaBox [0 0 612 792]";
+    for (page, letter) in [(None, false), (Some("letter"), true)] {
+        let out_dir = dir.0.join(page.unwrap_or("default"));
+        let run = Run {
+            page,
+            ..Run::capsule()
+        };
+        let out = run.write_to(&out_dir)?;
+        assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+        let pdf = String::from_utf8_lossy(&fs::read(out_dir.join("pattern.pdf"))?).into_owned();
+        assert_eq!(pdf.contains(letter_box), letter, "{page:?}");
+    }
+    Ok(())
+}
+
+#[test]
+fn warnings_print_in_the_files_and_do_not_stop_the_run() -> Result<(), Setup> {
+    let dir = scratch("warned")?;
+    let run = Run {
+        size_mm: "50".into(),
+        ..Run::capsule()
+    };
+    let out = run.write_to(&dir.0)?;
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
+    assert!(
+        svg.contains(">1. size-out-of-range: the whole pattern<"),
+        "{svg}"
+    );
+    let pdf = String::from_utf8_lossy(&fs::read(dir.0.join("pattern.pdf"))?).into_owned();
+    assert!(pdf.contains("(1. size-out-of-range: the whole pattern) Tj"));
+    Ok(())
+}
+
+#[test]
+fn a_one_based_seam_set_names_the_same_edges() -> Result<(), Setup> {
+    let dir = scratch("one-based")?;
+    let zero = fs::read_to_string(fixture("seams/capsule.json"))?;
+    let mut set: serde_json::Value = serde_json::from_str(&zero)?;
+    set["vertexIndexBase"] = 1.into();
+    for seam in set["seams"].as_array_mut().ok_or("no seams")? {
+        for i in seam["edge"].as_array_mut().ok_or("no edge")? {
+            *i = (i.as_u64().ok_or("not an index")? + 1).into();
+        }
+    }
+    let one = file(&dir.0, "one.json", &set.to_string())?;
+    let (a, b) = (dir.0.join("zero"), dir.0.join("one"));
+    assert_eq!(Run::capsule().write_to(&a)?.status.code(), Some(0));
+    let run = Run {
+        seams: one,
+        ..Run::capsule()
+    };
+    let out = run.write_to(&b)?;
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    assert_eq!(
+        fs::read(a.join("pattern.svg"))?,
+        fs::read(b.join("pattern.svg"))?
+    );
+    Ok(())
+}
+
+/// Runs the capsule with `seams` as its seam-set file and returns stderr, after checking that it
+/// exited 1 and wrote nothing.
+fn refused_seams(test: &str, seams: &str) -> Result<String, Setup> {
+    let dir = scratch(test)?;
+    let path = file(&dir.0, "seams.json", seams)?;
+    let out_dir = dir.0.join("out");
+    let out = Run {
+        seams: path,
+        ..Run::capsule()
+    }
+    .write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert!(!out_dir.exists(), "{test} wrote output");
+    Ok(stderr(&out))
+}
+
+fn seam_set(seams: &str) -> String {
+    format!(
+        r#"{{"format": "openplush-seam-set", "version": 1, "vertexIndexBase": 0, "seams": [{seams}]}}"#
+    )
+}
+
+#[test]
+fn a_seam_on_a_vertex_the_model_lacks_is_refused_naming_the_seam() -> Result<(), Setup> {
+    let err = refused_seams(
+        "missing",
+        &seam_set(r#"{"edge": [25, 26], "kind": "cut"}, {"edge": [0, 9999], "kind": "cut"}"#),
+    )?;
+    assert!(err.contains("seam 1: no vertex 9999"), "{err}");
+    Ok(())
+}
+
+#[test]
+fn a_seam_between_vertices_with_no_edge_is_refused_naming_the_seam() -> Result<(), Setup> {
+    // The capsule's two poles are far apart.
+    let err = refused_seams("no-edge", &seam_set(r#"{"edge": [0, 97], "kind": "cut"}"#))?;
+    assert!(
+        err.contains("seam 0: vertices 0 and 97 share no edge"),
+        "{err}"
+    );
+    Ok(())
+}
+
+#[test]
+fn a_malformed_seam_set_is_refused() -> Result<(), Setup> {
+    for (case, contents, says) in [
+        (
+            "format",
+            r#"{"format": "x", "version": 1, "vertexIndexBase": 0, "seams": []}"#,
+            "format",
+        ),
+        (
+            "version",
+            r#"{"format": "openplush-seam-set", "version": 2, "vertexIndexBase": 0, "seams": []}"#,
+            "version",
+        ),
+        (
+            "base",
+            r#"{"format": "openplush-seam-set", "version": 1, "vertexIndexBase": 2, "seams": []}"#,
+            "vertexIndexBase",
+        ),
+        (
+            "float",
+            &seam_set(r#"{"edge": [25.0, 26], "kind": "cut"}"#),
+            "seam 0",
+        ),
+        (
+            "kind",
+            &seam_set(r#"{"edge": [25, 26], "kind": "zip"}"#),
+            "seam 0",
+        ),
+        ("json", "{", "seams.json"),
+    ] {
+        let err = refused_seams(case, contents)?;
+        assert!(err.contains(says), "{case}: {err}");
+    }
+    Ok(())
+}
+
+/// Runs the capsule with `fabric` as its fabric file and returns its exit code and stderr.
+fn with_fabric(test: &str, fabric: &str) -> Result<(Option<i32>, String), Setup> {
+    let dir = scratch(test)?;
+    let path = file(&dir.0, "fabric.json", fabric)?;
+    let out_dir = dir.0.join("out");
+    let out = Run {
+        fabric: path,
+        ..Run::capsule()
+    }
+    .write_to(&out_dir)?;
+    if out.status.code() != Some(0) {
+        assert!(!out_dir.exists(), "{test} wrote output");
+    }
+    Ok((out.status.code(), stderr(&out)))
+}
+
+#[test]
+fn a_fabric_with_only_its_required_fields_takes_the_schema_s_defaults() -> Result<(), Setup> {
+    let (code, err) = with_fabric(
+        "minimal",
+        r#"{"id": "f", "name": "Felt", "category": "felt"}"#,
+    )?;
+    assert_eq!(code, Some(0), "{err}");
+    Ok(())
+}
+
+#[test]
+fn a_fabric_file_the_schema_or_the_engine_refuses_is_refused() -> Result<(), Setup> {
+    for (case, contents, says) in [
+        (
+            "unknown",
+            r#"{"id": "f", "name": "F", "category": "felt", "colour": "red"}"#,
+            "colour",
+        ),
+        ("missing", r#"{"id": "f", "category": "felt"}"#, "name"),
+        (
+            "category",
+            r#"{"id": "f", "name": "F", "category": "silk"}"#,
+            "category",
+        ),
+        (
+            "negative",
+            r#"{"id": "f", "name": "F", "category": "felt", "defaultAllowanceMm": -1}"#,
+            "defaultAllowanceMm",
+        ),
+        (
+            "roll",
+            r#"{"id": "f", "name": "F", "category": "felt", "rollWidthMm": 0}"#,
+            "rollWidthMm",
+        ),
+        (
+            "type",
+            r#"{"id": "f", "name": "F", "category": "felt", "nap": "yes"}"#,
+            "nap",
+        ),
+    ] {
+        let (code, err) = with_fabric(case, contents)?;
+        assert_eq!(code, Some(1), "{case}: {err}");
+        assert!(
+            err.contains("fabric.json") && err.contains(says),
+            "{case}: {err}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn an_engine_refusal_prints_its_code_and_writes_nothing() -> Result<(), Setup> {
+    let dir = scratch("engine")?;
+    let out_dir = dir.0.join("out");
+    let run = Run {
+        model: fixture("meshes/source-seams/sphere-band.obj"),
+        seams: fixture("seams/non-disk/sphere-band.json"),
+        ..Run::capsule()
+    };
+    let out = run.write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert!(
+        stderr(&out).starts_with("openplush-cli: ChartNotDisk: "),
+        "{}",
+        stderr(&out)
+    );
+    assert!(!out_dir.exists());
+    Ok(())
+}
+
+fn one_based(seams: &str) -> String {
+    format!(
+        r#"{{"format": "openplush-seam-set", "version": 1, "vertexIndexBase": 1, "seams": [{seams}]}}"#
+    )
+}
+
+#[test]
+fn a_one_based_file_is_refused_in_its_own_numbering() -> Result<(), Setup> {
+    for (case, seams, says) in [
+        (
+            "below",
+            r#"{"edge": [0, 1], "kind": "cut"}"#,
+            "seam 0: an index is below the file's base",
+        ),
+        (
+            "missing-1",
+            r#"{"edge": [1, 10000], "kind": "cut"}"#,
+            "seam 0: no vertex 10000",
+        ),
+        (
+            "no-edge-1",
+            r#"{"edge": [1, 98], "kind": "cut"}"#,
+            "seam 0: vertices 1 and 98 share no edge",
+        ),
+    ] {
+        let err = refused_seams(case, &one_based(seams))?;
+        assert!(err.contains(says), "{case}: {err}");
+    }
+    Ok(())
+}
+
+#[test]
+fn a_seam_the_seam_set_refuses_is_the_engine_s_refusal() -> Result<(), Setup> {
+    let capsule = fs::read_to_string(fixture("seams/capsule.json"))?;
+    let mut set: serde_json::Value = serde_json::from_str(&capsule)?;
+    let seams = set["seams"].as_array_mut().ok_or("no seams")?;
+    seams.insert(
+        0,
+        serde_json::json!({"edge": [25, 26], "kind": "mandatory"}),
+    );
+    let err = refused_seams("mandatory", &set.to_string())?;
+    assert!(err.starts_with("openplush-cli: Seams: "), "{err}");
+    Ok(())
+}
+
+#[test]
+fn a_source_vertex_repair_split_in_two_is_refused() -> Result<(), Setup> {
+    let dir = scratch("split")?;
+    // Two triangles meeting only at the first vertex: repair splits that bowtie.
+    let model = file(
+        &dir.0,
+        "bowtie.obj",
+        "v 0 0 0\nv 10 0 0\nv 10 10 0\nv -10 0 0\nv -10 -10 0\nf 1 2 3\nf 1 4 5\n",
+    )?;
+    let seams = file(
+        &dir.0,
+        "seams.json",
+        &seam_set(r#"{"edge": [0, 1], "kind": "cut"}"#),
+    )?;
+    let out_dir = dir.0.join("out");
+    let out = Run {
+        model,
+        seams,
+        ..Run::capsule()
+    }
+    .write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert!(
+        stderr(&out).contains("seam 0: vertex 0 is more than one vertex of the repaired model"),
+        "{}",
+        stderr(&out)
+    );
+    assert!(!out_dir.exists());
+    Ok(())
+}
+
+#[test]
+fn a_refusal_after_the_pattern_stage_writes_nothing() -> Result<(), Setup> {
+    let (code, err) = with_fabric(
+        "narrow",
+        r#"{"id": "f", "name": "F", "category": "felt", "rollWidthMm": 50}"#,
+    )?;
+    assert_eq!(code, Some(1), "{err}");
+    assert!(err.starts_with("openplush-cli: Layout: "), "{err}");
+    Ok(())
+}

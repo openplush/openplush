@@ -17,6 +17,8 @@ pub(crate) enum Failure {
         bytes: u64,
         cap: u64,
     },
+    /// A seam-set or fabric file the CLI cannot use; `detail` says which part and why.
+    Input { path: PathBuf, detail: String },
     /// The engine refused.
     Engine(EngineError),
 }
@@ -31,6 +33,7 @@ impl fmt::Display for Failure {
                 "{} and the files beside it are {bytes} bytes, over the {cap}-byte limit",
                 model.display()
             ),
+            Self::Input { path, detail } => write!(f, "{}: {detail}", path.display()),
             Self::Engine(e) => write!(f, "{}: {e}", e.code()),
         }
     }

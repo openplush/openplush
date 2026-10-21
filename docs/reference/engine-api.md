@@ -21,6 +21,10 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 | `validate(soup)` | function | `Staged<ValidationReport>`: every defect repair would meet, changing nothing; see [Stages](#stages) |
 | `repair(soup, plan)` | function | `StageResult<(ManifoldMesh, RepairReport)>`; see [Stages](#stages) |
 | `chart(mesh, seams)` | function | `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
+| `flatten(mesh, charts)` | function | `StageResult<Vec<Parameterization>>`; see [Stages](#stages) |
+| `Parameterization` | struct | One chart laid flat: `chart()` and `uv()`, one flat position per chart vertex |
+| `FlattenError` | re-export, enum, `#[non_exhaustive]` | From `openplush-flatten`: the refusal `EngineError::Flatten` carries. Its variants are the flattener's own |
+| `DVec2` | re-export | From `openplush-geom`: the type of a flat position in `Parameterization::uv` |
 | `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
 | `MeshError`, `MeshElement`, `HalfEdgeId`, `CornerArray`, `Counted`, `MaterialFault` | re-exports | From `openplush-mesh`: the refusal `EngineError::Mesh` carries and the types its variants name. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |
@@ -29,7 +33,7 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 
 ## Stages
 
-`import`, `validate`, `repair` and `chart` exist; each later stage lands with the task that builds it.
+`import`, `validate`, `repair`, `chart` and `flatten` exist; each later stage lands with the task that builds it.
 
 **`import(&ImportFiles)`** reads the primary file with the reader its extension names: the extension of the name's final `/`-separated segment, as `std::path::Path::extension` reads it, compared ASCII case-insensitively. `obj` is OBJ, `stl` STL, `ply` PLY. Any other name, one with no extension (`model`, `.obj`, `model.`), and `gltf`, `glb` and `fbx` until their readers exist, is `UnknownFormat`. The bytes are never sniffed. A reader's refusal is `Parse`, naming that reader, `NonFiniteInput`, or `Mesh`. The `others` are carried and not read yet. Its warnings are empty.
 
@@ -39,9 +43,11 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 
 **`chart(&ManifoldMesh, &SeamSet)`** splits the mesh along the seams into charts, each cut open along its seams for flattening, with the `SewingMap` of their seam sides. A mesh from `into_manifold` carries repair's copy groups (`ManifoldMesh::edge_copies`), which the map uses to sew a split edge's copies; the stage takes no others. It returns the first failure and no partial output, checking in this order: a seam on an edge the mesh lacks (`Seams`); then each chart in ID order, folded (`FoldedChart`) before not a disk (`ChartNotDisk`, with the one `CloseChart` proposal found, or none when no cut was found that leaves a disk); then a seam chain with no partner, or a copy group that does not line up (`Seams`). Its warnings are empty.
 
+**`flatten(&ManifoldMesh, &[ChartMesh])`** lays each chart flat, in the order given, stepping its `FlattenSession` until it settles, and returns one `Parameterization` per chart: `chart()` and `uv()`, one flat position per chart vertex, indexed like `ChartMesh::xyz` and in the model's units. The mesh, the one the charts were cut from, is read only to name a dart's edges. It returns the first chart's refusal and no layout for any chart: `Flip`; `BoundaryNotRealizable`, whose dart becomes one `Dart` proposal of the mesh edges it walks, each found through a chart face so a split edge's copy inside the chart is the one named (a dart with no edge offers none); or `Flatten` carrying any other `FlattenError`. Its warnings are empty.
+
 ## Errors
 
-Each `EngineError` variant carries the location of the problem. The messages are part of the API: they are pinned by tests (`crates/openplush-pipeline/tests/error.rs`) and change only deliberately. IDs print as their index, except in `Mesh` and `Seams`, which print their inner error's message; lengths print in millimetres to three decimals.
+Each `EngineError` variant carries the location of the problem. The messages are part of the API: they are pinned by tests (`crates/openplush-pipeline/tests/error.rs`) and change only deliberately. IDs print as their index, except in `Mesh` and `Seams`, which print their inner error's message; lengths print to three decimals, in millimetres, except `BoundaryNotRealizable`'s residual, which is in model units because flattening runs before the scale.
 
 | Variant | Located by | Message |
 |---|---|---|
@@ -52,8 +58,9 @@ Each `EngineError` variant carries the location of the problem. The messages are
 | `ChartNotDisk` | `chart`; carries `failure` and the `proposals` that fix it | `chart {chart} is not a topological disk` |
 | `FoldedChart` | `chart`, `edge` (the lowest edge it folds across) | `chart {chart} lies back over itself across edge {edge}` |
 | `Seams` | whatever the inner `SeamsError` names: its `edge`, `chart`, `chain` or `vertex` IDs; a refusal about a whole proposal or dart (`EmptyProposal`, `EmptyDart`, `BadProposalId`) names none | the inner error's message, unchanged, with IDs in Debug form as in the `SeamsError` table below |
+| `Flatten` | the inner `FlattenError`'s `chart` and, where it has one, its `face` | the inner error's message, unchanged |
 | `Flip` | `chart`, `faces` | `chart {chart} flattens with {n} inverted faces` |
-| `BoundaryNotRealizable` | `chart`; carries `residual_mm` and dart `proposals` | `chart {chart}'s seam lengths cannot close flat (residual {r} mm)` |
+| `BoundaryNotRealizable` | `chart`; carries `residual` (model units) and dart `proposals` | `chart {chart}'s seam lengths cannot close flat (residual {r} in model units)` |
 | `SeamParity` | `chain`, both side lengths, the tolerance | `seam chain {chain}: sides {a} mm and {b} mm differ by more than {t} mm` |
 | `OffsetFailed` | `piece` | `seam allowance for piece {piece} failed: {detail}` |
 | `ProposalNotOffered` | `id` | `proposal {16 hex digits} is no longer offered` |

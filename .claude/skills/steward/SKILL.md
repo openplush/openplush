@@ -38,7 +38,7 @@ Which paths put a PR in which tier, and who merges each: [the tier table](../../
 - Read the gate's comment on the PR (it starts "Merge gate"): it lists the tier and each condition as pass or fail, and `merge:ready` is its verdict. Never enable auto-merge yourself, on any tier, and never apply `merge:ready`: the gate removes what it did not set.
 - On a stall, fix what the comment names: a failing check, an open thread (answer it, then resolve it: an unresolved thread is an unanswered finding to the gate), a conflict, a base that is not `main`, or a reviewer's changes requested. A push revokes the verdict; the gate judges the new head when its CI completes.
 - The review summary must name the current head. After a push the gate adds `rereview` itself, once per head, and judges the new summary; you never add the label. If the review ran on a head without posting a summary, the comment says the maintainer must look.
-- Never merge a PR yourself, on any tier. Tier H waits for the maintainer; the comment says so.
+- Never merge a PR yourself, on any tier, except a tier H PR under a `factory` grant with `merge=yes`, by its rule (`factory`, Merging under a grant; [ADR 0020](../../../docs/adr/0020-factory-grants.md)). Otherwise tier H waits for the maintainer; the comment says so.
 
 ## Waiting
 

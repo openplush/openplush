@@ -70,7 +70,7 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 6: A grant is given once and honoured the same way (US6)
 
-- [ ] F011 [US6] `.claude/skills/factory/SKILL.md`: `/factory` reads the grant argument and `continue`, as ADR 0020 sets, and states the grant in the handoff's kickoff. needs:F001,F004
+- [x] F011 [US6] `.claude/skills/factory/SKILL.md`: `/factory` reads the grant argument and `continue`, as ADR 0020 sets, and states the grant in the handoff's kickoff. needs:F001,F004. As built: Arguments gains Grant (syntax, record, continue, renew); a new Merging under a grant section holds ADR 0020's merge rule; the firing writes `ends=` into the grant record and the kickoff, so a fresh session or a scheduled firing continues the same clock; the ledger comment gains `Grant:`, `Merged:` and `Accepted:` lines. AGENTS.md, `steward`, the tier table, the agents explanation and the glossary name the exception with a link
 - [ ] F012 [US6] `.claude/skills/factory/SKILL.md`, Scheduling: a firing after the grant's end does no work, reports the expiry and turns its scheduled task off. needs:F011
 
 ## Phase 7: Stacked PRs stop conflicting on shared lists (US7)

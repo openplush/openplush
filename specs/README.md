@@ -13,6 +13,14 @@ This index lists the features and how to read their files. How far each feature'
 | [003 source seam import](./003-source-seam-import/) | Seams and fabric regions read from the model's own UV map and materials |
 | [004 docs site](./004-docs-site/) | A documentation site for contributors and makers |
 
+## Repository process
+
+Work on how the repository runs: agents, merging, checks. No maker sees a change from it, so the status page counts it apart from the features above.
+
+| Feature | What it specifies |
+|---|---|
+| [005 factory hardening](./005-factory-hardening/) | Unattended factory runs: one structured grant, a handoff from every run, merge-gate setup |
+
 ## Reading order
 
 New to the project? Read in this order:

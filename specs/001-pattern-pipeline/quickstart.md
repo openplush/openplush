@@ -34,9 +34,10 @@ openplush-cli repair fixtures/defects/non-manifold-edge.obj \
   --plan-out out/repair-plan.json -o out/repaired.obj
 
 # A full pattern from a prepared seam set
+# --fabric takes a fabric JSON file until presets such as `minky` arrive with T084 (D-073)
 openplush-cli pattern fixtures/meshes/capsule.obj \
   --seams fixtures/seams/capsule.json \
-  --fabric minky \
+  --fabric fixtures/fabrics/woven.json \
   --size-mm 300 \
   --page a4 \
   -o out/
@@ -44,6 +45,7 @@ openplush-cli pattern fixtures/meshes/capsule.obj \
 # What landed in out/
 #   pattern.svg          true scale, 1 user unit = 1 mm
 #   pattern.pdf          cover page with the page map, then A4 tiles with registration marks; scale square on every page
+#   (later: pieces.json, metrics.json and warnings.json; D-073 (6))
 #   pieces.json          geometry + metadata (FR-063)
 #   metrics.json         per-piece distortion summary (FR-021)
 #   warnings.json        everything unresolved, with its remedy (FR-064, FR-065)
@@ -60,7 +62,7 @@ jq -e '.scale_square_mm == 50.0' out/metrics.json
 
 # Determinism: same input, byte-identical output (SC-008)
 openplush-cli pattern fixtures/meshes/capsule.obj --seams fixtures/seams/capsule.json \
-  --fabric minky --size-mm 300 --page a4 -o out2/
+  --fabric fixtures/fabrics/woven.json --size-mm 300 --page a4 -o out2/
 cmp out/pattern.svg out2/pattern.svg && echo "deterministic"
 ```
 

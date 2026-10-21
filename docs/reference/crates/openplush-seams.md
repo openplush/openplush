@@ -11,7 +11,7 @@ What `openplush-seams` contains **today**, and what it actually depends on. What
 - IDs `ChartId`, `SeamChainId`
 - `SeamSet` (`new`, `get`, `insert`, `remove`, `iter`, `len`, `is_empty`; edge flags in ascending edge order, with the mandatory-seam rule in its rustdoc)
 - `SeamsError`
-- `uv_cuts` and `UvCuts` (`edges`, `faces_without_uv`, `projection_points`, `proposal`)
+- `uv_cuts` and `UvCuts` (`edges`, `material_boundaries`, `shared_edges`, `faces_without_uv`, `projection_points`, `proposal`)
 
 ### Seam graph
 
@@ -59,9 +59,9 @@ What `openplush-seams` contains **today**, and what it actually depends on. What
 - a walk anchored at neither end (`DartNotAnchored`, naming its first vertex as drawn, a single edge's lower end)
 - a tip or inner vertex on a seam or boundary (`DartTouchesSeam`, naming the first)
 
-### UV cuts
+### UV cuts and material boundaries
 
-`uv_cuts(mesh, seams)`, the source model's UV cuts as `UvCuts`: `edges()`, ascending, every interior edge not already in `seams` whose corner UVs on its two sides differ by more than `UV_CUT` in either coordinate at either endpoint (a NaN difference counts as a cut), tested only when both its faces have a UV at every corner, so a boundary edge or one beside a face without UVs is never a cut; and `faces_without_uv()`, how many faces lack a UV at some corner. `projection_points()`, ascending, every interior vertex with at least five faces round it, all with a UV at every corner, whose corner UVs there differ pairwise by the same rule, as an automatic projection leaves at a sphere's poles (and as five hand-marked seams meeting do too); they change no cut. `proposal()` turns the cuts into one `ProposalKind::Seam { reason: SeamReason::SourceModel }` proposal of `Cut` edges, or `None` when there are none. Refuses a seam on an edge the mesh does not have with `UnknownEdge`.
+`uv_cuts(mesh, seams)`, the source model's UV cuts as `UvCuts`: `edges()`, ascending, every interior edge not already in `seams` whose corner UVs on its two sides differ by more than `UV_CUT` in either coordinate at either endpoint (a NaN difference counts as a cut), tested only when both its faces have a UV at every corner, so a boundary edge or one beside a face without UVs is never a cut; and `faces_without_uv()`, how many faces lack a UV at some corner. `material_boundaries()`, ascending, every interior edge not already in `seams` whose two faces both come from the file and differ in material (a face's material is its first corner's primitive's), a face with no material differing from one with a material; an edge beside a face repair added is never one. `shared_edges()`, how many edges are both. `projection_points()`, ascending, every interior vertex with at least five faces round it, all with a UV at every corner, whose corner UVs there differ pairwise by the same rule, as an automatic projection leaves at a sphere's poles (and as five hand-marked seams meeting do too); they change no cut. `proposal()` turns them into one `ProposalKind::Seam { reason: SeamReason::SourceModel }` proposal, each boundary a `FabricBoundary` edge (one that is also a cut included, added once) and every other cut a `Cut` edge, or `None` when there are none. Refuses a seam on an edge the mesh does not have with `UnknownEdge`.
 
 ## Depends on
 

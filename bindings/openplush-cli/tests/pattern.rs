@@ -277,11 +277,15 @@ fn a_malformed_seam_set_is_refused() -> Result<(), Setup> {
 fn with_fabric(test: &str, fabric: &str) -> Result<(Option<i32>, String), Setup> {
     let dir = scratch(test)?;
     let path = file(&dir.0, "fabric.json", fabric)?;
+    let out_dir = dir.0.join("out");
     let out = Run {
         fabric: path,
         ..Run::capsule()
     }
-    .write_to(&dir.0.join("out"))?;
+    .write_to(&out_dir)?;
+    if out.status.code() != Some(0) {
+        assert!(!out_dir.exists(), "{test} wrote output");
+    }
     Ok((out.status.code(), stderr(&out)))
 }
 
@@ -352,5 +356,92 @@ fn an_engine_refusal_prints_its_code_and_writes_nothing() -> Result<(), Setup> {
         stderr(&out)
     );
     assert!(!out_dir.exists());
+    Ok(())
+}
+
+fn one_based(seams: &str) -> String {
+    format!(
+        r#"{{"format": "openplush-seam-set", "version": 1, "vertexIndexBase": 1, "seams": [{seams}]}}"#
+    )
+}
+
+#[test]
+fn a_one_based_file_is_refused_in_its_own_numbering() -> Result<(), Setup> {
+    for (case, seams, says) in [
+        (
+            "below",
+            r#"{"edge": [0, 1], "kind": "cut"}"#,
+            "seam 0: an index is below the file's base",
+        ),
+        (
+            "missing-1",
+            r#"{"edge": [1, 10000], "kind": "cut"}"#,
+            "seam 0: no vertex 10000",
+        ),
+        (
+            "no-edge-1",
+            r#"{"edge": [1, 98], "kind": "cut"}"#,
+            "seam 0: vertices 1 and 98 share no edge",
+        ),
+    ] {
+        let err = refused_seams(case, &one_based(seams))?;
+        assert!(err.contains(says), "{case}: {err}");
+    }
+    Ok(())
+}
+
+#[test]
+fn a_seam_the_seam_set_refuses_is_the_engine_s_refusal() -> Result<(), Setup> {
+    let capsule = fs::read_to_string(fixture("seams/capsule.json"))?;
+    let mut set: serde_json::Value = serde_json::from_str(&capsule)?;
+    let seams = set["seams"].as_array_mut().ok_or("no seams")?;
+    seams.insert(
+        0,
+        serde_json::json!({"edge": [25, 26], "kind": "mandatory"}),
+    );
+    let err = refused_seams("mandatory", &set.to_string())?;
+    assert!(err.starts_with("openplush-cli: Seams: "), "{err}");
+    Ok(())
+}
+
+#[test]
+fn a_source_vertex_repair_split_in_two_is_refused() -> Result<(), Setup> {
+    let dir = scratch("split")?;
+    // Two triangles meeting only at the first vertex: repair splits that bowtie.
+    let model = file(
+        &dir.0,
+        "bowtie.obj",
+        "v 0 0 0\nv 10 0 0\nv 10 10 0\nv -10 0 0\nv -10 -10 0\nf 1 2 3\nf 1 4 5\n",
+    )?;
+    let seams = file(
+        &dir.0,
+        "seams.json",
+        &seam_set(r#"{"edge": [0, 1], "kind": "cut"}"#),
+    )?;
+    let out_dir = dir.0.join("out");
+    let out = Run {
+        model,
+        seams,
+        ..Run::capsule()
+    }
+    .write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert!(
+        stderr(&out).contains("seam 0: vertex 0 is more than one vertex of the repaired model"),
+        "{}",
+        stderr(&out)
+    );
+    assert!(!out_dir.exists());
+    Ok(())
+}
+
+#[test]
+fn a_refusal_after_the_pattern_stage_writes_nothing() -> Result<(), Setup> {
+    let (code, err) = with_fabric(
+        "narrow",
+        r#"{"id": "f", "name": "F", "category": "felt", "rollWidthMm": 50}"#,
+    )?;
+    assert_eq!(code, Some(1), "{err}");
+    assert!(err.starts_with("openplush-cli: Layout: "), "{err}");
     Ok(())
 }

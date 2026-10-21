@@ -95,3 +95,91 @@ fn category(o: &Map<String, Value>) -> Result<FabricCategory, String> {
         _ => Err("\"category\" is not woven, knit, pile or felt".into()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn spec(category: FabricCategory) -> Result<FabricSpec, openplush_pipeline::PatternError> {
+        let mm = |v| {
+            Mm::try_new(v).map_err(|source| openplush_pipeline::PatternError::BadScale { source })
+        };
+        Ok(FabricSpec {
+            id: FabricId::new(0),
+            name: "F".into(),
+            category,
+            stretch_grain_pct: 0.0,
+            stretch_cross_pct: 0.0,
+            stretch_bias_pct: 0.0,
+            nap: false,
+            pile_len: mm(0.0)?,
+            thickness: mm(0.0)?,
+            frays: true,
+            default_allowance: mm(6.0)?,
+            roll_width: mm(1500.0)?,
+        })
+    }
+
+    #[test]
+    fn omitted_fields_take_the_schema_s_defaults() -> Result<(), Box<dyn std::error::Error>> {
+        let read = parse(br#"{"id": "f", "name": "F", "category": "felt"}"#)?;
+        assert_eq!(read, Fabric::new(spec(FabricCategory::Felt)?)?);
+        Ok(())
+    }
+
+    #[test]
+    fn each_field_reads_into_its_own_place() -> Result<(), Box<dyn std::error::Error>> {
+        let read = parse(
+            br#"{"id": "f", "name": "F", "category": "knit", "stretchGrainPct": 10,
+                "stretchCrossPct": 20, "stretchBiasPct": 30, "nap": true, "pileLenMm": 0,
+                "thicknessMm": 1, "frays": false, "defaultAllowanceMm": 8,
+                "rollWidthMm": 900, "fromMaterial": true}"#,
+        )?;
+        let mut want = spec(FabricCategory::Knit)?;
+        want.stretch_grain_pct = 10.0;
+        want.stretch_cross_pct = 20.0;
+        want.stretch_bias_pct = 30.0;
+        want.nap = true;
+        want.thickness = Mm::try_new(1.0)?;
+        want.frays = false;
+        want.default_allowance = Mm::try_new(8.0)?;
+        want.roll_width = Mm::try_new(900.0)?;
+        assert_eq!(read, Fabric::new(want)?);
+        Ok(())
+    }
+
+    #[test]
+    fn each_category_name_reads_as_its_category() {
+        for (name, category) in [
+            ("woven", FabricCategory::Woven),
+            ("knit", FabricCategory::Knit),
+            ("pile", FabricCategory::Pile),
+            ("felt", FabricCategory::Felt),
+        ] {
+            let text = format!(r#"{{"id": "f", "name": "F", "category": "{name}"}}"#);
+            let read = parse(text.as_bytes()).map(|f| f.spec().category);
+            assert_eq!(read, Ok(category), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_missing_id_or_a_mistyped_flag_is_refused_naming_it() {
+        for (text, field) in [
+            (r#"{"name": "F", "category": "felt"}"#, "id"),
+            (
+                r#"{"id": "f", "name": "F", "category": "felt", "fromMaterial": "yes"}"#,
+                "fromMaterial",
+            ),
+            (
+                r#"{"id": "f", "name": "F", "category": "felt", "stretchGrainPct": -1}"#,
+                "stretchGrainPct",
+            ),
+            ("[]", "object"),
+        ] {
+            assert!(
+                parse(text.as_bytes()).is_err_and(|e| e.contains(field)),
+                "{text}"
+            );
+        }
+    }
+}

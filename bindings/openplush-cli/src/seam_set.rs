@@ -123,3 +123,52 @@ fn sources(mesh: &ManifoldMesh) -> BTreeMap<u64, BTreeSet<VertexId>> {
     }
     from
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn one(seam: &str) -> Result<SeamFile, String> {
+        parse(
+            format!(
+                r#"{{"format": "openplush-seam-set", "version": 1, "vertexIndexBase": 0, "seams": [{seam}]}}"#
+            )
+            .as_bytes(),
+        )
+    }
+
+    #[test]
+    fn each_kind_name_reads_as_its_seam_kind() {
+        for (name, kind) in [
+            ("cut", SeamKind::Cut),
+            ("dart", SeamKind::Dart),
+            ("opening", SeamKind::Opening),
+            ("fabricBoundary", SeamKind::FabricBoundary),
+            ("mandatory", SeamKind::Mandatory),
+        ] {
+            let file = one(&format!(r#"{{"edge": [1, 2], "kind": "{name}"}}"#));
+            assert_eq!(file.map(|f| f.seams[0].kind), Ok(kind), "{name}");
+        }
+    }
+
+    #[test]
+    fn an_edge_with_anything_but_two_integers_is_refused() {
+        for edge in [
+            r#"[25, "x", 26]"#,
+            "[25, 26.5, 26]",
+            "[25.0, 26]",
+            "[25]",
+            r#""25-26""#,
+        ] {
+            let file = one(&format!(r#"{{"edge": {edge}, "kind": "cut"}}"#));
+            assert!(file.is_err_and(|e| e.starts_with("seam 0:")), "{edge}");
+        }
+    }
+
+    #[test]
+    fn a_file_without_a_seam_list_is_refused() {
+        let file =
+            parse(br#"{"format": "openplush-seam-set", "version": 1, "vertexIndexBase": 0}"#);
+        assert!(file.is_err_and(|e| e.contains("\"seams\"")));
+    }
+}

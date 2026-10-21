@@ -1,10 +1,10 @@
 # Checks: what each one enforces
 
-This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the check for copied task counts, the generated status counts, the tests that must also run on wasm32, and the dependency licence check. [Set up and run every check](../start/setup.md) says how to run them.
+This page lists the rules behind the checks in `scripts/check.sh` that are not obvious from their names: the workspace lints, how a lint is opted out of, the tests that must also run on wasm32, the generated status counts, and the dependency licence check. It also covers the agent attribution check, which only CI runs, on pull requests. [Set up and run every check](../start/setup.md) says how to run them.
 
 ## Entries
 
-In the order `scripts/check.sh` runs them.
+In the order `scripts/check.sh` runs them, then the checks it does not run.
 
 ### Lint opt-outs (`hygiene`)
 
@@ -27,11 +27,18 @@ A number counts only when it stands alone, so dates (YYYY-MM-DD), version number
 
 It also warns, without failing, on each line outside the status page that says "not built", "not yet" or "planned", and prints how many there are: what is built is the status page's to say, so each one is a line to check by hand.
 
-### Generated status counts (`status`)
+### ADR lifecycle (`hygiene`)
 
-The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. `scripts/gen-status.py` reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc`, which the page includes; the `status` step renders the counts again and fails, with a diff, when the committed file differs. After ticking a task, run `scripts/gen-status.py` and commit the include with the tick.
+An ADR that another one amends or supersedes must say so, and the newer one must name it, so a reader who lands on either finds the other. `scripts/check-adr-lifecycle.sh` reads every `docs/adr/NNNN-*.md` and fails when:
 
-A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
+- an Accepted ADR amends or supersedes one that is still Proposed;
+- an Accepted ADR amends or supersedes one that does not record it, by a "Superseded by ADR-NNNN" status or a line naming the newer ADR with "amended" or "superseded";
+- an ADR says another amends or supersedes it, and that other ADR does not name it;
+- an ADR has no status, two ADRs share a number, or an amendment names an ADR that does not exist.
+
+Each failure names both ADRs and the fix. An ADR's status is the maintainer's decision and its body is a record, so a finding only the maintainer can settle is not fixed by editing the ADR: it gets a line, with its reason, in [`scripts/adr-lifecycle-exceptions.txt`](https://github.com/openplush/openplush/blob/main/scripts/adr-lifecycle-exceptions.txt), and a line whose finding is gone fails as stale. The script's header lists the phrasings it reads as an amendment ("Supersedes, in ADR 0014: …", "amended by", "Changes ADR 0006 …") and what it misses.
+
+The check also prints, without failing, the Proposed rows of every feature plan's Decision Ledger, sorted, as a reminder of the decisions waiting on the maintainer.
 
 ### Workspace lints (`clippy`)
 
@@ -81,3 +88,30 @@ How an npm licence expression is judged:
 | `AND` mixed with `OR` | never: stricter than `cargo deny` on purpose, until a real dependency needs it |
 
 IDs are case-sensitive. A missing licence, `SEE LICENSE IN …`, `UNLICENSED` and a `licenses` array of more than one entry all fail.
+
+### Generated status counts (`docs`)
+
+The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. Before it builds the book, the `docs` step runs `scripts/gen-status.py`, which reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc` for the page to include. The file is git-ignored and never committed, so a tick needs no regeneration and no pull request conflicts on it. A bare `mdbook build` fails on the missing file; run `scripts/gen-status.py` first, or build through `scripts/check.sh docs`.
+
+A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails the build, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), and on a `tasks.md` with no task lines.
+
+### Agent attribution (pull requests, CI only)
+
+A pull request's own commits carry the contributor's git identity and no agent attribution, and its description carries no agent footer; the rule is in [Commits and PRs in `AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs). [`scripts/check-attribution.sh`](https://github.com/openplush/openplush/blob/main/scripts/check-attribution.sh) fails on, in the commits the pull request adds, merge commits included:
+
+- an author or committer email `noreply@anthropic.com`, or the author name `Claude`;
+- a `Co-Authored-By:` line naming Claude or an `anthropic.com` address (a person as co-author passes);
+- a `Claude-Session:` line;
+- a "Generated with" or "Generated by" footer that links to Claude Code, or a link to a Claude Code session, in a commit message or the description.
+
+Each failure names the commit, by short SHA and subject, or `PR body`, and the line that matched. Footers are matched by their link and trailers by the start of their line, so a description that discusses them in prose passes.
+
+It reads only the commits between the pull request's base and its head, so commits already on `main` are never reported, whoever wrote them: history is not rewritten.
+
+It runs as the `attribution` step of the `fmt, clippy, test` job in `.github/workflows/engine.yml`, on pull request events only, so a failure blocks the merge gate. It reads the description when the step runs, so after removing a footer, re-run the job. `scripts/check.sh` does not run it, because a local run has no pull request. To check your branch's commits before you push:
+
+```sh
+scripts/check-attribution.sh origin/main HEAD
+```
+
+With `PR_BODY` set to the description, it checks that too.

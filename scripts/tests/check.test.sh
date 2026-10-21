@@ -29,7 +29,7 @@ expect_plan() {
 expect_plan "default runs every gate" "" \
   "cargo fmt --check" "cargo clippy --workspace --all-targets --locked -- -D warnings" \
   "cargo test --workspace --locked" "scripts/gen-ts-types.sh --check" "scripts/check-boundary.sh" "scripts/check-hygiene.sh" \
-  "scripts/gen-status.py --check" "cargo deny --locked check" \
+  "cargo deny --locked check" \
   "cargo build --workspace --target wasm32-unknown-unknown --locked" \
   "cargo clippy --workspace --all-targets --target wasm32-unknown-unknown --locked -- -D warnings" \
   "cargo test --workspace --target wasm32-unknown-unknown --locked" \
@@ -47,17 +47,28 @@ for out in "no tests to run!" "test result: ok. 0 passed; 0 failed" "test result
 done
 expect_plan "boundary step runs every self-test before the check" "boundary" \
   "scripts/tests/check-boundary.test.sh" "scripts/check-boundary.sh"
-expect_plan "hygiene step checks every lint opt-out against the allowlist" "hygiene" \
-  "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh"
+expect_plan "hygiene step checks lint opt-outs and the ADR lifecycle" "hygiene" \
+  "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "scripts/check-adr-lifecycle.sh"
 expect_plan "hygiene step checks the docs for copied task counts" "hygiene" "scripts/check-docs-facts.sh"
-expect_plan "engine group is boundary, hygiene, status, fmt, clippy, test, types, workflows, wasm-check" "engine" \
-  "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "scripts/gen-status.py --check" \
-  "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
+expect_plan "engine group is boundary, hygiene, fmt, clippy, test, types, workflows, wasm-check" "engine" \
+  "scripts/check-boundary.sh" "scripts/check-hygiene.sh" "scripts/check-opt-outs.sh" "cargo fmt --check" "-- -D warnings" "cargo test --workspace --locked" \
   "scripts/gen-ts-types.sh --check" "actionlint" \
   "cargo test --workspace --target wasm32-unknown-unknown --no-run --locked"
-# The status page's task counts are generated; the step fails when the committed
-# include differs from a fresh run, as the types step does for the TypeScript types.
-expect_plan "status step checks the generated task counts" "status" "scripts/gen-status.py --check"
+# The status page's task counts are generated when the book is built and never
+# committed, so no tick on main can leave a copy stale.
+out=$("$check" --dry-run docs 2>&1)
+gen=$(grep -nxF "+ scripts/gen-status.py" <<<"$out" | cut -d: -f1 || true)
+book=$(grep -nxF "+ mdbook build" <<<"$out" | cut -d: -f1 || true)
+if [[ -n $gen && -n $book && $gen -lt $book ]]; then ok "docs step generates the status counts before building the book"; else bad "docs step generates the status counts before building the book" "$out"; fi
+status=0
+out=$("$check" --dry-run status 2>&1) || status=$?
+if [[ $status -eq 2 ]]; then ok "status is not a step: the counts are never committed"; else bad "status is not a step (exit $status)" "$out"; fi
+root="$here/../.."
+if git -C "$root" check-ignore -q docs/start/status-counts.inc && ! git -C "$root" ls-files --error-unmatch docs/start/status-counts.inc >/dev/null 2>&1; then
+  ok "the status counts include is ignored and untracked"
+else
+  bad "the status counts include is ignored and untracked"
+fi
 # usize is 32 bits on wasm32, so a test can build natively and not there: a shift
 # past u32::MAX is a hard error that only codegen reports, which cargo check and
 # clippy never reach. wasm-check builds every test binary for wasm32 without

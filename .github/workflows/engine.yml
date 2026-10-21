@@ -22,19 +22,43 @@ jobs:
   check:
     name: fmt, clippy, test
     runs-on: ubuntu-latest
+    # pull-requests: read lets the attribution step read the PR's description.
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The attribution step walks base..head; a shallow clone cuts that
+          # range off and would list commits from before base.
+          fetch-depth: 0
       # Installs exactly what rust-toolchain.toml pins (toolchain = MSRV).
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The same entry point contributors run. "engine" is boundary (every
-      # self-test, then the boundary check, before any build), hygiene, status,
-      # fmt, clippy, test, types, workflows, wasm-check; --setup first installs the pinned
+      # self-test, then the boundary check, before any build), hygiene, fmt,
+      # clippy, test, types, workflows; --setup first installs the pinned
       # actionlint the workflows step needs, checksummed, with the same code
       # contributors use.
       - run: scripts/check.sh --setup engine
+      # A PR's own commits and its description carry no agent attribution
+      # (AGENTS.md, Commits and PRs). It runs in this job so a failure blocks the
+      # merge gate. The body is read from the API when the step runs, not from
+      # the event: the event keeps the body as it was when the PR opened, so a
+      # footer removed after opening would fail every re-run.
+      - name: attribution
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+          PR_BODY=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.body // ""')
+          export PR_BODY
+          scripts/check-attribution.sh "$BASE_SHA" "$HEAD_SHA"
 
   deny:
     name: licenses and advisories

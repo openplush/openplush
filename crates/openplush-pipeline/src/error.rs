@@ -1,12 +1,13 @@
 use std::collections::BTreeSet;
 
+use openplush_flatten::FlattenError;
 use openplush_io::Format;
 use openplush_mesh::{EdgeId, FaceId, MeshError, SourceCorner, VertexId};
 use openplush_pattern::PieceId;
 use openplush_seams::{ChartFailure, ChartId, Proposal, ProposalId, SeamChainId, SeamsError};
 use thiserror::Error;
 
-use crate::locations::mesh_locations;
+use crate::locations::{flatten_locations, mesh_locations};
 
 /// A violated invariant: the stage produced no output. Every variant but
 /// `Cancelled` names where the problem is, so the UI can highlight it.
@@ -20,6 +21,18 @@ pub enum EngineError {
         format: Format,
         /// What it refused, in the reader's words.
         detail: String,
+    },
+    /// No reader takes the primary file's extension; no reader ran.
+    #[error("cannot read \"{name}\": no reader for this file type")]
+    UnknownFormat {
+        /// The primary file's name, as the shell gave it.
+        name: String,
+    },
+    /// The file refers to another file the shell did not supply beside it.
+    #[error("the file refers to \"{uri}\", which was not supplied beside it")]
+    MissingResource {
+        /// The reference, as the file writes it.
+        uri: String,
     },
     /// Source vertices with a NaN or infinite coordinate; import refuses rather than drops them.
     #[error("{} source vertices have a NaN or infinite coordinate", .vertices.len())]
@@ -51,6 +64,10 @@ pub enum EngineError {
     /// The seams cannot be applied to the mesh; the inner error says how and where.
     #[error(transparent)]
     Seams(#[from] SeamsError),
+    /// A chart's flatten refused it for a reason the pipeline has no variant of its own for;
+    /// the inner error says how, naming the chart and, where it has one, the face.
+    #[error(transparent)]
+    Flatten(FlattenError),
     /// Flattening inverted faces (det J ≤ 0).
     #[error("chart {} flattens with {} inverted faces", .chart.index(), .faces.len())]
     Flip {
@@ -61,14 +78,15 @@ pub enum EngineError {
     },
     /// The prescribed seam lengths cannot close into a flat outline.
     #[error(
-        "chart {}'s seam lengths cannot close flat (residual {residual_mm:.3} mm)",
+        "chart {}'s seam lengths cannot close flat (residual {residual:.3} in model units)",
         .chart.index()
     )]
     BoundaryNotRealizable {
         /// The chart.
         chart: ChartId,
-        /// How far the outline fails to close, in millimetres.
-        residual_mm: f64,
+        /// How far the outline fails to close, in model units: flattening runs before the
+        /// scale is applied.
+        residual: f64,
         /// The darts that would let it close.
         proposals: Vec<Proposal>,
     },
@@ -112,11 +130,14 @@ impl EngineError {
     pub fn code(&self) -> &'static str {
         match self {
             Self::Parse { .. } => "Parse",
+            Self::UnknownFormat { .. } => "UnknownFormat",
+            Self::MissingResource { .. } => "MissingResource",
             Self::NonFiniteInput { .. } => "NonFiniteInput",
             Self::Mesh(_) => "Mesh",
             Self::ChartNotDisk { .. } => "ChartNotDisk",
             Self::FoldedChart { .. } => "FoldedChart",
             Self::Seams(_) => "Seams",
+            Self::Flatten(_) => "Flatten",
             Self::Flip { .. } => "Flip",
             Self::BoundaryNotRealizable { .. } => "BoundaryNotRealizable",
             Self::SeamParity { .. } => "SeamParity",
@@ -126,12 +147,16 @@ impl EngineError {
         }
     }
 
-    /// Where the problem is; empty for `Parse` and `Cancelled`.
+    /// Where the problem is; empty for `Parse`, `UnknownFormat`, `MissingResource` and
+    /// `Cancelled`.
     #[must_use]
     pub fn locations(&self) -> ErrorLocations {
         let none = ErrorLocations::default();
         match self {
-            Self::Parse { .. } | Self::Cancelled => none,
+            Self::Parse { .. }
+            | Self::UnknownFormat { .. }
+            | Self::MissingResource { .. }
+            | Self::Cancelled => none,
             Self::NonFiniteInput { vertices } => ErrorLocations {
                 source_vertices: sorted(vertices),
                 ..none
@@ -150,6 +175,7 @@ impl EngineError {
                 ..none
             },
             Self::Seams(inner) => seams_locations(inner),
+            Self::Flatten(inner) => flatten_locations(inner),
             Self::Flip { chart, faces } => ErrorLocations {
                 faces: sorted(faces),
                 charts: vec![*chart],
@@ -177,10 +203,13 @@ impl EngineError {
             Self::ChartNotDisk { proposals, .. }
             | Self::BoundaryNotRealizable { proposals, .. } => proposals,
             Self::Parse { .. }
+            | Self::UnknownFormat { .. }
+            | Self::MissingResource { .. }
             | Self::NonFiniteInput { .. }
             | Self::Mesh(_)
             | Self::FoldedChart { .. }
             | Self::Seams(_)
+            | Self::Flatten(_)
             | Self::Flip { .. }
             | Self::SeamParity { .. }
             | Self::OffsetFailed { .. }

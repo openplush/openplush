@@ -6,8 +6,9 @@
 # a tier H PR is never ready, tier C is ready like A, tier B holds 24 h after
 # the last check, the review passes only by a summary for this head, its
 # threads or review.yml's skip rules, a stale summary asks for one review per
-# head, a reviewer's changes-requested blocks, and the comment carries its
-# marker and the head it judged.
+# head, a reviewer's changes-requested blocks, the comment carries its
+# marker and the head it judged, and in dry-run it says it is rehearsing and
+# what makes it live.
 set -euo pipefail
 # expect runs at the end of a pipeline and counts in this shell.
 shopt -s lastpipe
@@ -108,6 +109,9 @@ ready | jq -c '.tier.tier = "C" | .tier.computed = "C"' | expect "tier C is read
 ready | jq -c '.tier.tier = "H" | .tier.computed = "H"' | expect "tier H is never ready" "$(failing "tier" "the maintainer merges")"
 ready | jq -c '.tier.tier = "H" | .tier.computed = "H"' | expect "tier H says so in the comment" '.comment | contains("the maintainer merges")'
 ready | jq -c '.mode = "on"' | expect "mode on is ready too" '.ready and (.comment | contains("mode on"))'
+ready | expect "a dry-run comment says it is rehearsing and what makes it live" '.comment | contains("rehearsing") and contains("`MERGE_GATE_MODE` to `on`")'
+ready | jq -c '.pr.draft = true' | expect "a not-ready dry-run comment says it is rehearsing too" '.comment | contains("rehearsing")'
+ready | jq -c '.mode = "on"' | expect "a live comment does not say it is rehearsing" '.comment | contains("rehearsing") | not'
 ready | jq -c '.pr.draft = true | .check_runs = []' | expect "every failed condition is listed, not just the first" '[.conditions[] | select(.ok | not)] | length == 2'
 
 if out=$(python3 "$gate" <<<'{"mode": "on"}' 2>&1); then bad "a missing field fails" "$out"; else ok "a missing field fails"; fi

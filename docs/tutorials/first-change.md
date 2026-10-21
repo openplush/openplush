@@ -117,10 +117,10 @@ Drop `--test units` to run every test in the crate.
 scripts/check.sh engine
 ```
 
-This runs what CI runs for the engine: the crate boundary and module-size checks, hygiene, the status page's task counts, formatting, clippy, every Rust test, the generated TypeScript types, the workflow linter, and a build of every test for WebAssembly, since the engine also runs in the browser. The first run takes several minutes and a few gigabytes of disk for the build output. It ends with:
+This runs what CI runs for the engine: the crate boundary and module-size checks, hygiene, formatting, clippy, every Rust test, the generated TypeScript types, the workflow linter, and a build of every test for WebAssembly, since the engine also runs in the browser. The first run takes several minutes and a few gigabytes of disk for the build output. It ends with:
 
 ```text
-check: ok (boundary hygiene status fmt clippy test types workflows wasm-check)
+check: ok (boundary hygiene fmt clippy test types workflows wasm-check)
 ```
 
 If a step fails, its output names the file and line; fix it and rerun just that step, such as `scripts/check.sh clippy`.

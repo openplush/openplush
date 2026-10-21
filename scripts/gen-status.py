@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate the status page's task counts from every specs/*/tasks.md.
 
-Counts are copied facts that drift when kept by hand, so this writes them into
-docs/start/status-counts.inc, which docs/start/status.md includes: a Markdown table
+Counts are copied facts that drift when kept by hand, so the docs step runs this
+before building the book. It writes docs/start/status-counts.inc, which is never
+committed and which docs/start/status.md includes: a Markdown table
 with one row per feature, in directory order, giving its ticked tasks of all its tasks.
 A task line starts "- [ ] " or "- [x] " and then a task ID (a capital letter, three
 digits and an optional lower-case letter). It fails, writing nothing, on:
@@ -10,13 +11,11 @@ digits and an optional lower-case letter). It fails, writing nothing, on:
     bullet or mark, a stray space in the box, no ID), since leaving it out of the
     counts would be silent;
   - a tasks.md with no task lines, or no specs/*/tasks.md at all.
---check renders the table and fails with a diff if the committed include differs.
 
-Usage: scripts/gen-status.py [--check] [root]   (default root: the repository)
+Usage: scripts/gen-status.py [root]   (default root: the repository)
 Tests: scripts/tests/gen-status.test.sh
 """
 
-import difflib
 import re
 import sys
 from pathlib import Path
@@ -66,39 +65,18 @@ def render(root: Path) -> str:
     return HEADER + "".join(rows)
 
 
-def check(root: Path, fresh: str) -> None:
-    path = root / INCLUDE
-    if not path.is_file():
-        raise StatusError(f"{INCLUDE} is missing; run scripts/gen-status.py and commit it")
-    committed = path.read_text(encoding="utf-8")
-    if committed != fresh:
-        diff = difflib.unified_diff(
-            committed.splitlines(keepends=True), fresh.splitlines(keepends=True), INCLUDE, "fresh counts"
-        )
-        raise StatusError(
-            f"{INCLUDE} differs from the counts in specs/*/tasks.md; "
-            f"run scripts/gen-status.py and commit the result:\n{''.join(diff)}"
-        )
-
-
 def main(argv: list[str]) -> int:
-    check_only = False
     root = Path(__file__).resolve().parent.parent
     for arg in argv:
-        if arg == "--check":
-            check_only = True
-        elif arg.startswith("-"):
+        if arg.startswith("-"):
             print(f"gen-status: unknown option '{arg}'", file=sys.stderr)
             return 2
         else:
             root = Path(arg)
     try:
         fresh = render(root)
-        if check_only:
-            check(root, fresh)
-        else:
-            with open(root / INCLUDE, "w", encoding="utf-8", newline="\n") as out:
-                out.write(fresh)
+        with open(root / INCLUDE, "w", encoding="utf-8", newline="\n") as out:
+            out.write(fresh)
     except (StatusError, OSError) as e:
         print(f"gen-status: {e}", file=sys.stderr)
         return 1

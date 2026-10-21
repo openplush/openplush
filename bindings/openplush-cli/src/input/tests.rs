@@ -197,3 +197,19 @@ fn a_file_name_that_is_not_utf8_is_refused_rather_than_renamed() {
         Err(Failure::Name { path }) if path == model
     ));
 }
+
+#[cfg(unix)]
+#[test]
+fn a_skipped_symlink_s_name_need_not_be_utf8() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    let dir = scratch("utf8-link");
+    fs::write(dir.join("model.gltf"), "{}").expect("write");
+    fs::write(dir.join("sub").join("real.bin"), "1").expect("write");
+    std::os::unix::fs::symlink(
+        dir.join("sub").join("real.bin"),
+        dir.join(OsStr::from_bytes(b"\xff.lnk")),
+    )
+    .expect("link");
+    assert_eq!(names(&dir, "model.gltf", CAP), ["sub/real.bin"]);
+}

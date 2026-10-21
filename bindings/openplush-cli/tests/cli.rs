@@ -99,7 +99,9 @@ fn repair_s_old_flags_are_gone() {
 
 #[test]
 fn a_fill_that_is_not_a_loop_ref_is_a_usage_error() {
-    for text in ["12", "0.12.3", "0.012", "+0.12", "0.-1", "a.b", ""] {
+    for text in [
+        "12", "0.12.3", "0.012", "+0.12", "0.-1", "a.b", "", "00.1", "1.", "+1.2",
+    ] {
         let flag = format!("--fill={text}");
         let out = cli(&["repair", "m.obj", &flag, "-o", "fixed.obj"]).expect("the binary runs");
         assert_eq!(out.status.code(), Some(2), "{text:?}: {}", stderr(&out));

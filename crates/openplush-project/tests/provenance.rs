@@ -33,7 +33,7 @@ const SHEET: &str = "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\nf 1 3 2\n";
 #[test]
 fn keys_sort_their_ends_in_numeric_order_and_print_as_text() {
     let edge = EdgeKey::new(corner(12), corner(9));
-    assert_eq!(edge.ends(), [corner(9), corner(12)]);
+    assert_eq!(edge.ends(), [corner(9).into(), corner(12).into()]);
     assert_eq!(edge.to_string(), "0.9:0.12");
     let face = FaceKey::new([
         corner(40),
@@ -106,7 +106,7 @@ fn a_bad_key_says_what_it_was_given() {
 #[test]
 fn every_edge_and_face_resolves_to_itself() -> Result<(), Setup> {
     let m = mesh(TETRA)?;
-    let p = Provenance::new(&m);
+    let p = Provenance::new(&m, &[]);
     for e in (0..u32::try_from(m.edge_count())?).map(EdgeId::new) {
         let key = p.edge_key(e).ok_or("an edge of a read mesh has no key")?;
         assert_eq!(p.resolve_edge(key), vec![e], "{key}");
@@ -121,22 +121,39 @@ fn every_edge_and_face_resolves_to_itself() -> Result<(), Setup> {
 #[test]
 fn a_vertex_is_named_by_its_lowest_source_vertex() -> Result<(), Setup> {
     let m = mesh(UNWELDED)?;
-    let p = Provenance::new(&m);
+    let p = Provenance::new(&m, &[]);
     let merged = (0..u32::try_from(m.vertex_count())?)
         .map(VertexId::new)
         .find(|&v| m.position(v).length() == 0.0)
         .ok_or("the origin vertex is missing")?;
     let h = m.vertex_out(merged);
     let key = p.edge_key(h.edge()).ok_or("an edge has no key")?;
-    assert!(key.ends().contains(&corner(0)), "{key}");
-    assert!(!key.ends().contains(&corner(4)), "{key}");
+    assert!(key.ends().contains(&corner(0).into()), "{key}");
+    assert!(!key.ends().contains(&corner(4).into()), "{key}");
+    Ok(())
+}
+
+#[test]
+fn a_face_key_names_each_corner_by_its_own_source_vertex() -> Result<(), Setup> {
+    // The last face's corner at the merged vertex comes from source vertex 4, the others' from
+    // source vertex 0: its key keeps 0.4, which the weld being off would also give it.
+    let m = mesh(UNWELDED)?;
+    let p = Provenance::new(&m, &[]);
+    let keys: Vec<FaceKey> = (0..u32::try_from(m.face_count())?)
+        .map(|f| p.face_key(FaceId::new(f)).ok_or("a face has no key"))
+        .collect::<Result<_, _>>()?;
+    assert!(
+        keys.contains(&FaceKey::new([corner(4), corner(3), corner(2)])),
+        "{keys:?}"
+    );
+    assert!(!keys.contains(&FaceKey::new([corner(0), corner(3), corner(2)])));
     Ok(())
 }
 
 #[test]
 fn a_key_written_with_any_source_vertex_of_a_merged_vertex_resolves() -> Result<(), Setup> {
     let m = mesh(UNWELDED)?;
-    let p = Provenance::new(&m);
+    let p = Provenance::new(&m, &[]);
     // Source vertices 4 and 3 (OBJ's 5 and 4) share an edge in the last face.
     let by_other = p.resolve_edge(EdgeKey::new(corner(4), corner(3)));
     let by_lowest = p.resolve_edge(EdgeKey::new(corner(0), corner(3)));
@@ -148,7 +165,7 @@ fn a_key_written_with_any_source_vertex_of_a_merged_vertex_resolves() -> Result<
 #[test]
 fn a_key_with_no_such_edge_resolves_to_nothing() -> Result<(), Setup> {
     let m = mesh(TETRA)?;
-    let p = Provenance::new(&m);
+    let p = Provenance::new(&m, &[]);
     assert!(
         p.resolve_edge(EdgeKey::new(corner(0), corner(9)))
             .is_empty()
@@ -167,7 +184,7 @@ fn a_key_with_no_such_edge_resolves_to_nothing() -> Result<(), Setup> {
 #[test]
 fn both_layers_of_a_double_sided_sheet_share_a_face_key() -> Result<(), Setup> {
     let m = mesh(SHEET)?;
-    let p = Provenance::new(&m);
+    let p = Provenance::new(&m, &[]);
     let key = FaceKey::new([corner(0), corner(1), corner(2)]);
     assert_eq!(p.face_key(FaceId::new(0)), Some(key));
     assert_eq!(p.face_key(FaceId::new(1)), Some(key));
@@ -180,7 +197,7 @@ fn every_copy_of_a_split_edge_resolves() -> Result<(), Setup> {
     // Three faces on the edge between source vertices 0 and 1: repair splits it.
     let book = "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 -1 0\nv 0 0 1\nf 1 2 3\nf 2 1 4\nf 1 2 5\n";
     let m = mesh(book)?;
-    let p = Provenance::new(&m);
+    let p = Provenance::new(&m, &[]);
     let copies = p.resolve_edge(EdgeKey::new(corner(0), corner(1)));
     assert!(copies.len() >= 2, "{copies:?}");
     let mut grouped: Vec<EdgeId> = m.edge_copies().iter().flatten().copied().collect();
@@ -203,13 +220,13 @@ fn the_lowest_source_vertex_names_a_vertex_whatever_its_corners_order() -> Resul
             text.push('\n');
         }
         let m = mesh(&text)?;
-        let p = Provenance::new(&m);
+        let p = Provenance::new(&m, &[]);
         let mut keys: Vec<EdgeKey> = (0..u32::try_from(m.edge_count())?)
             .map(|e| p.edge_key(EdgeId::new(e)).ok_or("an edge has no key"))
             .collect::<Result<_, _>>()?;
         keys.sort();
         assert!(
-            keys.iter().all(|k| !k.ends().contains(&corner(4))),
+            keys.iter().all(|k| !k.ends().contains(&corner(4).into())),
             "{keys:?}"
         );
         assert_eq!(
@@ -232,7 +249,7 @@ fn every_resolution_is_strictly_ascending() -> Result<(), Setup> {
         let soup = obj::read(&fixtures::load(kind, name)?)?;
         for plan in [RepairPlan::default(), plan.clone()] {
             let (m, _) = into_manifold(&soup, &plan)?;
-            let p = Provenance::new(&m);
+            let p = Provenance::new(&m, &[]);
             for e in (0..u32::try_from(m.edge_count())?).map(EdgeId::new) {
                 let key = p.edge_key(e).ok_or("an edge has no key")?;
                 let landed = p.resolve_edge(key);

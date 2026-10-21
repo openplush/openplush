@@ -232,7 +232,6 @@ impl Builder {
                 vertices: self.non_finite,
             });
         }
-        // glTF's default material is never in the list; its primitives map to `None`.
         let names = doc
             .materials()
             .enumerate()

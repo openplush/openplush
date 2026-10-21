@@ -41,7 +41,7 @@ The means are running means, so σ near `f64::MAX` never overflows a partial sum
 
 ### Flattening session
 
-`FlattenSession::new(chart, xyz, faces)` flattens one chart a step at a time: `step()` runs one SLIM iteration and returns `Progress::Working { iteration, energy }` or `Progress::Done` (further steps stay `Done`); `finish()` returns every vertex's flat position in vertex order, or `None` before `Done`, so a half-flattened layout is never handed out; dropping the session cancels it. Errors are `FlattenError`.
+`FlattenSession::new(chart, xyz, faces)` flattens one chart a step at a time; it reads `xyz` and owns `faces`, holding no borrow, so a caller can keep the session between steps: `step()` runs one SLIM iteration and returns `Progress::Working { iteration, energy }` or `Progress::Done` (further steps stay `Done`); `finish()` returns every vertex's flat position in vertex order, or `None` before `Done`, so a half-flattened layout is never handed out; dropping the session cancels it. Errors are `FlattenError`.
 
 ## Crate-private
 

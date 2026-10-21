@@ -59,7 +59,7 @@ impl Parameterization {
 }
 
 fn lay_flat(chart: &ChartMesh) -> Result<Parameterization, FlattenError> {
-    let mut session = FlattenSession::new(chart.chart(), chart.xyz(), chart.faces())?;
+    let mut session = FlattenSession::new(chart.chart(), chart.xyz(), chart.faces().to_vec())?;
     while !matches!(session.step()?, Progress::Done) {}
     // INVARIANT: a session that has stepped to `Done` finishes, with every chart vertex once in
     // vertex order, so the positions alone are indexed like `xyz`.

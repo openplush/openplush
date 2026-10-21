@@ -40,9 +40,9 @@ pub(crate) enum Step {
 }
 
 /// One chart's SLIM solve, advanced an iteration at a time.
-pub(crate) struct Solve<'a> {
+pub(crate) struct Solve {
     chart: ChartId,
-    faces: Faces<'a>,
+    faces: Vec<(FaceId, [VertexId; 3])>,
     rest: Vec<Rest>,
     uv: Vec<DVec2>,
     energy: f64,
@@ -53,13 +53,14 @@ pub(crate) struct Solve<'a> {
     settled: bool,
 }
 
-impl<'a> Solve<'a> {
+impl Solve {
     /// Prescribes the boundary and fills the interior from the first start that flips no face.
     pub(crate) fn start(
         chart: ChartId,
         xyz: &[DVec3],
-        faces: Faces<'a>,
+        chart_faces: Vec<(FaceId, [VertexId; 3])>,
     ) -> Result<Self, FlattenError> {
+        let faces = &chart_faces[..];
         let ring = boundary::prescribe(xyz, faces).map_err(|e| refuse(chart, xyz, faces, e))?;
         let rest =
             rest_shapes(xyz, faces).map_err(|face| FlattenError::Degenerate { chart, face })?;
@@ -80,7 +81,7 @@ impl<'a> Solve<'a> {
             .map_err(|e| solve_failed(chart, e))?;
         Ok(Self {
             chart,
-            faces,
+            faces: chart_faces,
             rest,
             uv,
             energy,
@@ -98,10 +99,10 @@ impl<'a> Solve<'a> {
         };
         self.iterations += 1;
         let target = system
-            .target(&self.rest, self.faces, &self.uv)
+            .target(&self.rest, &self.faces, &self.uv)
             .map_err(|e| solve_failed(self.chart, e))?;
         let dir: Vec<DVec2> = target.iter().zip(&self.uv).map(|(t, u)| *t - *u).collect();
-        let gain = descend(&self.rest, self.faces, &self.uv, &dir, self.energy).map(|(uv, e)| {
+        let gain = descend(&self.rest, &self.faces, &self.uv, &dir, self.energy).map(|(uv, e)| {
             let gain = (self.energy - e) / self.energy;
             (self.uv, self.energy) = (uv, e);
             gain

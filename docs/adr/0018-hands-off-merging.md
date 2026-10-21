@@ -6,6 +6,8 @@ deciders: Lavender (maintainer)
 
 # The merge gate merges every tier; the maintainer keeps only the files that define the gate and the rules
 
+> Amended 2026-10-21 by [ADR 0020](0020-factory-grants.md): under a grant with `merge=yes`, a run may merge a tier H PR whose gate comment shows every condition but the tier passing on its head; never one that changes the gate's own files.
+
 ## Context and problem statement
 
 [ADR 0014](0014-auto-merge-tiers.md) reserved tier C for the maintainer: engine crates, specs, decisions, dependency manifests, CI and the agent rules. [ADR 0015](0015-merge-gate.md) built the gate that merges tiers A and B. [ADR 0016](0016-standing-merge-authorization.md) let an agent merge tier C under a grant of at most four hours, in the maintainer's words, posted on the ledger. After the first night under all three, the maintainer found that nearly every PR of substance is tier C: feature 002 is Rust under `crates/`, its decisions are rows in `specs/*/plan.md`, and its ticks need those to merge first. A factory run that cannot merge tier C stacks PRs until a person returns, and a grant that has to be renewed every four hours is that person returning on a timer. The maintainer asked, 2026-10-20: "We made changes to not allow merges on C tier. I dislike those recent changes. Please overhaul such that the entire process is quite hands off on me."

@@ -52,7 +52,7 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 
 ## One firing
 
-The placeholder scan (Arguments) runs first, then the grant is read and recorded (Arguments, Grant); then the steps below. A session runs one firing and never starts a second: the handoff's kickoff starts the next one in a fresh session.
+The placeholder scan (Arguments) runs first, then the grant is read and recorded (Arguments, Grant), then the end check; then the steps below. A session runs one firing and never starts a second: the handoff's kickoff starts the next one in a fresh session.
 
 1. Check `main`, the open PRs, and the next free slice number once (`steward`, Sessions).
 2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and fix whatever the merge gate's comment names on a tier A, B or C PR that is not `merge:ready` (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone; the gate enables auto-merge on its own. Under `merge=yes`, merge each tier H PR the rule allows (Merging under a grant).
@@ -62,6 +62,8 @@ The placeholder scan (Arguments) runs first, then the grant is read and recorded
 6. Append one comment to the feature's ledger (below), emit the handoff (below) as the session's last output, and end the session. Do not wait for CI or review here; the next firing walks the open PRs.
 
 A step boundary is the end of a numbered step, or of one task inside step 4. At each, check the session's context: past 300k tokens, the firing stops there (Stop conditions, `context`) and goes straight to step 6. The step in hand always finishes first, so nothing is left half-pushed.
+
+**End check.** Before any work, and again at each step boundary, a firing under a grant compares the clock with the grant's `ends=`. Past it, the firing does no more work: it turns off each enabled scheduled task whose prompt is this firing's kickoff, then goes straight to step 6 with reason `grant expired`. So a schedule never outlives its grant by more than one firing.
 
 ## Build output
 
@@ -103,6 +105,7 @@ Each ends the firing after the ledger comment names it, then the handoff carries
 | The task needs a decision, a spec change, or a constitution reading | `decision: <ID> <D-NNN or question>` |
 | Usage limit or tool failure that a retry does not clear | `limit: <what>` |
 | The session's context passes 300k tokens (One firing, step boundary) | `context: <N>k tokens after <step>` |
+| The grant's end has passed (One firing, End check) | `grant expired: ended <ends>; scheduled task <id> turned off`, or `none found` |
 
 A gate or golden stop also leaves the branch pushed at its last green commit, so the work is not lost.
 
@@ -146,8 +149,8 @@ The session's last output, after the ledger comment, from every firing: one that
 - **State**: the `Stopped:` reason as the ledger wrote it (for a kickoff stop, its reason here); PRs merged since the last firing; every open PR this firing opened or drove, with its number, head SHA, base and tier; the branch checked out at the end, or `none`.
 - **Next steps**: what the next firing or the maintainer does first, in order.
 - **Blockers**: one per decision the firing needs: the facts, the file and ID where it lives, one recommendation, and what happens if nobody answers.
-- **Kickoff**: five lines or fewer that start the next firing: the `/factory` line with the active grant and its `ends=`, so the next firing continues it (Arguments, Grant), or `/factory <feature>` alone with no grant. Every field is filled, so it passes the placeholder scan: a field the firing cannot fill is left out and asked for under Blockers.
+- **Kickoff**: five lines or fewer that start the next firing: the `/factory` line with the active grant and its `ends=`, so the next firing continues it (Arguments, Grant), or `/factory <feature>` alone with no grant. After `grant expired` it is `/factory continue`, which renews the grant only when the maintainer pastes it. Every field is filled, so it passes the placeholder scan: a field the firing cannot fill is left out and asked for under Blockers.
 
 ## Scheduling
 
-A scheduled task fires `/factory <feature>` into a fresh session (`create_new_session_on_fire`), hourly. The maintainer enables it for the hours they want the factory running and disables it after. A firing that finds nothing to do costs one ledger comment and its handoff.
+A scheduled task fires a handoff's kickoff into a fresh session (`create_new_session_on_fire`), hourly; the maintainer creates it for a run. Under a grant, the kickoff carries `ends=`, so the schedule expires with the grant: the first firing past it turns the task off (One firing, End check). Its prompt is never `/factory continue`, which would renew the grant at every firing. Without a grant, the maintainer disables it after the hours they want. A firing that finds nothing to do costs one ledger comment and its handoff.

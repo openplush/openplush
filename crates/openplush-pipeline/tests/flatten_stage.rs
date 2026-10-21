@@ -3,6 +3,7 @@
 
 use std::fmt::Write as _;
 
+use openplush_geom::GeomError;
 use openplush_io::obj;
 use openplush_mesh::{RepairPlan, into_manifold};
 use openplush_pipeline::{
@@ -19,10 +20,16 @@ fn mesh_of(obj: &str) -> Result<ManifoldMesh, Setup> {
 
 /// A `cols` by `rows` grid of 10-unit quads in the plane, each split along its rising diagonal.
 fn sheet(cols: u32, rows: u32) -> String {
+    grid(cols, rows, |x, y| (x, y, 0.0))
+}
+
+/// The grid of [`sheet`] with grid point `(x, y)` moved to `place(x, y)`.
+fn grid(cols: u32, rows: u32, place: impl Fn(f64, f64) -> (f64, f64, f64)) -> String {
     let mut s = String::new();
     for r in 0..=rows {
         for c in 0..=cols {
-            let _ = writeln!(s, "v {} {} 0", 10 * c, 10 * r);
+            let (x, y, z) = place(f64::from(10 * c), f64::from(10 * r));
+            let _ = writeln!(s, "v {x} {y} {z}");
         }
     }
     let id = |c: u32, r: u32| r * (cols + 1) + c + 1;
@@ -104,6 +111,40 @@ fn a_flat_sheet_is_laid_flat_at_its_own_lengths() -> Result<(), Setup> {
 }
 
 #[test]
+fn a_sheet_folded_square_is_laid_out_unfolded_at_its_own_lengths() -> Result<(), Setup> {
+    let folded = grid(4, 2, |x, y| {
+        if x <= 20.0 {
+            (x, y, 0.0)
+        } else {
+            (20.0, y, x - 20.0)
+        }
+    });
+    let mesh = mesh_of(&folded)?;
+    let (charts, _) = chart(&mesh, &SeamSet::new())?.value;
+    let [layout] = &flatten(&mesh, &charts)?.value[..] else {
+        panic!("one layout");
+    };
+    let worst = worst_stretch(&charts[0], layout.uv());
+    assert!(worst < 1e-6, "an edge stretched by {worst}");
+    Ok(())
+}
+
+#[test]
+fn a_chart_that_needs_many_steps_is_stepped_to_the_end() -> Result<(), Setup> {
+    let bump = grid(4, 4, |x, y| {
+        (x, y, if (x, y) == (20.0, 20.0) { 8.0 } else { 0.0 })
+    });
+    let mesh = mesh_of(&bump)?;
+    let (charts, _) = chart(&mesh, &SeamSet::new())?.value;
+    let [layout] = &flatten(&mesh, &charts)?.value[..] else {
+        panic!("one layout");
+    };
+    assert_eq!(layout.uv().len(), charts[0].xyz().len());
+    assert!(layout.uv().iter().all(|p| p.is_finite()));
+    Ok(())
+}
+
+#[test]
 fn every_chart_is_laid_flat_in_chart_order() -> Result<(), Setup> {
     let mesh = mesh_of(&sheet(4, 2))?;
     let mut seams = SeamSet::new();
@@ -162,6 +203,83 @@ fn the_same_charts_flatten_to_the_same_bits() -> Result<(), Setup> {
     };
     assert_eq!(bits(&mesh, &charts)?, bits(&mesh, &charts)?);
     Ok(())
+}
+
+/// A flat square, then a tetrahedron: a closed shell that one cut edge opens into a chart
+/// bounded by two edges, which the flattener refuses.
+const SQUARE_THEN_TETRAHEDRON: &str = "v 0 0 0\nv 10 0 0\nv 10 10 0\nv 0 10 0\n\
+v 100 0 0\nv 110 0 0\nv 100 10 0\nv 100 0 10\n\
+f 1 2 3\nf 1 3 4\nf 5 7 6\nf 5 6 8\nf 5 8 7\nf 6 7 8\n";
+
+fn point(mesh: &ManifoldMesh, x: f64, y: f64, z: f64) -> Result<VertexId, Setup> {
+    (0..u32::try_from(mesh.vertex_count())?)
+        .map(VertexId::new)
+        .find(|&v| {
+            let p = mesh.position(v);
+            (p.x, p.y, p.z) == (x, y, z)
+        })
+        .ok_or_else(|| format!("no vertex at ({x}, {y}, {z})").into())
+}
+
+#[test]
+fn a_chart_the_flattener_refuses_refuses_the_stage_naming_that_chart() -> Result<(), Setup> {
+    let mesh = mesh_of(SQUARE_THEN_TETRAHEDRON)?;
+    let (a, b) = (point(&mesh, 100., 0., 0.)?, point(&mesh, 110., 0., 0.)?);
+    let mut seams = SeamSet::new();
+    seams.insert(edge_between(&mesh, a, b)?, SeamKind::Cut)?;
+    let (charts, _) = chart(&mesh, &seams)?.value;
+    let shell = charts
+        .iter()
+        .find(|c| c.faces().len() == 4)
+        .ok_or("no tetrahedron chart")?
+        .chart();
+    assert_ne!(
+        shell,
+        charts[0].chart(),
+        "the refused chart is not the first"
+    );
+    assert_eq!(
+        flatten(&mesh, &charts).map(|s| s.value.len()),
+        Err(EngineError::Flatten(FlattenError::NotADisk {
+            chart: shell
+        }))
+    );
+    Ok(())
+}
+
+#[test]
+fn every_carried_refusal_locates_its_chart_and_any_faces_in_id_order() {
+    let chart = ChartId::new(3);
+    let face = FaceId::new(7);
+    let unjudgeable = FlattenError::Unjudgeable {
+        chart,
+        face,
+        source: GeomError::InvalidDiagonal { diagonal: 0.0 },
+    };
+    let at = EngineError::Flatten(unjudgeable).locations();
+    assert_eq!((at.charts, at.faces), (vec![chart], vec![face]));
+    let flip = FlattenError::Flip {
+        chart,
+        faces: vec![FaceId::new(2), FaceId::new(0)],
+    };
+    let at = EngineError::Flatten(flip).locations();
+    assert_eq!(
+        (at.charts, at.faces),
+        (vec![chart], vec![FaceId::new(0), FaceId::new(2)])
+    );
+    for chart_only in [
+        FlattenError::EmptyChart { chart },
+        FlattenError::NotADisk { chart },
+        FlattenError::BoundaryNotRealizable {
+            chart,
+            residual: 1.0,
+            dart: None,
+        },
+    ] {
+        let at = EngineError::Flatten(chart_only.clone()).locations();
+        assert_eq!(at.charts, [chart], "{chart_only:?}");
+        assert!(at.faces.is_empty(), "{chart_only:?}");
+    }
 }
 
 #[test]

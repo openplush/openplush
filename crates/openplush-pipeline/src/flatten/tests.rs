@@ -7,7 +7,7 @@ use openplush_io::obj;
 use openplush_mesh::{EdgeId, FaceId, ManifoldMesh, RepairPlan, VertexId, into_manifold};
 use openplush_seams::{ChartId, ChartMesh, ProposalKind, SeamKind, SeamSet};
 
-use super::refusal;
+use super::{chart_edge, refusal};
 use crate::{EngineError, FlattenError, chart};
 
 /// A square of side 10 split into four triangles round its centre, the one interior vertex.
@@ -124,4 +124,102 @@ fn a_flip_keeps_its_faces_and_any_other_refusal_is_carried_whole() {
         refusal(&mesh, &c, degenerate.clone()),
         EngineError::Flatten(degenerate)
     );
+}
+
+#[test]
+fn every_side_of_every_chart_face_is_found_from_either_end() {
+    let (mesh, c) = fan();
+    let to_global = c.vtx_to_global();
+    for (_, corners) in c.faces() {
+        for i in 0..3 {
+            let (a, b) = (corners[i], corners[(i + 1) % 3]);
+            let side = edge(
+                &mesh,
+                to_global[a.index() as usize],
+                to_global[b.index() as usize],
+            );
+            assert_eq!(chart_edge(&mesh, &c, a, b), Some(side), "{a:?} to {b:?}");
+            assert_eq!(chart_edge(&mesh, &c, b, a), Some(side), "{b:?} to {a:?}");
+        }
+    }
+}
+
+/// A 3 by 3 grid of points with its eight triangles on both sides: the rim edges join the
+/// layers, and an inside edge between two rim points comes back as two parallel copies.
+const TWO_LAYERS: &str = "v 0 0 0\nv 10 0 0\nv 20 0 0\nv 0 10 0\nv 10 10 0\nv 20 10 0\n\
+v 0 20 0\nv 10 20 0\nv 20 20 0\n\
+f 1 2 5\nf 1 5 4\nf 2 3 6\nf 2 6 5\nf 4 5 8\nf 4 8 7\nf 5 6 9\nf 5 9 8\n\
+f 1 5 2\nf 1 4 5\nf 2 6 3\nf 2 5 6\nf 4 8 5\nf 4 7 8\nf 5 9 6\nf 5 8 9\n";
+
+/// The chart vertex at `(x, y)`.
+fn at(chart: &ChartMesh, x: f64, y: f64) -> VertexId {
+    let i = chart
+        .xyz()
+        .iter()
+        .position(|p| (p.x, p.y) == (x, y))
+        .expect("a chart vertex there");
+    VertexId::new(u32::try_from(i).expect("small"))
+}
+
+/// The mesh edge between `a` and `b` that bounds one of `chart`'s faces.
+fn edge_of(mesh: &ManifoldMesh, chart: &ChartMesh, a: VertexId, b: VertexId) -> EdgeId {
+    let inside = |f| chart.faces().iter().any(|&(g, _)| Some(g) == f);
+    mesh.outgoing(a)
+        .filter(|&h| mesh.dest(h) == b)
+        .find(|&h| inside(mesh.face(h)) || inside(mesh.face(h.twin())))
+        .map(|h| h.edge())
+        .expect("an edge of the chart")
+}
+
+#[test]
+fn a_dart_over_a_parallel_edge_names_the_copy_inside_its_own_chart() {
+    let soup = obj::read(TWO_LAYERS.as_bytes()).expect("the sheet reads");
+    let (mesh, _) = into_manifold(&soup, &RepairPlan::default()).expect("the sheet repairs");
+    let rim = [
+        (0., 0.),
+        (10., 0.),
+        (20., 0.),
+        (20., 10.),
+        (20., 20.),
+        (10., 20.),
+    ];
+    let rim = [&rim[..], &[(0., 20.), (0., 10.), (0., 0.)]].concat();
+    let mut seams = SeamSet::new();
+    for pair in rim.windows(2) {
+        let (a, b) = (
+            global(&mesh, pair[0].0, pair[0].1),
+            global(&mesh, pair[1].0, pair[1].1),
+        );
+        seams
+            .insert(edge(&mesh, a, b), SeamKind::Cut)
+            .expect("a seam");
+    }
+    let (charts, _) = chart(&mesh, &seams).expect("two layers").value;
+    let mut copies = Vec::new();
+    for c in &charts {
+        let path = vec![at(c, 20., 10.), at(c, 10., 0.), at(c, 10., 10.)];
+        let to_global = |v: VertexId| c.vtx_to_global()[v.index() as usize];
+        let EngineError::BoundaryNotRealizable { proposals, .. } =
+            refusal(&mesh, c, not_realizable(c.chart(), Some(path.clone())))
+        else {
+            panic!("still BoundaryNotRealizable");
+        };
+        let [dart] = &proposals[..] else {
+            panic!("one proposal: {proposals:?}");
+        };
+        assert_eq!(*dart.kind(), ProposalKind::Dart { chart: c.chart() });
+        let copy = edge_of(&mesh, c, to_global(path[0]), to_global(path[1]));
+        let expected: BTreeMap<EdgeId, SeamKind> = [
+            (copy, SeamKind::Dart),
+            (
+                edge_of(&mesh, c, to_global(path[1]), to_global(path[2])),
+                SeamKind::Dart,
+            ),
+        ]
+        .into();
+        assert_eq!(*dart.add(), expected, "chart {:?}", c.chart());
+        copies.push(copy);
+    }
+    assert_eq!(charts.len(), 2);
+    assert_ne!(copies[0], copies[1], "the layers share no copy of the edge");
 }

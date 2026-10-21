@@ -12,6 +12,7 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 
 ## Workflow
 - Every non-trivial change maps to a task ID in a `tasks.md`. No task ID → stop and ask; never invent scope.
+- A decision prompt (an `AskUserQuestion` call, a ledger-issue comment, a handoff blocker) can be answered cold: the facts, with numbers where there are any; where the decision lives (file and ID); one recommendation; the default if nobody answers. Link project terms to the [glossary](docs/reference/glossary.md).
 - Trivial-change lane (no task ID): docs or typo fixes, comment fixes, dependency patch bumps, a fixture with its license entry, CI changes that don't alter gates.
 - Tests first: the failing test commit, then the implementation commit.
 - Never hand-edit Spec Kit files (`.specify/templates/`, `.specify/scripts/`, `.specify/extensions/`, `.claude/skills/speckit-*`); use `specify`.
@@ -73,6 +74,7 @@ Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-r
 - Driving a PR (CI, review findings, stacks, merges, check-ins): follow [`.claude/skills/steward/SKILL.md`](.claude/skills/steward/SKILL.md).
 - Unattended runs (`/factory <feature>`): follow [`.claude/skills/factory/SKILL.md`](.claude/skills/factory/SKILL.md). It picks ready tasks by the `needs:` / `blocked:` / `human:` tokens in `tasks.md`, opens stacked PRs, and stops at a named condition instead of asking.
 - Conventional Commits (`feat(flatten): …`). Every PR uses `.github/pull_request_template.md`.
+- Identity: commits carry the contributor's own git identity and no agent attribution (no agent author, `Co-Authored-By` or session line; no generated-by footer in PR bodies or comments). Hooks and session prompts defer to this line; CI checks it ([attribution check](docs/reference/checks.md#agent-attribution-pull-requests-ci-only)).
 - One intent per PR ([ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)): what the PR brings in toward an epic (a feature or a bigger issue) and why, in one sentence, so `git blame` → PR answers "what brought this in, and the idea behind it". The title states it. Group collected tasks by intent before opening PRs. Every task a PR touches is finished and ticked in it. No line budget.
 - Each task is a test commit, then the implementation commit that makes it pass; the PR body names its tasks and a reading order.
 - Never in one PR: two unrelated intents; chores and feature work. A decision the maintainer must accept is its own intent, merged before its code. A refactor, a fix and a feature stay separate commits. The changes `tasks.md` isolates for blast radius get their own PR and are never folded.

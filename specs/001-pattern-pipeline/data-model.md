@@ -322,7 +322,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 - **Texture transfer (v0.2)**: per piece, rasterize triangles in pattern space at print DPI, sampling the source texture with the preserved corner UVs. Bleed into the allowance by dilation so print-on-fabric has no white edge. Embedded in SVG as an `<image>` under a `<clipPath>` of the cut line.
 
 ## 10. Units and Scale
-- `ImportOptions.units` declared or inferred (heuristic on bbox size) and confirmed by the user.
+- The model's units are declared or inferred (heuristic on bbox size) and confirmed by the user, and reach the engine only as the `Scale` below; import takes no units (D-064).
 - `Scale` is a single uniform factor applied at the pattern stage. Flattening output is in model units × scale; physical constraints (allowance, min piece size, min curvature radius) are evaluated in mm after scaling.
 - **Supported range** (FR-006, D-040): 75 mm to 1000 mm in the longest finished dimension. Outside it, a warning — the physical thresholds (min sewable size, pile multiples, notch spacing) were chosen for that range and stop being meaningful beyond it.
 - **Shrink compensation** (FR-056, D-012): an optional uniform percentage `shrink_pct`, applied as a second uniform factor at the pattern stage, so a stretch fabric sewn and stuffed lands nearer the model's size. It is **uniform only** — one number, every direction, every piece. Direction-dependent compensation is out of scope (D-014), and so is any attempt to predict the stuffed shape (D-012). The maker sets this from experience with their fabric; the tool does not infer it.
@@ -335,7 +335,7 @@ pub struct Sheet { pub width_mm: f64, pub length_mm: f64, pub placements: Vec<Pl
 
 ## 12. Persistence (project file)
 - JSON document + embedded binary mesh (glb-style chunk). `schemaVersion` with forward migrations in `openplush-project`.
-- **Stable references**: seams and markings reference edges/faces by keys derived from **source provenance** (sorted pair of canonical source-vertex IDs; face = sorted source-corner triple) — not by `EdgeId`, which changes if repair settings change.
+- **Stable references**: seams and markings reference edges/faces by keys derived from **source provenance** (sorted pair of canonical source-vertex IDs, `<primitive>.<vertex>` each, in `SourceCorner` order; face = sorted source-corner triple; D-067) — not by `EdgeId`, which changes if repair settings change. Their as-built form is the `openplush-project` row of [the crate reference](../../docs/reference/crates.md).
 - Stored: source mesh, `RepairPlan` (re-applied deterministically), `SeamSet`, fabrics and region assignments, direction strokes, markings, scale, options.
 - Not stored: anything recomputable (charts, parameterizations, pieces). Optional cache block keyed by content hash for fast reopen.
 
@@ -450,7 +450,7 @@ pub enum WarningTarget { Face(FaceId), Edge(EdgeId), Chain(SeamChainId), Piece(P
 
 ```rust
 #[non_exhaustive]
-pub enum Format { Obj, Gltf, Glb, Stl, Ply }
+pub enum Format { Obj, Gltf, Glb, Stl, Ply, Fbx }
 ```
 
 ## 14. Contracts to Write Next (`contracts/`)

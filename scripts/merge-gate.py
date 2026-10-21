@@ -27,7 +27,8 @@ REQUIRED_CHECKS = ("fmt, clippy, test", "licenses and advisories", "typecheck, u
 REVIEW_CHECKS = ("changed paths", "adversarial review")
 GREEN = frozenset({"success", "skipped"})
 SUMMARY_AUTHOR = "github-actions[bot]"
-RED_COUNT = re.compile(r"🔴\s*(\d+)")
+# The reviewer writes "🔴 0" and "0 🔴" alike; prose elsewhere in the summary also uses the mark.
+RED_COUNT = re.compile(r"^Findings:.*?(?:(\d+)[ \t]*🔴|🔴[ \t]*(\d+))", re.MULTILINE)
 SUMMARY_HEAD = re.compile(r"head ([0-9a-f]{40})")
 HOLD = timedelta(hours=24)
 MARKER = "<!-- merge-gate -->"
@@ -150,7 +151,7 @@ def summary_findings(summary: str, threads: list[object]) -> tuple[bool, str]:
     match = RED_COUNT.search(summary)
     if match is None:
         return False, "summary found but its 🔴 count not found"
-    reds = int(match[1])
+    reds = int(match[1] or match[2])
     if reds == 0:
         return True, "newest summary reports 🔴 0"
     open_reds = open_red_threads(threads)
@@ -238,10 +239,13 @@ def render(doc: Doc, conditions: list[Condition], ready: bool, asked: bool) -> s
     elif ready and mode == "on":
         verdict = "Ready: `merge:ready` applied and auto-merge enabled, matched to this head."
     elif ready:
-        verdict = "Ready: `merge:ready` applied. Mode dry-run: auto-merge is not enabled."
+        verdict = "Ready: `merge:ready` applied."
     else:
         verdict = ("Not ready: fix what fails above. The gate judges again when a CI workflow completes, "
                    "on every push, label and edit, and every 30 minutes.")
+    if mode == "dry-run":
+        verdict += ("\n\nThe gate is rehearsing (mode dry-run): it comments and labels but never enables auto-merge. "
+                    "Setting the repository variable `MERGE_GATE_MODE` to `on` makes it live.")
     return (
         f"{MARKER}\n{mark}### Merge gate: {'ready' if ready else 'not ready'} (head `{sha[:7]}`, mode {mode}, "
         f"checked {field(doc, 'now', str)})\n\n"

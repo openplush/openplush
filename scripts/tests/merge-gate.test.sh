@@ -6,8 +6,9 @@
 # a tier H PR is never ready, tier C is ready like A, tier B holds 24 h after
 # the last check, the review passes only by a summary for this head, its
 # threads or review.yml's skip rules, a stale summary asks for one review per
-# head, a reviewer's changes-requested blocks, and the comment carries its
-# marker and the head it judged.
+# head, a reviewer's changes-requested blocks, the comment carries its
+# marker and the head it judged, and in dry-run it says it is rehearsing and
+# what makes it live.
 set -euo pipefail
 # expect runs at the end of a pipeline and counts in this shell.
 shopt -s lastpipe
@@ -76,6 +77,11 @@ ready | jq -c '.comments[0].body |= sub("🔴 0"; "🔴 1") | .threads += [{isRe
   expect "a 🔴 whose thread is resolved passes" '.ready'
 ready | jq -c --arg head "$head" '.comments += [{user: {login: "github-actions[bot]"}, body: "**Review summary (PR 7, head \($head))**\n\nFindings: 🔴 2 / 🟡 0 / 🟣 0."}] | .threads += [{isResolved: false, comments: [{body: "🔴 later"}]}]' |
   expect "the newest summary is the one read" "$(failing "review" "2 🔴")"
+ready | jq -c '.comments[0].body |= sub("🔴 0 / 🟡 1 / 🟣 0"; "0 🔴, 1 🟡, 0 🟣")' | expect "a count written before its mark is read" '.ready'
+ready | jq -c '.comments[0].body |= sub("🔴 0 / 🟡 1 / 🟣 0"; "2 🔴, 0 🟡, 0 🟣") | .threads += [{isResolved: false, comments: [{body: "🔴 wrong sign"}]}]' |
+  expect "a count written before its mark still blocks" "$(failing "review" "2 🔴")"
+ready | jq -c '.comments[0].body |= sub("Findings: 🔴 0"; "The last review'"'"'s 🔴 3 are fixed.\n\nFindings: 🔴 0")' |
+  expect "only the Findings line is counted" '.ready and ([.conditions[] | select(.name == "review")] | .[0].detail | contains("🔴 0"))'
 ready | jq -c --arg head "$head" '.comments[0].body = "**Review summary (PR 7, head \($head))**\n\nno counts here"' | expect "an unreadable summary is not ready" "$(failing "review" "count not found")"
 ready | jq -c '.comments[0].body = "**Review summary (PR 7, head x)**\n\nFindings: 🔴 0"' | expect "a summary naming no head is not ready" "$(failing "review" "head not found")"
 old=1111111111111111111111111111111111111111
@@ -103,6 +109,9 @@ ready | jq -c '.tier.tier = "C" | .tier.computed = "C"' | expect "tier C is read
 ready | jq -c '.tier.tier = "H" | .tier.computed = "H"' | expect "tier H is never ready" "$(failing "tier" "the maintainer merges")"
 ready | jq -c '.tier.tier = "H" | .tier.computed = "H"' | expect "tier H says so in the comment" '.comment | contains("the maintainer merges")'
 ready | jq -c '.mode = "on"' | expect "mode on is ready too" '.ready and (.comment | contains("mode on"))'
+ready | expect "a dry-run comment says it is rehearsing and what makes it live" '.comment | contains("rehearsing") and contains("`MERGE_GATE_MODE` to `on`")'
+ready | jq -c '.pr.draft = true' | expect "a not-ready dry-run comment says it is rehearsing too" '.comment | contains("rehearsing")'
+ready | jq -c '.mode = "on"' | expect "a live comment does not say it is rehearsing" '.comment | contains("rehearsing") | not'
 ready | jq -c '.pr.draft = true | .check_runs = []' | expect "every failed condition is listed, not just the first" '[.conditions[] | select(.ok | not)] | length == 2'
 
 if out=$(python3 "$gate" <<<'{"mode": "on"}' 2>&1); then bad "a missing field fails" "$out"; else ok "a missing field fails"; fi

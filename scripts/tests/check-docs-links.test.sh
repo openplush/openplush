@@ -85,6 +85,34 @@ file "$d" src/guide/seams.md '# Seams
 Jump to [the darts](#darts).'
 expect fail "a link to a missing anchor on the same page" "$(build "$d")" "seams.html" "#darts"
 
+# rustdoc links a source range as page.rs.html#11-16, an anchor only its script
+# reads; each line has its own id, so the check reads the range's first line.
+d=$(new_book source-range)
+file "$d" src/api/src/lib.rs.html '<pre><a href=#1 id=1>1</a> <a href=#2 id=2>2</a></pre>'
+file "$d" src/intro.md '# Intro
+
+See [the source](api/src/lib.rs.html#1-2).'
+expect pass "a source line range whose first line exists" "$(build "$d")"
+
+d=$(new_book source-range-dead-line)
+file "$d" src/api/src/lib.rs.html '<pre><a href=#1 id=1>1</a> <a href=#2 id=2>2</a></pre>'
+file "$d" src/intro.md '# Intro
+
+See [the source](api/src/lib.rs.html#9-12).'
+expect fail "a source line range whose first line does not exist" "$(build "$d")" "intro.html" "lib.rs.html#9"
+
+d=$(new_book source-range-dead-page)
+file "$d" src/intro.md '# Intro
+
+See [the source](api/src/gone.rs.html#1-2).'
+expect fail "a source line range on a page that does not exist" "$(build "$d")" "intro.html" "gone.rs.html"
+
+d=$(new_book range-elsewhere)
+file "$d" src/intro.md '# Intro
+
+See [the allowance](guide/seams.md#1-2).'
+expect fail "a range-shaped anchor on any other page" "$(build "$d")" "intro.html" "#1-2"
+
 expect fail "a missing directory" "$tmp/missing" "$tmp/missing"
 
 echo

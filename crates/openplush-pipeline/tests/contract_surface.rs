@@ -29,3 +29,9 @@ fn pattern_takes_the_charts_with_their_layouts_and_options_and_returns_pieces() 
     use openplush_pipeline::{PatternInput, PatternOptions, PatternPiece, pattern};
     let _: fn(&PatternInput<'_>, &PatternOptions) -> StageResult<Vec<PatternPiece>> = pattern;
 }
+
+#[test]
+fn size_takes_the_mesh_and_a_target_and_returns_the_scale() {
+    use openplush_pipeline::{Scale, SizeTarget, size};
+    let _: fn(&ManifoldMesh, SizeTarget) -> StageResult<Scale> = size;
+}

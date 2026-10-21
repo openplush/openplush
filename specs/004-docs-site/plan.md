@@ -105,6 +105,8 @@ checks: summary completeness (sources) · remote references (output) · plain la
 
 The deploy job removes `target/site/guide/` before upload until W-003 is lifted, so the checks always see the whole site but only the contributor part ships.
 
+As built, the rustdoc is documented one crate at a time, dependencies first: [Checks, Generated API pages](../../docs/reference/checks.md#generated-api-pages-docs).
+
 ### Writing standards (summary; the writing guide is their home)
 
 - **Audience first, then kind.** Every page belongs to one part and one Diátaxis kind; the template carries both.

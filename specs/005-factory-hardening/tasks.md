@@ -42,7 +42,7 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 ## Phase 0: Decisions
 
-- [x] F001 `docs/adr/0020-factory-grants.md`, MADR, Proposed: the grant argument's fields ([data-model.md](./data-model.md#grant-us6-waits-on-f-002)), what a grant may and may not override with [ADR 0018](../../docs/adr/0018-hands-off-merging.md) named, scheduled triggers expiring with the grant, the options and one recommendation. No implementation until accepted. (F-002) As built: accepted by the maintainer on 2026-10-21, as option 2 (a grant may merge a tier H PR the gate shows green but for its tier)
+- [x] F001 `docs/adr/0020-factory-grants.md`, MADR, Proposed: the grant argument's fields ([data-model.md](./data-model.md#grant-us6-adr-0020)), what a grant may and may not override with [ADR 0018](../../docs/adr/0018-hands-off-merging.md) named, scheduled triggers expiring with the grant, the options and one recommendation. No implementation until accepted. (F-002) As built: accepted by the maintainer on 2026-10-21, as option 2 (a grant may merge a tier H PR the gate shows green but for its tier)
 - [x] F002 The ledger layout (F-003): the options (one file per decision with a generated table, an append-only section, as is) with one recommendation in plan.md's ledger, and the measured count of ledger conflicts in the last 50 merged stacked PRs. As built: accepted by the maintainer on 2026-10-21, as (c), the ledger as is
 
 ## Phase 1: A kickoff with a blank field never starts (US1) 🎯 MVP

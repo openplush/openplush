@@ -6,7 +6,7 @@
 
 ## Summary
 
-Each process rule the factory broke moves to one checked home: the factory skill refuses an unfilled kickoff and ends every firing with a handoff; `AGENTS.md` owns commit identity and a CI script enforces it on each PR's own commits and body; a read-only diagnostic checks the merge gate's prerequisites; the gate's comment names its rehearsal mode; `steward` reports stalled checks once; `AGENTS.md` gives decision prompts one shape with a glossary behind it. Grants (US6) and the ledger layout (US7) are maintainer decisions first: this plan drafts them (F-002, F-003) and their tasks wait on acceptance.
+Each process rule the factory broke moves to one checked home: the factory skill refuses an unfilled kickoff and ends every firing with a handoff; `AGENTS.md` owns commit identity and a CI script enforces it on each PR's own commits and body; a read-only diagnostic checks the merge gate's prerequisites; the gate's comment names its rehearsal mode; `steward` reports stalled checks once; `AGENTS.md` gives decision prompts one shape with a glossary behind it. Grants (US6) and the ledger layout (US7) are maintainer decisions first: this plan drafted them (F-002, F-003), and the maintainer accepted both on 2026-10-21.
 
 ## Technical Context
 
@@ -32,7 +32,7 @@ Each process rule the factory broke moves to one checked home: the factory skill
 | VII Explicit repair | ✅ The diagnostic prints fixes and never applies them |
 | VIII Local-first, no telemetry | ✅ The diagnostic calls the GitHub API only when a person runs it; nothing at app runtime changes |
 | IX Licences | ✅ No new dependency |
-| X Baseline before cleverness | ✅ Prose rules and small scripts first; a generated ledger only if F-003 is accepted |
+| X Baseline before cleverness | ✅ Prose rules and small scripts first; the ledger stays hand-written (F-003); only folder index lists are generated |
 
 ## Project Structure
 
@@ -79,8 +79,8 @@ scripts/merge-gate.py                # US4: the dry-run line
 | Phase | What | Gate |
 |---|---|---|
 | 1 | US1, US2 (factory skill), US3 (attribution), US4 (gate setup), US5 (decision prompts) | Maintainer merges (tier H) |
-| 2 | US6 grant: ADR 0020 accepted, then the skill and triggers | Waits on F-002 |
-| 3 | US7 ledger layout | Waits on F-003 |
+| 2 | US6 grant: ADR 0020 accepted, then the skill and triggers | F-002 accepted 2026-10-21 |
+| 3 | US7 ledger layout | F-003 accepted 2026-10-21; F013 follows 004's W044 |
 
 ## Decision Ledger
 

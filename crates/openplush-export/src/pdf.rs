@@ -38,7 +38,7 @@ const FONT: Name<'static> = Name(b"F1");
 /// squares and the page's label; then any summary rows the cover had no room for.
 ///
 /// # Errors
-/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary text the fonts cannot print.
+/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary text outside Latin-1.
 pub fn write(
     sheet: &Sheet,
     pieces: &[PatternPiece],

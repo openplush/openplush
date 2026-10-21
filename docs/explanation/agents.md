@@ -71,7 +71,7 @@ A PR's tier is the highest that any of its files reaches, and the gate can raise
 
 ### Standing authorizations
 
-For one day, tier C was the maintainer's and a standing authorization let an agent merge it for a while ([ADR 0016](../adr/0016-standing-merge-authorization.md)). Since the gate merges tier C itself ([ADR 0018](../adr/0018-hands-off-merging.md)), a grant matters only where the gate stops: tier H, and decisions. Grants given in free text were restated about ten times in one day and read differently by each session, so a grant is now one structured, time-boxed argument to a factory run, and under one that allows merging, a run merges a tier H PR only on the gate's verdict for every condition but the tier: the grant stands in for the one condition the gate leaves to a person. [ADR 0020](../adr/0020-factory-grants.md) sets the fields, the limits and what never merges under a grant.
+Tier C was briefly the maintainer's, with a standing authorization letting an agent merge it ([ADR 0016](../adr/0016-standing-merge-authorization.md)). Since the gate merges tier C itself ([ADR 0018](../adr/0018-hands-off-merging.md)), a grant matters only where the gate stops: tier H, and decisions. Grants given as free text were read differently by each session, so a grant is now one structured, time-boxed argument to a factory run, and under one that allows merging, a run merges a tier H PR only on the gate's verdict for every condition but the tier: the grant stands in for the one condition the gate leaves to a person. [ADR 0020](../adr/0020-factory-grants.md) sets the fields, the limits and what never merges under a grant.
 
 ## Why not the alternative
 

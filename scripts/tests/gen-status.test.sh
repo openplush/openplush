@@ -111,6 +111,41 @@ r=$(new_case link-bullet)
 tasks "$r" 002-first-feature "- [x] Q001 done" "- [the plan](plan.md) is a link, not a box"
 expect pass "a bullet that starts with a link is not a task box" "$r"
 
+# kind <root> <feature> <value>: give a feature's tasks.md a front matter `kind:` line.
+kind() {
+  local file="$1/specs/$2/tasks.md"
+  printf '%s\n' "---" "description: \"Task list\"" "kind: $3" "---" "" | cat - "$file" >"$file.new"
+  mv "$file.new" "$file"
+}
+
+# Process work (the factory, the gate) is no maker-visible progress, so it is listed apart.
+r=$(new_case process)
+tasks "$r" 005-process-work "- [x] Q001 done" "- [ ] Q002 open"
+kind "$r" 005-process-work process
+"$gen" "$r" >/dev/null
+want="| Feature | Tasks ticked |
+|---|---|
+| [001 earliest feature]($gh/001-earliest-feature/tasks.md) | 1 of 1 |
+| [002 first feature]($gh/002-first-feature/tasks.md) | 1 of 3 |
+| [010 later feature]($gh/010-later-feature/tasks.md) | 2 of 3 |
+Repository process, with no change a maker sees:
+| Feature | Tasks ticked |
+|---|---|
+| [005 process work]($gh/005-process-work/tasks.md) | 1 of 2 |"
+got=$(grep -v '^<!--' "$r/$inc" | sed '/^$/d')
+if [[ $got == "$want" ]]; then ok "a kind: process feature is listed apart, after the product features"; else bad "a kind: process feature is listed apart, after the product features" "$got"; fi
+
+r=$(new_case product-kind)
+kind "$r" 002-first-feature product
+expect pass "kind: product is the default, spelled out" "$r"
+if ! grep -q "Repository process" "$r/$inc"; then ok "no process heading without a process feature"; else bad "no process heading without a process feature" "$(cat "$r/$inc")"; fi
+
+r=$(new_case unknown-kind)
+cp "$r/$inc" "$tmp/before.inc"
+kind "$r" 002-first-feature tooling
+expect fail "an unknown kind fails, naming the file" "$r" "specs/002-first-feature/tasks.md: unknown kind 'tooling'"
+if cmp -s "$tmp/before.inc" "$r/$inc"; then ok "a failed kind writes nothing"; else bad "a failed kind writes nothing"; fi
+
 status=0
 out=$("$gen" --bogus "$tmp" 2>&1) || status=$?
 if [[ $status -eq 2 && $out == *"unknown option"* ]]; then ok "an unknown option exits 2"; else bad "an unknown option exits 2 (got $status)" "$out"; fi

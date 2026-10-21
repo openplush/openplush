@@ -45,7 +45,7 @@ openplush-cli pattern fixtures/meshes/capsule.obj \
 # What landed in out/
 #   pattern.svg          true scale, 1 user unit = 1 mm
 #   pattern.pdf          cover page with the page map, then A4 tiles with registration marks; scale square on every page
-#   (later: pieces.json, metrics.json and warnings.json; D-073 (6))
+# Later, as D-073 (6) says:
 #   pieces.json          geometry + metadata (FR-063)
 #   metrics.json         per-piece distortion summary (FR-021)
 #   warnings.json        everything unresolved, with its remedy (FR-064, FR-065)
@@ -54,6 +54,7 @@ openplush-cli pattern fixtures/meshes/capsule.obj \
 ### Check the things that matter
 
 ```sh
+# These two read metrics.json, which pattern writes later (D-073 (6)).
 # Seam parity is a hard contract now (D-013). This must print nothing.
 jq -e '.chains[] | select(.parity_error_mm > 1.0)' out/metrics.json && echo "PARITY VIOLATION" || echo "parity ok"
 
@@ -71,8 +72,8 @@ cmp out/pattern.svg out2/pattern.svg && echo "deterministic"
 The determinism CI job is this, for every fixture:
 
 ```sh
-openplush-cli          pattern "$f" --seams "$seams" -o native/
-node scripts/wasm-cli.mjs pattern "$f" --seams "$seams" -o wasm/
+openplush-cli          pattern "$f" --seams "$seams" --fabric fixtures/fabrics/woven.json --size-mm 300 -o native/
+node scripts/wasm-cli.mjs pattern "$f" --seams "$seams" --fabric fixtures/fabrics/woven.json --size-mm 300 -o wasm/
 cmp native/pattern.svg wasm/pattern.svg
 ```
 

@@ -251,6 +251,10 @@ fn export_carries_its_refusal_whole_and_locates_the_piece_it_names() {
         text: "\u{2192}".into(),
         character: '\u{2192}',
     });
+    assert_eq!(
+        unprintable.to_string(),
+        "\"\u{2192}\" has '\u{2192}', which is outside the Latin-1 the exports can print"
+    );
     assert!(unprintable.locations().pieces.is_empty());
 }
 

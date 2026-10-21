@@ -4,7 +4,10 @@
 //! positions in f64; a node that mirrors space has its triangles' winding reversed. Each
 //! drawn (node, triangle primitive) pair is one source primitive, numbered from 0 in walk
 //! order, so a mesh drawn twice is two. `vertex` is the index into that primitive's
-//! accessors. `TEXCOORD_0` gives the corner UVs; further sets count in `extra_uv_sets`.
+//! accessors. A primitive's material is its own `material`, none for glTF's default
+//! material; the names are the file's materials list in order, an unnamed one called
+//! `material N`. `TEXCOORD_0` gives the corner UVs; `extra_uv_sets` is the most sets
+//! beyond it on any drawn primitive.
 //! Normals, tangents and images are not read. Skins, morph targets, animations and point or
 //! line primitives are not applied: they are listed in [`Imported::ignored`].
 
@@ -231,10 +234,10 @@ impl Builder {
         }
         let names = doc
             .materials()
-            .map(|m| match (m.name(), m.index()) {
-                (Some(name), _) => name.to_owned(),
-                (None, Some(i)) => format!("material {i}"),
-                (None, None) => "default material".to_owned(),
+            .enumerate()
+            .map(|(i, m)| {
+                m.name()
+                    .map_or_else(|| format!("material {i}"), str::to_owned)
             })
             .collect();
         let uvs = self.has_uvs.then_some(self.uvs);

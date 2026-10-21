@@ -128,8 +128,8 @@ None. No new crate and no new dependency (S-001).
 
 Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 so triangulation keeps one primitive's corners under that primitive's number.
 
-- [ ] U014 [P] `crates/openplush-io/tests/source_materials.rs`: failing tests on U004 and U006. glTF: names in file order, one material per primitive, a primitive with no material (glTF's default material) maps to `None`, and `extra_uv_sets` counts `TEXCOORD_1` and up. OBJ: names from `usemtl` exactly as written (no trimming; matching trims later), faces before any `usemtl` map to `None`, and each `usemtl` change starts a new primitive even inside one group. `no-uv.obj` imports with no UVs and one material. The OBJ half can land now that T050 has merged; the glTF half waits for T051 — *OBJ half merged in #139; the glTF half waits for T051*
-- [ ] U015 needs:T051 `crates/openplush-io/src/obj/mod.rs`, `src/obj/parse.rs`, `src/gltf.rs`: fill `SourceMaterials` and `extra_uv_sets`. OBJ: name each primitive after the `usemtl` line that opened it (the reader already splits there, 001 D-034); no MTL file is read, because only the name is used. glTF: one material per primitive, after T051. Makes U014 pass — *OBJ half merged in #139; the glTF half waits for T051*
+- [x] U014 [P] `crates/openplush-io/tests/source_materials.rs`: failing tests on U004 and U006. glTF: names in file order, one material per primitive, a primitive with no material (glTF's default material) maps to `None`, and `extra_uv_sets` counts `TEXCOORD_1` and up. OBJ: names from `usemtl` exactly as written (no trimming; matching trims later), faces before any `usemtl` map to `None`, and each `usemtl` change starts a new primitive even inside one group. `no-uv.obj` imports with no UVs and one material — *OBJ half merged in #139; glTF half built in memory where no fixture has a material-less primitive or a `TEXCOORD_1`; it passed on arrival, since T051 (#308) already filled the table*
+- [x] U015 needs:T051 `crates/openplush-io/src/obj/mod.rs`, `src/obj/parse.rs`, `src/gltf/mod.rs`: fill `SourceMaterials` and `extra_uv_sets`. OBJ: name each primitive after the `usemtl` line that opened it (the reader already splits there, 001 D-034); no MTL file is read, because only the name is used. glTF: one material per primitive, after T051. Makes U014 pass — *OBJ half merged in #139; the glTF half came with T051's reader (#308) in `src/gltf/mod.rs`, as built in [openplush-io](../../docs/reference/crates/openplush-io.md)*
 
 **Checkpoint**: an imported fixture's `ManifoldMesh` names each face's material.
 
@@ -292,7 +292,7 @@ Lands after T050 and T051 merge, as its own 003 slice. Developed alongside T053 
 Phase 0 fixtures U001–U007; ADR U069 ─▶ spikes U008, U009, U011 (U010 answered by 001 D-034)
                                    │ Q1
 Phase 2  U012→U013 (mesh)          │
-         U014→U015 (io: OBJ now, glTF after T051)
+         U014→U015 (io: OBJ and glTF)
                                    ▼
 US1  U016,U017 → U018 (after U008) → U019 → U070→U071 → U020→U021 (after U009) → U022→U023, U025→U026 → U027→U028 → U029→U030 → U024 (after spec gap 1)
 US2  (after U021) U031→U032 → U033→U034 → U035→U036, U037, U038

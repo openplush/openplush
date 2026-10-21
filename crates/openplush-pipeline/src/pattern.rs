@@ -1,9 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use openplush_geom::units::Scale;
+use openplush_geom::units::{Mm, Scale};
 use openplush_mesh::{HalfEdgeId, ManifoldMesh, VertexId};
-use openplush_pattern::{CutCount, Fabric, Outline, PatternPiece, PieceId, allowance};
-use openplush_seams::{ChartMesh, SeamBundle, SewingMap};
+use openplush_pattern::{
+    CutCount, Fabric, Outline, PatternError, PatternPiece, PieceId, allowance, parity,
+};
+use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
 
 use crate::{EngineError, Parameterization, StageResult, Staged, WarningSet};
 
@@ -33,11 +35,17 @@ pub struct PatternOptions {
 /// line, counter-clockwise, and the cut line around it.
 ///
 /// # Errors
-/// `StageInputMismatch` when the layouts or the sewing map are not the charts' own; then, per
-/// chart in order, `Pattern` naming the piece when its sewing line or cut line is refused. No
-/// pieces are returned with an error.
+/// `StageInputMismatch` when the layouts or the sewing map are not the charts' own; then
+/// `SeamParity` for the first bundle, in lead-chain order, with a side whose flat length differs
+/// from its first side's, a flattener bug; then, per chart in order, `Pattern` naming the piece
+/// when its sewing line or cut line is refused. No pieces are returned with an error.
 pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<Vec<PatternPiece>> {
     check_input(input)?;
+    // Parity first: it checks the flattener's own postcondition, so a broken layout surfaces as
+    // the bug it is, not as an outline refusal asking the maker to change the model.
+    for bundle in input.sewing.bundles() {
+        check_parity(input, bundle, opts.scale)?;
+    }
     let value = input
         .charts
         .iter()
@@ -84,6 +92,72 @@ fn check_input(input: &PatternInput<'_>) -> Result<(), EngineError> {
         }
     }
     Ok(())
+}
+
+/// Every side of `bundle` has its first side's flat length, within the parity tolerance.
+fn check_parity(
+    input: &PatternInput<'_>,
+    bundle: &SeamBundle,
+    scale: Scale,
+) -> Result<(), EngineError> {
+    let mut sides = bundle.sides().iter();
+    let Some(first) = sides.next() else {
+        return Ok(());
+    };
+    let first = flat_length(input, first, scale)?;
+    for side in sides {
+        let other = flat_length(input, side, scale)?;
+        parity::check(bundle.chain(), first, other).map_err(|e| match e {
+            PatternError::SeamParity {
+                chain,
+                a,
+                b,
+                tolerance,
+            } => EngineError::SeamParity {
+                chain,
+                a_mm: a.get(),
+                b_mm: b.get(),
+                tolerance_mm: tolerance.get(),
+            },
+            other => EngineError::Pattern {
+                piece: None,
+                source: other,
+            },
+        })?;
+    }
+    Ok(())
+}
+
+/// `side`'s length in its chart's layout, summed in model units and converted once.
+fn flat_length(
+    input: &PatternInput<'_>,
+    side: &ChainSide,
+    scale: Scale,
+) -> Result<Mm, EngineError> {
+    let unmatched = EngineError::StageInputMismatch {
+        chart: side.chart(),
+    };
+    // INVARIANT: `check_input` found each side's chart among the charts, with its own layout at
+    // the same index and every half-edge on its faces; a miss is the mismatch it ruled out.
+    let c = input
+        .charts
+        .iter()
+        .position(|c| c.chart() == side.chart())
+        .ok_or_else(|| unmatched.clone())?;
+    let (chart, uv) = (&input.charts[c], input.layouts[c].uv());
+    let mut model = 0.0;
+    for &h in side.half_edges() {
+        let (a, b) = flat_side(input.mesh, chart, h).ok_or_else(|| unmatched.clone())?;
+        let (pa, pb) = (uv.get(a.index() as usize), uv.get(b.index() as usize));
+        let (Some(&pa), Some(&pb)) = (pa, pb) else {
+            return Err(unmatched);
+        };
+        model += (pb - pa).length();
+    }
+    scale.to_mm(model).map_err(|source| EngineError::Pattern {
+        piece: Some(PieceId::new(side.chart().index())),
+        source: PatternError::BadScale { source },
+    })
 }
 
 fn mismatch(chart: &ChartMesh) -> EngineError {

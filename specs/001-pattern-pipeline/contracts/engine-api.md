@@ -1,8 +1,8 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-18 | **Version**: 0.7 (draft) | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-21 | **Version**: 0.8 (draft) | **Status**: Draft contract
 
-*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built. 0.7 (2026-10-20) rewrites `flatten`: it takes the mesh, to name a dart's edges, and no `FlattenOptions`, and `BoundaryNotRealizable`'s residual is `residual`, in model units (D-068).
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built. 0.7 (2026-10-20) rewrites `flatten`: it takes the mesh, to name a dart's edges, and no `FlattenOptions`, and `BoundaryNotRealizable`'s residual is `residual`, in model units (D-068). 0.8 (2026-10-21) adds `size`, which returns the scale for the maker's finished size and warns outside 75 mm to 1000 mm (D-072 (5)).
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
@@ -54,6 +54,7 @@ pub fn direction_field(mesh: &ManifoldMesh, strokes: &[DirectionStroke]) -> Stag
 pub fn orient(charts: &[ChartMesh], params: &[Parameterization], field: &DirectionField, fabrics: &FabricAssignment) -> StageResult<Vec<GrainAngle>>;
 
 // ── Pattern ───────────────────────────────────────────────────────────────
+pub fn size(mesh: &ManifoldMesh, target: SizeTarget) -> StageResult<Scale>;   // raises size-out-of-range outside 75–1000 mm
 pub fn pattern(input: &PatternInput, opts: &PatternOptions) -> StageResult<Vec<PatternPiece>>;
 
 // ── Hints (feature 002) ───────────────────────────────────────────────────

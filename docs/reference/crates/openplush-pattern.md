@@ -40,7 +40,7 @@ Derived, never stored: `rotations_deg()` is `[0]` with a nap, else `[0, 90, 180,
 
 ### Sizing
 
-`scale::size(model_longest, target)` returns the `Scale` and a `SizeRange` (`Below`, `Within`, `Above`, against 75 mm to 1000 mm, both ends within) for a `SizeTarget`: `LongestDimension(Mm)`, judged on that length itself, or `Reference { model_length, finished }`, judged on the model's longest dimension once scaled. Out of range is a `SizeRange`, never an error; it refuses `BadModelLength { model_length }` (zero, negative or not finite) and `BadScale { source }` (a scale or finished length that is zero or not finite).
+`scale::size(model_longest, target)` returns the `Scale` and a `SizeRange` (`Below`, `Within`, `Above`, against 75 mm to 1000 mm, both ends within) for a `SizeTarget`: `LongestDimension(Mm)`, judged on that length itself, or `Reference { model_length, finished }`, judged on the model's longest dimension once scaled. The bounds are `scale::MIN_MM` and `scale::MAX_MM`. Out of range is a `SizeRange`, never an error; it refuses `BadModelLength { model_length }` (zero, negative or not finite) and `BadScale { source }` (a scale or finished length that is zero or not finite).
 
 ## Depends on
 

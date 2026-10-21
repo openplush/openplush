@@ -21,6 +21,10 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 | `validate(soup)` | function | `Staged<ValidationReport>`: every defect repair would meet, changing nothing; see [Stages](#stages) |
 | `repair(soup, plan)` | function | `StageResult<(ManifoldMesh, RepairReport)>`; see [Stages](#stages) |
 | `chart(mesh, seams)` | function | `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
+| `flatten(mesh, charts)` | function | `StageResult<Vec<Parameterization>>`; see [Stages](#stages) |
+| `Parameterization` | struct | One chart laid flat: `chart()` and `uv()`, one flat position per chart vertex |
+| `FlattenError` | re-export, enum, `#[non_exhaustive]` | From `openplush-flatten`: the refusal `EngineError::Flatten` carries. Its variants are the flattener's own |
+| `DVec2` | re-export | From `openplush-geom`: the type of a flat position in `Parameterization::uv` |
 | `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
 | `MeshError`, `MeshElement`, `HalfEdgeId`, `CornerArray`, `Counted`, `MaterialFault` | re-exports | From `openplush-mesh`: the refusal `EngineError::Mesh` carries and the types its variants name. Variants below |
 | `Warning`, `WarningSet`, `WarningCode`, `WarningTarget`, `Remedy`, `NonBlank` | types | The warning channel; see [Warnings](#warnings) |

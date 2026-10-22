@@ -39,6 +39,7 @@ Each section is in alphabetical order.
 - **Fixture**: a test model or data file under `fixtures/`, such as a mesh, a model with exactly one repair defect, or a reference seam set. A *golden* fixture is a stage's expected output, and a pull request that changes one is [tier B](../how-to/review-and-merge.md#tiers). What each folder holds, and how the files are generated: [the fixtures README](https://github.com/openplush/openplush/blob/main/fixtures/README.md).
 - **Grant**, or **standing authorization**: a time-boxed permission the maintainer gives a [factory](#process) run as one argument (hours, features, merge, paths, decisions); one that allows merging lets the run merge a [tier H](#process) pull request the merge gate shows ready but for its tier ([Standing authorizations](../explanation/agents.md#standing-authorizations), [ADR 0020](../adr/0020-factory-grants.md)).
 - **Plan**: a feature's `plan.md`: how it will be built, with the architecture, the technology choices, the decision ledger and the order of work.
+- **Review finding**: one comment from the automated review, marked 🔴 blocking (fixed, or answered with why it stands), 🟡 optional, or 🟣 pre-existing (there before the pull request, needing nothing) ([Get a pull request reviewed and merged](../how-to/review-and-merge.md)).
 - **Spec**: a feature's `spec.md`: what the feature does and why, as user stories, numbered requirements and success criteria, with no technology choices.
 - **Stack position**: the `NN` in a branch named `NNN/NN-slug`: a pull request's place in its feature's sequence, assigned when the pull request opens and never reused ([Name the branch and stack it](../how-to/pull-requests.md#3-name-the-branch-and-stack-it)).
 - **Steward**: the procedure an agent follows to drive a pull request through CI, review findings, stacks and merges ([the steward skill](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md)).
@@ -48,10 +49,11 @@ Each section is in alphabetical order.
 
 ### ID prefixes
 
-Each feature numbers its own tasks and decisions with its own letter, so an ID names its feature. Spec IDs (`FR-`, `SC-`, `US`, `P`) restart in every feature: say which feature, as in "001 FR-023".
+Each feature numbers its own tasks and decisions with its own letter, so an ID names its feature. Spec IDs (`FR-`, `SC-`, `US`, `P`) restart in every feature: say which feature, as in "001 FR-023". A number in brackets after an ID names one numbered item inside it: D-066 (9) is item 9 of decision D-066.
 
 | Prefix | Example | What it names | Feature | Defined in |
 |---|---|---|---|---|
+| `#` | #241 | A pull request or issue | All | GitHub |
 | `ADR` | ADR 0013 | An architecture decision record | All | `docs/adr/` |
 | `D-` | D-013 | A decision | 001 | `plan.md`, Decision Ledger |
 | `FR-` | FR-023 | A functional requirement | Each | `spec.md` |

@@ -9,8 +9,9 @@ pub struct Imported {
     pub ignored: Vec<Ignored>,
 }
 
-/// Something in the file that the soup does not carry. Indices are the file's own.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// Something in the file that the soup does not carry. glTF parts are named by the file's
+/// own indices, FBX parts by the names of the file's objects.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Ignored {
     /// A skinned node, read in its bind pose.
     Skin {
@@ -37,5 +38,25 @@ pub enum Ignored {
         mesh: u32,
         /// Its index in the mesh.
         primitive: u32,
+    },
+    /// An FBX deformer (a skin, a blend shape) on a drawn mesh, read in the rest pose.
+    Deformer {
+        /// The model drawing the mesh.
+        model: String,
+        /// The deformer.
+        deformer: String,
+    },
+    /// An FBX animation stack, not played.
+    AnimationStack {
+        /// The stack.
+        stack: String,
+    },
+    /// FBX geometry on a drawn model that is not a polygon mesh (a curve, a NURBS
+    /// surface), not drawn.
+    Geometry {
+        /// The model.
+        model: String,
+        /// The geometry.
+        geometry: String,
     },
 }

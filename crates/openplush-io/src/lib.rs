@@ -1,7 +1,8 @@
-//! Bytes to `TriangleSoup`: OBJ, glTF, STL, PLY.
+//! Bytes to `TriangleSoup`: OBJ, glTF, FBX, STL, PLY.
 
 mod affine;
 mod error;
+pub mod fbx;
 pub mod gltf;
 mod imported;
 pub mod obj;
@@ -27,6 +28,8 @@ pub enum Format {
     Stl,
     /// PLY, ASCII or binary.
     Ply,
+    /// FBX 7.x, binary.
+    Fbx,
 }
 
 impl Format {
@@ -38,6 +41,7 @@ impl Format {
             Self::Glb => "GLB",
             Self::Stl => "STL",
             Self::Ply => "PLY",
+            Self::Fbx => "FBX",
         }
     }
 }

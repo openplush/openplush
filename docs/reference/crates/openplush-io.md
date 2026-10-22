@@ -6,7 +6,7 @@ What `openplush-io` contains **today**, and what it actually depends on. What it
 
 ## Public items
 
-`Format` (OBJ, glTF, GLB, STL, PLY, FBX); `IoError` (`Parse`, `NonFiniteInput`, `MissingResource`, `Mesh`), deliberately not `#[non_exhaustive]`, so the pipeline's mapping to `EngineError` must name every variant and a new one fails to compile there.
+`Format` (OBJ, glTF, GLB, STL, PLY, FBX); `IoError` (`Parse`, `NonFiniteInput`, `MissingResource`, `Mesh`), deliberately not `#[non_exhaustive]`, so the pipeline's mapping to `EngineError` must name every variant and a new one fails to compile there; `Imported`, a scene reader's soup with the `Ignored` parts it read and did not apply (`Skin`, `MorphTargets`, `Animation`, `Primitive`, `Deformer`, `AnimationStack`, `Geometry`), returned by both `gltf` and `fbx`.
 
 ### glTF and GLB
 

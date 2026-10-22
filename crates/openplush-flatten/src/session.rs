@@ -24,19 +24,20 @@ pub enum Progress {
     Done,
 }
 
-/// One chart's flatten in progress.
-pub struct FlattenSession<'a> {
-    solve: Solve<'a>,
+/// One chart's flatten in progress, owning the chart's faces so a caller can hold it between
+/// steps.
+pub struct FlattenSession {
+    solve: Solve,
     done: bool,
 }
 
-impl<'a> FlattenSession<'a> {
+impl FlattenSession {
     /// Prescribes the boundary and fills the interior; the first `step` iterates from there.
     /// `faces` index `xyz`.
     pub fn new(
         chart: ChartId,
         xyz: &[DVec3],
-        faces: &'a [(FaceId, [VertexId; 3])],
+        faces: Vec<(FaceId, [VertexId; 3])>,
     ) -> Result<Self, FlattenError> {
         Ok(Self {
             solve: Solve::start(chart, xyz, faces)?,

@@ -1,8 +1,8 @@
 # Contract: `openplush-pipeline` public API
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-21 | **Version**: 0.8 (draft) | **Status**: Draft contract
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-22 | **Version**: 0.9 (draft) | **Status**: Draft contract
 
-*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built. 0.7 (2026-10-20) rewrites `flatten`: it takes the mesh, to name a dart's edges, and no `FlattenOptions`, and `BoundaryNotRealizable`'s residual is `residual`, in model units (D-068). 0.8 (2026-10-21) adds `size`, which returns the scale for the maker's finished size and warns outside 75 mm to 1000 mm, and rewrites `export_svg` and `export_pdf`: each takes one sheet and its pieces, the PDF its paper, and both print the warnings (D-072 (5), (7)).
+*Changes*: 0.1 (2026-10-13) initial. 0.2 (2026-10-14) adds section 6a, the project document re-export (D-020). 0.3 (2026-10-14) defines `Proposal` and the element IDs (data-model §13a), removes `Unsewable` (nothing produced it), adds `ProposalNotOffered`, and gives `BoundaryNotRealizable` the dart proposals its remedy promises (D-022). 0.4 (2026-10-14) adds `NonFiniteInput`: a NaN/∞ coordinate fails import, located, instead of being dropped (D-021). 0.5 (2026-10-14) marks sections 1 and 5 as built: the code and `docs/reference/engine-api.md` are now their source of truth, and these sections stop changing (ADR 0003, D-023). Editorial; no signature changes. 0.6 (2026-10-18) changes the `import` signature: it takes an `ImportFiles` set instead of one byte buffer, so a `.gltf`'s buffers and an OBJ's sidecars can be carried (D-038). `MissingResource` joins the §5 error enum with the task that implements it, in `docs/reference/`, since §5 is built. 0.7 (2026-10-20) rewrites `flatten`: it takes the mesh, to name a dart's edges, and no `FlattenOptions`, and `BoundaryNotRealizable`'s residual is `residual`, in model units (D-068). 0.8 (2026-10-21) adds `size`, which returns the scale for the maker's finished size and warns outside 75 mm to 1000 mm, and rewrites `export_svg` and `export_pdf`: each takes one sheet and its pieces, the PDF its paper, and both print the warnings (D-072 (5), (7)). 0.9 (2026-10-22) rewrites §3 and §4's session and stepping: the `Pipeline` steps the flatten crate's per-chart session one chart at a time, instead of a multi-chart `FlattenSession`, remembers each chart's layout by its content, keeps a chart's refusal until the seams change, and `set_seams` returns the charts it replaced (D-069 (1)–(3)).
 
 The single surface every shell depends on (Constitution I). `bindings/openplush-cli`, `bindings/openplush-wasm`, and later `bindings/openplush-py` may import `openplush-pipeline` and **nothing else** from `crates/`. The project document API is part of this surface as a re-export, `openplush_pipeline::project` (D-020), so saving and loading a project needs no second dependency. A CI check over `cargo metadata` enforces this.
 
@@ -73,40 +73,37 @@ pub fn export_pdf(sheet: &Sheet, pieces: &[PatternPiece], paper: Paper, warnings
 
 ## 3. Sessions (long-running stages)
 
-WASM is single-threaded in v0.1, so `flatten` must be able to yield.
+WASM is single-threaded in v0.1, so flattening must be able to yield. `openplush-flatten`'s `FlattenSession` lays one chart flat a step at a time and owns its chart's arrays; the `Pipeline` (§4) holds at most one and steps it.
 
 ```rust
-pub struct FlattenSession { /* opaque */ }
-
-impl FlattenSession {
-    pub fn new(charts: &[ChartMesh], opts: &FlattenOptions) -> Result<Self, EngineError>;
-    pub fn step(&mut self) -> Result<Progress, EngineError>;
-    pub fn cancel(self);
-    pub fn finish(self) -> StageResult<Vec<Parameterization>>;
-}
-
 pub enum Progress {
-    Working { chart: usize, iteration: u32, max_distortion: f64 },
+    Working { chart: ChartId, iteration: u32, energy: f64 },
+    ChartDone { chart: ChartId },
     Done,
 }
 ```
 
-`step()` performs a bounded amount of work and returns. The caller decides when to yield to the event loop. Cancellation is cooperative and leaves no partial output — there is no way to obtain a half-flattened `Parameterization`.
+Each `flatten_step()` performs a bounded amount of work and returns. The caller decides when to yield to the event loop. Dropping the `Pipeline`, or a seam change, cancels the session in progress and leaves no partial output — there is no way to obtain a half-flattened `Parameterization`.
 
 ## 4. Incremental recompute
 
 ```rust
-pub struct Pipeline { /* opaque; memoizes by content hash */ }
+pub struct Pipeline { /* opaque; memoizes each chart's flatten by content hash */ }
 
 impl Pipeline {
     pub fn new(mesh: ManifoldMesh) -> Self;
-    pub fn set_seams(&mut self, seams: SeamSet);       // invalidates affected charts only (FR-014)
+    pub fn set_seams(&mut self, seams: &SeamSet) -> Vec<ChartId>; // the charts whose content is new (FR-014)
+    pub fn charts(&self) -> &StageResult<(Vec<ChartMesh>, SewingMap)>;
+    pub fn flatten_step(&mut self) -> Result<Progress, EngineError>;
+    pub fn parameterizations(&mut self) -> StageResult<Vec<Parameterization>>;
     pub fn set_scale(&mut self, scale: Scale);         // invalidates `pattern` onward only
     pub fn set_shrink(&mut self, pct: f64);            // same (FR-056, uniform — D-012)
     pub fn set_fabrics(&mut self, a: FabricAssignment);
     pub fn pieces(&mut self) -> StageResult<&[PatternPiece]>;
 }
 ```
+
+`set_seams` re-runs the chart stage, which is linear in the faces and not cached. A chart's layout is filed under a 64-bit FNV-1a of its cut-open `ChartMesh` and reused only for a chart equal to the one it was made for, so a hash collision costs a recompute, never a wrong layout; layouts for charts the current seams no longer make are dropped. `flatten_step` advances the lowest-ID chart without a layout and is `Done` when every chart has one; `parameterizations` runs the rest to the end. A chart's refusal is kept: every later `flatten_step` and `parameterizations` returns it, retrying nothing and stepping no other chart, until the next `set_seams`. `set_scale`, `set_shrink`, `set_fabrics` and `pieces` land with the pattern-stage tasks that read them (D-069 (5)).
 
 Scale and shrink are uniform factors applied at the pattern stage, so neither re-runs flattening. That is the practical payoff of keeping shrink compensation uniform (D-012, D-014).
 

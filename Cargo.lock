@@ -887,6 +887,7 @@ dependencies = [
  "openplush-pattern",
  "openplush-seams",
  "openplush-testkit",
+ "proptest",
  "thiserror",
 ]
 

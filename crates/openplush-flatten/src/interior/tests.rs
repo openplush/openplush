@@ -21,7 +21,7 @@ fn flatten(
     xyz: &[DVec3],
     faces: &[(FaceId, [VertexId; 3])],
 ) -> Result<Vec<(VertexId, DVec2)>, FlattenError> {
-    let mut solve = Solve::start(chart, xyz, faces)?;
+    let mut solve = Solve::start(chart, xyz, faces.to_vec())?;
     while solve.iterate()? == Step::Improved {}
     Ok(solve.layout())
 }
@@ -98,7 +98,7 @@ fn a_hemisphere_pinned_to_its_boundary_settles_near_the_s7_energy() -> Result<()
 #[test]
 fn the_energy_never_rises_and_no_iterate_flips_a_face() -> Result<(), FlattenError> {
     let (xyz, f) = hemisphere();
-    let mut solve = Solve::start(CHART, &xyz, &f)?;
+    let mut solve = Solve::start(CHART, &xyz, f.clone())?;
     let mut last = solve.energy();
     let mut iterations = 0;
     loop {
@@ -123,7 +123,7 @@ fn the_energy_never_rises_and_no_iterate_flips_a_face() -> Result<(), FlattenErr
 #[test]
 fn a_settled_solve_stays_settled_and_unchanged() -> Result<(), FlattenError> {
     let (xyz, f) = half_cylinder();
-    let mut solve = Solve::start(CHART, &xyz, &f)?;
+    let mut solve = Solve::start(CHART, &xyz, f.clone())?;
     while solve.iterate()? == Step::Improved {}
     let before = solve.layout();
     assert_eq!(solve.iterate()?, Step::Settled);
@@ -287,7 +287,7 @@ fn the_iteration_cap_settles_the_solve_on_that_iteration_and_no_later_one_moves_
 -> Result<(), FlattenError> {
     let (xyz, f) = hemisphere();
     for cap in [1, 2] {
-        let mut solve = Solve::start(CHART, &xyz, &f)?;
+        let mut solve = Solve::start(CHART, &xyz, f.clone())?;
         let start = solve.energy();
         solve.cap = cap;
         for _ in 1..cap {
@@ -305,7 +305,7 @@ fn the_iteration_cap_settles_the_solve_on_that_iteration_and_no_later_one_moves_
 #[test]
 fn the_solve_keeps_going_until_the_gain_is_negligible() -> Result<(), FlattenError> {
     let (xyz, f) = hemisphere();
-    let mut solve = Solve::start(CHART, &xyz, &f)?;
+    let mut solve = Solve::start(CHART, &xyz, f.clone())?;
     assert_eq!(solve.iterate()?, Step::Improved);
     let after_one = solve.energy();
     while solve.iterate()? == Step::Improved {}

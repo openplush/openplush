@@ -47,7 +47,7 @@ This amends [ADR 0019](0019-spec-maintenance-model.md) by one exception: its rul
 
 ### Confirmation
 
-`scripts/check.sh` fails on a task line or ledger row in any other form (task F017). The rename's pull request carries a script run that resolves every bare `T` and `D-` in a feature's files to that feature (task F016).
+Task F017 makes `scripts/check.sh` fail on a task line or ledger row in any other form. The rename's pull request (task F016) will carry a script run that resolves every bare `T` and `D-` in a feature's files to that feature.
 
 ## Pros and cons of the options
 

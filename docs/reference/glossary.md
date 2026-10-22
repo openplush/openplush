@@ -49,7 +49,7 @@ Each section is in alphabetical order.
 
 ### ID prefixes
 
-Each feature numbers its own tasks and decisions with its own letter, so an ID names its feature. Spec IDs (`FR-`, `SC-`, `US`, `P`) restart in every feature: say which feature, as in "001 FR-023". A number in brackets after an ID names one numbered item inside it: D-066 (9) is item 9 of decision D-066.
+[ADR 0021](../adr/0021-one-id-scheme.md) sets one scheme for every feature: tasks are `T`, decisions `D-`, and a spike is named by its task. The table lists the prefixes the specs carry until that rename lands, each feature with its own letter. Spec IDs (`FR-`, `SC-`, `US`, `P`) restart in every feature: say which feature, as in "001 FR-023". A number in brackets after an ID names one numbered item inside it: D-066 (9) is item 9 of decision D-066.
 
 | Prefix | Example | What it names | Feature | Defined in |
 |---|---|---|---|---|

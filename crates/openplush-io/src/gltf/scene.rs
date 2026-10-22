@@ -3,6 +3,7 @@
 use ::gltf::scene::Transform;
 use ::gltf::{Document, Node};
 use openplush_geom::DVec3;
+use openplush_geom::epsilon::UNIT_QUATERNION_TOLERANCE;
 
 /// A 4x4 transform in column-major order, `m[column][row]`, as glTF stores it.
 pub(super) type Mat = [[f64; 4]; 4];
@@ -33,7 +34,7 @@ pub(super) fn walk(doc: &Document) -> Result<Vec<(Node<'_>, Mat)>, String> {
                 node.index()
             ));
         }
-        let world = mul(&parent, &local(&node));
+        let world = mul(&parent, &local(&node)?);
         let first = stack.len();
         stack.extend(node.children().map(|c| (c, world)));
         stack[first..].reverse();
@@ -42,18 +43,25 @@ pub(super) fn walk(doc: &Document) -> Result<Vec<(Node<'_>, Mat)>, String> {
     Ok(out)
 }
 
-fn local(node: &Node<'_>) -> Mat {
+/// The node's own transform. A `matrix` is read as written, since it may scale on purpose.
+fn local(node: &Node<'_>) -> Result<Mat, String> {
     match node.transform() {
-        Transform::Matrix { matrix } => matrix.map(|column| column.map(f64::from)),
+        Transform::Matrix { matrix } => Ok(matrix.map(|column| column.map(f64::from))),
         Transform::Decomposed {
             translation,
             rotation,
             scale,
-        } => trs(
-            translation.map(f64::from),
-            rotation.map(f64::from),
-            scale.map(f64::from),
-        ),
+        } => {
+            let q = rotation.map(f64::from);
+            let squared: f64 = q.iter().map(|c| c * c).sum();
+            if (squared - 1.0).abs() > UNIT_QUATERNION_TOLERANCE {
+                return Err(format!(
+                    "node {}: the rotation {rotation:?} is not a unit quaternion (its squared length is {squared})",
+                    node.index()
+                ));
+            }
+            Ok(trs(translation.map(f64::from), q, scale.map(f64::from)))
+        }
     }
 }
 

@@ -77,4 +77,4 @@ What enforces it (004, Phase 8):
 
 ## More information
 
-Builds on ADR 0003. Decisions: W-016 (generated, not `mdbook-cmdrun`), W-017 (exceptions file) in `specs/004-docs-site/plan.md`. Accepted by the maintainer on 2026-10-21. Revisit if the exceptions file grows past a handful of lines.
+Builds on ADR 0003. Decisions: W-016 (generated, not `mdbook-cmdrun`), W-017 (exceptions file) in `specs/004-docs-site/plan.md`. Accepted by the maintainer on 2026-10-21. Revisit if the exceptions file grows past a handful of lines. Amended by [ADR 0021](0021-one-id-scheme.md): the one-time ID rename is an exception to specs stopping once their code lands.

@@ -45,6 +45,11 @@ pub const FOLD_ANGLE: f64 = 5.0 * core::f64::consts::PI / 180.0;
 /// angle a swap is meant to fix.
 pub const DELAUNAY_COT: f64 = 1e-9;
 
+/// A rotation quaternion is unit when its squared length is within this of 1. Dimensionless.
+/// A writer's f32 normalisation leaves about 1e-7; a rotation further off is not orthogonal
+/// and would scale and shear the geometry, and normalising it would change what the file says.
+pub const UNIT_QUATERNION_TOLERANCE: f64 = 1e-6;
+
 /// Model-space tolerances for one model, derived from its bounding-box diagonal.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ModelTolerances {

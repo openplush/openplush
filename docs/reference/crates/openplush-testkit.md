@@ -1,6 +1,6 @@
 # openplush-testkit
 
-<!-- index: the test fixtures loader and the independent oracles tests check results against. -->
+<!-- index: the test fixtures loader, binary FBX test files built in code, and the independent oracles tests check results against. -->
 
 What `openplush-testkit` contains **today**, and what it actually depends on. Dev-dependency only.
 
@@ -9,6 +9,10 @@ What `openplush-testkit` contains **today**, and what it actually depends on. De
 ### Fixtures
 
 `fixtures`: `load(Kind, name)` returns a fixture's bytes, `names(Kind)` lists every fixture of a kind sorted, and `FixtureError` covers a bad name, a missing file, an entry that is not a file and a read error. Kinds: `Mesh` (`fixtures/meshes/*.obj`), `Defect` (`fixtures/defects/*.obj`), `Seams` (`fixtures/seams/*.json`).
+
+### FBX test files
+
+`fbx`: binary FBX 7.4 files built in code, written with `fbxcel`'s writer, arrays zlib-compressed as exporters write them. `Scene` holds `GlobalSettings` properties (`axes` sets the axis system), objects and object-to-object connections (`connect`, 0 the document's root), and `bytes()` writes it; `binary(top)` writes any top-level `Node`s. `object`, `model`, `mesh`, `material`, `layer`, `properties`, `vector` and `int` build the nodes as FBX lays them out.
 
 ### Oracles
 
@@ -27,4 +31,4 @@ Each reports an `OracleFailure`, which names the face, edge or lengths involved 
 
 ## Depends on
 
-`openplush-geom`, `openplush-mesh`, `thiserror`
+`openplush-geom`, `openplush-mesh`, `thiserror`, `fbxcel` (`writer` only)

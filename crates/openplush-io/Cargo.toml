@@ -1,6 +1,6 @@
 [package]
 name = "openplush-io"
-description = "Bytes to TriangleSoup: OBJ, glTF, STL, PLY"
+description = "Bytes to TriangleSoup: OBJ, glTF, FBX, STL, PLY"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,6 +14,8 @@ openplush-mesh = { path = "../openplush-mesh" }
 thiserror = "2.0.21"
 base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
 gltf = { version = "1.4.1", default-features = false, features = ["names"] }
+fbxcel = { version = "0.9.0", default-features = false }
+libm = "0.2.16"
 
 [dev-dependencies]
 openplush-testkit = { path = "../openplush-testkit" }

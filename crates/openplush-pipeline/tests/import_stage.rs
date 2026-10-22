@@ -94,8 +94,8 @@ fn a_name_without_an_extension_is_an_unknown_format() {
 }
 
 #[test]
-fn a_type_with_no_reader_yet_is_an_unknown_format() {
-    for name in ["tri.fbx", "tri.3ds", "tri.obj.zip", "tri.gltf.bak"] {
+fn a_type_with_no_reader_is_an_unknown_format() {
+    for name in ["tri.3ds", "tri.obj.zip", "tri.gltf.bak", "tri.fbx.bak"] {
         assert_eq!(
             import(&only(name, TRIANGLE_OBJ)),
             Err(EngineError::UnknownFormat { name: name.into() }),

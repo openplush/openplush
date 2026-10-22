@@ -1,6 +1,6 @@
 [package]
 name = "openplush-testkit"
-description = "Dev-dependency only: fixture loader, oracles, golden compare"
+description = "Dev-dependency only: fixture loader, oracles, FBX test files, golden compare"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,6 +12,7 @@ publish = false
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
 thiserror = "2.0.21"
+fbxcel = { version = "0.9.0", default-features = false, features = ["writer"] }
 
 [lints]
 workspace = true

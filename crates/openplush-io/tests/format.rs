@@ -10,9 +10,10 @@ fn every_format_has_a_stable_name() {
         Format::Glb,
         Format::Stl,
         Format::Ply,
+        Format::Fbx,
     ]
     .iter()
     .map(|f| f.name())
     .collect();
-    assert_eq!(names, ["OBJ", "glTF", "GLB", "STL", "PLY"]);
+    assert_eq!(names, ["OBJ", "glTF", "GLB", "STL", "PLY", "FBX"]);
 }

@@ -201,6 +201,29 @@ mod tests {
     }
 
     #[test]
+    fn each_kind_of_skipped_fbx_part_is_named() {
+        assert_eq!(
+            ignored_text(&[
+                Ignored::Deformer {
+                    model: "Body".into(),
+                    deformer: "Smile".into(),
+                },
+                Ignored::Geometry {
+                    model: "Body".into(),
+                    geometry: "Guide".into(),
+                },
+                Ignored::AnimationStack {
+                    stack: "Walk".into(),
+                },
+            ]),
+            "The file has parts the pattern does not follow: the deformer \"Smile\" on model \
+             \"Body\", read in its rest pose; the geometry \"Guide\" on model \"Body\", which is \
+             not a polygon mesh; animation stack \"Walk\", not played. The pattern is made from \
+             the triangles as modelled."
+        );
+    }
+
+    #[test]
     fn a_soup_the_mesh_crate_refuses_is_mesh_carrying_that_refusal() {
         let refused = MeshError::IndexOutOfRange {
             triangle: FaceId::new(4),

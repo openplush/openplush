@@ -38,6 +38,9 @@ One intent per PR, test commit before implementation commit, interdependent inte
 | **F002** ledger layout | A decision; its layout change touches every feature's plan |
 | **F003**, **F004** factory skill | Each changes how every unattended run behaves; read alone |
 | **F005** attribution check | A new CI gate; its blast radius is every PR |
+| **F014** ADR 0021 | A decision the maintainer accepts before the work that applies it |
+| **F016** the rename | Touches every feature's spec files; lands while no open PR edits 002 to 005, and read alone |
+| **F017** the scheme checks | Changes what the status page counts; its blast radius is every `tasks.md` |
 
 ---
 
@@ -78,10 +81,18 @@ One intent per PR, test commit before implementation commit, interdependent inte
 
 - [x] F013 [US7] Generate the folder index lists, as 004's W044 does; the ledger stays as it is (F-003). needs:W044. As built: W044 (#354) generates them; nothing else to apply
 
+## Phase 8: Status reads without decoding IDs (US8)
+
+- [x] F014 [US8] `docs/adr/0021-one-id-scheme.md`, MADR: one ID scheme in every feature, renamed in place, spike numbers retired, the alias rule for IDs in history, and the one exception to ADR 0019; the options measured against the prefixes in use. (F-005) As built: accepted by the maintainer on 2026-10-22; listed in `docs/SUMMARY.md`
+- [ ] F015 [P] [US8] `AGENTS.md` (Comments and prose: one bullet), `.claude/skills/factory/SKILL.md` (Ledger, Handoff and stop-reason templates: words first, linked IDs; no task ID in branch names), `.claude/skills/steward/SKILL.md` (finding answers and handoffs), `.github/pull_request_template.md` (the Tasks example), and a link from `docs/how-to/write-docs.md`'s process-ID rule: the status-prose rule (F-006, FR-018). A worked example in the PR body: the last firing comment on #241 rewritten. Check by hand before merging whether a GitHub search for `"001 T084"` returns only 001's PRs; if not, the factory's readiness check searches the task's branch instead. needs:F014
+- [ ] F016 [US8] The rename (F-005, FR-019, FR-020): in 002 to 005, qualify every reference to another feature's ID with its feature first, then rename tasks to `T` and decisions to `D-`, one commit per feature; retire spike labels in 001 to 003 in favour of their task IDs; drop spike IDs from `research/` folder names and their references, and IDs from research code comments; update ADRs, `docs/` and `scripts/tests/` references; the glossary's ID table gets one row per kind and the alias rule. Verified by a one-off script, given in the PR body, that every bare `T` and `D-` in a feature's files resolves to that feature. needs:F014
+- [ ] F017 [US8] `scripts/tests/gen-status.test.sh`, `scripts/tests/report-tick-lag.test.sh`, `scripts/tests/check-hygiene.test.sh`, `scripts/tests/check-docs-plain.test.sh` then their scripts: a task line is counted only as `T`, and a task line or ledger row in another form fails `scripts/check.sh` naming it (FR-021); the hygiene and maker-page checks match the current scheme. needs:F016
+
 ## Dependencies and execution order
 
 - Phase 0 is drafted now and accepted by the maintainer; Phases 6 and 7 wait on it.
 - Phases 1–5 are independent of each other except F004, which edits the same skill after F003.
+- Phase 8 starts after F014 is accepted; F015 and F016 are independent, F017 follows F016 so its checks pass on the renamed tree.
 - 004's W043 (glossary terms) lands beside F010; neither waits on the other.
 
 ## Parallel opportunities

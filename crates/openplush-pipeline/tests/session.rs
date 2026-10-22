@@ -170,6 +170,12 @@ fn steps_flatten_the_lowest_chart_without_a_layout_first_and_are_done_only_after
     assert!(all.contains(&Progress::ChartDone {
         chart: ChartId::new(0)
     }));
+    assert!(
+        !all.contains(&Progress::ChartDone {
+            chart: ChartId::new(6)
+        }),
+        "the step that lays the last chart flat is Done: {all:?}"
+    );
     assert_eq!(pipeline.flatten_step()?, Progress::Done, "Done stays Done");
     let (charts, _) = chart(&mesh, &seams)?.value;
     assert_eq!(

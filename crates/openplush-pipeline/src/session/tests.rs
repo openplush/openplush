@@ -13,7 +13,7 @@ use openplush_seams::{ChartMesh, SeamKind, SeamSet};
 
 use self::grid::{Setup, bumpy, column_cut, mesh_of, seam, tetra_cut, tetrahedron_then_grid};
 use super::memo::{Memo, key};
-use super::{Pipeline, Stepping};
+use super::{Pipeline, Stepping, fresh};
 use crate::{ChartId, EngineError, FlattenError, Parameterization};
 
 fn halves() -> Result<(Pipeline, SeamSet), Setup> {
@@ -68,6 +68,50 @@ fn a_seam_change_carries_over_only_entries_whose_content_matches() -> Result<(),
     assert_eq!(pipeline.memo.len(), 2);
     pipeline.set_seams(&seams);
     assert_eq!(pipeline.memo.len(), 1, "only chart 0's own entry is kept");
+    Ok(())
+}
+
+#[test]
+fn a_seam_change_keeps_a_charts_own_entry_and_drops_others_filed_beside_it() -> Result<(), Setup> {
+    let (mut pipeline, seams) = halves()?;
+    let reference = pipeline.parameterizations()?.value;
+    let [left, right] = &charts(&pipeline)[..] else {
+        panic!("two charts");
+    };
+    let (left, right) = (left.clone(), right.clone());
+    pipeline.memo = Memo::default();
+    pipeline
+        .memo
+        .insert(key(&right), left.clone(), reference[0].uv().to_vec());
+    pipeline
+        .memo
+        .insert(key(&right), right, reference[1].uv().to_vec());
+    pipeline
+        .memo
+        .insert(key(&left), left, reference[0].uv().to_vec());
+    pipeline.set_seams(&seams);
+    assert_eq!(
+        pipeline.memo.len(),
+        2,
+        "each chart's own entry, and no other"
+    );
+    Ok(())
+}
+
+#[test]
+fn a_chart_is_fresh_when_only_its_key_matches_an_old_charts() -> Result<(), Setup> {
+    let (pipeline, _) = halves()?;
+    let [left, right] = &charts(&pipeline)[..] else {
+        panic!("two charts");
+    };
+    let collided = key(right);
+    let named = fresh(
+        std::slice::from_ref(left),
+        &[collided],
+        std::slice::from_ref(right),
+        &[collided],
+    );
+    assert_eq!(named, vec![right.chart()]);
     Ok(())
 }
 

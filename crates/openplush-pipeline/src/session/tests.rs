@@ -170,6 +170,23 @@ fn fnv1a(bytes: &[u8]) -> u64 {
     })
 }
 
+/// A chart's key bytes, written out independently of the session's own.
+fn key_bytes(chart: &ChartMesh) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    for (face, corners) in chart.faces() {
+        bytes.extend(face.index().to_le_bytes());
+        for v in corners {
+            bytes.extend(v.index().to_le_bytes());
+        }
+    }
+    for p in chart.xyz() {
+        for c in [p.x, p.y, p.z] {
+            bytes.extend(c.to_bits().to_le_bytes());
+        }
+    }
+    bytes
+}
+
 #[test]
 fn the_key_is_fnv1a_over_face_ids_and_corners_then_positions() -> Result<(), Setup> {
     let mesh = mesh_of("v 0 0 0\nv 3 0 0\nv 0 4 0.5\nf 1 2 3\n")?;
@@ -177,19 +194,51 @@ fn the_key_is_fnv1a_over_face_ids_and_corners_then_positions() -> Result<(), Set
     let [one] = &charts(&pipeline)[..] else {
         panic!("one chart");
     };
-    let mut bytes = Vec::new();
-    for (face, corners) in one.faces() {
-        bytes.extend(face.index().to_le_bytes());
-        for v in corners {
-            bytes.extend(v.index().to_le_bytes());
-        }
-    }
-    for p in one.xyz() {
-        for c in [p.x, p.y, p.z] {
-            bytes.extend(c.to_bits().to_le_bytes());
-        }
-    }
-    assert_eq!(bytes.len(), 16 + 3 * 24);
-    assert_eq!(key(one), fnv1a(&bytes));
+    assert_eq!(key_bytes(one).len(), 16 + 3 * 24);
+    assert_eq!(key(one), fnv1a(&key_bytes(one)));
     Ok(())
+}
+
+#[test]
+fn the_key_writes_face_ids_little_endian() -> Result<(), Setup> {
+    let (pipeline, _) = halves()?;
+    let charts = charts(&pipeline);
+    // The right half's faces have IDs above 0, whose bytes differ between byte orders.
+    let right = charts
+        .iter()
+        .find(|c| c.chart().index() > 0)
+        .expect("right half");
+    assert_eq!(key(right), fnv1a(&key_bytes(right)));
+    Ok(())
+}
+
+#[test]
+fn working_reports_the_flatten_sessions_own_iteration_and_energy() -> Result<(), Setup> {
+    let (mut pipeline, _) = halves()?;
+    let first = charts(&pipeline).swap_remove(0);
+    let mut bare =
+        openplush_flatten::FlattenSession::new(first.chart(), first.xyz(), first.faces().to_vec())
+            .expect("session");
+    loop {
+        let bare_step = bare.step().expect("bare step");
+        let step = pipeline.flatten_step().expect("step");
+        match (bare_step, step) {
+            (
+                openplush_flatten::Progress::Working { iteration, energy },
+                super::Progress::Working {
+                    chart,
+                    iteration: i,
+                    energy: e,
+                },
+            ) => {
+                assert_eq!(chart, first.chart());
+                assert_eq!((i, e.to_bits()), (iteration, energy.to_bits()));
+            }
+            (openplush_flatten::Progress::Done, super::Progress::ChartDone { chart }) => {
+                assert_eq!(chart, first.chart());
+                return Ok(());
+            }
+            other => panic!("the pipeline and the bare session disagree: {other:?}"),
+        }
+    }
 }

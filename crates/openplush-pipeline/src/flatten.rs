@@ -10,8 +10,8 @@ use crate::{EngineError, StageResult, Staged, WarningSet};
 /// One chart laid flat.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parameterization {
-    chart: ChartId,
-    uv: Vec<DVec2>,
+    pub(crate) chart: ChartId,
+    pub(crate) uv: Vec<DVec2>,
 }
 
 impl Parameterization {
@@ -61,19 +61,24 @@ impl Parameterization {
 fn lay_flat(chart: &ChartMesh) -> Result<Parameterization, FlattenError> {
     let mut session = FlattenSession::new(chart.chart(), chart.xyz(), chart.faces().to_vec())?;
     while !matches!(session.step()?, Progress::Done) {}
-    // INVARIANT: a session that has stepped to `Done` finishes, with every chart vertex once in
-    // vertex order, so the positions alone are indexed like `xyz`.
-    let layout = session.finish().ok_or(FlattenError::SolveFailed {
-        chart: chart.chart(),
-    })?;
     Ok(Parameterization {
         chart: chart.chart(),
-        uv: layout.into_iter().map(|(_, p)| p).collect(),
+        uv: settled(session, chart.chart())?,
     })
 }
 
+/// The flat positions of a session that has stepped to `Done`, indexed like the chart's `xyz`.
+pub(crate) fn settled(session: FlattenSession, chart: ChartId) -> Result<Vec<DVec2>, FlattenError> {
+    // INVARIANT: a session that has stepped to `Done` finishes, with every chart vertex once in
+    // vertex order, so the positions alone are indexed like `xyz`.
+    let layout = session
+        .finish()
+        .ok_or(FlattenError::SolveFailed { chart })?;
+    Ok(layout.into_iter().map(|(_, p)| p).collect())
+}
+
 /// `error`, from flattening `chart`, as the stage reports it.
-fn refusal(mesh: &ManifoldMesh, chart: &ChartMesh, error: FlattenError) -> EngineError {
+pub(crate) fn refusal(mesh: &ManifoldMesh, chart: &ChartMesh, error: FlattenError) -> EngineError {
     match error {
         FlattenError::Flip { chart, faces } => EngineError::Flip { chart, faces },
         FlattenError::BoundaryNotRealizable {

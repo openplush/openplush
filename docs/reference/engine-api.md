@@ -38,6 +38,8 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 | `Fabric`, `FabricSpec`, `FabricCategory`, `FabricId`, `StretchDirection` | re-exports | From `openplush-pattern`: a fabric profile, built by `Fabric::new` from a `FabricSpec`, which refuses an unusable one |
 | `PatternPiece`, `Outline`, `CutCount` | re-exports | From `openplush-pattern`: what `pattern` returns, a piece's sewing and cut lines in millimetres, and how many copies to cut |
 | `PatternError` | re-export, enum, `#[non_exhaustive]` | From `openplush-pattern`: the refusal `EngineError::Pattern` carries. Its variants are the pattern crate's own |
+| `Pipeline` | struct | The session: one repaired mesh, the charts its current seams make, and each chart's layout, stepped and remembered; see [Session](#session) |
+| `Progress` | enum, `#[non_exhaustive]` | What `Pipeline::flatten_step` left behind: `Working { chart, iteration, energy }`, `ChartDone { chart }` or `Done` |
 | `FlattenError` | re-export, enum, `#[non_exhaustive]` | From `openplush-flatten`: the refusal `EngineError::Flatten` carries. Its variants are the flattener's own |
 | `DVec2` | re-export | From `openplush-geom`: the type of a flat position in `Parameterization::uv` |
 | `TriangleSoup`, `ValidationReport`, `RepairPlan`, `LoopRef`, `RepairReport`, `ManifoldMesh`, `SeamSet`, `ChartMesh`, `SewingMap`, `SeamBundle`, `ChainSide` | re-exports | What the stages take and return, from `openplush-mesh` and `-seams` |
@@ -70,6 +72,18 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 **`export_svg(&Sheet, &[PatternPiece], &WarningSet)`** is `svg::write`: the sheet at true scale, 1 user unit to 1 mm, with every warning in the set printed under it as summary rows. **`export_pdf(&Sheet, &[PatternPiece], Paper, &WarningSet)`** tiles the sheet on `paper` with `pages::tile` and calls `pdf::write`: a cover with the scale check, the page map and the summary rows, then one page per tile. The pieces are the ones the sheet places; a `Sheet` holds placements, not outlines. A sheet needing more than 26 pages across or down is `Layout` (`TooManyPages`), naming nothing. A placement whose piece was not given, or a piece given twice, is `Export`, naming the piece. Their warnings are empty.
 
 **Summary rows.** Both exports print every warning in the set, in its order, acknowledged or not: "unresolved" means not fixed. A row is the code's string; the target in words: `face {n}`, `edge {n}`, `seam chain {n}`, `piece {n}`, `component {n}`, or `the whole pattern`; the explanation; and the remedy's text, an `Actionable` proposal's explanation or an `Advisory`'s `what_to_change`. Each prints as `{n}. {code}: {target}`, then the explanation, then `Fix: {remedy}`. Every engine warning's text is printable ASCII, so `ExportError::Unprintable` is a bug if it ever appears.
+
+## Session
+
+`Pipeline` holds what a shell edits between stage calls, so a seam edit flattens again only the charts it changed. It owns one repaired mesh; it does not keep the seam set itself, only the charts it makes.
+
+- **`Pipeline::new(ManifoldMesh)`** starts with no seams: `charts()` is `chart(&mesh, &SeamSet::new())`.
+- **`set_seams(&SeamSet) -> Vec<ChartId>`** runs the `chart` stage again and returns, in ID order, each chart whose content no chart of the previous seams had; with the same seams again it returns none, and when the chart stage refuses, none. It drops the flatten in progress, any refusal kept, and the layout of every chart the new seams no longer make; a chart they leave as it was keeps its layout.
+- **`charts() -> &StageResult<(Vec<ChartMesh>, SewingMap)>`** is the `chart` stage's result for the current seams, a refusal included.
+- **`flatten_step() -> Result<Progress, EngineError>`** takes one `FlattenSession` step on the lowest-ID chart without a layout, starting its session on the first step. It returns `Working { chart, iteration, energy }` while that chart's flatten may take more steps (`energy` is the area-weighted mean symmetric Dirichlet energy, 4 for an isometry), `ChartDone { chart }` on the step that lays a chart flat while another still has no layout, and `Done` once every chart has one, then on every later call. When the chart stage refused, it returns that refusal. A chart's refusal is mapped as `flatten` maps it (`Flip`, `BoundaryNotRealizable` or `Flatten`) and kept: every later `flatten_step` and `parameterizations` returns the same error, steps no other chart and retries nothing, until the next `set_seams`.
+- **`parameterizations() -> StageResult<Vec<Parameterization>>`** steps the rest to the end and returns every chart's layout in chart order, byte-identical to what `flatten` returns for the same charts. Its warnings are empty.
+
+A layout is remembered under a key, 64-bit FNV-1a (offset basis `0xcbf29ce484222325`, prime `0x100000001b3`) over the chart's `ChartMesh`: each face's `FaceId` and three local corners as 4 bytes little-endian, then each local position's `x`, `y` and `z` bits as 8 bytes little-endian. The key only finds a candidate: a layout is used only for a `ChartMesh` equal to the one it was laid out for, so two charts whose keys collide each get their own layout. Dropping a `Pipeline` drops the flatten in progress; no half-flattened layout is ever reachable.
 
 ## Errors
 

@@ -117,6 +117,12 @@ fn rz([x, y, z]: [f64; 3]) -> [f64; 3] {
 fn rz_back([x, y, z]: [f64; 3]) -> [f64; 3] {
     [y, -x, z]
 }
+fn rx_back([x, y, z]: [f64; 3]) -> [f64; 3] {
+    [x, z, -y]
+}
+fn ry_back([x, y, z]: [f64; 3]) -> [f64; 3] {
+    [-z, y, x]
+}
 fn add(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
     [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 }
@@ -369,8 +375,11 @@ fn two_materials_on_one_mesh_are_two_primitives_each_with_its_own() -> Result<()
         first_quad.iter().all(|i| [4, 5, 6, 7].contains(i)),
         "{first_quad:?}"
     );
-    // Each primitive carries the whole control-point array.
+    // Each primitive carries the whole control-point array, and indexes its own copy.
     assert_eq!(soup.vertex_count(), 16);
+    let tris = triangles(&imported);
+    assert!(tris[..6].concat().iter().all(|&i| i < v(8)), "{tris:?}");
+    assert!(tris[6..].concat().iter().all(|&i| i >= v(8)), "{tris:?}");
     Ok(())
 }
 
@@ -554,7 +563,10 @@ fn a_uv_layer_that_cannot_be_read_is_parse() -> Result<(), Setup> {
             "LayerElementUV",
             "ByPolygonVertex",
             "Direct",
-            vec![Node::new("UV", vec![vec![0.0, 0.0, 1.0, 0.0, 0.0].into()])],
+            vec![Node::new(
+                "UV",
+                vec![vec![0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.5].into()],
+            )],
         ),
     ];
     for layer in layers {
@@ -563,6 +575,16 @@ fn a_uv_layer_that_cannot_be_read_is_parse() -> Result<(), Setup> {
         assert!(detail.contains("UV"), "{layer:?}: {detail}");
     }
     Ok(())
+}
+
+/// A by-polygon-vertex, direct UV layer holding `uv`.
+fn direct_uvs(uv: Vec<f64>) -> Node {
+    layer(
+        "LayerElementUV",
+        "ByPolygonVertex",
+        "Direct",
+        vec![Node::new("UV", vec![uv.into()])],
+    )
 }
 
 #[test]
@@ -578,6 +600,11 @@ fn a_non_finite_texture_coordinate_is_parse() -> Result<(), Setup> {
     );
     let detail = parse_detail(fbx::read(
         &uv_triangle(TRIANGLE.to_vec(), vec![layer]).bytes()?,
+    ))?;
+    assert!(detail.contains("finite"), "{detail}");
+    let only_v = direct_uvs(vec![0.0, 0.0, 1.0, f64::NAN, 0.0, 1.0]);
+    let detail = parse_detail(fbx::read(
+        &uv_triangle(TRIANGLE.to_vec(), vec![only_v]).bytes()?,
     ))?;
     assert!(detail.contains("finite"), "{detail}");
     Ok(())
@@ -680,6 +707,10 @@ fn a_polygon_index_past_the_control_points_is_parse() -> Result<(), Setup> {
     scene.objects[1] = mesh(2, "Tri", AXES.to_vec(), vec![0, 1, -6]);
     let detail = parse_detail(fbx::read(&scene.bytes()?))?;
     assert!(detail.contains("Tri"), "{detail}");
+    // Control point 3, one past the last of three.
+    scene.objects[1] = mesh(2, "Tri", AXES.to_vec(), vec![0, 1, -4]);
+    let detail = parse_detail(fbx::read(&scene.bytes()?))?;
+    assert!(detail.contains("control point 3"), "{detail}");
     Ok(())
 }
 
@@ -900,6 +931,11 @@ fn a_geometry_without_readable_control_points_or_polygons_is_parse() -> Result<(
         geometry(vec![polygons()]),
         geometry(vec![vertices(AXES.to_vec().into())]),
         geometry(vec![vertices(AXES[..8].to_vec().into()), polygons()]),
+        // Three whole control points and one number over.
+        geometry(vec![
+            vertices([AXES.as_slice(), &[0.0]].concat().into()),
+            polygons(),
+        ]),
         geometry(vec![vertices(Value::ArrI32(vec![0; 9])), polygons()]),
         geometry(vec![
             vertices(AXES.to_vec().into()),
@@ -921,6 +957,10 @@ fn a_connection_or_object_that_cannot_be_read_is_parse() -> Result<(), Setup> {
     dangling.connect(9, 1);
     let detail = parse_detail(fbx::read(&dangling.bytes()?))?;
     assert!(detail.contains('9'), "{detail}");
+    let mut orphan = one_triangle(Vec::new());
+    orphan.connect(2, 99);
+    let detail = parse_detail(fbx::read(&orphan.bytes()?))?;
+    assert!(detail.contains("99"), "{detail}");
     let mut twice = one_triangle(Vec::new());
     twice.object(material(2, "Felt"));
     let detail = parse_detail(fbx::read(&twice.bytes()?))?;
@@ -980,12 +1020,180 @@ fn a_property_written_in_another_number_type_reads_the_same() -> Result<(), Setu
             3_i64.into(),
         ],
     );
+    let as_i16 = Node::new(
+        "P",
+        vec![
+            "Lcl Translation".into(),
+            "Lcl Translation".into(),
+            "".into(),
+            "A".into(),
+            1_i16.into(),
+            2.0_f64.into(),
+            3.0_f64.into(),
+        ],
+    );
+    assert_eq!(
+        read(&one_triangle(vec![as_i16]))?,
+        read(&one_triangle(vec![vector(
+            "Lcl Translation",
+            [1.0, 2.0, 3.0]
+        )]))?
+    );
     assert_eq!(
         read(&one_triangle(vec![as_f32]))?,
         read(&one_triangle(vec![vector(
             "Lcl Translation",
             [1.0, 2.0, 3.0]
         )]))?
+    );
+    Ok(())
+}
+
+#[test]
+fn pre_post_and_geometric_rotation_turn_x_then_y_then_z() -> Result<(), Setup> {
+    let turned = [90.0, 90.0, 0.0];
+    let points: Vec<[f64; 3]> = AXES.chunks(3).map(|c| [c[0], c[1], c[2]]).collect();
+    let x_then_y: Vec<[f64; 3]> = points.iter().map(|&p| ry(rx(p))).collect();
+    let pre = read(&one_triangle(vec![vector("PreRotation", turned)]))?;
+    assert_near(&positions(&pre), &x_then_y);
+    let geometric = read(&one_triangle(vec![vector("GeometricRotation", turned)]))?;
+    assert_near(&positions(&geometric), &x_then_y);
+    // Post-rotation is undone: y back, then x back.
+    let post = read(&one_triangle(vec![vector("PostRotation", turned)]))?;
+    let undone: Vec<[f64; 3]> = points.iter().map(|&p| rx_back(ry_back(p))).collect();
+    assert_near(&positions(&post), &undone);
+    Ok(())
+}
+
+#[test]
+fn the_geometric_transform_scales_then_turns_then_moves() -> Result<(), Setup> {
+    let imported = read(&one_triangle(vec![
+        vector("GeometricTranslation", [10.0, 0.0, 0.0]),
+        vector("GeometricRotation", [0.0, 0.0, 90.0]),
+        vector("GeometricScaling", [2.0, 3.0, 4.0]),
+    ]))?;
+    let want: Vec<[f64; 3]> = AXES
+        .chunks(3)
+        .map(|c| {
+            add(
+                rz(scale([c[0], c[1], c[2]], [2.0, 3.0, 4.0])),
+                [10.0, 0.0, 0.0],
+            )
+        })
+        .collect();
+    assert_near(&positions(&imported), &want);
+    Ok(())
+}
+
+#[test]
+fn children_are_drawn_in_connection_order() -> Result<(), Setup> {
+    let mut scene = Scene::default();
+    scene
+        .object(model(1, "Parent", Vec::new()))
+        .object(model(
+            3,
+            "First",
+            vec![vector("Lcl Translation", [0.0, 5.0, 0.0])],
+        ))
+        .object(model(5, "Second", Vec::new()))
+        .object(triangle_mesh(4))
+        .connect(1, 0)
+        .connect(3, 1)
+        .connect(5, 1)
+        .connect(4, 3)
+        .connect(4, 5);
+    let imported = read(&scene)?;
+    let mut want: Vec<[f64; 3]> = AXES.chunks(3).map(|c| [c[0], c[1] + 5.0, c[2]]).collect();
+    want.extend(AXES.chunks(3).map(|c| [c[0], c[1], c[2]]));
+    assert_near(&positions(&imported), &want);
+    Ok(())
+}
+
+#[test]
+fn a_property_connection_does_not_draw_a_model() -> Result<(), Setup> {
+    let mut scene = one_triangle(Vec::new());
+    scene
+        .object(model(3, "Linked", Vec::new()))
+        .object(triangle_mesh(4));
+    scene.connections.push(Node::new(
+        "C",
+        vec!["OP".into(), 3_i64.into(), 0_i64.into(), "Prop".into()],
+    ));
+    scene.connect(4, 3);
+    assert_eq!(read(&scene)?.soup.triangle_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn uvs_and_extra_uv_sets_come_from_any_drawn_mesh() -> Result<(), Setup> {
+    let direct = |u: f64| direct_uvs(vec![u, 0.0, u, 0.0, u, 0.0]);
+    let mut scene = uv_triangle(
+        TRIANGLE.to_vec(),
+        vec![direct(0.25), direct(0.5), direct(0.75)],
+    );
+    scene
+        .object(model(3, "Bare", Vec::new()))
+        .object(triangle_mesh(4))
+        .connect(3, 0)
+        .connect(4, 3);
+    let imported = read(&scene)?;
+    assert_eq!(corner_uvs(&imported), [uv(0.25, 0.0); 3]);
+    assert_eq!(imported.soup.corner_uv(FaceId::new(1), 0), None);
+    assert_eq!(imported.soup.extra_uv_sets(), 2);
+    Ok(())
+}
+
+/// A regular `n`-gon of radius 1 in the xy plane, as one polygon.
+fn polygon_scene(n: i32) -> Scene {
+    let points = (0..n)
+        .flat_map(|k| {
+            let a = f64::from(k) * std::f64::consts::TAU / f64::from(n);
+            [a.cos(), a.sin(), 0.0]
+        })
+        .collect();
+    let mut corners: Vec<i32> = (0..n).collect();
+    if let Some(last) = corners.last_mut() {
+        *last = -*last - 1;
+    }
+    let mut scene = one_triangle(Vec::new());
+    scene.objects[1] = mesh(2, "Disc", points, corners);
+    scene
+}
+
+#[test]
+fn a_polygon_of_1000_corners_reads_and_one_of_1001_is_parse() -> Result<(), Setup> {
+    assert_eq!(read(&polygon_scene(1000))?.soup.triangle_count(), 998);
+    let detail = parse_detail(fbx::read(&polygon_scene(1001).bytes()?))?;
+    assert!(detail.contains("1001 corners"), "{detail}");
+    Ok(())
+}
+
+#[test]
+fn a_non_finite_corner_of_a_quad_is_non_finite_input() -> Result<(), Setup> {
+    let square = vec![
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        f64::NAN,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+    ];
+    let mut scene = one_triangle(Vec::new());
+    scene.objects[1] = mesh(2, "Square", square, vec![0, 1, 2, -4]);
+    assert_eq!(
+        fbx::read(&scene.bytes()?),
+        Err(IoError::NonFiniteInput {
+            vertices: vec![SourceCorner {
+                primitive: 0,
+                vertex: 2
+            }]
+        })
     );
     Ok(())
 }

@@ -207,6 +207,47 @@ fn a_matrix_transform_and_a_rotation_are_applied() -> Result<(), Setup> {
     Ok(())
 }
 
+/// Mesh 0 drawn by node 1, the child of node 0, which rotates by `rotation`.
+fn rotated_child(rotation: &str) -> String {
+    triangle(&format!(
+        r#""nodes":[{{"children":[1]}},{{"mesh":0,"rotation":{rotation}}}],"scenes":[{{"nodes":[0]}}],"scene":0"#
+    ))
+}
+
+#[test]
+fn a_rotation_that_is_not_a_unit_quaternion_is_refused_naming_its_node() -> Result<(), Setup> {
+    // |q|² = 1.01, 0.99, and 1 + 1.9e-6 (w = 1.000001 as f32), each beyond 1e-6 of unit.
+    for rotation in ["[0.1,0,0,1]", "[0,0,0,0.99498744]", "[0,0,0,1.000001]"] {
+        let detail = parse_detail(read(&rotated_child(rotation)))?;
+        assert!(detail.contains("node 1"), "{rotation}: {detail}");
+        assert!(detail.contains("unit quaternion"), "{rotation}: {detail}");
+    }
+    Ok(())
+}
+
+#[test]
+fn a_rotation_within_f32_rounding_of_unit_reads() -> Result<(), Setup> {
+    // 0.6 and 0.8 as f32 square to 1 + 4.8e-8, as a writer's f32 normalisation leaves it.
+    let q = [0.6_f32, 0.8_f32].map(f64::from);
+    assert!((q[0] * q[0] + q[1] * q[1] - 1.0).abs() < 1e-7);
+    let p = position(&read(&rotated_child("[0,0,0.6,0.8]"))?.soup, 1)?;
+    // A turn about z by 2 atan(0.6 / 0.8): cos = 0.28, sin = 0.96.
+    assert!(
+        (p[0] - 0.28).abs() < 1e-6 && (p[1] - 0.96).abs() < 1e-6 && p[2].abs() < 1e-6,
+        "{p:?}"
+    );
+    Ok(())
+}
+
+#[test]
+fn a_matrix_that_scales_reads_as_written() -> Result<(), Setup> {
+    let doc = triangle(
+        r#""nodes":[{"mesh":0,"matrix":[2,0,0,0, 0,2,0,0, 0,0,2,0, 0,0,0,1]}],"scenes":[{"nodes":[0]}],"scene":0"#,
+    );
+    assert_eq!(position(&read(&doc)?.soup, 1)?, [2.0, 0.0, 0.0]);
+    Ok(())
+}
+
 #[test]
 fn a_mesh_drawn_by_two_nodes_is_two_primitives() -> Result<(), Setup> {
     let doc = triangle(

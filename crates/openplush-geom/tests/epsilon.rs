@@ -3,7 +3,8 @@
 //! meet only through a named conversion (AGENTS.md, units).
 
 use openplush_geom::epsilon::{
-    FOLD_ANGLE, MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity, UV_CUT,
+    FOLD_ANGLE, MAX_DIAGONAL, MIN_DIAGONAL, ModelTolerances, SeamParity, UNIT_QUATERNION_TOLERANCE,
+    UV_CUT,
 };
 use openplush_geom::units::{Mm, Scale};
 use openplush_geom::{DVec2, GeomError};
@@ -187,4 +188,11 @@ fn fold_angle_is_five_degrees_between_a_closed_dart_and_a_wrapped_cap() {
     let wrapped_cap = std::hint::black_box(0.12_f64.to_radians());
     assert!(FOLD_ANGLE * 2.0 <= closed_dart);
     assert!(FOLD_ANGLE > wrapped_cap * 40.0);
+}
+
+#[test]
+fn unit_quaternion_tolerance_is_1e_minus_6_above_f32_normalisation_rounding() {
+    assert_eq!(UNIT_QUATERNION_TOLERANCE, 1e-6);
+    // A writer that normalises in f32 leaves |q|² a few ulps of 1.0 off; four is 4.8e-7.
+    assert!(std::hint::black_box(UNIT_QUATERNION_TOLERANCE) > 4.0 * f64::from(f32::EPSILON));
 }

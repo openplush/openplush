@@ -54,7 +54,7 @@ fn fnv(hash: u64, word: u64) -> u64 {
 /// Steps the session to `Done`, hashing every reported energy and then the layout's bits.
 fn flatten_hash() -> Result<u64, FlattenError> {
     let (xyz, faces) = hemisphere(8);
-    let mut session = FlattenSession::new(ChartId::new(0), &xyz, &faces)?;
+    let mut session = FlattenSession::new(ChartId::new(0), &xyz, faces)?;
     let mut hash = 0xcbf2_9ce4_8422_2325;
     while let Progress::Working { iteration, energy } = session.step()? {
         hash = fnv(fnv(hash, u64::from(iteration)), energy.to_bits());

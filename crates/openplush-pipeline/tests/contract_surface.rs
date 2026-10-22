@@ -49,3 +49,13 @@ fn the_exports_take_one_sheet_its_pieces_and_the_warnings_and_return_bytes() {
     type Pdf = fn(&Sheet, &[PatternPiece], Paper, &WarningSet) -> StageResult<Vec<u8>>;
     let _: Pdf = export_pdf;
 }
+
+#[test]
+fn the_pipeline_session_takes_a_mesh_sets_seams_and_steps_its_charts_flat() {
+    use openplush_pipeline::{ChartId, EngineError, Parameterization, Pipeline, Progress};
+    let _: fn(ManifoldMesh) -> Pipeline = Pipeline::new;
+    let _: fn(&mut Pipeline, &SeamSet) -> Vec<ChartId> = Pipeline::set_seams;
+    let _: fn(&Pipeline) -> &Charted = Pipeline::charts;
+    let _: fn(&mut Pipeline) -> Result<Progress, EngineError> = Pipeline::flatten_step;
+    let _: fn(&mut Pipeline) -> StageResult<Vec<Parameterization>> = Pipeline::parameterizations;
+}

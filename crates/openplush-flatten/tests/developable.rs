@@ -44,7 +44,7 @@ fn grid(cols: u32, rows: u32, place: impl Fn(f64, f64) -> DVec3) -> (Vec<DVec3>,
 
 /// Steps the session to `Done` and returns each vertex's flat position, in vertex order.
 fn flatten(xyz: &[DVec3], faces: &Faces) -> Result<Vec<DVec2>, FlattenError> {
-    let mut session = FlattenSession::new(CHART, xyz, faces)?;
+    let mut session = FlattenSession::new(CHART, xyz, faces.clone())?;
     while session.step()? != Progress::Done {}
     let layout = session.finish().unwrap_or_default();
     assert_eq!(layout.len(), xyz.len(), "every vertex is laid out");

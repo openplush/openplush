@@ -11,6 +11,7 @@ mod layout;
 mod locations;
 mod pattern;
 mod repair;
+mod session;
 mod size;
 mod stage;
 mod warning;
@@ -46,6 +47,7 @@ pub use openplush_seams::{
 };
 pub use pattern::{PatternInput, PatternOptions, pattern};
 pub use repair::{repair, validate};
+pub use session::{Pipeline, Progress};
 pub use size::size;
 pub use stage::{StageResult, Staged};
 pub use warning::{NonBlank, Remedy, Warning, WarningCode, WarningSet, WarningTarget};

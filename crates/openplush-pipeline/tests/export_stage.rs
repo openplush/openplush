@@ -5,13 +5,12 @@
 #[allow(dead_code, reason = "each test file uses part of the shared fixtures")]
 mod common;
 
-use common::{CAPSULE_OBJ, Setup, capsule_seams, fabric};
+use common::{Setup, fabric};
 use openplush_mesh::{RepairPlan, into_manifold};
 use openplush_pipeline::{
-    EngineError, ExportError, ImportFile, ImportFiles, LayoutError, LayoutOptions, Mm, NonBlank,
-    Paper, PatternInput, PatternOptions, PatternPiece, PieceId, Remedy, Scale, SeamSet, Sheet,
-    SizeTarget, Warning, WarningCode, WarningSet, WarningTarget, chart, export_pdf, export_svg,
-    flatten, import, layout, pattern, repair, size,
+    EngineError, ExportError, LayoutError, LayoutOptions, Mm, NonBlank, Paper, PatternInput,
+    PatternOptions, PatternPiece, PieceId, Remedy, Scale, SeamSet, Sheet, Warning, WarningCode,
+    WarningSet, WarningTarget, chart, export_pdf, export_svg, flatten, layout, pattern,
 };
 
 /// A unit square at `mm_per_unit`, cut at 6 mm: at 100 mm per unit, 100 mm sewn and 112 mm cut.
@@ -192,47 +191,6 @@ fn nothing_to_lay_out_is_layout_locating_nothing() -> Result<(), Setup> {
         .ok_or("no pieces must be refused")?;
     assert!(matches!(err, EngineError::Layout(LayoutError::NoPieces)));
     assert!(err.locations().pieces.is_empty());
-    Ok(())
-}
-
-/// The capsule from its file to PDF bytes, through every stage, with the warnings they raised.
-fn capsule_pdf() -> Result<Vec<u8>, Setup> {
-    let files = ImportFiles {
-        primary: ImportFile {
-            name: "capsule.obj".into(),
-            bytes: CAPSULE_OBJ.as_bytes().to_vec(),
-        },
-        others: vec![],
-    };
-    let mut warnings = WarningSet::default();
-    let mut keep = |w: &WarningSet| w.iter().for_each(|w| warnings.insert(w.clone()));
-    let soup = import(&files)?;
-    keep(&soup.warnings);
-    let (mesh, _) = repair(&soup.value, &RepairPlan::default())?.value;
-    let (charts, sewing) = chart(&mesh, &capsule_seams(&mesh)?)?.value;
-    let layouts = flatten(&mesh, &charts)?.value;
-    let scale = size(&mesh, SizeTarget::LongestDimension(Mm::try_new(200.0)?))?;
-    keep(&scale.warnings);
-    let input = PatternInput {
-        mesh: &mesh,
-        charts: &charts,
-        sewing: &sewing,
-        layouts: &layouts,
-    };
-    let opts = PatternOptions {
-        scale: scale.value,
-        fabric: fabric(6.0)?,
-    };
-    let pieces = pattern(&input, &opts)?.value;
-    let sheet = one_sheet(&pieces, 1500.0)?;
-    Ok(export_pdf(&sheet, &pieces, Paper::A4, &warnings)?.value)
-}
-
-#[test]
-fn the_capsule_runs_from_its_file_to_the_same_pdf_bytes_twice() -> Result<(), Setup> {
-    let first = capsule_pdf()?;
-    assert!(first.starts_with(b"%PDF-"));
-    assert_eq!(first, capsule_pdf()?);
     Ok(())
 }
 

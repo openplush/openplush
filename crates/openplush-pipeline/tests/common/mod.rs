@@ -7,7 +7,9 @@ use openplush_pipeline::{
 pub(crate) type Setup = Box<dyn std::error::Error>;
 
 pub(crate) const CAPSULE_OBJ: &str = include_str!("../../../../fixtures/meshes/capsule.obj");
-const CAPSULE_SEAMS: &str = include_str!("../../../../fixtures/seams/capsule.json");
+pub(crate) const CAPSULE_SEAMS: &str = include_str!("../../../../fixtures/seams/capsule.json");
+pub(crate) const CUBE_OBJ: &str = include_str!("../../../../fixtures/meshes/cube.obj");
+pub(crate) const CUBE_SEAMS: &str = include_str!("../../../../fixtures/seams/cube.json");
 
 /// A woven fabric with `allowance_mm` as its default seam allowance.
 pub(crate) fn fabric(allowance_mm: f64) -> Result<Fabric, Setup> {
@@ -27,10 +29,19 @@ pub(crate) fn fabric(allowance_mm: f64) -> Result<Fabric, Setup> {
     })?)
 }
 
-/// The capsule's reference seams on `mesh`, the capsule repaired. Seam edges name OBJ vertices by
-/// file order, matched to the mesh by position.
+/// The capsule's reference seams on `mesh`, the capsule repaired.
 pub(crate) fn capsule_seams(mesh: &ManifoldMesh) -> Result<SeamSet, Setup> {
-    let positions: Vec<[f64; 3]> = CAPSULE_OBJ
+    reference_seams(CAPSULE_OBJ, CAPSULE_SEAMS, mesh)
+}
+
+/// The seam set `seams` of the OBJ `obj` on `mesh`, that OBJ repaired. Seam edges name OBJ
+/// vertices by file order, matched to the mesh by position.
+pub(crate) fn reference_seams(
+    obj: &str,
+    seams: &str,
+    mesh: &ManifoldMesh,
+) -> Result<SeamSet, Setup> {
+    let positions: Vec<[f64; 3]> = obj
         .lines()
         .filter_map(|line| line.strip_prefix("v "))
         .map(|rest| {
@@ -50,8 +61,8 @@ pub(crate) fn capsule_seams(mesh: &ManifoldMesh) -> Result<SeamSet, Setup> {
             })
             .ok_or_else(|| format!("no vertex for OBJ index {i}").into())
     };
-    let mut seams = SeamSet::new();
-    for pair in CAPSULE_SEAMS.split("\"edge\": [").skip(1) {
+    let mut set = SeamSet::new();
+    for pair in seams.split("\"edge\": [").skip(1) {
         let (a, b) = pair
             .split(']')
             .next()
@@ -63,7 +74,7 @@ pub(crate) fn capsule_seams(mesh: &ManifoldMesh) -> Result<SeamSet, Setup> {
             .find(|&h| mesh.dest(h) == b)
             .ok_or("no such edge")?
             .edge();
-        seams.insert(edge, SeamKind::Cut)?;
+        set.insert(edge, SeamKind::Cut)?;
     }
-    Ok(seams)
+    Ok(set)
 }

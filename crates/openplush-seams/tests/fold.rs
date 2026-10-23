@@ -15,7 +15,7 @@ use openplush_geom::epsilon::FOLD_ANGLE;
 use openplush_mesh::{EdgeId, FaceId, ManifoldMesh};
 use openplush_seams::{SeamKind, SeamSet, SeamsError, charts, check_fold};
 
-/// S7's synthetic cap: a disk of `rings` concentric rings (ring `k` has `6k` vertices) mapped onto
+/// The synthetic cap of `research/boundary_pinned/`: a disk of `rings` concentric rings (ring `k` has `6k` vertices) mapped onto
 /// the unit sphere with the polar angle proportional to the radius, the rim at `rim_deg`. Past
 /// 180° the surface wraps round the south pole and lies back over itself.
 fn cap(rim_deg: f64, rings: u32) -> Result<ManifoldMesh, Setup> {

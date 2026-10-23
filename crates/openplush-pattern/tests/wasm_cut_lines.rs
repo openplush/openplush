@@ -1,5 +1,5 @@
 //! The same requests give the same cut lines, bit for bit, natively and on wasm32 (Constitution V,
-//! ADR 0006), over the first cases of S3's seeded corpus.
+//! ADR 0006), over the first cases of the seeded corpus from `research/i_overlay_fuzz/`.
 //!
 //! The pinned hash was computed natively; the wasm32 run must reproduce it. It changes only when
 //! the construction does, and then a person decides whether the new cut lines are right.
@@ -13,7 +13,7 @@ use openplush_geom::units::Mm;
 use openplush_pattern::allowance::cut_line;
 use openplush_pattern::{Outline, PieceId};
 
-/// S3's corpus seed.
+/// The seed of that corpus.
 const SEED: u64 = 0x0057_3F00_2026_1015;
 const CASES: u64 = 200;
 

@@ -183,7 +183,7 @@ fn uv_cut_is_1e_minus_5_between_f32_noise_and_the_tightest_measured_cut() {
 fn fold_angle_is_five_degrees_between_a_closed_dart_and_a_wrapped_cap() {
     assert_eq!(FOLD_ANGLE, 5.0_f64.to_radians());
     // The sharpest crease a plush carries, a closed dart edge, leaves its faces about 10°
-    // apart; a sphere cap wrapped past its pole (S7) leaves them under 0.12° from antiparallel.
+    // apart; a sphere cap wrapped past its pole (`research/boundary_pinned/`) leaves them under 0.12° from antiparallel.
     let closed_dart = std::hint::black_box(10.0_f64.to_radians());
     let wrapped_cap = std::hint::black_box(0.12_f64.to_radians());
     assert!(FOLD_ANGLE * 2.0 <= closed_dart);

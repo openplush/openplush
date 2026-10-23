@@ -1,4 +1,4 @@
-//! `allowance::cut_line` against S3's seeded corpus. Every cut line it accepts must be the
+//! `allowance::cut_line` against the seeded corpus from `research/i_overlay_fuzz/`. Every cut line it accepts must be the
 //! reference region, (outline ∪ strips ∪ joins) − guards, judged point by point by an oracle that
 //! uses no boolean, and reach every edge's full allowance.
 
@@ -18,10 +18,10 @@ use openplush_pattern::{Outline, PatternError, PieceId};
 
 type Setup = Box<dyn std::error::Error>;
 
-/// S3's corpus seed, so these are the first cases of the spike's own corpus.
+/// That corpus's seed, so these are the first cases of the spike's own corpus.
 const SEED: u64 = 0x0057_3F00_2026_1015;
 const CASES: u64 = 1000;
-/// The worst allowance shortfall on an edge longer than the grid, in mm; S3 measured 1.3e-10.
+/// The worst allowance shortfall on an edge longer than the grid, in mm; the spike measured 1.3e-10.
 const SHORTFALL_MM: f64 = 1e-6;
 
 /// What happened to one case.

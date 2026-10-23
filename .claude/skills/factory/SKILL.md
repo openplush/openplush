@@ -42,7 +42,7 @@ The scan covers the kickoff only. A blocker inside a task (`blocked:`, `human:`,
 
 A task is **ready** when every line holds:
 
-1. Unticked, and no open PR names it: list the open PRs and look for the ID with its feature (`001 T084`) in each title and body. GitHub's search matches the two words apart, so it cannot answer this.
+1. Unticked, and no open PR names it: list the open PRs and look in each title and body for the ID with its feature (`001 T084`), or, in a PR whose branch is the feature's (`001/…`), for the ID alone, as PRs written before [ADR 0021](../../../docs/adr/0021-one-id-scheme.md) name it. GitHub's search matches the two words apart, so it cannot answer this.
 2. No `blocked:` or `human:` token.
 3. Every ID in its `needs:` token is ticked.
 4. Every task its phase depends on is ticked. The phase order is in the file's `## Dependencies` section (or, for 001, the phase checkpoints) and, for 002 and 003, the `## Blocking dependency on 001` table. The file's prose dependencies count too: the tokens add precision where the prose was ambiguous, they do not replace it.
@@ -57,7 +57,7 @@ The placeholder scan (Arguments) runs first, then the grant is read and recorded
 1. Check `main`, the open PRs, and the next free slice number once (`steward`, Sessions).
 2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and fix whatever the merge gate's comment names on a tier A, B or C PR that is not `merge:ready` (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone; the gate enables auto-merge on its own. Under `merge=yes`, merge each tier H PR the rule allows (Merging under a grant).
 3. Pick up to four ready tasks that touch different crates and share no file. One task runs inline; two or more run through the Workflow tool, one agent per task, each in its own worktree, all building into the one shared target dir (Build output), and nothing else runs while they do.
-4. Per task: branch `NNN/NN-slug` from its parent, the slug naming the intent (`main`, or the open PR it depends on); the failing test commit; the implementation commit; `scripts/check.sh <lane>` green, then its wasm32 output removed (Build output); `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; label its tier; remove the attribution footer the server adds; subscribe.
+4. Per task: branch `NNN/NN-slug` from its parent (`main`, or the open PR it depends on), the slug naming the intent; the failing test commit; the implementation commit; `scripts/check.sh <lane>` green, then its wasm32 output removed (Build output); `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; label its tier; remove the attribution footer the server adds; subscribe.
 5. Scope each PR by intent (ADR 0013): one task is one PR unless it carries two intents, and the `Intent` section says what it brings in and why. Never split by size, and never a reason to stop.
 6. Append one comment to the feature's ledger (below), emit the handoff (below) as the session's last output, and end the session. Do not wait for CI or review here; the next firing walks the open PRs.
 

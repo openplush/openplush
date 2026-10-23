@@ -242,6 +242,7 @@ for step in "${steps[@]}"; do
       run mdbook build
       # After the book, whose build empties target/site/dev/.
       run scripts/assemble-docs-api.sh
+      run scripts/gen-depgraph.py . target/site/dev/depgraph
       # The maker guide is its own book, built beside the contributor book and
       # published only from the first public release (docs.yml drops it on main).
       run mdbook build docs/user

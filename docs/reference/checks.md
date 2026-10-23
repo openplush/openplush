@@ -121,6 +121,12 @@ It fails, leaving no `api/`, on a workspace crate rustdoc wrote no `index.html` 
 
 rustdoc links a source range as `lib.rs.html#11-16`, an anchor only its script reads. The link check reads such a range on a `.rs.html` page as its first line, `#11`, which rustdoc gives an id; a range-shaped anchor on any other page still fails.
 
+### Generated dependency graph (`docs`)
+
+The site publishes an interactive [dependency graph](dependency-graph.md) under `dev/depgraph/`. After the API pages, the `docs` step runs `scripts/gen-depgraph.py`, which reads the files git tracks and writes one page, `depgraph/index.html`, with the graph's data and D3 inlined, and D3's ISC licence beside it as `LICENSE-d3.txt`. D3 7.9.0 is vendored as `scripts/depgraph/d3.min.js`, copied unchanged from the npm package `d3@7.9.0` (the package tarball's sha1, as npm publishes it, is `579e7acb3d749caf8860bd1741ae8d371070cd5d`; the file's own sha256 is `f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539`), so the page loads nothing from the network and the remote-reference check passes. Like the status counts, the page is never committed, so it cannot go stale.
+
+The output is byte-identical for the same commit: edges are sorted, Python packages count as external only when a `requirements.txt` declares them (never by the running Python's own module list), and neither a date nor the checkout directory's name is written: the page's title is the last path segment of the root `package.json`'s name (so `@scope/name` gives `name`), else the last part of the Cargo workspace's repository URL, else `repository`. It fails, writing nothing, naming the file, on a manifest that does not parse or does not have the expected shape, or a tracked file that is missing or not UTF-8.
+
 ### Agent attribution (pull requests, CI only)
 
 A pull request's own commits carry the contributor's git identity and no agent attribution, and its description carries no agent footer; the rule is in [Commits and PRs in `AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs). [`scripts/check-attribution.sh`](https://github.com/openplush/openplush/blob/main/scripts/check-attribution.sh) fails on, in the commits the pull request adds, merge commits included:

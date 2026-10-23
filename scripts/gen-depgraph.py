@@ -37,7 +37,7 @@ sys.path.insert(0, str(ASSETS))
 sys.dont_write_bytecode = True
 
 from levels import levels  # noqa: E402
-from repo import MANIFESTS, GenError, Graph, Layout, Repo, add_nodes, add_py_edges, add_ref_edges, add_ts_edges, parse_cargo  # noqa: E402
+from repo import MANIFESTS, GenError, Graph, Layout, Repo, add_nodes, add_py_edges, add_ref_edges, add_ts_edges, parse_cargo, project_name  # noqa: E402
 from rust import add_rust_edges  # noqa: E402
 
 
@@ -58,7 +58,7 @@ def build(root):
     roots = {info["root"] for info in cargo.values()} | set(crates.lib.values())
     manifests = [f for f in repo.files if os.path.basename(f) in MANIFESTS]
     data = levels(graph, cargo, roots, manifests)
-    data["project"] = Path(root).resolve().name
+    data["project"] = project_name(repo)
     return data
 
 

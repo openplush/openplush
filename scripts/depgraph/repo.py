@@ -101,6 +101,29 @@ def parse_cargo(repo):
     return pkgs
 
 
+def project_name(repo):
+    """The name the page shows: the root package.json's, else the Cargo workspace repository's last segment.
+
+    Never the checkout directory's name, so the same commit gives the same bytes wherever it is checked out.
+    """
+    if "package.json" in repo.fileset:
+        try:
+            name = json.loads(repo.read("package.json")).get("name")
+        except json.JSONDecodeError as e:
+            raise GenError(f"package.json: {e}") from e
+        if isinstance(name, str) and name:
+            return name.rsplit("/", 1)[-1]
+    if "Cargo.toml" in repo.fileset:
+        try:
+            workspace = tomllib.loads(repo.read("Cargo.toml")).get("workspace", {})
+        except tomllib.TOMLDecodeError as e:
+            raise GenError(f"Cargo.toml: {e}") from e
+        url = workspace.get("package", {}).get("repository")
+        if isinstance(url, str) and url.rstrip("/"):
+            return url.rstrip("/").rsplit("/", 1)[-1]
+    return "repository"
+
+
 class Layout:
     """Which package (level 2) and category (level 1) each file belongs to."""
 

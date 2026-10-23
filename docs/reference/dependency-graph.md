@@ -2,7 +2,7 @@
 
 <!-- index: an interactive map of what depends on what, from subsystems down to single files, rebuilt with the site. -->
 
-The [dependency graph](../depgraph/index.html) shows how the repository's parts depend on each other, read from the committed code each time this site is built, so it always matches `main`. How the page is generated, and what the build checks, is in [Checks](checks.md#generated-dependency-graph-docs).
+The [dependency graph](../depgraph/index.html) shows how the repository's parts depend on each other, read from the committed code each time this site is built, so it always matches the commit the site was built from. How the page is generated, and what the build checks, is in [Checks](checks.md#generated-dependency-graph-docs).
 
 ## Entries
 

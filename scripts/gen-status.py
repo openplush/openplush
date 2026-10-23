@@ -26,7 +26,8 @@ from pathlib import Path
 INCLUDE = "docs/start/status-counts.inc"
 TASKS_URL = "https://github.com/openplush/openplush/blob/main/specs/{}/tasks.md"
 CHECKBOX = re.compile(r"\s*[-*+]\s*\[[^\]]{0,3}\](?!\()")
-TASK = re.compile(r"- \[(?P<mark>[ x])\] [A-Z][0-9]{3}[a-z]?\b")
+TASK = re.compile(r"- \[(?P<mark>[ x])\] T[0-9]{3}[a-z]?\b")
+OTHER_LETTER = re.compile(r"- \[[ x]\] [A-Z][0-9]{3}[a-z]?\b")
 KIND = re.compile(r"kind:\s*(?P<kind>\S+)\s*$")
 KINDS = ("product", "process")
 HEADER = (
@@ -48,6 +49,8 @@ def count(path: Path, name: str) -> tuple[int, int]:
     for n, line in enumerate(lines, start=1):
         task = TASK.match(line)
         if task is None:
+            if OTHER_LETTER.match(line):
+                raise StatusError(f"{name}:{n}: a task ID is T and three digits in every feature (ADR 0021): {line.strip()[:80]}")
             if CHECKBOX.match(line):
                 raise StatusError(f"{name}:{n}: a checkbox line that is not a task line: {line.strip()[:80]}")
             continue

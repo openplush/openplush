@@ -2,6 +2,8 @@
 //! moved to lower the symmetric Dirichlet energy without ever flipping a face.
 
 mod energy;
+#[cfg(test)]
+pub(crate) mod fixtures;
 mod free;
 mod proxy;
 mod slim;

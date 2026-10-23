@@ -22,49 +22,9 @@ use ::gltf::{Document, Node, Primitive, Semantic};
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{MaterialIndex, SourceCorner, SourceMaterials, TriangleSoup};
 
-use crate::{Format, IoError};
+use crate::affine::{self, Mat};
+use crate::{Format, Ignored, Imported, IoError};
 use accessor::Use;
-use scene::Mat;
-
-/// A read file: its soup, and what was in it that the soup does not carry.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Imported {
-    /// The drawn triangles.
-    pub soup: TriangleSoup,
-    /// Everything not applied, in walk order, animations last.
-    pub ignored: Vec<Ignored>,
-}
-
-/// Something in the file that the soup does not carry. Indices are the file's own.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Ignored {
-    /// A skinned node, read in its bind pose.
-    Skin {
-        /// The node.
-        node: u32,
-    },
-    /// A mesh's morph targets, read as the base mesh.
-    MorphTargets {
-        /// The node drawing it.
-        node: u32,
-        /// The mesh.
-        mesh: u32,
-    },
-    /// An animation, not played.
-    Animation {
-        /// The animation.
-        animation: u32,
-    },
-    /// A point or line primitive, not drawn.
-    Primitive {
-        /// The node drawing it.
-        node: u32,
-        /// Its mesh.
-        mesh: u32,
-        /// Its index in the mesh.
-        primitive: u32,
-    },
-}
 
 /// Reads glTF or GLB bytes (GLB when they start with its magic) into a soup. `name` is the
 /// file's name in the import set; `sidecar` looks up the files beside it by name.
@@ -178,14 +138,14 @@ impl Builder {
             return Err(format!("index {i} is past its last vertex"));
         }
         let mut triangles = triangles(primitive.mode(), &indices)?;
-        if scene::mirrors(world) {
+        if affine::mirrors(world) {
             for t in &mut triangles {
                 t.swap(1, 2);
             }
         }
         let base = u32::try_from(self.positions.len()).map_err(|_| "too many vertices")?;
         for (v, p) in points.chunks_exact(3).enumerate() {
-            let at = scene::apply(world, [p[0], p[1], p[2]]);
+            let at = affine::apply(world, [p[0], p[1], p[2]]);
             if !(at.x.is_finite() && at.y.is_finite() && at.z.is_finite()) {
                 self.non_finite.push(corner(id, v));
             }

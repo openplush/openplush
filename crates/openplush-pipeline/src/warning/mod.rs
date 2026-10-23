@@ -32,8 +32,8 @@ impl NonBlank {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum WarningCode {
-    /// The file has parts the pattern does not follow: skins, morph targets, animations,
-    /// or point and line primitives.
+    /// The file has parts the pattern does not follow: skins, morph targets, deformers,
+    /// animations, point and line primitives, or geometry that is not a polygon mesh.
     ImportIgnored,
     /// The finished size is outside the supported range of the longest dimension.
     SizeOutOfRange,

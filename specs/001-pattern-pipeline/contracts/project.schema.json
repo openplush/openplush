@@ -21,7 +21,7 @@
       "required": ["sourceFormat", "meshChunk", "units"],
       "additionalProperties": false,
       "properties": {
-        "sourceFormat": { "enum": ["obj", "gltf", "glb", "stl", "ply"] },
+        "sourceFormat": { "enum": ["obj", "gltf", "glb", "stl", "ply", "fbx"] },
         "meshChunk": {
           "type": "string",
           "description": "Name of the binary chunk holding the ORIGINAL imported mesh, unrepaired. Repair is replayed from repairPlan so the source the maker supplied is never lost."

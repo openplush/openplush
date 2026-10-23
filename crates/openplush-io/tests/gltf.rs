@@ -3,8 +3,9 @@
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
-use openplush_io::gltf::{self, Ignored, Imported};
+use openplush_io::gltf;
 use openplush_io::{Format, IoError};
+use openplush_io::{Ignored, Imported};
 use openplush_mesh::{FaceId, MaterialIndex, SourceCorner, TriangleSoup, VertexId};
 
 type Setup = Box<dyn std::error::Error>;

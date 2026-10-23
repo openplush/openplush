@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use openplush_io::gltf::{self, Ignored, Imported};
-use openplush_io::{IoError, obj, ply, stl};
+use openplush_io::{Ignored, Imported, IoError, fbx, gltf, obj, ply, stl};
 use openplush_mesh::TriangleSoup;
 
 use crate::{
@@ -28,8 +27,9 @@ pub struct ImportFile {
 }
 
 /// Reads the primary file with the reader its extension names, ASCII case-insensitively.
-/// What a glTF reader skipped (skins, morph targets, animations, point and line
-/// primitives) is one `import-ignored` warning.
+/// What a glTF or FBX reader skipped (skins, morph targets, deformers, animations, point
+/// and line primitives, geometry that is not a polygon mesh) is one `import-ignored`
+/// warning.
 ///
 /// # Errors
 /// `UnknownFormat` when no reader takes the extension; otherwise the reader's refusal:
@@ -43,6 +43,7 @@ pub fn import(files: &ImportFiles) -> StageResult<TriangleSoup> {
             ignored: Vec::new(),
         }),
         Some(Reader::Gltf) => gltf::read(name, bytes, &|wanted| beside(files, wanted)),
+        Some(Reader::Fbx) => fbx::read(bytes),
         None => return Err(EngineError::UnknownFormat { name: name.clone() }),
     }
     .map_err(refusal)?;
@@ -59,6 +60,7 @@ pub fn import(files: &ImportFiles) -> StageResult<TriangleSoup> {
 enum Reader {
     Plain(fn(&[u8]) -> Result<TriangleSoup, IoError>),
     Gltf,
+    Fbx,
 }
 
 /// The reader the final path segment's extension names.
@@ -71,6 +73,7 @@ fn reader(name: &str) -> Option<Reader> {
         ("ply", Reader::Plain(ply::read)),
         ("gltf", Reader::Gltf),
         ("glb", Reader::Gltf),
+        ("fbx", Reader::Fbx),
     ];
     readers
         .into_iter()
@@ -116,7 +119,7 @@ fn ignored_warning(ignored: &[Ignored]) -> Warning {
 fn ignored_text(ignored: &[Ignored]) -> String {
     let parts: Vec<String> = ignored
         .iter()
-        .map(|i| match *i {
+        .map(|i| match i {
             Ignored::Skin { node } => format!("the skin on node {node}, read in its bind pose"),
             Ignored::MorphTargets { node, mesh } => {
                 format!("the morph targets of mesh {mesh} (node {node}), read as the base mesh")
@@ -129,6 +132,13 @@ fn ignored_text(ignored: &[Ignored]) -> String {
             } => format!(
                 "primitive {primitive} of mesh {mesh} (node {node}), which is points or lines"
             ),
+            Ignored::Deformer { model, deformer } => {
+                format!("the deformer \"{deformer}\" on model \"{model}\", read in its rest pose")
+            }
+            Ignored::AnimationStack { stack } => format!("animation stack \"{stack}\", not played"),
+            Ignored::Geometry { model, geometry } => format!(
+                "the geometry \"{geometry}\" on model \"{model}\", which is not a polygon mesh"
+            ),
         })
         .collect();
     format!(
@@ -140,7 +150,7 @@ fn ignored_text(ignored: &[Ignored]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use openplush_io::gltf::Ignored;
+    use openplush_io::Ignored;
     use openplush_mesh::{FaceId, MeshError};
 
     use super::*;
@@ -198,6 +208,29 @@ mod tests {
             "The file has parts the pattern does not follow: the skin on node 2, read in its \
              bind pose; the morph targets of mesh 1 (node 2), read as the base mesh; animation \
              0, not played. The pattern is made from the triangles as modelled."
+        );
+    }
+
+    #[test]
+    fn each_kind_of_skipped_fbx_part_is_named() {
+        assert_eq!(
+            ignored_text(&[
+                Ignored::Deformer {
+                    model: "Body".into(),
+                    deformer: "Smile".into(),
+                },
+                Ignored::Geometry {
+                    model: "Body".into(),
+                    geometry: "Guide".into(),
+                },
+                Ignored::AnimationStack {
+                    stack: "Walk".into(),
+                },
+            ]),
+            "The file has parts the pattern does not follow: the deformer \"Smile\" on model \
+             \"Body\", read in its rest pose; the geometry \"Guide\" on model \"Body\", which is \
+             not a polygon mesh; animation stack \"Walk\", not played. The pattern is made from \
+             the triangles as modelled."
         );
     }
 

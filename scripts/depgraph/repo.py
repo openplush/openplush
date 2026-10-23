@@ -78,6 +78,25 @@ def loc(text):
     return sum(1 for line in text.splitlines() if line.strip())
 
 
+def json_object(repo, path):
+    """A JSON file's top-level object; anything else is refused naming the file."""
+    try:
+        data = json.loads(repo.read(path))
+    except json.JSONDecodeError as e:
+        raise GenError(f"{path}: {e}") from e
+    if not isinstance(data, dict):
+        raise GenError(f"{path}: expected a JSON object, found {type(data).__name__}")
+    return data
+
+
+def table(data, key, path):
+    """data[key] as a TOML table (empty when absent); anything else is refused naming the file."""
+    value = data.get(key, {})
+    if not isinstance(value, dict):
+        raise GenError(f"{path}: expected [{key}] to be a table")
+    return value
+
+
 def parse_cargo(repo):
     """Each Cargo package by directory: its name and dependencies by the identifier its source uses."""
     pkgs = {}
@@ -107,18 +126,15 @@ def project_name(repo):
     Never the checkout directory's name, so the same commit gives the same bytes wherever it is checked out.
     """
     if "package.json" in repo.fileset:
-        try:
-            name = json.loads(repo.read("package.json")).get("name")
-        except json.JSONDecodeError as e:
-            raise GenError(f"package.json: {e}") from e
+        name = json_object(repo, "package.json").get("name")
         if isinstance(name, str) and name:
             return name.rsplit("/", 1)[-1]
     if "Cargo.toml" in repo.fileset:
         try:
-            workspace = tomllib.loads(repo.read("Cargo.toml")).get("workspace", {})
+            workspace = table(tomllib.loads(repo.read("Cargo.toml")), "workspace", "Cargo.toml")
         except tomllib.TOMLDecodeError as e:
             raise GenError(f"Cargo.toml: {e}") from e
-        url = workspace.get("package", {}).get("repository")
+        url = table(workspace, "package", "Cargo.toml").get("repository")
         if isinstance(url, str) and url.rstrip("/"):
             return url.rstrip("/").rsplit("/", 1)[-1]
     return "repository"
@@ -211,10 +227,7 @@ def add_ts_edges(repo, graph):
 
 
 def add_npm_manifest(repo, graph, manifest):
-    try:
-        pj = json.loads(repo.read(manifest))
-    except json.JSONDecodeError as e:
-        raise GenError(f"{manifest}: {e}") from e
+    pj = json_object(repo, manifest)
     exports = pj.get("exports", {})
     entry = exports.get(".") if isinstance(exports, dict) else exports
     if not isinstance(entry, str):

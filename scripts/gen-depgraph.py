@@ -17,8 +17,8 @@ files. Edges come from what the code names:
 Depth and cycles read production imports only. D3 is vendored beside this script
 and inlined, and its licence is written beside the page, so the page loads nothing
 from the network. The output is byte-identical for the same commit.
-It fails, writing nothing, naming the file, on a manifest that does not parse or a
-tracked file that is missing or not UTF-8.
+It fails, writing nothing, naming the file, on a manifest that does not parse or
+has the wrong shape, or a tracked file that is missing or not UTF-8.
 
 Usage: scripts/gen-depgraph.py [root] [out]
        (default root: the repository; default out: <root>/target/site/dev/depgraph)

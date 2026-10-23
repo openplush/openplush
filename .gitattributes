@@ -15,3 +15,6 @@
 *.webp binary
 *.pdf binary
 *.wasm binary
+
+# Vendored third-party code, published only in the docs site
+scripts/depgraph/d3.min.js linguist-vendored

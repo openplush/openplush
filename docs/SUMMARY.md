@@ -61,6 +61,7 @@
     - [openplush-pipeline](reference/crates/openplush-pipeline.md)
     - [openplush-cli](reference/crates/openplush-cli.md)
     - [openplush-wasm](reference/crates/openplush-wasm.md)
+  - [Dependency graph](reference/dependency-graph.md)
   - [Engine API](reference/engine-api.md)
   - [Glossary](reference/glossary.md)
   - [Rust API](reference/api.md)

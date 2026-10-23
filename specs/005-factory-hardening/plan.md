@@ -81,6 +81,7 @@ scripts/merge-gate.py                # US4: the dry-run line
 | 1 | US1, US2 (factory skill), US3 (attribution), US4 (gate setup), US5 (decision prompts) | Maintainer merges (tier H) |
 | 2 | US6 grant: ADR 0020 accepted, then the skill and triggers | F-002 accepted 2026-10-21 |
 | 3 | US7 ledger layout | F-003 accepted 2026-10-21; F013 follows 004's W044 |
+| 4 | US8: ADR 0021, then the prose rule, the rename, and the checks | F-005, F-006 accepted 2026-10-22 |
 
 ## Decision Ledger
 
@@ -90,6 +91,8 @@ scripts/merge-gate.py                # US4: the dry-run line
 | 2026-10-20 | F-002 | **A grant is a structured `/factory` argument** ([#316](https://github.com/openplush/openplush/issues/316)): hours, features, merge yes/no, paths, decisions yes/no, and `continue` to renew the last one. What a grant may override relative to [ADR 0018](../../docs/adr/0018-hands-off-merging.md) is set by ADR 0020; scheduled triggers expire with the grant. `human:decision` | Accepted (maintainer, 2026-10-21): option 2, merge on the gate's verdict; recorded in ADR 0020 |
 | 2026-10-20 | F-003 | **Ledger layout** ([#320](https://github.com/openplush/openplush/issues/320)). Measured (research R6): of the last 50 merged PRs, 28 merged a parent or `main` into their branch and 16 of those hit a conflict; the Decision Ledger was in 2, a `tasks.md` in 9, an index list (`docs/SUMMARY.md`, a folder `README.md`, `docs/adr/README.md`, `docs/reference/crates.md`) in 7. Options: (a) one file per decision with a generated ledger table; (b) an append-only ledger section; (c) the ledger as is. **Recommendation: (c) for the ledger**, since it caused 2 of 16 and (a) adds a generator and a file per row to every feature; (b) still conflicts when two branches append after the same last row. Put the effort where the conflicts are: generated folder index lists (004's W-018) and `tasks.md` as-built notes. Default if unanswered: (c). `human:decision` | Accepted (maintainer, 2026-10-21): (c), the ledger as is; folder index lists are generated instead (004's W-018, W044) |
 | 2026-10-20 | F-004 | **A factory session stops after one firing, or at the next step boundary past 300k tokens of context**, with the reason and the handoff ([#321](https://github.com/openplush/openplush/issues/321)) | Accepted (standing authorization, 2026-10-21; grant on the 005 ledger #345) |
+| 2026-10-22 | F-005 | **One ID scheme in every feature** ([ADR 0021](../../docs/adr/0021-one-id-scheme.md)): tasks `T`, decisions `D-`, spike numbers retired; 002 to 005 renamed in place with their numbers kept; an ID outside its feature's files names its feature (`002 T012`); research folders drop their spike IDs; the glossary maps old forms. | Accepted (maintainer, 2026-10-22) |
+| 2026-10-22 | F-006 | **Status prose for people**: a sentence first; IDs only as links to where they live, after the words; at most two per line; one closing glossary line; machine fields exempt. Its home is to be `AGENTS.md`, Comments and prose; task F015 puts it there. | Accepted (maintainer, 2026-10-22) |
 
 ## Complexity Tracking
 

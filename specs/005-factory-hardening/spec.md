@@ -123,6 +123,21 @@ Parallel and stacked PRs that each add a page no longer conflict on the same fol
 
 ---
 
+### User Story 8 - Status reads without decoding IDs (Priority: P2)
+
+The maintainer reads a ledger comment, a handoff or a PR body and learns what happened from its words; every ID in it is a link to where it lives. One ID scheme holds in every feature, so an ID's kind is in a fixed place. Raised on 2026-10-22 from ledger [#241](https://github.com/openplush/openplush/issues/241), where one line carried eight bare IDs of four kinds.
+
+**Why this priority**: Each bare ID costs the reader a lookup, and the per-feature letters make the same letter mean a task, a spike or a decision depending on the feature.
+
+**Independent Test**: Read the first ledger comment and the first PR body written after this lands: every line opens with a sentence, carries at most two IDs, and each ID links to its file. Grep the specs: every task line is `T` and every ledger row `D-`, in every feature.
+
+**Acceptance Scenarios**:
+
+1. **Given** a firing that skips a task, **When** it writes the ledger comment, **Then** the line says why in words first, and the task's ID, with its feature, links to its line in `tasks.md`.
+2. **Given** any feature, **When** a reader meets a task or decision ID, **Then** it is `T` or `D-` followed by its number, and the glossary maps any older form to it.
+
+---
+
 ### Edge Cases
 
 - **A placeholder inside quoted example text** in a kickoff (a code span showing the syntax): it is still refused; the kickoff is rewritten without it. A false stop costs one message, a false start costs hours.
@@ -130,6 +145,7 @@ Parallel and stacked PRs that each add a page no longer conflict on the same fol
 - **A merge commit or a bot's commit in a PR range**: only commits the PR adds are checked, and a bot that is not an agent identity is not attribution.
 - **A diagnostic run without the rights to read a setting**: it reports that setting as unknown with the right it needs, never as present.
 - **A grant naming a feature with no ready task**: the firing records "idle" as today.
+- **An old ID in history** (a merged PR title, a ledger comment, a commit): it keeps its old form; the glossary's alias rule maps it to the current one.
 - **A context threshold reached in the middle of a push**: the step finishes; the stop happens at the next step boundary, so nothing is left half-pushed.
 
 ## Requirements *(mandatory)*
@@ -153,12 +169,17 @@ Parallel and stacked PRs that each add a page no longer conflict on the same fol
 - **FR-015**: What a grant may and may not override MUST be stated in one accepted decision, and the factory rules MUST match it (US6).
 - **FR-016**: A scheduled firing MUST do no work after its grant expires, and the schedule MUST be turned off (US6).
 - **FR-017**: Adding a page in two parallel PRs MUST NOT conflict on a shared folder index (US7).
+- **FR-018**: Status prose an agent writes for a person (ledger comments, handoffs, PR bodies and comments, chat summaries) MUST open each line with a sentence, give IDs only as links to where they live, and carry at most two per line; machine fields (readiness tokens, kickoff, grant record, branch names) are exempt (US8).
+- **FR-019**: Every feature MUST number tasks `T` and decisions `D-`, with no separate spike numbers, and an ID written outside its feature's files MUST name its feature (US8).
+- **FR-020**: The glossary MUST map every earlier prefix to the current one (US8).
+- **FR-021**: The checks MUST reject a task line or ledger row in another form (US8).
 
 ### Key Entities
 
 - **Grant**: the maintainer's permission for a factory run: duration, features, whether it may merge, paths it may touch, whether it may accept decisions.
 - **Kickoff**: the prompt or arguments that start a firing.
 - **Handoff**: the text a firing ends with: state, next steps, blockers, kickoff.
+- **Status prose**: anything an agent writes for a person to read, as opposed to a field a script or a firing parses.
 - **Decision prompt**: any question, ledger comment or handoff blocker that asks the maintainer to decide.
 - **Gate prerequisite**: a repository label, setting, App installation or variable the merge gate needs.
 
@@ -174,12 +195,14 @@ Parallel and stacked PRs that each add a page no longer conflict on the same fol
 - **SC-006**: The maintainer asks for no re-explanation of a decision prompt.
 - **SC-007**: The maintainer states a grant once per run.
 - **SC-008**: Ledger and index conflicts in stacked PRs drop to zero, measured over the next 20 stacked PRs.
+- **SC-009**: Zero bare IDs in the first five ledger comments after this lands, and zero task lines or ledger rows outside `T` and `D-` on `main`.
 
 ## Assumptions
 
 - The factory runs as Claude Code sessions driven by `.claude/skills/factory/SKILL.md`; skills have no test harness, so their rules are shown by worked examples.
 - The maintainer's identity is the one in the repository's commit history; agent identities are the ones in the history check above.
 - The merge gate's stale-summary and changes-requested handling (ADR 0018) is correct and tested; this feature only confirms it.
+- US8 renames IDs in specs whose code has landed; [ADR 0021](../../docs/adr/0021-one-id-scheme.md) makes that one exception to [ADR 0019](../../docs/adr/0019-spec-maintenance-model.md), since it changes no intent.
 - US6 and US7 waited on decisions the maintainer accepted on 2026-10-21 (F-002, F-003).
 
 ## Out of scope

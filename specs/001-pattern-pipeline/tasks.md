@@ -103,7 +103,7 @@ T084's `Fabric` with any detector that consumes it. The spike tasks (T001–T008
 - [ ] T204 [P] **Spike** `research/cargo_mutants/` — run `cargo-mutants` (installed for the spike, not through `scripts/check.sh --setup`) on `openplush-flatten` and `openplush-pattern`: wall time per crate on a named machine; mutants generated, caught, missed, timed out and unviable; each missed mutant with its file and line; `README.md` (question, method, versions), `results.md`, and `results.json`. Output is data and a recommendation; adopting it is a later decision, and each missed mutant becomes its own test task. Box: 1 day. *Added 2026-10-23*
 - [ ] T205 [P] **Spike** `research/fabric_stretch/protocol.md` — a reproducible strip test for research R7's per-direction stretch: strip width, gauge length, load and hold time, and how grain, cross and bias strips are cut and marked, with a recording sheet per fabric. Every number cites a published test standard; none is written from memory. Feeds T008. Box: 0.5 day. *Added 2026-10-23*
 
-**Checkpoint**: T007 and T006 must be answered before Phase 3. T001 through T005 and T008 may run alongside Phases 1 and 2. T204 and T205, added later and not in R6, block nothing: each feeds a later decision or T008.
+**Checkpoint**: T007 and T006 must be answered before Phase 3. T001 through T005 and T008 may run alongside Phases 1 and 2. T204 and T205, added later and not in R6, gate no phase: T204 feeds a later decision, and T205 blocks only T008.
 
 ---
 

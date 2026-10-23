@@ -488,7 +488,7 @@ fn polygon(corners: usize) -> String {
     let mut text = String::new();
     for i in 0..corners {
         let a = std::f64::consts::TAU * i as f64 / corners as f64;
-        text += &format!("v {} {} 0\n", a.cos(), a.sin());
+        text += &format!("v {} {} 0\n", libm::cos(a), libm::sin(a));
     }
     text += "f";
     (1..=corners).for_each(|i| text += &format!(" {i}"));

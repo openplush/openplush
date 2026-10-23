@@ -259,7 +259,7 @@ fn singular_values(chart: &Chart<'_>, [a, b, c]: [usize; 3]) -> Option<(f64, f64
     // the sign of det J.
     let (e, f) = ((j00 + j11) / 2.0, (j00 - j11) / 2.0);
     let (g, h) = ((j10 + j01) / 2.0, (j10 - j01) / 2.0);
-    let (q, r) = (e.hypot(h), f.hypot(g));
+    let (q, r) = (libm::hypot(e, h), libm::hypot(f, g));
     Some((q + r, q - r))
 }
 

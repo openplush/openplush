@@ -49,9 +49,9 @@ fn cap(rim_deg: f64, rings: u32) -> Result<ManifoldMesh, Setup> {
         .map(|&(rho, azimuth)| {
             let theta = scale * rho;
             DVec3::new(
-                theta.sin() * azimuth.cos(),
-                theta.sin() * azimuth.sin(),
-                theta.cos(),
+                libm::sin(theta) * libm::cos(azimuth),
+                libm::sin(theta) * libm::sin(azimuth),
+                libm::cos(theta),
             )
         })
         .collect();
@@ -77,7 +77,7 @@ fn zip_rings(inner: &[u32], outer: &[u32], triangles: &mut Vec<[u32; 3]>) {
 /// Two triangles on the edge from `(0, 0, 0)` to `(10, 0, 0)`, the second folded back over the
 /// first about that edge until their normals are `apart_deg` from antiparallel.
 fn book(apart_deg: f64) -> Result<ManifoldMesh, Setup> {
-    let lift = 8.0 * apart_deg.to_radians().tan();
+    let lift = 8.0 * libm::tan(apart_deg.to_radians());
     repaired(
         vec![
             DVec3::new(0.0, 0.0, 0.0),
@@ -107,7 +107,7 @@ fn unit_normal(mesh: &ManifoldMesh, f: FaceId) -> Result<DVec3, Setup> {
 /// Oracle: every interior edge whose two faces' unit normals are within `FOLD_ANGLE` of
 /// antiparallel, from positions alone, in ascending order.
 fn folded_edges(mesh: &ManifoldMesh) -> Result<Vec<EdgeId>, Setup> {
-    let limit = -(FOLD_ANGLE.cos());
+    let limit = -(libm::cos(FOLD_ANGLE));
     let mut folded = Vec::new();
     for e in 0..u32::try_from(mesh.edge_count())? {
         let h = EdgeId::new(e).half_edge();
@@ -204,7 +204,7 @@ fn a_flat_sheet_has_no_fold() -> Result<(), Setup> {
 fn the_folded_chart_is_named_when_it_is_not_the_first() -> Result<(), Setup> {
     // Face 0 lies flat beside face 1, cut from it by a seam; face 2 is folded back over face 1
     // about their shared edge from (0, 0, 0) to (5, -10, 0), 2° from antiparallel.
-    let lift = 80.0 * 2.0_f64.to_radians().tan() / 125.0_f64.sqrt();
+    let lift = 80.0 * libm::tan(2.0_f64.to_radians()) / 125.0_f64.sqrt();
     let mesh = repaired(
         vec![
             DVec3::new(0.0, 0.0, 0.0),

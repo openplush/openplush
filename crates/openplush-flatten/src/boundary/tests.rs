@@ -61,9 +61,9 @@ fn a_half_cylinder_unrolls_to_its_rectangle() -> Result<(), BoundaryError> {
     // Every quad of a prism is a flat rectangle, so the strip is exactly developable.
     let step = std::f64::consts::PI / 8.0;
     let (xyz, f) = surface(8, 3, |c, r| {
-        DVec3::new((c * step).cos(), (c * step).sin(), 0.4 * r)
+        DVec3::new(libm::cos(c * step), libm::sin(c * step), 0.4 * r)
     });
-    let chord = 2.0 * (step / 2.0).sin();
+    let chord = 2.0 * libm::sin(step / 2.0);
     let flat = prescribe(&xyz, &f)?;
     let id = |v: VertexId| (f64::from(v.index() % 9), f64::from(v.index() / 9));
     assert!(congruent(&flat, |v| DVec2::new(
@@ -231,7 +231,7 @@ fn lopsided() -> (Vec<DVec3>, Faces) {
 fn the_open_polygon_misses_closing_by_the_natural_gap() -> Result<(), BoundaryError> {
     let step = std::f64::consts::PI / 8.0;
     let (xyz, f) = surface(8, 3, |c, r| {
-        DVec3::new((c * step).cos(), (c * step).sin(), 0.4 * r)
+        DVec3::new(libm::cos(c * step), libm::sin(c * step), 0.4 * r)
     });
     // Developable: the natural turning already closes.
     assert!(open_polygon(&xyz, &f)?.gap <= 1e-12);

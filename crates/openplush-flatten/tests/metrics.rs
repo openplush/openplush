@@ -56,7 +56,7 @@ fn assert_values(d: Distortion, expected: [f64; 4]) {
 fn an_isometry_neither_stretches_nor_compresses() -> Result<(), FlattenError> {
     let (xyz, faces) = right_triangle();
     // The same triangle turned by 30° and moved.
-    let (s, c) = (PI / 6.0).sin_cos();
+    let (s, c) = libm::sincos(PI / 6.0);
     let flat = uv(&[(5.0, -2.0), (5.0 + c, -2.0 + s), (5.0 - s, -2.0 + c)]);
     assert_values(one(&xyz, &faces, &flat)?, [1.0, 1.0, 1.0, 1.0]);
     Ok(())
@@ -102,13 +102,13 @@ fn a_face_tilted_in_3d_is_measured_in_its_own_plane() -> Result<(), FlattenError
 /// unrolling: each facet is a flat rectangle one chord wide.
 fn half_cylinder(columns: u32, rows: u32) -> (Vec<DVec3>, Faces, Vec<DVec2>) {
     let step = PI / f64::from(columns);
-    let chord = 2.0 * (step / 2.0).sin();
+    let chord = 2.0 * libm::sin(step / 2.0);
     let grid = (0..=rows).flat_map(|r| (0..=columns).map(move |c| (c, r)));
     let xyz = grid
         .clone()
         .map(|(c, r)| {
             let a = f64::from(c) * step;
-            DVec3::new(a.cos(), a.sin(), f64::from(r))
+            DVec3::new(libm::cos(a), libm::sin(a), f64::from(r))
         })
         .collect();
     let unrolled = grid

@@ -42,7 +42,13 @@ fn tube(cols: u32, rows: u32) -> String {
     for r in 0..=rows {
         for c in 0..cols {
             let a = std::f64::consts::TAU * f64::from(c) / f64::from(cols);
-            let _ = writeln!(s, "v {} {} {}", 10.0 * a.cos(), 10.0 * a.sin(), 10 * r);
+            let _ = writeln!(
+                s,
+                "v {} {} {}",
+                10.0 * libm::cos(a),
+                10.0 * libm::sin(a),
+                10 * r
+            );
         }
     }
     let id = |c: u32, r: u32| r * cols + c % cols + 1;
@@ -170,7 +176,7 @@ fn a_closed_mesh_with_no_seam_is_closed_and_the_error_carries_a_cut() -> Result<
 
 /// Two triangles on one edge, the second folded back `degrees` from lying on the first.
 fn book(degrees: f64) -> String {
-    let lift = 8.0 * degrees.to_radians().tan();
+    let lift = 8.0 * libm::tan(degrees.to_radians());
     format!("v 0 0 0\nv 10 0 0\nv 5 10 0\nv 5 8 {lift}\nf 1 2 3\nf 2 1 4\n")
 }
 
@@ -272,10 +278,10 @@ fn moebius(n: u32) -> String {
     let mut s = String::new();
     for i in 0..n {
         let a = std::f64::consts::TAU * f64::from(i) / f64::from(n);
-        let (radial, up) = ((a / 2.0).cos(), (a / 2.0).sin());
+        let (radial, up) = (libm::cos(a / 2.0), libm::sin(a / 2.0));
         for w in [-2.0, 0.0, 2.0] {
             let r = 10.0 + w * radial;
-            let _ = writeln!(s, "v {} {} {}", r * a.cos(), r * a.sin(), w * up);
+            let _ = writeln!(s, "v {} {} {}", r * libm::cos(a), r * libm::sin(a), w * up);
         }
     }
     // Vertex `side` (0, 1, 2 across the rung) of rung `i`; the half turn swaps the sides of

@@ -417,7 +417,7 @@ fn a_polygon_with_too_many_corners_is_refused_rather_than_clipped_for_minutes() 
     let mut body = String::new();
     for i in 0..n {
         let a = std::f64::consts::TAU * f64::from(i) / f64::from(n);
-        body += &format!("{} {} 0\n", a.cos(), a.sin());
+        body += &format!("{} {} 0\n", libm::cos(a), libm::sin(a));
     }
     body += &format!("{n}");
     (0..n).for_each(|i| body += &format!(" {i}"));

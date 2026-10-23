@@ -213,7 +213,7 @@ fn a_short_direction_is_taken_whole_and_a_long_one_by_four_fifths_of_the_flip_li
     let limit = 0.8 * max_step(&faces, &uv, &long);
     let (next, _) = descend(&rest, &faces, &uv, &long, e).ok_or("no step")?;
     let halvings = (0..40).find(|h| {
-        let t = limit * 0.5_f64.powi(*h);
+        let t = libm::ldexp(limit, -*h);
         next.iter()
             .zip(&uv)
             .zip(&long)

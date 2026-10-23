@@ -86,7 +86,7 @@ expect fail "HashMap is still banned in crates/" $geom \
 # Allowed.
 expect pass "Duration is not a clock read" $geom \
   'pub fn f() -> std::time::Duration { std::time::Duration::from_millis(5) }'
-expect pass "plain arithmetic" $geom 'pub fn f(a: f64, b: f64) -> f64 { a.mul_add(b, 1.0) }'
+expect pass "plain arithmetic" $geom 'pub fn f(a: f64, b: f64) -> f64 { a * b + 1.0 }'
 expect pass "testkit may read fixture files" openplush-testkit \
   'pub fn load() -> usize { std::fs::read("fixture.glb").map(|v| v.len()).unwrap_or(0) }'
 expect fail "testkit still may not use HashMap" openplush-testkit \
@@ -107,6 +107,18 @@ for crate in $geom openplush-testkit; do
     "\`slice::sort_unstable\`"
   expect pass "$crate: stable sorts" "$crate" \
     'pub fn f(v: &mut [f64], w: &mut [(u32, u8)]) { v.sort_by(f64::total_cmp); w.sort(); w.sort_by_key(|p| p.0); }'
+done
+
+# Determinism (root rules): std's transcendentals call the platform libm, whose
+# last bits differ between native and wasm32; mul_add is banned so a*b + c oracles
+# keep one rounding style. sqrt is correctly rounded by IEEE 754, so it stays.
+for crate in $geom openplush-testkit; do
+  expect fail "$crate: f64::sin" "$crate" 'pub fn f(x: f64) -> f64 { x.sin() }' "\`f64::sin\`"
+  expect fail "$crate: f64::powf" "$crate" 'pub fn f(x: f64, y: f64) -> f64 { x.powf(y) }' "\`f64::powf\`"
+  expect fail "$crate: f64::mul_add" "$crate" 'pub fn f(x: f64, y: f64, z: f64) -> f64 { x.mul_add(y, z) }' \
+    "\`f64::mul_add\`"
+  expect fail "$crate: f32::sin through a path" "$crate" 'pub fn f(x: f32) -> f32 { f32::sin(x) }' "\`f32::sin\`"
+  expect pass "$crate: f64::sqrt" "$crate" 'pub fn f(x: f64) -> f64 { x.sqrt() + x.abs() }'
 done
 
 # Clippy reads only the nearest clippy.toml, so each nested one must repeat every

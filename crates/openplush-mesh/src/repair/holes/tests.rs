@@ -29,7 +29,7 @@ fn tube() -> ManifoldMesh {
     for r in 0..2 {
         for c in 0..4 {
             let a = std::f64::consts::TAU * f64::from(c) / 4.0;
-            positions.push(p(a.cos(), a.sin(), f64::from(r)));
+            positions.push(p(libm::cos(a), libm::sin(a), f64::from(r)));
         }
     }
     let mut triangles = Vec::new();

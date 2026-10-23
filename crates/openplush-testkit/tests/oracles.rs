@@ -16,7 +16,7 @@ fn cylinder_strip(r: f64, n: u32) -> Mesh {
     for i in 0..=n {
         let t = sweep * f64::from(i) / f64::from(n);
         for z in [0.0, 10.0] {
-            xyz.push(DVec3::new(r * t.cos(), r * t.sin(), z));
+            xyz.push(DVec3::new(r * libm::cos(t), r * libm::sin(t), z));
             uv.push(DVec2::new(r * t, z));
         }
     }

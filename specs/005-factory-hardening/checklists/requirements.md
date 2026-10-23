@@ -32,4 +32,4 @@
 ## Notes
 
 - The users are the maintainer and the agents, so the factory, the merge gate and CI are the product here, not implementation choices; the spec names them and leaves how to `plan.md`.
-- No clarification markers: the two open questions (what a grant may override, the ledger layout) are maintainer decisions recorded as Proposed in `plan.md` (F-002, F-003), and US6 and US7 waited on them. Both were accepted on 2026-10-21.
+- No clarification markers: the two open questions (what a grant may override, the ledger layout) are maintainer decisions recorded as Proposed in `plan.md` (D-002, D-003), and US6 and US7 waited on them. Both were accepted on 2026-10-21.

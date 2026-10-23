@@ -9,4 +9,4 @@
 | US4 | Gate in `dry-run` | Its comment says dry-run and names `MERGE_GATE_MODE=on` |
 | US5 | Read a handoff's blockers | Each has facts, file and ID, one recommendation, the default |
 | US6 | `/factory 005 grant hours=1 merge=no paths=specs/ decisions=no`, then `/factory continue` | The handoff's kickoff states the grant; `continue` renews it with a fresh start |
-| US7 | `scripts/check.sh docs` once 004's W044 lands | Folder index lists are generated; the ledger stays as it is (F-003) |
+| US7 | `scripts/check.sh docs` once 004's T044 lands | Folder index lists are generated; the ledger stays as it is (D-003) |

@@ -23,7 +23,7 @@ See [contracts/handoff.md](contracts/handoff.md). Every firing emits exactly one
 | Part | Rule |
 |---|---|
 | Facts | What is true now, measured, with numbers where there are any |
-| Where it lives | File and ID (`specs/004-docs-site/plan.md` W-017) |
+| Where it lives | File and ID (`specs/004-docs-site/plan.md` D-017) |
 | Recommendation | Exactly one |
 | Default | What happens if nobody answers |
 

@@ -192,7 +192,7 @@ This phase is large because US1 *is* the product. Every other story decorates th
 - [x] T046 [P] [US1] `crates/openplush-export/tests/scale.rs` — the scale-check square measures exactly 50.00 mm in the output file (SC-003) — *merged in #214: an independent PDF reader in the export tests measures each page's scale square at 50.00 mm and its inch square at 25.40 mm, on A4 and Letter*
 - [ ] T047 [P] [US1] `bindings/openplush-cli/tests/end_to_end.rs` — capsule from import to SVG through the CLI path, matching a golden snapshot
 - [x] T048 [P] [US1] `crates/openplush-io/tests/defect_corpus.rs` — every model in `fixtures/defects/` is detected and reported (SC-007, 100%) — *merged in #117; it lives in `openplush-io` because reading the fixtures as OBJ from `openplush-mesh` would be a crate cycle. Each defect fixture trips exactly its own detector; each clean fixture trips none*
-- [ ] T049 [P] [US1] `crates/openplush-pipeline/tests/determinism.rs` — same input twice gives byte-identical export (SC-008)
+- [x] T049 [P] [US1] `crates/openplush-pipeline/tests/determinism.rs` — same input twice gives byte-identical export (SC-008) — *2026-10-22: the capsule and the cube, each with its reference seams, from file bytes through every stage to the SVG and the A4 and Letter PDFs, run twice; the sphere has no reference seam set. The capsule-PDF-twice test in `export_stage.rs` moved here*
 
 ### Import and model health (FR-001 … FR-006)
 

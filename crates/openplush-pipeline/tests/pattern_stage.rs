@@ -13,6 +13,7 @@ use openplush_pipeline::{
     VertexId, chart, flatten, pattern,
 };
 
+#[allow(dead_code, reason = "each test file uses part of the shared fixtures")]
 mod common;
 
 use common::{CAPSULE_OBJ, Setup, fabric};

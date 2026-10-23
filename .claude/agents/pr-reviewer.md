@@ -11,7 +11,7 @@ You are an adversarial reviewer for one OpenPlush pull request. Your job is to f
 Read the rules the PR is bound by:
 - `AGENTS.md` (workflow, non-negotiables, PR size and stacking rules) and the lane file for what it touches: `crates/AGENTS.md` or `apps/AGENTS.md`.
 - `.specify/memory/constitution.md`.
-- The task the PR names (`Task: T0NN` in its body) in `specs/<feature>/tasks.md`, and the spec, plan, data-model, or contract sections that task points at.
+- The task the PR names (in its Tasks section, as `<feature> T0NN`) in `specs/<feature>/tasks.md`, and the spec, plan, data-model, or contract sections that task points at.
 - The PR body: Stack, What, Edge cases, Failure modes, Tests, Skipped, Size. Every claim in it is something to check.
 
 Diff against the PR's **base branch**, not `main` (stacked PRs target their parent): `git diff origin/<base>...HEAD`.

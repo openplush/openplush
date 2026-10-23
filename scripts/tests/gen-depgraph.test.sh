@@ -3,13 +3,13 @@
 # asserts the graph the generator embeds in the page it writes.
 #
 # What matters: edges follow what the code names (Rust mod and use paths, including a
-# test crate's own modules and a dependency renamed in its manifest, TypeScript
-# imports, Python imports a requirements.txt declares, script references); a
-# dev-dependency or an inline test module never reads as a production edge, so a
-# loop through test code is not reported as a cycle; the page loads nothing from the
-# network; the output is byte-identical run to run and whatever the checkout
-# directory is called; and a manifest the graph cannot be read from fails, naming
-# the file, with nothing written.
+# test crate's own modules and a dependency renamed in its manifest, with string
+# literals read as text; TypeScript imports, Python imports a requirements.txt
+# declares, script references); a dev-dependency or an inline test module never
+# reads as a production edge, so a loop through test code is not reported as a
+# cycle; the page loads nothing from the network; the output is byte-identical run
+# to run and whatever the checkout directory is called; and a manifest the graph
+# cannot be read from fails, naming the file, with nothing written.
 set -euo pipefail
 export LC_ALL=C
 
@@ -45,9 +45,13 @@ crate() {
 new_repo() {
   local root="$tmp/$1"
   crate "$root" crates/alpha alpha "[dependencies]" 'thiserror = "2"'
-  write "$root" crates/alpha/src/lib.rs "mod util;" "mod loop_a;" "mod loop_b;" "mod first;" "mod second;" \
+  write "$root" crates/alpha/src/lib.rs "mod util;" "mod strings;" "mod loop_a;" "mod loop_b;" "mod first;" "mod second;" \
     "pub use util::Thing;" "#[derive(thiserror::Error)]" "pub struct E;"
   write "$root" crates/alpha/src/util.rs "pub struct Thing;"
+  # Comment markers and braces inside string literals are text, not comments or blocks.
+  write "$root" crates/alpha/src/strings.rs 'pub const OPEN: &str = "/* not a comment";' \
+    "use crate::util::Thing;" "/* a real comment */" "#[cfg(test)]" "mod tests {" \
+    '    const B: &str = "}";' "    use crate::loop_b::b;" "}"
   # A loop only test code closes: not a cycle.
   write "$root" crates/alpha/src/loop_a.rs "pub fn a() {}" "#[cfg(test)]" "mod tests {" \
     "    use crate::loop_b::b;" "    #[test] fn t() { b() }" "}"
@@ -115,6 +119,10 @@ has "a declared dependency no source names still shows" "$facts" "edge crates/be
 has "a renamed dependency resolves by the name the source uses" "$facts" \
   "edge crates/gamma/src/lib.rs crates/alpha/src/util.rs use"
 lacks "a renamed dependency the source uses is not reported unnamed" "$facts" "^edge crates/gamma/src/lib.rs .* manifest$"
+has "a comment marker inside a string does not hide the code after it" "$facts" \
+  "edge crates/alpha/src/strings.rs crates/alpha/src/util.rs use"
+has "a brace inside a string does not end an inline test module" "$facts" \
+  "edge crates/alpha/src/strings.rs crates/alpha/src/loop_b.rs test"
 has "a production loop is a cycle" "$facts" "cycle crates/alpha/src/first.rs crates/alpha/src/second.rs"
 lacks "a loop closed only by test code is not a cycle" "$facts" "^cycle .*loop_a"
 has "a relative TypeScript import resolves to the file" "$facts" "edge packages/client/src/index.ts packages/client/src/x.ts import"

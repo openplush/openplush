@@ -9,12 +9,20 @@
 )]
 mod grid;
 
-use openplush_seams::{ChartMesh, SeamKind, SeamSet};
+use std::collections::BTreeMap;
 
-use self::grid::{Setup, bumpy, column_cut, mesh_of, seam, tetra_cut, tetrahedron_then_grid};
+use openplush_seams::{ChartMesh, Proposal, ProposalKind, SeamKind, SeamSet};
+
+use self::grid::{
+    Setup, bumpy, column_cut, edge_between, mesh_of, seam, tetra_cut, tetrahedron_then_grid,
+    vertex_at,
+};
 use super::memo::{Memo, key};
 use super::{Pipeline, Stepping, fresh};
-use crate::{ChartId, EngineError, FlattenError, Parameterization};
+use crate::{
+    ChartId, EdgeId, EngineError, FlattenError, NonBlank, Parameterization, Remedy, Warning,
+    WarningCode, WarningTarget,
+};
 
 fn halves() -> Result<(Pipeline, SeamSet), Setup> {
     let mesh = mesh_of(&bumpy(4, 2, 3.0))?;
@@ -241,4 +249,72 @@ fn working_reports_the_flatten_sessions_own_iteration_and_energy() -> Result<(),
             other => panic!("the pipeline and the bare session disagree: {other:?}"),
         }
     }
+}
+
+/// The cut's bottom edge, a `Cut` seam, and the edge beside it on column 1, which is no seam.
+fn on_cut_and_beside(pipeline: &Pipeline) -> Result<(EdgeId, EdgeId), Setup> {
+    let at = |c, r| vertex_at(&pipeline.mesh, c, r);
+    Ok((
+        edge_between(&pipeline.mesh, at(2, 0)?, at(2, 1)?)?,
+        edge_between(&pipeline.mesh, at(1, 0)?, at(1, 1)?)?,
+    ))
+}
+
+/// A dart for chart 0 over the cut's bottom edge and the edge beside it.
+fn dart_over_the_cut(pipeline: &Pipeline) -> Result<Proposal, Setup> {
+    let (on_cut, beside) = on_cut_and_beside(pipeline)?;
+    let add = BTreeMap::from([(on_cut, SeamKind::Dart), (beside, SeamKind::Dart)]);
+    let kind = ProposalKind::Dart {
+        chart: ChartId::new(0),
+    };
+    Ok(Proposal::new(kind, add, "a dart".to_owned())?)
+}
+
+#[test]
+fn a_kept_refusals_darts_are_offered_once_each() -> Result<(), Setup> {
+    let (mut pipeline, _) = halves()?;
+    let dart = dart_over_the_cut(&pipeline)?;
+    pipeline.stepping = Stepping::Refused(EngineError::BoundaryNotRealizable {
+        chart: ChartId::new(0),
+        residual: 0.5,
+        proposals: vec![dart.clone(), dart.clone()],
+    });
+    assert_eq!(pipeline.proposals(), vec![dart]);
+    Ok(())
+}
+
+#[test]
+fn a_preview_adds_only_edges_with_no_seam_and_keeps_each_seams_kind() -> Result<(), Setup> {
+    let (mut pipeline, seams) = halves()?;
+    let dart = dart_over_the_cut(&pipeline)?;
+    pipeline.stepping = Stepping::Refused(EngineError::BoundaryNotRealizable {
+        chart: ChartId::new(0),
+        residual: 0.5,
+        proposals: vec![dart.clone()],
+    });
+    let (on_cut, beside) = on_cut_and_beside(&pipeline)?;
+    let mut expected = seams;
+    assert_eq!(expected.get(on_cut), Some(SeamKind::Cut));
+    expected.insert(beside, SeamKind::Dart)?;
+    assert_eq!(pipeline.preview(dart.id())?, expected);
+    Ok(())
+}
+
+#[test]
+fn an_actionable_warning_remedy_is_offered_and_an_advisory_is_not() -> Result<(), Setup> {
+    let (mut pipeline, _) = halves()?;
+    let dart = dart_over_the_cut(&pipeline)?;
+    let warning = |remedy| {
+        let text = NonBlank::new("why".to_owned()).expect("not blank");
+        Warning::new(WarningCode::TestAlpha, WarningTarget::Project, text, remedy)
+    };
+    let staged = pipeline.charts.as_mut().expect("charts");
+    staged.warnings.insert(warning(Remedy::Actionable {
+        proposal: dart.clone(),
+    }));
+    staged.warnings.insert(warning(Remedy::Advisory {
+        what_to_change: NonBlank::new("use a stretchier fabric".to_owned()).expect("not blank"),
+    }));
+    assert_eq!(pipeline.proposals(), vec![dart]);
+    Ok(())
 }

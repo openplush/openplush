@@ -59,7 +59,7 @@ fn flatten_hash() -> Result<u64, FlattenError> {
     while let Progress::Working { iteration, energy } = session.step()? {
         hash = fnv(fnv(hash, u64::from(iteration)), energy.to_bits());
     }
-    let layout = session.finish().unwrap_or_default();
+    let layout = session.finish().map(|(l, _)| l).unwrap_or_default();
     Ok(layout.iter().fold(hash, |h, (v, p)| {
         fnv(
             fnv(fnv(h, u64::from(v.index())), p.x.to_bits()),

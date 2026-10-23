@@ -8,9 +8,11 @@
     reason = "shared with the integration tests, which use the rest"
 )]
 mod grid;
+mod stops;
 
 use std::collections::BTreeMap;
 
+use openplush_flatten::StoppedBy;
 use openplush_seams::{ChartMesh, Proposal, ProposalKind, SeamKind, SeamSet};
 
 use self::grid::{
@@ -55,8 +57,11 @@ fn collide(pipeline: &mut Pipeline, layouts: &[Parameterization]) {
     };
     let uv = layouts[0].uv().to_vec();
     pipeline.memo = Memo::default();
-    pipeline.memo.insert(key(left), left.clone(), uv.clone());
-    pipeline.memo.insert(key(right), left.clone(), uv);
+    let settled = StoppedBy::Settled;
+    pipeline
+        .memo
+        .insert(key(left), left.clone(), uv.clone(), settled);
+    pipeline.memo.insert(key(right), left.clone(), uv, settled);
 }
 
 #[test]
@@ -88,15 +93,24 @@ fn a_seam_change_keeps_a_charts_own_entry_and_drops_others_filed_beside_it() -> 
     };
     let (left, right) = (left.clone(), right.clone());
     pipeline.memo = Memo::default();
-    pipeline
-        .memo
-        .insert(key(&right), left.clone(), reference[0].uv().to_vec());
-    pipeline
-        .memo
-        .insert(key(&right), right, reference[1].uv().to_vec());
-    pipeline
-        .memo
-        .insert(key(&left), left, reference[0].uv().to_vec());
+    pipeline.memo.insert(
+        key(&right),
+        left.clone(),
+        reference[0].uv().to_vec(),
+        StoppedBy::Settled,
+    );
+    pipeline.memo.insert(
+        key(&right),
+        right,
+        reference[1].uv().to_vec(),
+        StoppedBy::Settled,
+    );
+    pipeline.memo.insert(
+        key(&left),
+        left,
+        reference[0].uv().to_vec(),
+        StoppedBy::Settled,
+    );
     pipeline.set_seams(&seams);
     assert_eq!(
         pipeline.memo.len(),

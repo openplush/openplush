@@ -46,7 +46,7 @@ fn grid(cols: u32, rows: u32, place: impl Fn(f64, f64) -> DVec3) -> (Vec<DVec3>,
 fn flatten(xyz: &[DVec3], faces: &Faces) -> Result<Vec<DVec2>, FlattenError> {
     let mut session = FlattenSession::new(CHART, xyz, faces.clone())?;
     while session.step()? != Progress::Done {}
-    let layout = session.finish().unwrap_or_default();
+    let layout = session.finish().map(|(l, _)| l).unwrap_or_default();
     assert_eq!(layout.len(), xyz.len(), "every vertex is laid out");
     let mut uv = vec![DVec2::new(f64::NAN, f64::NAN); xyz.len()];
     for (v, p) in layout {

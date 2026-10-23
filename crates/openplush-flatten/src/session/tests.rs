@@ -5,10 +5,10 @@ use openplush_mesh::VertexId;
 use openplush_seams::ChartId;
 
 use super::{FlattenSession, Progress};
-use crate::FlattenError;
 use crate::boundary::fixtures::{Faces, faces, grid, rings};
-use crate::interior::fixtures::place;
+use crate::interior::fixtures::{cap, half_cylinder, place};
 use crate::interior::{Solve, Step};
+use crate::{FlattenError, StoppedBy};
 
 const CHART: ChartId = ChartId::new(9);
 
@@ -38,7 +38,7 @@ fn stepping_to_done_gives_the_layout_the_solve_settles_on() -> Result<(), Flatte
     let mut session = FlattenSession::new(CHART, &xyz, f.clone())?;
     while session.step()? != Progress::Done {}
     assert_eq!(
-        session.finish().map(|l| bits(&l)),
+        session.finish().map(|(l, _)| bits(&l)),
         Some(bits(&solve.layout()))
     );
     Ok(())
@@ -77,7 +77,7 @@ fn done_stays_done_and_the_layout_is_whole() -> Result<(), FlattenError> {
     let mut session = FlattenSession::new(CHART, &xyz, f.clone())?;
     while session.step()? != Progress::Done {}
     assert_eq!(session.step()?, Progress::Done);
-    assert_eq!(session.finish().map(|l| l.len()), Some(xyz.len()));
+    assert_eq!(session.finish().map(|(l, _)| l.len()), Some(xyz.len()));
     Ok(())
 }
 
@@ -91,7 +91,7 @@ fn a_chart_with_nothing_to_move_is_done_on_the_first_step() -> Result<(), Flatte
     let f = faces(&[[0, 1, 2]]);
     let mut session = FlattenSession::new(CHART, &xyz, f.clone())?;
     assert_eq!(session.step()?, Progress::Done);
-    assert_eq!(session.finish().map(|l| l.len()), Some(3));
+    assert_eq!(session.finish().map(|(l, _)| l.len()), Some(3));
     Ok(())
 }
 
@@ -151,5 +151,37 @@ fn a_step_that_fails_leaves_the_session_as_it_was() -> Result<(), FlattenError> 
         Err(FlattenError::SolveFailed { chart: CHART })
     );
     assert_eq!(session.finish(), None);
+    Ok(())
+}
+
+/// Why a session stepped to `Done` stopped, as `finish` reports it.
+fn stopped_by(mut session: FlattenSession) -> Result<Option<StoppedBy>, FlattenError> {
+    while session.step()? != Progress::Done {}
+    Ok(session.finish().map(|(_, stopped)| stopped))
+}
+
+#[test]
+fn finish_reports_a_stop_at_the_cap() -> Result<(), FlattenError> {
+    let (xyz, f) = hemisphere();
+    let mut solve = Solve::start(CHART, &xyz, f)?;
+    cap(&mut solve, 3);
+    let session = FlattenSession { solve, done: false };
+    assert_eq!(stopped_by(session)?, Some(StoppedBy::IterationCap));
+    Ok(())
+}
+
+#[test]
+fn finish_reports_a_negligible_gain_as_settled() -> Result<(), FlattenError> {
+    let (xyz, f) = hemisphere();
+    let session = FlattenSession::new(CHART, &xyz, f)?;
+    assert_eq!(stopped_by(session)?, Some(StoppedBy::Settled));
+    Ok(())
+}
+
+#[test]
+fn finish_reports_a_chart_already_at_its_isometry_as_no_descent() -> Result<(), FlattenError> {
+    let (xyz, f) = half_cylinder();
+    let session = FlattenSession::new(CHART, &xyz, f)?;
+    assert_eq!(stopped_by(session)?, Some(StoppedBy::NoDescent));
     Ok(())
 }

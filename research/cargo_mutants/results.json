@@ -1,0 +1,353 @@
+{
+  "tool": "cargo-mutants 27.1.0",
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "machine": {
+    "nproc": 4,
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "mem_gib": 15,
+    "os": "Linux 6.18"
+  },
+  "commit": "2ad8d23",
+  "settings": "--timeout-multiplier 3 -j 2",
+  "crates": [
+    {
+      "package": "openplush-flatten",
+      "runs": [
+        {
+          "started_utc": "2026-10-23T03:40:32Z",
+          "finished_utc": "2026-10-23T04:34:29Z",
+          "wall_seconds": 3237,
+          "note": "cut off by a container restart after 514 of 723 mutants"
+        },
+        {
+          "started_utc": "2026-10-23T04:37:15Z",
+          "finished_utc": "2026-10-23T05:08:06Z",
+          "wall_seconds": 1851,
+          "note": "--iterate: the 242 not caught in the first run"
+        }
+      ],
+      "fraction_run": "1/1",
+      "counts": {
+        "generated": 723,
+        "caught": 608,
+        "missed": 9,
+        "timeout": 34,
+        "unviable": 72
+      },
+      "missed": [
+        {
+          "file": "crates/openplush-flatten/src/boundary/closure.rs",
+          "line": 62,
+          "column": 49,
+          "function": "gap",
+          "mutation": "replace + with - in gap",
+          "test_guess": "equivalent: negating the summed vector leaves its length unchanged"
+        },
+        {
+          "file": "crates/openplush-flatten/src/boundary/closure.rs",
+          "line": 111,
+          "column": 43,
+          "function": "damped",
+          "mutation": "replace < with <= in damped",
+          "test_guess": "equality between a trial's error and the current one; no test reaches it exactly"
+        },
+        {
+          "file": "crates/openplush-flatten/src/fallback.rs",
+          "line": 58,
+          "column": 32,
+          "function": "dart",
+          "mutation": "replace + with * in dart",
+          "test_guess": "gap: a test that the proposed dart is the shortest path, on a chart with two candidate paths of different length"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 25,
+          "column": 39,
+          "function": "Rest::jacobian",
+          "mutation": "replace + with - in Rest::jacobian",
+          "test_guess": "equivalent: inv[1][0] is always 0 (rest_shapes builds it so)"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 29,
+          "column": 39,
+          "function": "Rest::jacobian",
+          "mutation": "replace + with - in Rest::jacobian",
+          "test_guess": "equivalent: inv[1][0] is always 0"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 39,
+          "column": 18,
+          "function": "Rest::operator",
+          "mutation": "replace + with - in Rest::operator",
+          "test_guess": "equivalent: b[0] is inv[1][0], always 0"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 124,
+          "column": 24,
+          "function": "first_positive_root",
+          "mutation": "replace && with || in first_positive_root",
+          "test_guess": "a unit test of max_step with a non-finite coefficient; callers pass finite layouts, so unreachable from the session"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 134,
+          "column": 24,
+          "function": "first_positive_root",
+          "mutation": "replace > with >= in first_positive_root",
+          "test_guess": "a unit test with a root at exactly 0 (an already-collapsed face); unreachable while det J > 0"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 110,
+          "column": 77,
+          "function": "Solve::iterate",
+          "mutation": "replace < with <= in Solve::iterate",
+          "test_guess": "equality at the 1e-9 threshold; no realistic input lands on it exactly"
+        }
+      ],
+      "timeout": [
+        {
+          "file": "crates/openplush-flatten/src/fallback.rs",
+          "line": 58,
+          "column": 32,
+          "function": "dart",
+          "mutation": "replace + with - in dart"
+        },
+        {
+          "file": "crates/openplush-flatten/src/fallback.rs",
+          "line": 59,
+          "column": 53,
+          "function": "dart",
+          "mutation": "replace < with > in dart"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 56,
+          "column": 31,
+          "function": "rest_shapes",
+          "mutation": "replace - with + in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 56,
+          "column": 38,
+          "function": "rest_shapes",
+          "mutation": "replace - with + in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 38,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 38,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 59,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 59,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 29,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 29,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 39,
+          "function": "rest_shapes",
+          "mutation": "delete - in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 42,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 42,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 52,
+          "function": "rest_shapes",
+          "mutation": "replace * with + in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 52,
+          "function": "rest_shapes",
+          "mutation": "replace * with / in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 69,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 69,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 107,
+          "column": 37,
+          "function": "max_step",
+          "mutation": "replace + with * in max_step"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 18,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 28,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 32,
+          "function": "first_positive_root",
+          "mutation": "replace * with + in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 32,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 131,
+          "column": 18,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 131,
+          "column": 23,
+          "function": "first_positive_root",
+          "mutation": "replace + with * in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 8,
+          "function": "first_positive_root",
+          "mutation": "replace / with % in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 8,
+          "function": "first_positive_root",
+          "mutation": "replace / with * in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 15,
+          "function": "first_positive_root",
+          "mutation": "replace / with % in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 15,
+          "function": "first_positive_root",
+          "mutation": "replace / with * in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 106,
+          "column": 37,
+          "function": "Solve::iterate",
+          "mutation": "replace - with + in Solve::iterate"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 106,
+          "column": 37,
+          "function": "Solve::iterate",
+          "mutation": "replace - with / in Solve::iterate"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 110,
+          "column": 52,
+          "function": "Solve::iterate",
+          "mutation": "replace || with && in Solve::iterate"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/slim.rs",
+          "line": 134,
+          "column": 75,
+          "function": "terms",
+          "mutation": "replace + with * in terms"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/slim.rs",
+          "line": 157,
+          "column": 35,
+          "function": "descend",
+          "mutation": "replace * with / in descend"
+        },
+        {
+          "file": "crates/openplush-flatten/src/session.rs",
+          "line": 50,
+          "column": 12,
+          "function": "FlattenSession::step",
+          "mutation": "delete ! in FlattenSession::step"
+        }
+      ]
+    }
+  ]
+}

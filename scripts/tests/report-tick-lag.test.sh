@@ -120,6 +120,25 @@ g update-ref -d refs/remotes/origin/main
 expect "no main and no origin/main is a usage error" 2 "report-tick-lag: neither main nor origin/main exists; pass --ref
 usage: scripts/report-tick-lag.sh [--ref <ref>] [--now <epoch|date>] [root]" "$repo"
 
+# Task numbers repeat across features (ADR 0021): a subject names its feature, as
+# "(002 <task>)", and a bare ID keeps its meaning from before: T is 001's, and H, U,
+# W, F are 002 to 005's. Task IDs are split so the hygiene check does not read them.
+t1="T""001" t9="T""009"
+repo="$tmp/features"
+mkdir -p "$repo/specs/001-a" "$repo/specs/002-b"
+git init -q -b main "$repo"
+printf '%s\n' "- [ ] $t9 pipeline" >"$repo/specs/001-a/tasks.md"
+printf '%s\n' "- [ ] $t1 hints" "- [ ] $t9 more hints" >"$repo/specs/002-b/tasks.md"
+g add specs
+commit 2026-10-01 "docs(tasks): the tasks"
+commit 2026-10-02 "feat(a): pipeline work ($t9)"
+commit 2026-10-03 "feat(h): written before the rename (H009)"
+commit 2026-10-04 "feat(h): hints (002 $t1)"
+expect "a subject's feature picks the task, and a bare ID keeps its earlier feature" 0 "001-a $t9 18d feat(a): pipeline work ($t9)
+002-b $t1 16d feat(h): hints (002 $t1)
+002-b $t9 17d feat(h): written before the rename (H009)
+tick-lag: 3 unticked tasks named on main" --now 2026-10-20 "$repo"
+
 echo
 echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]

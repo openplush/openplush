@@ -77,7 +77,7 @@ fn rates(solve: &Solve, dir: &[DVec2], slope: f64) -> Result<Vec<f64>, FlattenEr
         .collect::<Result<_, _>>()?;
     Ok(r.windows(2)
         .filter(|w| w[1] > floor)
-        .map(|w| (w[0] / w[1]).log2())
+        .map(|w| libm::log2(w[0] / w[1]))
         .collect())
 }
 

@@ -24,7 +24,11 @@ fn hemisphere() -> (Vec<DVec3>, Faces) {
         let theta = FRAC_PI_2 * f64::from(k) / f64::from(RINGS);
         xyz.extend((0..6 * k).map(|j| {
             let a = TAU * f64::from(j) / f64::from(6 * k);
-            DVec3::new(theta.sin() * a.cos(), theta.sin() * a.sin(), theta.cos())
+            DVec3::new(
+                libm::sin(theta) * libm::cos(a),
+                libm::sin(theta) * libm::sin(a),
+                libm::cos(theta),
+            )
         }));
     }
     let mut tris: Vec<[u32; 3]> = (0..6).map(|j| [0, 1 + j, 1 + (j + 1) % 6]).collect();
@@ -57,7 +61,7 @@ fn band(inner: &[u32], outer: &[u32], tris: &mut Vec<[u32; 3]>) {
 
 /// Rodrigues' rotation by `angle` about the unit `axis`.
 fn rotate(p: DVec3, axis: DVec3, angle: f64) -> DVec3 {
-    let (sin, cos) = angle.sin_cos();
+    let (sin, cos) = libm::sincos(angle);
     p * cos + axis.cross(p) * sin + axis * axis.dot(p) * (1.0 - cos)
 }
 

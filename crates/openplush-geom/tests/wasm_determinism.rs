@@ -47,7 +47,7 @@ fn correctly_rounded_ops_are_bit_identical_across_targets() {
         "-0 * 1 keeps the sign"
     );
     assert_eq!(
-        bits(a.mul_add(black_box(10.0), black_box(-1.0))),
+        bits(libm::fma(a, black_box(10.0), black_box(-1.0))),
         0x3c90_0000_0000_0000,
         "fma(0.1, 10, -1) is fused"
     );

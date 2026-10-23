@@ -17,7 +17,7 @@ fn end_point(lengths: &[f64], kappa: &[f64]) -> DVec2 {
         if i > 0 {
             heading += kappa[i];
         }
-        p += DVec2::new(l * heading.cos(), l * heading.sin());
+        p += DVec2::new(l * libm::cos(heading), l * libm::sin(heading));
     }
     p
 }
@@ -29,7 +29,11 @@ fn a_rigid_triangle_closes_at_its_only_turning_angles_whatever_the_target()
     // lengths fix its angles, so any target must land on these.
     let lengths = [3.0, 4.0, 5.0];
     let kappa = close(&lengths, &[2.0, 2.0, 2.0])?;
-    let expected = [PI - 4.0_f64.atan2(3.0), PI / 2.0, PI - 3.0_f64.atan2(4.0)];
+    let expected = [
+        PI - libm::atan2(4.0, 3.0),
+        PI / 2.0,
+        PI - libm::atan2(3.0, 4.0),
+    ];
     for (k, e) in kappa.iter().zip(expected) {
         assert!(near(*k, e, 1e-12), "{kappa:?}");
     }
@@ -69,7 +73,7 @@ fn an_open_target_closes_without_changing_a_length() -> Result<(), BoundaryError
     let lengths: Vec<f64> = (0..24).map(|i| 1.0 + 0.37 * f64::from(i % 5)).collect();
     let perimeter: f64 = lengths.iter().sum();
     let target: Vec<f64> = (0..24)
-        .map(|i| TAU / 24.0 + 0.3 * (f64::from(i) * 0.25).sin())
+        .map(|i| TAU / 24.0 + 0.3 * libm::sin(f64::from(i) * 0.25))
         .collect();
     assert!(end_point(&lengths, &target).length() > 0.1 * perimeter);
     let kappa = close(&lengths, &target)?;
@@ -100,7 +104,7 @@ fn the_walk_starts_at_the_origin_heading_along_x() {
 fn the_same_input_closes_to_the_same_bits() -> Result<(), BoundaryError> {
     let lengths: Vec<f64> = (0..50).map(|i| 1.0 + 0.1 * f64::from(i % 7)).collect();
     let target: Vec<f64> = (0..50)
-        .map(|i| TAU / 50.0 + 0.1 * (f64::from(i) * 0.9).cos())
+        .map(|i| TAU / 50.0 + 0.1 * libm::cos(f64::from(i) * 0.9))
         .collect();
     let a = close(&lengths, &target)?;
     let b = close(&lengths, &target)?;
@@ -115,7 +119,7 @@ fn the_same_input_closes_to_the_same_bits() -> Result<(), BoundaryError> {
 fn closing_does_not_depend_on_scale() -> Result<(), BoundaryError> {
     let lengths: Vec<f64> = (0..24).map(|i| 1.0 + 0.37 * f64::from(i % 5)).collect();
     let target: Vec<f64> = (0..24)
-        .map(|i| TAU / 24.0 + 0.3 * (f64::from(i) * 0.25).sin())
+        .map(|i| TAU / 24.0 + 0.3 * libm::sin(f64::from(i) * 0.25))
         .collect();
     let unscaled = close(&lengths, &target)?;
     for s in [1e-9, 1e-6, 1e3, 1e9] {
@@ -131,10 +135,10 @@ fn closing_does_not_depend_on_scale() -> Result<(), BoundaryError> {
 fn a_long_irregular_boundary_closes() -> Result<(), BoundaryError> {
     let n = 2000;
     let lengths: Vec<f64> = (0..n)
-        .map(|i| 1.0 + 0.9 * (f64::from(i) * 2.3).sin())
+        .map(|i| 1.0 + 0.9 * libm::sin(f64::from(i) * 2.3))
         .collect();
     let target: Vec<f64> = (0..n)
-        .map(|i| TAU / f64::from(n) + 0.01 * (f64::from(i) * 0.7).cos())
+        .map(|i| TAU / f64::from(n) + 0.01 * libm::cos(f64::from(i) * 0.7))
         .collect();
     let kappa = close(&lengths, &target)?;
     let perimeter: f64 = lengths.iter().sum();
@@ -147,7 +151,7 @@ fn one_step_near_a_closed_polygon_squares_the_error() {
     // Newton-like steps converge quadratically; half steps or a scaled condition only linearly.
     let unit = vec![1.0 / 9.0; 9];
     let kappa: Vec<f64> = (0..9)
-        .map(|i| TAU / 9.0 + 1e-3 * (1.3 * f64::from(i)).sin())
+        .map(|i| TAU / 9.0 + 1e-3 * libm::sin(1.3 * f64::from(i)))
         .collect();
     let (r0, jacobian) = conditions(&unit, &kappa);
     let e0 = norm(r0);

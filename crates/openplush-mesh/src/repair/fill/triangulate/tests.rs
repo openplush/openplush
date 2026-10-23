@@ -24,7 +24,7 @@ fn a_flat_convex_loop_is_covered_exactly_once() {
     let points: Vec<DVec3> = (0..6)
         .map(|k| {
             let a = std::f64::consts::TAU * f64::from(k) / 6.0;
-            DVec3::new(a.cos(), a.sin(), 0.0)
+            DVec3::new(libm::cos(a), libm::sin(a), 0.0)
         })
         .collect();
     let across = vec![DVec3::Z; 6];
@@ -143,7 +143,7 @@ fn between_equal_largest_angles_the_smaller_area_wins() {
 fn a_triangle_with_no_area_is_not_chosen() {
     // Vertex 2 sits 2^-40 off chord 1-3, so triangle 1-2-3 is a sliver; the flat loop
     // otherwise ties and would take it.
-    let off = 0.5 + 2f64.powi(-40);
+    let off = 0.5 + libm::ldexp(1.0, -40);
     let points = [
         DVec3::new(0.0, 0.0, 0.0),
         DVec3::new(1.0, 0.0, 0.0),

@@ -20,6 +20,7 @@ openplush-seams = { path = "../openplush-seams" }
 thiserror = "2.0.21"
 
 [dev-dependencies]
+libm = "0.2.16"
 openplush-testkit = { path = "../openplush-testkit" }
 
 # Native only: proptest pulls in getrandom, which does not build for

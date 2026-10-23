@@ -818,6 +818,7 @@ dependencies = [
 name = "openplush-geom"
 version = "0.0.0"
 dependencies = [
+ "libm",
  "num-bigint",
  "num-rational",
  "num-traits",
@@ -855,6 +856,7 @@ name = "openplush-mesh"
 version = "0.0.0"
 dependencies = [
  "faer",
+ "libm",
  "openplush-geom",
  "proptest",
  "thiserror",
@@ -878,6 +880,7 @@ dependencies = [
 name = "openplush-pipeline"
 version = "0.0.0"
 dependencies = [
+ "libm",
  "openplush-export",
  "openplush-flatten",
  "openplush-geom",
@@ -917,6 +920,7 @@ name = "openplush-testkit"
 version = "0.0.0"
 dependencies = [
  "fbxcel",
+ "libm",
  "openplush-geom",
  "openplush-mesh",
  "thiserror",

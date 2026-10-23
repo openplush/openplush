@@ -235,13 +235,13 @@ fn reports_a_surface_no_flip_can_orient() -> Result<(), MeshError> {
     for i in 0..n {
         let theta = std::f64::consts::TAU * f64::from(i) / f64::from(n);
         let phi = theta / 2.0;
-        let (c, s) = (theta.cos(), theta.sin());
+        let (c, s) = (libm::cos(theta), libm::sin(theta));
         for side in [1.0, -1.0] {
             let w = 0.3 * side;
             positions.push([
-                c * (2.0 + w * phi.cos()),
-                s * (2.0 + w * phi.cos()),
-                w * phi.sin(),
+                c * (2.0 + w * libm::cos(phi)),
+                s * (2.0 + w * libm::cos(phi)),
+                w * libm::sin(phi),
             ]);
         }
     }

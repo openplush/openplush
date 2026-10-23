@@ -223,7 +223,7 @@ fn twisted_ring() -> TriangleSoup {
         .enumerate()
         .map(|(i, r)| {
             let a = std::f64::consts::TAU * i as f64 / 5.0;
-            p(r * a.cos(), r * a.sin(), 0.0)
+            p(r * libm::cos(a), r * libm::sin(a), 0.0)
         })
         .collect();
     soup(

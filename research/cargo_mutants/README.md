@@ -46,10 +46,9 @@ Each run copies the workspace into `$TMPDIR` once per job (about 1.1 GB each wit
 | `settings` | The cargo-mutants flags used, as a string |
 | `crates[]` | One object per package, in run order |
 | `crates[].package` | Cargo package name |
-| `crates[].started_utc`, `finished_utc` | ISO 8601 UTC, to the second |
-| `crates[].wall_seconds` | Whole run including the baseline build and test |
+| `crates[].runs[]` | Each cargo-mutants invocation for the package: `started_utc`, `finished_utc` (ISO 8601 UTC, to the second), `wall_seconds` (including the baseline build and test), and a `note` when a run was cut off or resumed with `--iterate` |
 | `crates[].fraction_run` | `"1/1"` for a full run; `"k/n"` names the shards that ran |
-| `crates[].counts` | `generated`, `caught`, `missed`, `timeout`, `unviable`; the last four sum to `generated` |
+| `crates[].counts` | `generated`, `caught`, `missed`, `timeout`, `unviable`, each mutant counted once by its last outcome; the last four sum to `generated` |
 | `crates[].missed[]` | `file`, `line`, `column`, `function`, `mutation` (cargo-mutants' text), `test_guess` (which test should catch it; a guess, not checked) |
 | `crates[].timeout[]` | Same fields without `test_guess` |
 

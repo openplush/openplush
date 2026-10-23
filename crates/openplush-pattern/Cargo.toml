@@ -17,9 +17,11 @@ openplush-seams = { path = "../openplush-seams" }
 thiserror = "2.0.21"
 
 [dev-dependencies]
-# The `research/i_overlay_fuzz/` corpus generator's trigonometry, identical on every target; the version i_float pulls in.
+# The `research/i_overlay_fuzz/` corpus generator's trigonometry, identical on every target;
+# the version i_float pulls in.
 libm = "=0.2.16"
-# That corpus's oracle's exact orientation, independent of the engine; the version openplush-geom uses.
+# The `research/i_overlay_fuzz/` oracle's exact orientation, independent of the engine; the
+# version openplush-geom uses.
 robust = "=1.2.0"
 
 [lints]

@@ -80,7 +80,7 @@ fn a_half_cylinder_unrolls_with_no_distortion() -> Result<(), FlattenError> {
 }
 
 #[test]
-fn a_hemisphere_pinned_to_its_boundary_settles_near_the_s7_energy() -> Result<(), FlattenError> {
+fn a_hemisphere_pinned_to_its_boundary_settles_near_the_spike_energy() -> Result<(), FlattenError> {
     // research/boundary_pinned/results.md, cap-90: pinned SD mean 5.200, no face flipped.
     let (xyz, f) = hemisphere();
     let uv = dense(&flatten(CHART, &xyz, &f)?, xyz.len());

@@ -13,7 +13,7 @@ use openplush_geom::units::Mm;
 use openplush_pattern::allowance::cut_line;
 use openplush_pattern::{Outline, PieceId};
 
-/// The seed of that corpus.
+/// The seed of `research/i_overlay_fuzz/`.
 const SEED: u64 = 0x0057_3F00_2026_1015;
 const CASES: u64 = 200;
 

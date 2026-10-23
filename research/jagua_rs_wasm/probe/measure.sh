@@ -14,12 +14,12 @@ for opt in z s; do
     dir="$out/$variant-$opt"
     rm -rf "$dir"
     wasm-bindgen --target nodejs --out-dir "$dir" \
-      target/wasm32-unknown-unknown/release/s4_size_probe.wasm
-    raw=$(stat -c %s target/wasm32-unknown-unknown/release/s4_size_probe.wasm)
-    bg=$(stat -c %s "$dir/s4_size_probe_bg.wasm")
-    gz=$(gzip -9 -c "$dir/s4_size_probe_bg.wasm" | wc -c)
-    js=$(stat -c %s "$dir/s4_size_probe.js")
-    ran=$(node -e "const m=require('./$dir/s4_size_probe.js');console.log(m.nest_length(false), m.nest_length(true))")
+      target/wasm32-unknown-unknown/release/jagua_size_probe.wasm
+    raw=$(stat -c %s target/wasm32-unknown-unknown/release/jagua_size_probe.wasm)
+    bg=$(stat -c %s "$dir/jagua_size_probe_bg.wasm")
+    gz=$(gzip -9 -c "$dir/jagua_size_probe_bg.wasm" | wc -c)
+    js=$(stat -c %s "$dir/jagua_size_probe.js")
+    ran=$(node -e "const m=require('./$dir/jagua_size_probe.js');console.log(m.nest_length(false), m.nest_length(true))")
     printf '%-8s opt=%s  cargo=%8d  bindgen=%8d  gzip=%7d  js=%6d  run=%s\n' \
       "$variant" "$opt" "$raw" "$bg" "$gz" "$js" "$ran"
   done

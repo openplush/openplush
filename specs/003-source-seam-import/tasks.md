@@ -27,19 +27,19 @@ Same policy as 001 and 002: one intent per PR, each task a test commit then the 
 
 | PR | Tasks |
 |---|---|
-| `003/NN-U013-source-materials` | T012, T013 |
-| `003/NN-U015-io-materials` | T014, T015 |
-| `003/NN-U019-uv-cuts` | T016, T017, T019 (stacked on T018's one-constant slice) |
-| `003/NN-U071-projection-hint` | T070, T071 (stacked on T019's slice, which creates `source.rs`) |
-| `003/NN-U021-source-import-stage` | T020, T021 |
-| `003/NN-U032-closing` | T031, T032 |
-| `003/NN-U034-accept-all` | T033, T034 |
-| `003/NN-U040-material-boundaries` | T039, T040 |
-| `003/NN-U044-source-regions-stage` | T043, T044 |
-| `003/NN-U052-dead-ends` | T051, T052 |
-| `003/NN-U054-source-darts` | T053, T054 |
-| `003/NN-U060-reimport-diff` | T059, T060 |
-| `003/NN-U072-rename-source-seams` | T072 (alone: a rename touching every `source_*` test) |
+| `003/NN-source-materials` | T012, T013 |
+| `003/NN-io-materials` | T014, T015 |
+| `003/NN-uv-cuts` | T016, T017, T019 (stacked on T018's one-constant slice) |
+| `003/NN-projection-hint` | T070, T071 (stacked on T019's slice, which creates `source.rs`) |
+| `003/NN-source-import-stage` | T020, T021 |
+| `003/NN-closing` | T031, T032 |
+| `003/NN-accept-all` | T033, T034 |
+| `003/NN-material-boundaries` | T039, T040 |
+| `003/NN-source-regions-stage` | T043, T044 |
+| `003/NN-dead-ends` | T051, T052 |
+| `003/NN-source-darts` | T053, T054 |
+| `003/NN-reimport-diff` | T059, T060 |
+| `003/NN-rename-source-seams` | T072 (alone: a rename touching every `source_*` test) |
 
 Each CLI, WASM, engine-client and web pair (a test task and its implementation) is one PR.
 

@@ -29,14 +29,14 @@ This feature packages more cleanly than 001, because each detector is independen
 
 | PR | Tasks |
 |---|---|
-| `002/NN-H009-hints-crate` | T009, T010, T011 |
-| `002/NN-H015-signals` | T012, T013, T014, T015, T016, T017 — the foundation and its three contract tests belong together; the tests define what the split *is* |
-| `002/NN-H026-crease-detector` | T018, T019, T020, T026 |
-| `002/NN-H027-chaining` | T027 (plus T006's spike finding) |
-| `002/NN-H029-dart-detector` | T021, T029 |
-| `002/NN-H030-symmetry` | T022, T030 |
-| `002/NN-H061-identity` | T057, T059, T060, T061, T062 |
-| `002/NN-H071-lifecycle` | T071, T072, T073 |
+| `002/NN-hints-crate` | T009, T010, T011 |
+| `002/NN-signals` | T012, T013, T014, T015, T016, T017 — the foundation and its three contract tests belong together; the tests define what the split *is* |
+| `002/NN-crease-detector` | T018, T019, T020, T026 |
+| `002/NN-chaining` | T027 (plus T006's spike finding) |
+| `002/NN-dart-detector` | T021, T029 |
+| `002/NN-symmetry` | T022, T030 |
+| `002/NN-identity` | T057, T059, T060, T061, T062 |
+| `002/NN-lifecycle` | T071, T072, T073 |
 
 `NN` is assigned when the PR is opened: the next unused position in feature 002.
 
@@ -291,7 +291,7 @@ That is partway through 001's Phase 3, not after all of 001. T001–T004 (fixtur
 - **Phase 3 (US1)**: needs Phase 2 and the thresholds from T005
 - **Phase 4 (US2)**: needs US1's detectors plus 001's T107
 - **Phase 5 (US3)**: needs T030 (symmetry detector)
-- **Phase 6 (US4)**: needs T061/H062 identity; can run parallel to Phases 4 and 5
+- **Phase 6 (US4)**: needs T061/T062 identity; can run parallel to Phases 4 and 5
 - **Phase 7 (US5)**: needs Phase 2 only; the UI needs Phase 3
 - **Phase 8**: needs the detectors and the identity work
 - **Phase 9**: needs everything
@@ -307,7 +307,7 @@ The one hard external dependency is 001's flatten and pattern stages, for US2's 
 - All of Phase 0 except T005 and T008
 - T010 and T011 together
 - All of Phase 2's tests (T012–T014) together
-- All of Phase 3's tests (T018–T025) together, then the four detectors T026/H029/H030 in parallel (T027 follows T026)
+- All of Phase 3's tests (T018–T025) together, then the four detectors T026/T029/T030 in parallel (T027 follows T026)
 - Phase 6 alongside Phases 4 and 5
 - All of Phase 9 except T079 (after the detectors) and T080
 

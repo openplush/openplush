@@ -91,6 +91,7 @@ Same policy as 001–003: one intent per PR, test commit before implementation c
 - [x] T027 [P] [US1] `docs/explanation/flattening.md`: what flattening does and why seam lengths are pinned exactly
 - [x] T028 [P] [US1] `docs/explanation/seams.md`: seams, charts, darts and openings, and why a chart must be a disk. As built: also covers the seam graph, the sewing map, mandatory seams and the fold check, since the chart stage refuses on them
 - [x] T029 [P] [US1] `docs/explanation/sewing.md`: sewing concepts for programmers (allowance, grain, nap, notches). As built: notches and grain arrows are not built, so their sections say so and link to status
+- [ ] T045 [US1] `scripts/tests/gen-depgraph.test.sh` then `scripts/gen-depgraph.py`: an interactive dependency graph of the repository at `dev/depgraph/`, written by the `docs` step after the book, at three levels (subsystems, packages, files) with search, a category filter, and colour by category, language or dependency depth. Edges come from what is committed: Cargo manifests and Rust `mod` and `use` paths, TypeScript imports, Python imports a `requirements.txt` declares, ts-rs generated types, and path references in scripts, workflows and docs. D3 is vendored with its ISC licence published beside the page, so nothing loads from the network. `docs/reference/dependency-graph.md` links it. Tests first: a throwaway repository whose graph the test asserts, two runs byte-identical, and a refusal naming the file for an unparseable manifest. blocked:D-019
 
 ## Phase 6: Reference and tutorial
 

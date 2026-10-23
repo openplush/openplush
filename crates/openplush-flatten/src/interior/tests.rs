@@ -13,6 +13,8 @@ use crate::boundary::fixtures::{Faces, faces, grid, rings};
 use crate::injectivity;
 use crate::solver::SolveError;
 
+mod gradient;
+
 const CHART: ChartId = ChartId::new(3);
 
 /// The chart's layout once the iteration settles.

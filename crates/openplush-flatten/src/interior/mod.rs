@@ -2,6 +2,8 @@
 //! moved to lower the symmetric Dirichlet energy without ever flipping a face.
 
 mod energy;
+#[cfg(test)]
+pub(crate) mod fixtures;
 mod free;
 mod proxy;
 mod slim;
@@ -97,10 +99,10 @@ impl Solve {
         let Some(system) = self.system.as_ref().filter(|_| !self.settled) else {
             return Ok(Step::Settled);
         };
-        self.iterations += 1;
         let target = system
             .target(&self.rest, &self.faces, &self.uv)
             .map_err(|e| solve_failed(self.chart, e))?;
+        self.iterations += 1;
         let dir: Vec<DVec2> = target.iter().zip(&self.uv).map(|(t, u)| *t - *u).collect();
         let gain = descend(&self.rest, &self.faces, &self.uv, &dir, self.energy).map(|(uv, e)| {
             let gain = (self.energy - e) / self.energy;

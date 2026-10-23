@@ -6,9 +6,10 @@
 # test crate's own modules and a dependency renamed in its manifest, TypeScript
 # imports, Python imports a requirements.txt declares, script references); a
 # dev-dependency or an inline test module never reads as a production edge, so a
-# loop through test code is not reported as a cycle; the
-# page loads nothing from the network; the output is byte-identical run to run; and a
-# manifest the graph cannot be read from fails, naming the file, with nothing written.
+# loop through test code is not reported as a cycle; the page loads nothing from the
+# network; the output is byte-identical run to run and whatever the checkout
+# directory is called; and a manifest the graph cannot be read from fails, naming
+# the file, with nothing written.
 set -euo pipefail
 export LC_ALL=C
 
@@ -132,6 +133,13 @@ if out=$("$remote" "$tmp/out" 2>&1); then ok "the page loads nothing from the ne
 
 "$gen" "$root" "$tmp/again" >/dev/null
 if cmp -s "$tmp/out/index.html" "$tmp/again/index.html"; then ok "two runs are byte-identical"; else bad "two runs are byte-identical"; fi
+cp -r "$root" "$tmp/renamed-checkout"
+"$gen" "$tmp/renamed-checkout" "$tmp/renamed-out" >/dev/null
+if cmp -s "$tmp/out/index.html" "$tmp/renamed-out/index.html"; then
+  ok "the same commit in a differently named directory is byte-identical"
+else
+  bad "the same commit in a differently named directory is byte-identical"
+fi
 
 root=$(new_repo broken)
 write "$root" crates/beta/Cargo.toml "[package" "name = beta"

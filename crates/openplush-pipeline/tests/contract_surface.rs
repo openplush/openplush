@@ -59,3 +59,12 @@ fn the_pipeline_session_takes_a_mesh_sets_seams_and_steps_its_charts_flat() {
     let _: fn(&mut Pipeline) -> Result<Progress, EngineError> = Pipeline::flatten_step;
     let _: fn(&mut Pipeline) -> StageResult<Vec<Parameterization>> = Pipeline::parameterizations;
 }
+
+#[test]
+fn the_pipeline_session_offers_previews_and_applies_proposals() {
+    use openplush_pipeline::{ChartId, EngineError, Pipeline, Proposal, ProposalId};
+    let _: fn(&Pipeline) -> Vec<Proposal> = Pipeline::proposals;
+    let _: fn(&Pipeline, ProposalId) -> Result<SeamSet, EngineError> = Pipeline::preview;
+    let _: fn(&mut Pipeline, ProposalId) -> Result<Vec<ChartId>, EngineError> =
+        Pipeline::apply_proposal;
+}

@@ -43,6 +43,7 @@ Each run copies the workspace into `$TMPDIR` once per job (about 1.1 GB each wit
 |---|---|
 | `tool`, `rustc`, `machine` | Versions and machine as above; `machine` has `nproc`, `cpu`, `mem_gib`, `os` |
 | `commit` | The `main` commit the runs mutated |
+| `recheck` | Where the missed mutants were rechecked by hand on a later commit: `commit`, `crate`, `what` |
 | `settings` | The cargo-mutants flags used, as a string |
 | `crates[]` | One object per package, in run order |
 | `crates[].package` | Cargo package name |

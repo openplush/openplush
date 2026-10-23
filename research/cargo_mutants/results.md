@@ -1,6 +1,6 @@
 # Results: cargo-mutants on openplush-flatten and openplush-pattern
 
-Run 2026-10-23 on `main` at `2ad8d23` (before the flatten oracles of #395 and #396 landed), with cargo-mutants 27.1.0, `--timeout-multiplier 3 -j 2`, on the machine in the [README](README.md). Machine-readable: [results.json](results.json).
+Run 2026-10-23 on `main` at `2ad8d23` (before the flatten oracles of #395 and #396 landed), with cargo-mutants 27.1.0 and rustc 1.97.0 (2d8144b78 2026-07-07), `--timeout-multiplier 3 -j 2`, on the machine in the [README](README.md). Machine-readable: [results.json](results.json).
 
 ## openplush-flatten
 
@@ -12,7 +12,7 @@ Of the 651 viable mutants, 608 are caught and 34 time out, so 9 (1.4%) survive [
 
 ### The nine survivors
 
-Each was rechecked on `main` at `85fd6bc`, after #395 and #396: all nine still survive, and a control mutation in the same function (`Rest::jacobian`, line 26) is caught [solid].
+Each was rechecked on `main` at `85fd6bc` (recorded as `recheck` in results.json), after #395 and #396: all nine still survive, and a control mutation in the same function (`Rest::jacobian`, line 26) is caught [solid].
 
 | Where | Mutation | Verdict |
 |---|---|---|
@@ -52,7 +52,9 @@ Of the 245 viable mutants, 22 (9.0%) survive [solid]. Pattern's tests are mostly
 | `allowance.rs:126` `strip` | `>` → `>=` on the width | Unreachable until zero-allowance edges exist (001 T152) [likely] |
 | `allowance.rs:116` | `j < i` → `j <= i` | Equivalent [solid]: `j == i` needs a one-edge outline, and the loop runs only above three |
 | `outline.rs:107–109` `segments_meet` | `\|\|` → `&&` in the box test | Equivalent [solid]: the box test only skips the exact predicates, which give the same answer |
-| `outline.rs:79` `check_counter_clockwise` | four comparisons in the lowest-vertex choice | Equivalent [likely]: the mutated choice is still an extreme vertex, which is convex, so its turn is still the orientation |
+| `outline.rs:79` `check_counter_clockwise` | `<` → `>` and `<` → `<=` at each of the two comparisons in the lowest-vertex choice (four mutants) | Equivalent [likely]: the mutated choice is still an extreme vertex, which is convex, so its turn is still the orientation |
+
+The one timeout, `allowance.rs:118` in `merge_short_edges`, is `i += 1` → `i *= 1`, which keeps the merge loop from advancing; the limit catches it, not a test [solid].
 
 So 12 survivors are test gaps: the fold-back corner (3), the collinear touch (1), the refusal's edge index (4), the non-right miter (1), the cut-count accessors (2) and, once 001 T152 lands, the zero-width strip (1).
 

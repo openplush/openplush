@@ -554,5 +554,10 @@
         }
       ]
     }
-  ]
+  ],
+  "recheck": {
+    "commit": "85fd6bc",
+    "crate": "openplush-flatten",
+    "what": "each of the nine missed mutants applied by hand and the crate's tests run; all nine still survive, and a control mutation in Rest::jacobian (energy.rs:26) is caught"
+  }
 }

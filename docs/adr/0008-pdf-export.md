@@ -10,7 +10,7 @@ deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementi
 
 FR-061 puts PDF print export in v0.1 because browsers print SVG at unreliable scale: tiled Letter and A4 with overlap, registration marks, a page map, and a 50 mm scale-check square on every page, plus the FR-064 warning summary on the first page (001 D-053 later moved the page map and the summary to a cover page before the tiles). 001 T091 (`crates/openplush-export/src/pdf.rs`) writes it. Research R2 listed `svg2pdf` for this with WASM support `[verify]`.
 
-001 T005, a spike, asks whether `svg2pdf` works under WASM or whether 001 T091 should write PDF directly. Evidence: [`research/s5_svg2pdf_wasm/`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/README.md).
+001 T005, a spike, asks whether `svg2pdf` works under WASM or whether 001 T091 should write PDF directly. Evidence: [`research/svg2pdf_wasm/`](https://github.com/openplush/openplush/blob/main/research/svg2pdf_wasm/README.md).
 
 ## Decision drivers
 
@@ -88,7 +88,7 @@ Why not the others:
 
 ## More information
 
-* Evidence: [`research/s5_svg2pdf_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/results.md): commands, versions, hashes, sizes, and the font license table.
+* Evidence: [`research/svg2pdf_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/svg2pdf_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/svg2pdf_wasm/results.md): commands, versions, hashes, sizes, and the font license table.
 * Follow-ups for the lead's docs PR: research.md R2 `svg2pdf` row (WASM `[verify]` → result, role → not used); research R6 001 T005 result; tasks.md 001 T005 and 001 T091 ("approach chosen by T005"); plan.md Primary dependencies, if it names `svg2pdf`.
 * Revisit when labels or the warning page need non-Latin text, or a font under an allowlisted license (or an OFL ADR) becomes available.
 * PDF 1.7 (ISO 32000-1) §8.3 coordinate systems, §9.6.2.2 standard Type 1 fonts, Annex D WinAnsiEncoding.

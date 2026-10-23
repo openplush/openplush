@@ -118,7 +118,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 
 ### T001 result: baby_shark on wasm32 (2026-10-14) ✅ closed
 
-Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_shark_wasm/README.md). Decision: [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed).
+Spike and full results: [`research/baby_shark_wasm/`](../../research/baby_shark_wasm/README.md). Decision: [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed).
 
 **It builds and runs on `wasm32-unknown-unknown`, byte-identical to native, but it can't be adopted as published** [solid]. `baby_shark` 0.3.12's isotropic remesher, quadric decimator and both voxel meshers ran under Node, and each output hash matched the native release build. Rayon does not panic on wasm32: `rayon-core` 1.13 falls back to the current thread.
 
@@ -142,7 +142,7 @@ Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_
 
 ### T003 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
 
-Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
+Prototype, numbers and reproducers: [`research/i_overlay_fuzz/`](../../research/i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
 
 - **No panics** [solid for the corpus].
   - The corpus: 10,000 seeded near-degenerate outlines × 4 methods, plus six invalid inputs. The release and debug-assert builds gave byte-identical output.
@@ -172,7 +172,7 @@ Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../resear
 
 ### T004 result: `jagua-rs` on wasm32, bundle size, rotation sets (2026-10-15) ✅ closed
 
-Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md). Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).
+Spike: [`research/jagua_rs_wasm/`](../../research/jagua_rs_wasm/README.md). Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).
 
 - **Discrete rotation sets are first-class** [solid], via `jagua_rs::geometry::AllowedOrientations`:
   - {0°} maps to `None`;
@@ -195,7 +195,7 @@ Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md)
 
 ### T005 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
 
-**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
+**Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted). Evidence: [`research/svg2pdf_wasm/`](../../research/svg2pdf_wasm/README.md).
 
 The spike wrote one A3 pattern page (a 400-vertex outline, the 50.00 mm square, and three labels) two ways: through `svg2pdf` 0.13, and directly with `pdf-writer` 0.15. Both ran natively and on wasm32. An independent pypdf interpreter measured the scale.
 
@@ -249,7 +249,7 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 
 ### T007 result — boundary-pinned flattening (2026-10-15) ✅ closed
 
-Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). Verdict: [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md).
+Prototype and full results: [`research/boundary_pinned/`](../../research/boundary_pinned/README.md). Verdict: [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md).
 
 **Corpus.** 36 runs of 28–1,728 triangles:
 - every chart of the three reference seam sets in `fixtures/`: 6 sphere gores, 2 capsule caps, a slit capsule tube and a cube net, so 10 charts;

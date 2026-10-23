@@ -1,0 +1,27 @@
+# Bundle-size probe. Without features it is the empty wasm-bindgen baseline;
+# `--features jagua` links the 001 T004 harness. Its own [workspace] keeps it standalone.
+[workspace]
+
+[package]
+name = "jagua-size-probe"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+jagua = ["dep:jagua-rs-wasm"]
+
+[dependencies]
+jagua-rs-wasm = { path = "..", optional = true }
+wasm-bindgen = "=0.2.129"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

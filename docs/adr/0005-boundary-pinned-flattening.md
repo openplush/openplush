@@ -8,7 +8,7 @@ deciders: maintainer (proposed by the implementing agent from spike 001 T007, de
 
 ## Context and problem statement
 
-001 D-013 (plan Decision Ledger) made seam parity exact and hard: every chart's boundary edges are pinned to their 3D lengths, and the interior absorbs all distortion. Research R3 named two risks: the pinned outline may not close, and the pinned map may not be injective, where free-boundary SLIM had a local guarantee. Constitution III makes det J > 0 and a non-overlapping outline a contract, so each failure must be a typed error with a dart or extra-seam proposal (001 T082), never relaxed parity. 001 T007, a spike, asked how often those failures happen on the fixture corpus, and what pinning costs in interior distortion. The answer sets how aggressive 001 T082 must be, and which distortion measure should drive dart suggestions (001 T105). Evidence: [`research/s7_boundary_pinned/`](https://github.com/openplush/openplush/blob/main/research/s7_boundary_pinned/README.md).
+001 D-013 (plan Decision Ledger) made seam parity exact and hard: every chart's boundary edges are pinned to their 3D lengths, and the interior absorbs all distortion. Research R3 named two risks: the pinned outline may not close, and the pinned map may not be injective, where free-boundary SLIM had a local guarantee. Constitution III makes det J > 0 and a non-overlapping outline a contract, so each failure must be a typed error with a dart or extra-seam proposal (001 T082), never relaxed parity. 001 T007, a spike, asked how often those failures happen on the fixture corpus, and what pinning costs in interior distortion. The answer sets how aggressive 001 T082 must be, and which distortion measure should drive dart suggestions (001 T105). Evidence: [`research/boundary_pinned/`](https://github.com/openplush/openplush/blob/main/research/boundary_pinned/README.md).
 
 ## Decision drivers
 
@@ -60,7 +60,7 @@ Developable charts pay nothing, and the pinned pipeline reproduces the exact net
 * 001 T079–T081 tests run on every fixture chart and assert closure, a simple outline, and det J > 0, so a regression shows up as a typed error in CI.
 * The tube and cube net are exact developable oracles for 001 T079–T080: SD 4.000, σ = 1 within tolerance.
 * 001 T082's tests construct each failure and assert the typed error, the proposal, and unchanged boundary lengths.
-* Re-run `research/s7_boundary_pinned/run.py` when the corpus gains a scanned or sculpted model (contributed CC0/CC-BY fixture); any closure or injectivity failure reopens this ADR.
+* Re-run `research/boundary_pinned/run.py` when the corpus gains a scanned or sculpted model (contributed CC0/CC-BY fixture); any closure or injectivity failure reopens this ADR.
 
 ## Pros and cons of the options
 

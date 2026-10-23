@@ -10,7 +10,7 @@ deciders: maintainer (proposed by the implementing agent from spike 001 T001)
 
 Research R2 picked `baby_shark` for three preprocessing jobs: isotropic remeshing before flattening (triangle quality drives solver conditioning), decimation for preview, and voxel remeshing as the opt-in last-resort repair ([data-model §3](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#3-non-manifold-handling-repair-pipeline)). Plan decision 001 D-007 adopted it "pending T001". The plan's Technical Context also has flattening run on a remeshed proxy of at most ~30k triangles.
 
-001 T001, a spike, asks whether the crate builds and runs on `wasm32-unknown-unknown`. If it doesn't, remeshing would be native-only and WASM would flatten the raw mesh, which changes what the interior solve (001 T080) can assume. This ADR records the answer and what the engine does about it. Evidence: [`research/s1_baby_shark_wasm/`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md).
+001 T001, a spike, asks whether the crate builds and runs on `wasm32-unknown-unknown`. If it doesn't, remeshing would be native-only and WASM would flatten the raw mesh, which changes what the interior solve (001 T080) can assume. This ADR records the answer and what the engine does about it. Evidence: [`research/baby_shark_wasm/`](https://github.com/openplush/openplush/blob/main/research/baby_shark_wasm/README.md).
 
 ## Decision drivers
 
@@ -68,7 +68,7 @@ Why not the others:
 ### Confirmation
 
 * `cargo deny check bans` and `scripts/check-boundary.sh` rule 1 reject `baby_shark` 0.3.12 in any engine crate. While this decision stands, CI is the check.
-* Re-adoption needs a crates.io release where `rayon`, `wasm-bindgen`, and `getrandom` can be turned off. To check one, bump the pin in `research/s1_baby_shark_wasm/Cargo.toml`, add `default-features = false`, and run its five native and wasm32 tests. All must pass byte-identical before an engine crate adds the dependency.
+* Re-adoption needs a crates.io release where `rayon`, `wasm-bindgen`, and `getrandom` can be turned off. To check one, bump the pin in `research/baby_shark_wasm/Cargo.toml`, add `default-features = false`, and run its five native and wasm32 tests. All must pass byte-identical before an engine crate adds the dependency.
 * 001 T080's tests and T002's measurements run on unremeshed input. If either shows the raw mesh can't meet 001 T080's convergence or SC-005's budget, this ADR is revisited.
 
 ## Pros and cons of the options
@@ -104,7 +104,7 @@ Why not the others:
 
 ## More information
 
-* Evidence: [`research/s1_baby_shark_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, and the size table.
+* Evidence: [`research/baby_shark_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/baby_shark_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/baby_shark_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, and the size table.
 * Follow-ups for the lead's docs PR: 001 D-007 status; the plan's Technical Context ("flattening runs on a remeshed proxy"); research R6 001 T001 result; tasks.md 001 T001 and T002 (the remeshed-proxy dial); data-model §3 last-resort row; plan.md Primary dependencies (`baby_shark` pending 001 T001) and Trade-offs ("remeshed flattening proxy"); research.md's `[verify]` note on rayon via baby_shark.
 * Revisit when (a) `baby_shark` publishes opt-out features, (b) 001 T002 reports SLIM wall time on raw-size charts, or (c) fixture runs show 001 T080 convergence failures on poorly shaped input. If (b) or (c) arrives before (a), option 5 is the preferred fallback [speculative].
 * Botsch, Kobbelt, "A Remeshing Approach to Multiresolution Modeling" (SGP 2004), the algorithm `IncrementalRemesher` implements.

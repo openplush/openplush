@@ -45,13 +45,16 @@ crate() {
 new_repo() {
   local root="$tmp/$1"
   crate "$root" crates/alpha alpha "[dependencies]" 'thiserror = "2"'
-  write "$root" crates/alpha/src/lib.rs "mod util;" "mod strings;" "mod loop_a;" "mod loop_b;" "mod first;" "mod second;" \
+  write "$root" crates/alpha/src/lib.rs "mod util;" "mod strings;" "mod raw;" "mod loop_a;" "mod loop_b;" "mod first;" "mod second;" \
     "pub use util::Thing;" "#[derive(thiserror::Error)]" "pub struct E;"
   write "$root" crates/alpha/src/util.rs "pub struct Thing;"
   # Comment markers and braces inside string literals are text, not comments or blocks.
   write "$root" crates/alpha/src/strings.rs 'pub const OPEN: &str = "/* not a comment";' \
     "use crate::util::Thing;" "/* a real comment */" "#[cfg(test)]" "mod tests {" \
     '    const B: &str = "}";' "    use crate::loop_b::b;" "}"
+  # A raw string's quotes and braces are text too.
+  write "$root" crates/alpha/src/raw.rs "#[cfg(test)]" "mod tests {" \
+    '    const J: &str = r#"{"a": "}"}"#;' "    use crate::loop_b::b;" "}" "use crate::util::Thing;"
   # A loop only test code closes: not a cycle.
   write "$root" crates/alpha/src/loop_a.rs "pub fn a() {}" "#[cfg(test)]" "mod tests {" \
     "    use crate::loop_b::b;" "    #[test] fn t() { b() }" "}"
@@ -123,6 +126,10 @@ has "a comment marker inside a string does not hide the code after it" "$facts" 
   "edge crates/alpha/src/strings.rs crates/alpha/src/util.rs use"
 has "a brace inside a string does not end an inline test module" "$facts" \
   "edge crates/alpha/src/strings.rs crates/alpha/src/loop_b.rs test"
+has "a raw string's braces do not end an inline test module" "$facts" \
+  "edge crates/alpha/src/raw.rs crates/alpha/src/loop_b.rs test"
+has "code after an inline test module with a raw string reads as production" "$facts" \
+  "edge crates/alpha/src/raw.rs crates/alpha/src/util.rs use"
 has "a production loop is a cycle" "$facts" "cycle crates/alpha/src/first.rs crates/alpha/src/second.rs"
 lacks "a loop closed only by test code is not a cycle" "$facts" "^cycle .*loop_a"
 has "a relative TypeScript import resolves to the file" "$facts" "edge packages/client/src/index.ts packages/client/src/x.ts import"

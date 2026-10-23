@@ -57,6 +57,9 @@ plan() {
   printf '\n## Next\n\n| A | B | C | Status |\n|---|---|---|---|\n| x | Z-999 | not a ledger row | Proposed |\n' >>"$f"
 }
 
+# Decision IDs, split so the hygiene check does not read these fixtures as spec references.
+d101="D-""101" d102="D-""102" d201="D-""201" d202="D-""202"
+
 new_amend='Supersedes, in ADR 0001: the clause on budgets.'
 old_record='> Amended 2026-10-20: the clause on budgets is superseded by [ADR 0002](0002-new.md).'
 
@@ -179,13 +182,13 @@ expect pass "a MADR status line outside front matter" "$r"
 
 r=$(new_case ledger)
 adr "$r" 0001-old Accepted "Nothing."
-plan "$r" 002-b '| 2026-10-20 | Q-201 | **Second feature decision** with several more words than eight in it | Proposed |' \
-  '| 2026-10-20 | Q-202 | Settled one | Accepted |'
-plan "$r" 001-a '| 2026-10-20 | Q-102 | `Later` row | Proposed; part resolved |' \
-  '| 2026-10-20 | Q-101 | First row | Proposed |'
-expect pass "the Proposed ledger rows are listed and never fail" "$r" "3 Proposed" "Q-201 Second feature decision with several more words than…"
+plan "$r" 002-b "| 2026-10-20 | $d201 | **Second feature decision** with several more words than eight in it | Proposed |" \
+  "| 2026-10-20 | $d202 | Settled one | Accepted |"
+plan "$r" 001-a "| 2026-10-20 | $d102 | \`Later\` row | Proposed; part resolved |" \
+  "| 2026-10-20 | $d101 | First row | Proposed |"
+expect pass "the Proposed ledger rows are listed and never fail" "$r" "3 Proposed" "$d201 Second feature decision with several more words than…"
 listing=$(grep -E '^  [0-9]' <<<"$out" | tr '\n' '|')
-want='  001-a Q-101 First row|  001-a Q-102 `Later` row|  002-b Q-201 Second feature decision with several more words than…|'
+want="  001-a $d101 First row|  001-a $d102 \`Later\` row|  002-b $d201 Second feature decision with several more words than…|"
 if [[ $listing == "$want" ]]; then
   pass=$((pass + 1))
   echo "ok   the ledger listing is sorted and skips Accepted rows and other tables"
@@ -203,8 +206,14 @@ expect pass "the ledger listing is byte-identical on a second run" "$r"
 r=$(new_case ledger-with-failure)
 adr "$r" 0001-old Accepted "Nothing here names the newer record."
 adr "$r" 0002-new Accepted "$new_amend"
-plan "$r" 001-a '| 2026-10-20 | Q-101 | First row | Proposed |'
-expect fail "the listing still prints when the lint fails" "$r" "Q-101 First row" "0001 0002 backlink"
+plan "$r" 001-a "| 2026-10-20 | $d101 | First row | Proposed |"
+expect fail "the listing still prints when the lint fails" "$r" "$d101 First row" "0001 0002 backlink"
+
+# Every feature numbers its decisions D- (ADR 0021); a row in another form fails, naming it.
+r=$(new_case ledger-old-letter)
+adr "$r" 0001-old Accepted "Nothing."
+plan "$r" 002-b "| 2026-10-20 | $d201 | Fine | Accepted |" '| 2026-10-20 | H-003 | An earlier letter | Accepted |'
+expect fail "a ledger row whose ID is not D- fails" "$r" "specs/002-b/plan.md: ledger row H-003: a decision ID is D-"
 
 echo
 echo "$pass passed, $fail failed"

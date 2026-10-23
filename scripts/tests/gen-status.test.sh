@@ -32,6 +32,9 @@ expect() {
   fi
 }
 
+# Task IDs, split so the hygiene check does not read these fixtures as spec references.
+T1="T""001" T2="T""002" T2a="T""002a" T3="T""003" T9="T""009"
+
 # tasks <root> <feature> <lines>...: write a feature's tasks.md around the lines.
 tasks() {
   local file="$1/specs/$2/tasks.md"
@@ -46,9 +49,9 @@ tasks() {
 new_case() {
   local root="$tmp/$1"
   mkdir -p "$root/docs/start"
-  tasks "$root" 002-first-feature "- [x] Q001 done" "- [ ] Q002 open" "- [ ] Q003 open"
-  tasks "$root" 010-later-feature "- [ ] Q001 [US1] open" "- [x] Q002 done" "- [x] Q002a done"
-  tasks "$root" 001-earliest-feature "- [x] Q001 done"
+  tasks "$root" 002-first-feature "- [x] $T1 done" "- [ ] $T2 open" "- [ ] $T3 open"
+  tasks "$root" 010-later-feature "- [ ] $T1 [US1] open" "- [x] $T2 done" "- [x] $T2a done"
+  tasks "$root" 001-earliest-feature "- [x] $T1 done"
   "$gen" "$root" >/dev/null
   echo "$root"
 }
@@ -68,14 +71,14 @@ if [[ $got == "$want" ]]; then ok "one row per feature, in directory order, tick
 # Directory listings come in creation or hash order, so a few names may list sorted by chance.
 r="$tmp/order"
 mkdir -p "$r/docs/start"
-for feature in 007-g 003-c 010-j 001-a 012-l 005-e 002-b 011-k; do tasks "$r" "$feature" "- [x] Q001 done"; done
+for feature in 007-g 003-c 010-j 001-a 012-l 005-e 002-b 011-k; do tasks "$r" "$feature" "- [x] $T1 done"; done
 "$gen" "$r" >/dev/null
 got=$(grep -o 'specs/[^/]*/tasks.md)' "$r/$inc" | tr '\n' ' ')
 want="specs/001-a/tasks.md) specs/002-b/tasks.md) specs/003-c/tasks.md) specs/005-e/tasks.md) specs/007-g/tasks.md) specs/010-j/tasks.md) specs/011-k/tasks.md) specs/012-l/tasks.md) "
 if [[ $got == "$want" ]]; then ok "rows in sorted directory order"; else bad "rows in sorted directory order" "$got"; fi
 
 r=$(new_case stale)
-sed -i 's/^- \[ \] Q003/- [x] Q003/' "$r/specs/002-first-feature/tasks.md"
+sed -i "s/^- \\[ \\] $T3/- [x] $T3/" "$r/specs/002-first-feature/tasks.md"
 "$gen" "$r" >/dev/null
 if grep -qF "002-first-feature/tasks.md) | 2 of 3 |" "$r/$inc"; then ok "a tick shows in the next run"; else bad "a tick shows in the next run" "$(cat "$r/$inc")"; fi
 
@@ -97,18 +100,25 @@ rm -r "$r/specs"
 expect fail "no tasks.md at all fails" "$r" "no specs/*/tasks.md"
 
 # Each looks like a task to a reader, so counting or skipping it silently would be wrong.
-for line in "- [X] Q009 upper-case" "  - [x] Q009 indented" "* [ ] Q009 other bullet" "- [x] no task ID" \
-  "- [x]Q009 no space" "- [~] Q009 other mark" "- [] Q009 empty box" "- [ ] q009 lower-case ID" \
-  "- [x ] Q009 stray space" "- [ x] Q009 leading space"; do
+for line in "- [X] $T9 upper-case" "  - [x] $T9 indented" "* [ ] $T9 other bullet" "- [x] no task ID" \
+  "- [x]$T9 no space" "- [~] $T9 other mark" "- [] $T9 empty box" "- [ ] t009 lower-case ID" \
+  "- [x ] $T9 stray space" "- [ x] $T9 leading space"; do
   r=$(new_case "malformed-${line//[^a-zA-Z0-9]/_}")
   cp "$r/$inc" "$tmp/before.inc"
-  tasks "$r" 002-first-feature "- [x] Q001 done" "$line"
+  tasks "$r" 002-first-feature "- [x] $T1 done" "$line"
   expect fail "a malformed task line fails: '$line'" "$r" "specs/002-first-feature/tasks.md:6"
   if cmp -s "$tmp/before.inc" "$r/$inc"; then ok "a failed run writes nothing: '$line'"; else bad "a failed run writes nothing: '$line'"; fi
 done
 
+# Every feature numbers its tasks T (ADR 0021); an earlier letter still reads as a task, so it fails.
+for line in "- [x] H012 an earlier letter" "- [ ] U042 another earlier letter"; do
+  r=$(new_case "old-letter-${line//[^a-zA-Z0-9]/_}")
+  tasks "$r" 002-first-feature "- [x] $T1 done" "$line"
+  expect fail "a task line with an earlier letter fails: '$line'" "$r" "specs/002-first-feature/tasks.md:6: a task ID is T"
+done
+
 r=$(new_case link-bullet)
-tasks "$r" 002-first-feature "- [x] Q001 done" "- [the plan](plan.md) is a link, not a box"
+tasks "$r" 002-first-feature "- [x] $T1 done" "- [the plan](plan.md) is a link, not a box"
 expect pass "a bullet that starts with a link is not a task box" "$r"
 
 # kind <root> <feature> <value>: give a feature's tasks.md a front matter `kind:` line.
@@ -120,7 +130,7 @@ kind() {
 
 # Process work (the factory, the gate) is no maker-visible progress, so it is listed apart.
 r=$(new_case process)
-tasks "$r" 005-process-work "- [x] Q001 done" "- [ ] Q002 open"
+tasks "$r" 005-process-work "- [x] $T1 done" "- [ ] $T2 open"
 kind "$r" 005-process-work process
 "$gen" "$r" >/dev/null
 want="| Feature | Tasks ticked |

@@ -54,7 +54,7 @@ expect pass "a book with only its landing page" "$d"
 task="T""042"
 fr="FR-""030"
 decision="D-""012"
-for id in "W016" "W-003" "$decision" "$task" "H105" "U007" "$fr" "SC-006" "US3" "ADR 0017" "R4" "Q2" "S1"; do
+for id in "W016" "W-003" "F013" "$decision" "$task" "H105" "U007" "$fr" "SC-006" "US3" "ADR 0017" "R4" "Q2" "S1"; do
   d=$(new_case "id-${id// /-}" "This is decided in $id, which you can read.")
   expect fail "a process ID: $id" "$d" "faq.md:3: process ID '$id'"
 done

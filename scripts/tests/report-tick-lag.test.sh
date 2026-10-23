@@ -139,6 +139,21 @@ expect "a subject's feature picks the task, and a bare ID keeps its earlier feat
 002-b $t9 17d feat(h): written before the rename (H009)
 tick-lag: 3 unticked tasks named on main" --now 2026-10-20 "$repo"
 
+# A feature named once in the parentheses covers the bare IDs after it.
+t2="T""002"
+mkdir -p "$repo/specs/005-e"
+printf '%s\n' "- [ ] $t1 first" "- [ ] $t2 second" >"$repo/specs/005-e/tasks.md"
+printf '%s\n' "- [ ] $t2 pipeline second" >>"$repo/specs/001-a/tasks.md"
+g add specs
+commit 2026-10-05 "docs(tasks): more tasks"
+commit 2026-10-06 "feat(e): two at once (005 $t1, $t2)"
+expect "a feature named first in the parentheses covers the bare IDs after it" 0 "001-a $t9 18d feat(a): pipeline work ($t9)
+002-b $t1 16d feat(h): hints (002 $t1)
+002-b $t9 17d feat(h): written before the rename (H009)
+005-e $t1 14d feat(e): two at once (005 $t1, $t2)
+005-e $t2 14d feat(e): two at once (005 $t1, $t2)
+tick-lag: 5 unticked tasks named on main" --now 2026-10-20 "$repo"
+
 echo
 echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]

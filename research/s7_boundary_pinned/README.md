@@ -1,14 +1,14 @@
-# Spike S7: boundary-pinned flattening (D-013)
+# Spike S7: boundary-pinned flattening (001 D-013)
 
-**Status (2026-10-15): T007 answered on the fixture corpus.** Every chart of every reference seam set in `fixtures/` closes and flattens injectively with its boundary pinned, as do seeded asymmetric variants and two refinement levels: 36 fixture runs (10 charts, the same 10 jittered, 16 refined), zero closure failures, zero injectivity failures. The verdict and what it means for T079–T082 are in [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md). The corpus is three coarse, smooth or piecewise-flat shapes (see Limits), so the verdict is [likely], not [solid]; the synthetic results below are the stress evidence the fixtures cannot give yet.
+**Status (2026-10-15): 001 T007 answered on the fixture corpus.** Every chart of every reference seam set in `fixtures/` closes and flattens injectively with its boundary pinned, as do seeded asymmetric variants and two refinement levels: 36 fixture runs (10 charts, the same 10 jittered, 16 refined), zero closure failures, zero injectivity failures. The verdict and what it means for 001 T079–T082 are in [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md). The corpus is three coarse, smooth or piecewise-flat shapes (see Limits), so the verdict is [likely], not [solid]; the synthetic results below are the stress evidence the fixtures cannot give yet.
 
-Non-shipping research code (plan.md: `research/` holds reference implementations, not product code). It answers the structural questions now so the Rust flattener (T079 boundary, T080 interior, T082 fallback) is designed around the right failure mode.
+Non-shipping research code (plan.md: `research/` holds reference implementations, not product code). It answers the structural questions now so the Rust flattener (001 T079 boundary, 001 T080 interior, 001 T082 fallback) is designed around the right failure mode.
 
 > **Correction (2026-10-14, same PR).** The first version of this spike reported that three stress charts had "no injective start" and that failures grew with resolution. An adversarial review found those charts were **folded 3D input**: the cap's polar angle passed 180°, so the surface wrapped past the south pole. A second, smaller defect was the radial lobe warp, which inverted triangles whenever lobe depth × lobe count ≳ 1, at every resolution. Both are fixed: the generators now refuse folded caps, lobes come from a provably one-to-one conformal warp, and an independent validity oracle (`test_s7.Validity`) checks every chart before it is flattened. The findings below are from the corrected corpus.
 
 ## The question
 
-D-013 pins every chart's boundary edges to their 3D lengths, so the two sides of a seam always match, and puts all distortion in the interior. Research R3 lists two risks:
+001 D-013 pins every chart's boundary edges to their 3D lengths, so the two sides of a seam always match, and puts all distortion in the interior. Research R3 lists two risks:
 
 1. The prescribed lengths may not **close** into a flat outline.
 2. The map may not be **injective** (some triangle folds over, det J ≤ 0), where free-boundary SLIM had a local guarantee.
@@ -109,20 +109,20 @@ Full table in [`results.md`](./results.md). Read the columns as:
 
 ### Findings (synthetic)
 
-1. **Closure is not the failure mode** [likely; synthetic]. With u_B = 0 and a harmonic interior factor, the flattened metric is flat on a disk, so in the smooth limit the boundary closes (Sawhney & Crane 2017). The discrete gap is what remains, and it shrank with refinement in every sweep here. Pinning only lengths leaves every turning angle free, and the angle fix needed was tiny everywhere. R3's "fails to close" risk can be downgraded. The closure step still belongs in T079, as a least-squares angle correction rather than BFF's length correction.
-2. **On valid input, injectivity held everywhere** [likely; synthetic]. On every geometrically valid chart tried (up to 6,144 triangles and 55 reflex corners) a linear start was injective, and the optimizer kept it that way. **The injectivity failures seen in this spike's first version came from folded input**, not from the method. An untangling rung in T080 remains a [speculative] safeguard until real fixtures say otherwise.
-3. **Input validity is the real gate** [likely]. A chart that is folded in 3D is garbage in. It flattens to garbage, and the flattener is the wrong place to discover that. It should be a typed input-validation error *upstream* of T080, with its own task (a follow-up, not this PR).
-4. **Pinned distortion is the dart signal** [likely]. On a hemisphere, the free solve hides distortion by stretching the boundary 42%. The pinned solve keeps the boundary exact and compresses the interior to 0.63. A plush maker would never cut a hemisphere as one piece; they'd use gores (gore-90: compression 0.84). The pinned interior's compression is exactly the FR-021 heatmap and FR-022 dart-suggestion input. This supports D-013's design: distortion goes where the sewist can see it and act on it.
+1. **Closure is not the failure mode** [likely; synthetic]. With u_B = 0 and a harmonic interior factor, the flattened metric is flat on a disk, so in the smooth limit the boundary closes (Sawhney & Crane 2017). The discrete gap is what remains, and it shrank with refinement in every sweep here. Pinning only lengths leaves every turning angle free, and the angle fix needed was tiny everywhere. R3's "fails to close" risk can be downgraded. The closure step still belongs in 001 T079, as a least-squares angle correction rather than BFF's length correction.
+2. **On valid input, injectivity held everywhere** [likely; synthetic]. On every geometrically valid chart tried (up to 6,144 triangles and 55 reflex corners) a linear start was injective, and the optimizer kept it that way. **The injectivity failures seen in this spike's first version came from folded input**, not from the method. An untangling rung in 001 T080 remains a [speculative] safeguard until real fixtures say otherwise.
+3. **Input validity is the real gate** [likely]. A chart that is folded in 3D is garbage in. It flattens to garbage, and the flattener is the wrong place to discover that. It should be a typed input-validation error *upstream* of 001 T080, with its own task (a follow-up, not this PR).
+4. **Pinned distortion is the dart signal** [likely]. On a hemisphere, the free solve hides distortion by stretching the boundary 42%. The pinned solve keeps the boundary exact and compresses the interior to 0.63. A plush maker would never cut a hemisphere as one piece; they'd use gores (gore-90: compression 0.84). The pinned interior's compression is exactly the FR-021 heatmap and FR-022 dart-suggestion input. This supports 001 D-013's design: distortion goes where the sewist can see it and act on it.
 5. **The free baseline is not Option B** [solid]. It is unweighted, so its boundary drift (8.3%–990% over the non-oracle charts) is an upper bound, not what a heavy-boundary-weight solve would produce. It shows parity cannot be left to a free solve. It doesn't measure how small Option B's residual could get, and R3 already rejected Option B on contract grounds.
 
-## Recommendations for T079–T082
+## Recommendations for 001 T079–T082
 
 Unchanged by the fixture run, which confirmed each one; ADR 0005 records them as the S7 verdict.
 
-- **Before T079 (new, upstream)**: validate the 3D chart (consistently oriented, no folded-over faces) and return a typed input error. This spike's own first mistake is the reason.
-- **T079 (boundary)**: BFF curvature with u_B = 0, then a least-squares *angle* closure, weighted by dual length: minimise Σ Δκᵢ² / Lᵢ with Lᵢ = (ℓᵢ₋₁ + ℓᵢ)/2, and run the Gauss-Newton polish in the same metric. The prototype's unweighted version is fine on these near-uniform meshes but would over-penalise short edges on real ones. Never adjust lengths. Return a typed error if closure fails, the outline self-touches, or an all-boundary triangle comes out inverted.
-- **T080 (interior)**: try cotan first, then uniform (bump-h1.2 needed the fallback). Accept only a start with zero folds, because the flip-capped line search can't repair one. Add an untangling rung only if fixture runs show it's needed.
-- **T082 (fallback)**: when no start is injective, return the typed error with a dart or extra-seam proposal, as D-013 says. Never relax parity.
+- **Before 001 T079 (new, upstream)**: validate the 3D chart (consistently oriented, no folded-over faces) and return a typed input error. This spike's own first mistake is the reason.
+- **001 T079 (boundary)**: BFF curvature with u_B = 0, then a least-squares *angle* closure, weighted by dual length: minimise Σ Δκᵢ² / Lᵢ with Lᵢ = (ℓᵢ₋₁ + ℓᵢ)/2, and run the Gauss-Newton polish in the same metric. The prototype's unweighted version is fine on these near-uniform meshes but would over-penalise short edges on real ones. Never adjust lengths. Return a typed error if closure fails, the outline self-touches, or an all-boundary triangle comes out inverted.
+- **001 T080 (interior)**: try cotan first, then uniform (bump-h1.2 needed the fallback). Accept only a start with zero folds, because the flip-capped line search can't repair one. Add an untangling rung only if fixture runs show it's needed.
+- **001 T082 (fallback)**: when no start is injective, return the typed error with a dart or extra-seam proposal, as 001 D-013 says. Never relax parity.
 
 ## Limits
 
@@ -131,4 +131,4 @@ Unchanged by the fixture run, which confirmed each one; ADR 0005 records them as
 - Symmetric Dirichlet is a geometric proxy, not a fabric model. "Compression 0.63" means "needs a dart", not a fabric strain measurement.
 - Fold counts are for two linear starts. The prototype makes no claim about the best possible start, and it found no case where a better one was needed.
 - 28–6,144 triangles, not the ~30k proxy.
-- The angle closure is unweighted (see T079 above).
+- The angle closure is unweighted (see 001 T079 above).

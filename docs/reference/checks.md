@@ -22,7 +22,7 @@ It scans the files git tracks or would add, so ignored trees such as build outpu
 
 A task count copied into prose is wrong the next time a task is ticked, and a review of that tick never opens the page. The counts live on the [status page](../start/status.md#by-feature), generated; every other page links there. `scripts/check-docs-facts.sh` reads `README.md`, `CONTRIBUTING.md`, `specs/README.md` and every `.md` and `.inc` file under `docs/`, except the generated `docs/start/status-counts.inc` and the [generated index lists](#generated-index-lists-docs), whose text it already reads in the pages they copy, and fails, naming each file and line, on:
 
-- a number followed by "task", "tasks", "work item" or "work items". A zero-padded number is a feature, as in "003 tasks U008", and never matches;
+- a number followed by "task", "tasks", "work item" or "work items". A zero-padded number is a feature, as in "003 tasks T008", and never matches;
 - "N of M" on a line that says "task", "ticked" or "work item", or in a table whose header row says so. Elsewhere, as in a count of pattern pieces, it passes.
 
 A number counts only when it stands alone, so dates (YYYY-MM-DD), version numbers and paper sizes such as A4 never match. The fix is a link to the status page instead of the number.

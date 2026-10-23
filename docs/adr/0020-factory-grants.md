@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-Grants given as free text were read inconsistently across factory sessions ([#316](https://github.com/openplush/openplush/issues/316)): most sessions kept treating PRs as "the maintainer merges", one merged a PR against [ADR 0018](0018-hands-off-merging.md), and a scheduled firing kept running after its grant ended. ADR 0018 says agents never merge, grant or no grant, and the gate merges tiers A, B and C; [ADR 0016](0016-standing-merge-authorization.md)'s clause on accepting decisions under a grant still stands. A run that merged tier H PRs only once the gate showed every condition but the tier passing on their heads kept `main` green. The question: what is a grant's shape, what may it allow, and how does it end? Feature 005, decision F-002, task F001.
+Grants given as free text were read inconsistently across factory sessions ([#316](https://github.com/openplush/openplush/issues/316)): most sessions kept treating PRs as "the maintainer merges", one merged a PR against [ADR 0018](0018-hands-off-merging.md), and a scheduled firing kept running after its grant ended. ADR 0018 says agents never merge, grant or no grant, and the gate merges tiers A, B and C; [ADR 0016](0016-standing-merge-authorization.md)'s clause on accepting decisions under a grant still stands. A run that merged tier H PRs only once the gate showed every condition but the tier passing on their heads kept `main` green. The question: what is a grant's shape, what may it allow, and how does it end? Feature 005, decision D-002, task 005 T001.
 
 ## Decision drivers
 
@@ -63,7 +63,7 @@ and it records each merge on the ledger. It still never applies `merge:ready`, e
 
 ### Confirmation
 
-* `.claude/skills/factory/SKILL.md` reads the argument and `continue`, checks the end time first, and merges only by the rule above (005 F011, F012); its PR shows worked examples, since skills have no test harness.
+* `.claude/skills/factory/SKILL.md` reads the argument and `continue`, checks the end time first, and merges only by the rule above (005 T011, T012); its PR shows worked examples, since skills have no test harness.
 * The ledger shows one grant per run, each merge with its head SHA and the gate verdict it relied on, and no firing after a grant's end that did work.
 
 ## Pros and cons of the options
@@ -85,4 +85,4 @@ and it records each merge on the ledger. It still never applies `merge:ready`, e
 
 ## More information
 
-Spec: `specs/005-factory-hardening/spec.md` (US6). Plan: F-002 in `specs/005-factory-hardening/plan.md`. Revisit after the first revert of a tier H change merged under a grant.
+Spec: `specs/005-factory-hardening/spec.md` (US6). Plan: 005 D-002 in `specs/005-factory-hardening/plan.md`. Revisit after the first revert of a tier H change merged under a grant.

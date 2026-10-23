@@ -39,4 +39,4 @@ Angle-preserving (conformal) flattening was not chosen for the interior either: 
 
 ## Decisions
 
-[Seam parity is exact and hard (plan, Decision Ledger, D-013)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#decision-ledger) · [flattening algorithm (research R3)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/research.md#r3-flattening-algorithm) · [ADR 0005, boundary-pinned flattening](../adr/0005-boundary-pinned-flattening.md)
+[Seam parity is exact and hard (plan, Decision Ledger, 001 D-013)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#decision-ledger) · [flattening algorithm (research R3)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/research.md#r3-flattening-algorithm) · [ADR 0005, boundary-pinned flattening](../adr/0005-boundary-pinned-flattening.md)

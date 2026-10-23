@@ -47,10 +47,10 @@ Edges are interior edges of each export (the GLB has more because it is triangul
 A meridian marked from pole to pole ends at the poles, where nothing else meets it. FR-011 defines a dead end as an endpoint inside the surface that touches no other seam, so both poles are dead ends, and under the 2026-10-16 spec import would have failed. Yet marking a meridian is the standard way to unwrap a sphere, and with the equator it gives each hemisphere a slit from its rim to its pole. In sewing terms that slit, sewn shut, is a **dart**: a seam ending inside a piece (001 FR-011). 003 FR-010 says an imported cut is never a dart, and FR-011 makes its tip an error. [solid: measured]
 
 Consequences:
-- **Fixtures**: `capsule-uv` (U001), `capsule-hardshade` (U002) and `reshaped-v1/v2` (U007) use exactly this layout (the local review confirmed degree-1 poles at z = ±60 in all three), so the 2026-10-16 spec would have rejected them with `DeadEndCut`, while US1's independent test expects them to import. `dead-end` (U005) is unaffected; its cut A ends on a material boundary and an opening.
+- **Fixtures**: `capsule-uv` (003 T001), `capsule-hardshade` (003 T002) and `reshaped-v1/v2` (003 T007) use exactly this layout (the local review confirmed degree-1 poles at z = ±60 in all three), so the 2026-10-16 spec would have rejected them with `DeadEndCut`, while US1's independent test expects them to import. `dead-end` (003 T005) is unaffected; its cut A ends on a material boundary and an opening.
 - **Makers**: a sphere or a capsule unwrapped the usual way in Blender would have failed import.
 
-**Decided 2026-10-17 (003 plan S-014): option 2, as a proposal.** A dead-ended cut is offered as a dart proposal, located and explained, which the maker accepts or declines. No fixture needs changing. The options as they were weighed:
+**Decided 2026-10-17 (003 plan D-014): option 2, as a proposal.** A dead-ended cut is offered as a dart proposal, located and explained, which the maker accepts or declines. No fixture needs changing. The options as they were weighed:
 1. **Keep FR-011, change the fixtures.** Give capsule-uv a layout with no free ends, such as both rims plus a meridian on the tube only, like `seams/capsule.json`, and say in the docs that seams must end on another seam or an opening.
 2. **Import a free end as a dart.** Reverse FR-010 for cuts that end in the interior. This is close to what the maker drew, but it is the case the maintainer ruled out.
 3. **Keep the error, but make it teach.** Report the poles as a distinct, located case, with a remedy naming the fix in Blender: run the seam into another seam.
@@ -59,11 +59,11 @@ Consequences:
 
 ## Pole fans in projection UVs
 
-Blender's default UV sphere map gives each pole triangle its own pole UV, so the u-coordinate varies around the pole while v is 0 or 1. Under R2's per-endpoint rule every pole edge then reads as a cut. Each ring-0 vertex (one UV on both sides) would become a dead-end tip: 22 on this sphere, measured (`dead_end_tips` in the report), against the 2 that `sphere-dead-end`'s slit really has. Under the 2026-10-16 spec, import would have failed with `DeadEndCut` on a model whose maker never marked a seam; under S-014 it would offer 22 darts nobody meant.
+Blender's default UV sphere map gives each pole triangle its own pole UV, so the u-coordinate varies around the pole while v is 0 or 1. Under R2's per-endpoint rule every pole edge then reads as a cut. Each ring-0 vertex (one UV on both sides) would become a dead-end tip: 22 on this sphere, measured (`dead_end_tips` in the report), against the 2 that `sphere-dead-end`'s slit really has. Under the 2026-10-16 spec, import would have failed with `DeadEndCut` on a model whose maker never marked a seam; under 003 D-014 it would offer 22 darts nobody meant.
 
 - A pole-fan edge and a slit's last edge look the same locally: UVs agree at one end and differ at the other. The edge alone can't tell them apart.
 - What differs is the far vertex. At a projection pole *every* incident face has its own UV, and those UVs share v and vary only in u.
-- **Decided 2026-10-17 (003 plan S-015): a report hint.** Detection stays exact. The report lists *projection points* and says the UVs may come from an automatic projection, suggesting the maker mark seams and unwrap (003 spec FR-006, research R2). The options as they were weighed:
+- **Decided 2026-10-17 (003 plan D-015): a report hint.** Detection stays exact. The report lists *projection points* and says the UVs may come from an automatic projection, suggesting the maker mark seams and unwrap (003 spec FR-006, research R2). The options as they were weighed:
   1. Accept it. Models must be unwrapped with marked seams, and the remedy text says so.
   2. Recognise a projection pole (all corners distinct, with a shared v of 0 or 1) and treat its fan as uncut.
   3. Report it as a distinct, located case rather than as many dead ends. The chosen hint is this option, as advice rather than an error.

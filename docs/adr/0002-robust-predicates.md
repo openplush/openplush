@@ -1,14 +1,14 @@
 ---
 status: Accepted
 date: 2026-10-14
-deciders: maintainer (delegated to the implementing agent, reviewed in the T023 PR)
+deciders: maintainer (delegated to the implementing agent, reviewed in the 001 T023 PR)
 ---
 
 # Use the `robust` crate for exact geometric predicates
 
 ## Context and problem statement
 
-T023 needs orientation and in-circle predicates whose **sign is exact**. Naive f64 evaluation returns wrong and mutually inconsistent signs near degeneracy (Kettner et al. 2008), and the engine makes topological decisions with these signs: weld and repair, chart construction, flip checks. A wrong sign there is plausible-looking wrong output, the failure Constitution III exists to prevent. This is the first geometry dependency of its kind, so AGENTS.md asks for an ADR.
+001 T023 needs orientation and in-circle predicates whose **sign is exact**. Naive f64 evaluation returns wrong and mutually inconsistent signs near degeneracy (Kettner et al. 2008), and the engine makes topological decisions with these signs: weld and repair, chart construction, flip checks. A wrong sign there is plausible-looking wrong output, the failure Constitution III exists to prevent. This is the first geometry dependency of its kind, so AGENTS.md asks for an ADR.
 
 ## Decision drivers
 
@@ -32,7 +32,7 @@ Chosen option: **`robust`**. It is a direct port of Shewchuk's public-domain ref
 * Good: exact signs for orient2d, orient3d, and incircle; nothing to maintain.
 * Good: the public API (`openplush_geom::predicates`) exposes only `Sign`, so swapping the implementation later changes no caller.
 * Bad: a third-party crate on the engine's lowest layer. Mitigated by the exact-oracle tests below, which would catch a regression in an upgrade.
-* Bad: Shewchuk's arithmetic is exact only while no intermediate overflows or underflows, and `robust` returns NaN or a flushed zero when one does (found in review of the T023 PR: `incircle` on coordinates near 1e200 returned NaN). Mitigated in the wrapper: inputs are scaled by a power of two so the largest magnitude is in [0.5, 1), which is exact and sign-preserving, and inputs whose nonzero magnitudes span more than 2^150 get a typed `UnsupportedMagnitude` error instead of a sign.
+* Bad: Shewchuk's arithmetic is exact only while no intermediate overflows or underflows, and `robust` returns NaN or a flushed zero when one does (found in review of the 001 T023 PR: `incircle` on coordinates near 1e200 returned NaN). Mitigated in the wrapper: inputs are scaled by a power of two so the largest magnitude is in [0.5, 1), which is exact and sign-preserving, and inputs whose nonzero magnitudes span more than 2^150 get a typed `UnsupportedMagnitude` error instead of a sign.
 
 ### Confirmation
 

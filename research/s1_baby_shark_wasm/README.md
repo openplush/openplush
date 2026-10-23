@@ -6,13 +6,13 @@ This is non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/
 
 ## The question
 
-Task T001 asks whether `baby_shark` builds and runs on `wasm32-unknown-unknown`. Research R2 picked it for three preprocessing jobs:
+Task 001 T001 asks whether `baby_shark` builds and runs on `wasm32-unknown-unknown`. Research R2 picked it for three preprocessing jobs:
 
 - isotropic remeshing before flattening, because triangle quality drives solver conditioning;
 - decimation for preview;
 - voxel remeshing as the opt-in last-resort repair (data-model §3).
 
-If it does not work on wasm32, isotropic remeshing becomes native-only and WASM flattening runs on the raw mesh. That changes what the interior solve (T080) can assume about its input.
+If it does not work on wasm32, isotropic remeshing becomes native-only and WASM flattening runs on the raw mesh. That changes what the interior solve (001 T080) can assume about its input.
 
 "Builds" is not "runs": a rayon pool or `Instant::now` only fails at runtime. So the spike runs every operation under Node and compares the output byte for byte with native.
 

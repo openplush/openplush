@@ -2,7 +2,7 @@
 
 > **License: GPL-3.0-or-later** (see [`LICENSE`](LICENSE)). `export_models.py` imports Blender's `bpy`, which is GPL-3.0, so this whole directory is GPL. Nothing outside it may import it ([ADR 0011](../../docs/adr/0011-blender-research-tool.md)). Copying code from here into the MIT/Apache parts of the project is not allowed.
 
-Non-shipping research code for feature 003, task U011 (research R5, R6 Q4). U011 named Q1's quadruped, but Q1 built none, so this spike builds its own.
+Non-shipping research code for feature 003, task T011 (research R5, R6 Q4). T011 named Q1's quadruped, but Q1 built none, so this spike builds its own.
 
 **Status (2026-10-17): answered for this model.** After an edit that moves only one leg's vertices, every seam and face away from that leg re-placed by position. A proportional edit also moves vertices around the leg, and lost the 3 seams within its reach. Smoothing the whole model or moving it re-placed no seams. Numbers are in [`results.md`](results.md). Updating 003 research.md R5's tag is a separate spec change.
 

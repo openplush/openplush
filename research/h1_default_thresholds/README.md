@@ -1,6 +1,6 @@
-# Spike H1: default thresholds for the hint detectors (H005)
+# Spike H1: default thresholds for the hint detectors (002 T005)
 
-**Status (2026-10-20): the defaults below were accepted as H-011 in the 002 plan's Decision Ledger, as provisional values.** They are tuned on five procedural fixtures and no real plush model, so they are [likely], not [solid]; H004's hand-made patterns are what would settle them. Nothing here ships; H028, H029 and H031 implement the same definitions.
+**Status (2026-10-20): the defaults below were accepted as 002 D-011 in the 002 plan's Decision Ledger, as provisional values.** They are tuned on five procedural fixtures and no real plush model, so they are [likely], not [solid]; 002 T004's hand-made patterns are what would settle them. Nothing here ships; 002 T028, 002 T029 and 002 T031 implement the same definitions.
 
 Non-shipping research code (research/AGENTS.md). Standard library only; `requirements.txt` is empty on purpose.
 
@@ -12,7 +12,7 @@ python3 -m unittest -v       # 8 oracles
 
 ## The question
 
-Research R1 and H-003 fix the shape of each detector (a pure threshold over a precomputed signal, fixed absolute thresholds, chains and clusters built once) and leave the numbers open: the dihedral threshold for sharp edges, the lower one for concave creases, the minimum chain length, and the curvature threshold and integration radius for dart candidates. H1 asks which defaults let a typical plush yield useful hints with no adjustment.
+Research R1 and 002 D-003 fix the shape of each detector (a pure threshold over a precomputed signal, fixed absolute thresholds, chains and clusters built once) and leave the numbers open: the dihedral threshold for sharp edges, the lower one for concave creases, the minimum chain length, and the curvature threshold and integration radius for dart candidates. H1 asks which defaults let a typical plush yield useful hints with no adjustment.
 
 ## Method
 
@@ -36,10 +36,10 @@ Numbers in [`results.md`](results.md).
 4. **Length filters earn their keep at the concave default.** At 25° the quadruped has 45 chains with no length floor, 21 at 10 mm, 13 at 20 mm and 10 at 30 mm; 24 of the 45 are under 10 mm, a couple of edges of the 4 mm grid. 20 mm leaves the neck, muzzle and limb-root rings, which are tens of millimetres around. [likely]
 5. **Signed integration is the working dart signal; R1's absolute sum is not.** Over a disk of 15 mm the quadruped yields 20 clusters at 30° with the signed sum and one with the absolute sum: a grid mesh alternates saddle and peak vertices, and summing |defect| measures that noise and merges the whole surface into one region. Summing first and taking the absolute value cancels it. The cube is unaffected (8 corners, 90° each). This revises R1's "integrated absolute Gaussian curvature" wording. [solid on these meshes]
 6. **The radius sets what size of feature qualifies, and 15 mm is the middle.** At 10 mm the quadruped yields 11 candidates at 60° including all four feet and two leg-root clusters; at 20 mm the sphere and the capsule start to register (1 and 2 clusters at 60°). At 15 mm and 60° the quadruped has 7 (two feet, an ear, the muzzle tip, the neck, the tail, the chest), the cube 8, and the sphere, capsule and faceted model none. A 60° disk at 15 mm is the curvature of a spherical cap of radius about 26 mm (2π(1 − cos(15/R)) = 60°), so the default says "tighter than a ball of 51 mm diameter needs a dart". [likely for the fixture counts, speculative as a statement about fabric; 001's Fabric presets are what should confirm it]
-7. **Clustering puts the head dome's hint on an ear.** The head-top vertex reads 174° at 15 mm, well over 60°, but it is connected to the ear roots, and a cluster is located at its peak, which is on the left ear at (−14, 71, 157) with 325°. The dome is found, in the sense that its region is flagged, but the hint's marker sits on the ear. H031 should know this: either place the marker at the cluster's centroid of mass, or split clusters at a neck in the signal. Not decided here. [solid]
+7. **Clustering puts the head dome's hint on an ear.** The head-top vertex reads 174° at 15 mm, well over 60°, but it is connected to the ear roots, and a cluster is located at its peak, which is on the left ear at (−14, 71, 157) with 325°. The dome is found, in the sense that its region is flagged, but the hint's marker sits on the ear. 002 T031 should know this: either place the marker at the cluster's centroid of mass, or split clusters at a neck in the signal. Not decided here. [solid]
 8. **The faceted fixture does not flood by chain count.** Its 120 edges chain into 10 chains at 20° and none from 25°, under the 50-per-category cap of SC-010 at every threshold, so the flood path (data-model section 8, "reported as flooded") is not reached by it. The fixture's note counts edges; hints are chains. Either the cap counts something finer than chains, or `faceted.glb` needs a denser or noisier sibling to exercise the flood. Flagged for the maintainer, not changed (the fixture is merged and the cap's unit is a spec question).
 
-## Recommended defaults (accepted provisionally as H-011)
+## Recommended defaults (accepted provisionally as 002 D-011)
 
 | Quantity | Default | Why |
 |---|---|---|
@@ -49,11 +49,11 @@ Numbers in [`results.md`](results.md).
 | Dart integration radius | 15 mm | The middle radius; the disk spans a few cells on the 4 mm quadruped and a few triangles on the coarse fixtures |
 | Dart curvature, summed angle defect | 60° | Seven candidates on the quadruped, eight on the cube, none on the sphere, capsule or faceted model |
 
-Sensitivity maps the defaults down monotonically (H-002); this spike sets only where the default sits.
+Sensitivity maps the defaults down monotonically (002 D-002); this spike sets only where the default sits.
 
 ## Limits
 
 - Five fixtures, three of them 100 to 200 triangles. Dihedral folds depend on tessellation, so every fold number above is as much a statement about these meshes as about shapes.
-- No real plush model and no hand-made pattern (H004), so "useful" is judged by the spec's named features and by silence on smooth shapes, not by agreement with a sewist.
+- No real plush model and no hand-made pattern (002 T004), so "useful" is judged by the spec's named features and by silence on smooth shapes, not by agreement with a sewist.
 - One tessellation of the quadruped (4 mm grid). A finer mesh would lower every fold and raise the dart signal's resolution; the chain-length and radius defaults are in millimetres precisely so they would not move, but the dihedral ones would.
 - Chains here pair every junction by smallest turning angle; a detector that ended chains at junctions would give more, shorter chains and move every count.

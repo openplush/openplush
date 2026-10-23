@@ -5,7 +5,7 @@ An ADR records a decision that changes a principle or the project's shape, so th
 **When an ADR is required**:
 - A change to a constitution principle, or to a public contract (constitution, Development Workflow).
 - A new dependency category (AGENTS.md, Licenses).
-- A dependency whose license is not on the allowlist (Constitution IX, T006).
+- A dependency whose license is not on the allowlist (Constitution IX, 001 T006).
 - A new sideways edge in the crate DAG (`crates/AGENTS.md`).
 - An exception to `unsafe_code = "forbid"` ([the workspace lints](../reference/checks.md#workspace-lints-clippy)).
 

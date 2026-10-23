@@ -2,7 +2,7 @@
 
 > **License: GPL-3.0-or-later** (see [`LICENSE`](LICENSE)). `export_texcoord.py` imports Blender's `bpy`, which is GPL-3.0, so this whole directory is GPL. Nothing outside it may import it ([ADR 0011](../../docs/adr/0011-blender-research-tool.md)). Copying code from here into the MIT/Apache parts of the project is not allowed.
 
-Non-shipping research code for feature 003, task U009 (research R1, R6 Q2).
+Non-shipping research code for feature 003, task T009 (research R1, R6 Q2).
 
 **Status (2026-10-17): answered.** glTF's `TEXCOORD_0` is the first UV map in Blender's list, whichever map is active or set to render. OBJ carries only the active map. So the two formats read different maps when the active one isn't first. Details are in [`results.md`](results.md). Recording the answer in 003 research.md R1 is a separate spec change.
 

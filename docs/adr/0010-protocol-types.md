@@ -8,7 +8,7 @@ deciders: maintainer (accepted 2026-10-15, in review of #85); proposed by the im
 
 ## Context and problem statement
 
-[contracts/worker-protocol.md](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md) says the shell's TypeScript types are generated from the Rust definitions, never hand-written, because two hand-kept copies of a protocol drift and the drift shows up as a wrong pattern. T179 defines those Rust definitions (the DTOs of the envelope, handles, progress and errors) and T041 needs a generator for them. A code generator is a new dependency category, so AGENTS.md asks for an ADR. The decision also fixes how the DTOs are encoded on the wire, because the generator and the encoder must agree on every shape.
+[contracts/worker-protocol.md](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md) says the shell's TypeScript types are generated from the Rust definitions, never hand-written, because two hand-kept copies of a protocol drift and the drift shows up as a wrong pattern. 001 T179 defines those Rust definitions (the DTOs of the envelope, handles, progress and errors) and 001 T041 needs a generator for them. A code generator is a new dependency category, so AGENTS.md asks for an ADR. The decision also fixes how the DTOs are encoded on the wire, because the generator and the encoder must agree on every shape.
 
 ## Decision drivers
 
@@ -29,34 +29,34 @@ deciders: maintainer (accepted 2026-10-15, in review of #85); proposed by the im
 
 Chosen option: **`ts-rs` as a dev-dependency, generating from `serde` DTOs that live in the binding**, because it generates from the same `serde` derive that defines the wire, needs no wasm build to run, and never ships.
 
-* **Where the DTOs live.** `bindings/openplush-wasm/src/protocol/`, never in `crates/`. They derive `Serialize`/`Deserialize`, and that derive *is* the wire format; the TS types are a reading of it. The conversion from `EngineError` (via its `code()`, `locations()` and `proposals()`, D-031) lives beside them.
+* **Where the DTOs live.** `bindings/openplush-wasm/src/protocol/`, never in `crates/`. They derive `Serialize`/`Deserialize`, and that derive *is* the wire format; the TS types are a reading of it. The conversion from `EngineError` (via its `code()`, `locations()` and `proposals()`, 001 D-031) lives beside them.
 * **`ts-rs` 12.0.1, dev-dependency only.** MIT [solid]; MSRV 1.78, below the workspace's 1.97 [solid]. Its default feature `serde-compat` reads `serde` attributes such as `rename_all` and `tag` [solid]. It brings `termcolor`, licensed "Unlicense OR MIT", which passes `cargo deny` through the MIT alternative [solid].
 * **How each DTO opts in.** `#[cfg_attr(test, derive(ts_rs::TS), ts(export))]`, and field-level `ts(...)` attributes inside the same `cfg_attr(test, ...)`, since the `ts` helper attribute exists only where the derive does. `ts-rs` is therefore compiled for wasm32 test builds as well (dev-dependencies are) [likely], but it only ever runs natively, in the generator, and is never in a release build [solid].
 * **Where the output goes.** Generated `.ts` files are committed under `packages/engine-client/src/generated/`. `scripts/gen-ts-types.sh` runs the export tests with `TS_RS_EXPORT_DIR` pointing at that directory; `--check` exports into a temporary directory instead and diffs in both directions, so a changed file, a missing file and a stale extra file (a DTO that was renamed or removed) all fail.
 * **Encoding.** Control messages are JSON text via `serde_json`, which `openplush-wasm` gains together with `serde` in the first PR that exports a DTO. Not `serde-wasm-bindgen`: by default it turns a Rust map into a JS `Map`, while `ts-rs` types the same field as a plain object (`{ [key: string]: T }`) [solid], which is exactly the silent disagreement this ADR exists to prevent. Geometry still crosses as transferable typed arrays, outside the DTOs.
 * **No 64-bit integers.** `u64`, `i64`, `u128` and `i128` are banned from protocol types. `ts-rs` emits `bigint` for them [solid], but a JSON number decodes to a JS `number` and loses precision above 2^53, so the type and the value would disagree. IDs and counts that cross are `u32`; `ProposalId` stays a 16-hex-digit string, as the contract already says. The generator fails if any `bigint` appears in its output, and it unsets `TS_RS_LARGE_INT` (which would otherwise remap those types to `number` [likely]) before running, so the check cannot be switched off from the environment.
 * **Finite floats only.** A float in a DTO must be finite when it is serialized: `serde_json` writes NaN and the infinities as `null` [solid], while the TS type says `number`. The engine already rejects non-finite input (`NonFiniteInput`) and a non-finite value inside it is a violated invariant, so a non-finite float reaching a DTO is a bug to surface as a typed error, never a `null` to pass on.
-* **Optional fields.** An `Option<T>` field that may be absent is written `#[serde(default, skip_serializing_if = "Option::is_none")]` plus `#[ts(optional)]`, and the TS reads `field?: T`. Without `#[ts(optional)]`, `ts-rs` emits `field: T | null`, which describes a different wire, and its warning about the unsupported `skip_serializing_if` only goes to the compiler's stderr [likely], where CI does not fail on it. The bigint scan cannot catch this, so T041 also checks the generated text of one DTO against the contract (below).
+* **Optional fields.** An `Option<T>` field that may be absent is written `#[serde(default, skip_serializing_if = "Option::is_none")]` plus `#[ts(optional)]`, and the TS reads `field?: T`. Without `#[ts(optional)]`, `ts-rs` emits `field: T | null`, which describes a different wire, and its warning about the unsupported `skip_serializing_if` only goes to the compiler's stderr [likely], where CI does not fail on it. The bigint scan cannot catch this, so 001 T041 also checks the generated text of one DTO against the contract (below).
 
 ### Consequences
 
 * Good, because the wire format has one definition, the `serde` derive, and the TS types are generated from it; drift between Rust and TS fails the `--check` diff in CI instead of reaching a maker.
 * Good, because the generator never ships: no bytes in the release WASM, no code in `crates/`, and the shell needs no Rust toolchain to type-check against committed `.ts` files.
-* Good, because JSON keeps messages inspectable in the browser's devtools and in the mock worker of T040, which speaks the same JSON without any WASM.
+* Good, because JSON keeps messages inspectable in the browser's devtools and in the mock worker of 001 T040, which speaks the same JSON without any WASM.
 * Bad, because a protocol type cannot use a 64-bit integer, and every future 64-bit ID needs a string form like `ProposalId`'s.
-* Bad, because the optional-field rule is a convention that review must keep: `ts-rs` accepts the wrong form and only warns. T041's text test covers one DTO, not every field; a wider check may be needed if optional fields multiply [speculative].
+* Bad, because the optional-field rule is a convention that review must keep: `ts-rs` accepts the wrong form and only warns. 001 T041's text test covers one DTO, not every field; a wider check may be needed if optional fields multiply [speculative].
 * Bad, because JSON costs a serialize and a parse per message. Control messages are small by contract (worker-protocol §1, rule 2), so this is noise next to a flattening step [likely].
 * Neutral: `ts-rs` emits `Array<T>` where the contract's sketches write `T[]` [likely]. The two are the same type.
 
 ### Confirmation
 
-T041's `scripts/gen-ts-types.sh --check` runs in CI and fails on:
+001 T041's `scripts/gen-ts-types.sh --check` runs in CI and fails on:
 
 * any difference, in either direction, between a fresh export and `packages/engine-client/src/generated/`;
 * any `bigint` in the generated output, with `TS_RS_LARGE_INT` unset;
 * the generated declaration of one §6 DTO (`EngineErrorDto`) not reading `locations?:` with no `| null` — the test that proves the optional-field rule is applied and that `ts-rs` still honours it after an upgrade.
 
-T179's tests serialize each DTO and compare it with the contract's JSON shape, and `cargo deny check` passes with `ts-rs`, `serde` and `serde_json` in the lock file.
+001 T179's tests serialize each DTO and compare it with the contract's JSON shape, and `cargo deny check` passes with `ts-rs`, `serde` and `serde_json` in the lock file.
 
 ## Pros and cons of the options
 
@@ -78,5 +78,5 @@ T179's tests serialize each DTO and compare it with the contract's JSON shape, a
 ## More information
 
 * Contract: [worker-protocol.md](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md), §1 (numbers rule) and §6 (locations), amended 2026-10-15 with this ADR.
-* Tasks: T179 (the DTOs), T041 (the generator and its checks), T040 (`packages/engine-client`, the consumer). Ledger: D-033.
+* Tasks: 001 T179 (the DTOs), 001 T041 (the generator and its checks), 001 T040 (`packages/engine-client`, the consumer). Ledger: 001 D-033.
 * Revisit if a protocol type genuinely needs a 64-bit integer, if `ts-rs` gains a hard error for unsupported `serde` attributes (the text test could then go), or if message volume makes JSON measurable.

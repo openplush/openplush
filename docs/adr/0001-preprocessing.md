@@ -1,16 +1,16 @@
 ---
 status: Proposed
 date: 2026-10-14
-deciders: maintainer (proposed by the implementing agent from spike S1, T001)
+deciders: maintainer (proposed by the implementing agent from spike S1, 001 T001)
 ---
 
 # Do not adopt `baby_shark` 0.3.12; both targets flatten the repaired mesh until a gate-clean release exists
 
 ## Context and problem statement
 
-Research R2 picked `baby_shark` for three preprocessing jobs: isotropic remeshing before flattening (triangle quality drives solver conditioning), decimation for preview, and voxel remeshing as the opt-in last-resort repair ([data-model §3](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#3-non-manifold-handling-repair-pipeline)). Plan decision D-007 adopted it "pending S1". The plan's Technical Context also has flattening run on a remeshed proxy of at most ~30k triangles.
+Research R2 picked `baby_shark` for three preprocessing jobs: isotropic remeshing before flattening (triangle quality drives solver conditioning), decimation for preview, and voxel remeshing as the opt-in last-resort repair ([data-model §3](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#3-non-manifold-handling-repair-pipeline)). Plan decision 001 D-007 adopted it "pending S1". The plan's Technical Context also has flattening run on a remeshed proxy of at most ~30k triangles.
 
-T001 (spike S1) asks whether the crate builds and runs on `wasm32-unknown-unknown`. If it doesn't, remeshing would be native-only and WASM would flatten the raw mesh, which changes what the interior solve (T080) can assume. This ADR records the answer and what the engine does about it. Evidence: [`research/s1_baby_shark_wasm/`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md).
+001 T001 (spike S1) asks whether the crate builds and runs on `wasm32-unknown-unknown`. If it doesn't, remeshing would be native-only and WASM would flatten the raw mesh, which changes what the interior solve (001 T080) can assume. This ADR records the answer and what the engine does about it. Evidence: [`research/s1_baby_shark_wasm/`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md).
 
 ## Decision drivers
 
@@ -19,12 +19,12 @@ T001 (spike S1) asks whether the crate builds and runs on `wasm32-unknown-unknow
 * Constitution III and VII: no silent wrong output; destructive repairs are opt-in and reported.
 * Constitution IX: allowlisted licenses.
 * `crates/AGENTS.md`: no loop runs longer than ~50 ms without a yield point.
-* Solver conditioning for T080, and SC-005's 10 s budget, which the remeshed proxy was meant to secure.
+* Solver conditioning for 001 T080, and SC-005's 10 s budget, which the remeshed proxy was meant to secure.
 
 ## Considered options
 
 1. Adopt `baby_shark` 0.3.12 as published, in both targets.
-2. Native-only remeshing; WASM flattens the raw mesh (the fallback T001 names).
+2. Native-only remeshing; WASM flattens the raw mesh (the fallback 001 T001 names).
 3. Don't adopt it now. Both targets flatten the repaired mesh. Propose opt-out features upstream and re-evaluate when a crates.io release has them.
 4. Fork or vendor a patched `baby_shark` as a pinned git dependency.
 5. Write our own isotropic remesher in `openplush-mesh` (split, collapse, flip, smooth, project; Botsch and Kobbelt 2004).
@@ -50,13 +50,13 @@ Why not the others:
 
 * Good: native and WASM flatten the same mesh, so the determinism CI job and golden tests mean the same thing in both targets.
 * Good: no new dependency category, no fork, no `deny.toml` exception. The gates already enforce this decision: a PR that adds `baby_shark` 0.3.12 fails CI.
-* Bad, **for T080**: the interior solve can't assume isotropic, well-shaped triangles. It gets the repaired mesh: slivers, high-valence vertices, and edge lengths spread over orders of magnitude [solid]. T080 should:
+* Bad, **for 001 T080**: the interior solve can't assume isotropic, well-shaped triangles. It gets the repaired mesh: slivers, high-valence vertices, and edge lengths spread over orders of magnitude [solid]. 001 T080 should:
   * keep S7's cotan-then-uniform harmonic start and its flip-capped line search. S7 converged on rim slivers with minimum angles around 1.8° [likely, synthetic charts only];
   * stay scale-equivariant, never normalising by a target edge length;
   * report non-convergence as a typed error rather than returning a poor map.
 
   How much conditioning degrades on real scanned or sculpted fixtures is unmeasured [verify, with the fixture corpus].
-* Bad, **for SC-005**: the "remeshed proxy of at most ~30k triangles" dial in the plan's Technical Context doesn't exist yet. Charts are as large as the repaired input, up to ~200k triangles in total. S2 (T002) must measure SLIM on charts of raw-input size, not proxy size [likely to matter].
+* Bad, **for SC-005**: the "remeshed proxy of at most ~30k triangles" dial in the plan's Technical Context doesn't exist yet. Charts are as large as the repaired input, up to ~200k triangles in total. S2 (001 T002) must measure SLIM on charts of raw-input size, not proxy size [likely to matter].
 * Bad, **for data-model §3**: the voxel-remesh last resort is unavailable in v0.1. Hopeless input ends in the typed errors and `RepairReport` the earlier repair steps already produce. Constitution VII makes destructive repair opt-in anyway, so nothing silently changes. Preview decimation, if wanted, belongs to the shell's renderer, not the engine.
 * Conditions on re-adoption, from S1 [solid]. They apply to any later version, upstream or forked:
   * use marching cubes (`MeshingMethod::Manifold`) only. Dual contouring gave 20 different outputs in 20 native runs on 4 threads, because it appends faces in thread-completion order, and its tile paths contain `todo!()`;
@@ -69,7 +69,7 @@ Why not the others:
 
 * `cargo deny check bans` and `scripts/check-boundary.sh` rule 1 reject `baby_shark` 0.3.12 in any engine crate. While this decision stands, CI is the check.
 * Re-adoption needs a crates.io release where `rayon`, `wasm-bindgen`, and `getrandom` can be turned off. To check one, bump the pin in `research/s1_baby_shark_wasm/Cargo.toml`, add `default-features = false`, and run its five native and wasm32 tests. All must pass byte-identical before an engine crate adds the dependency.
-* T080's tests and S2's measurements run on unremeshed input. If either shows the raw mesh can't meet T080's convergence or SC-005's budget, this ADR is revisited.
+* 001 T080's tests and S2's measurements run on unremeshed input. If either shows the raw mesh can't meet 001 T080's convergence or SC-005's budget, this ADR is revisited.
 
 ## Pros and cons of the options
 
@@ -89,7 +89,7 @@ Why not the others:
 
 * Good, because it is gate-clean and deterministic in both targets with no new dependency.
 * Good, because S1 showed the upstream change is small and output-preserving.
-* Bad, because T080 loses the conditioning guarantee, and SC-005 loses its proxy dial until a remesher exists.
+* Bad, because 001 T080 loses the conditioning guarantee, and SC-005 loses its proxy dial until a remesher exists.
 * Bad, because adoption depends on an upstream release we don't control [speculative on timing].
 
 ### 4. Fork or vendor a patched crate
@@ -105,6 +105,6 @@ Why not the others:
 ## More information
 
 * Evidence: [`research/s1_baby_shark_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s1_baby_shark_wasm/results.md). These hold the exact commands, versions, hashes, the patch diff, and the size table.
-* Follow-ups for the lead's docs PR: D-007 status; the plan's Technical Context ("flattening runs on a remeshed proxy"); research R6 S1 result; tasks.md T001 and T002 (the remeshed-proxy dial); data-model §3 last-resort row; plan.md Primary dependencies (`baby_shark` pending S1) and Trade-offs ("remeshed flattening proxy"); research.md's `[verify]` note on rayon via baby_shark.
-* Revisit when (a) `baby_shark` publishes opt-out features, (b) S2 reports SLIM wall time on raw-size charts, or (c) fixture runs show T080 convergence failures on poorly shaped input. If (b) or (c) arrives before (a), option 5 is the preferred fallback [speculative].
+* Follow-ups for the lead's docs PR: 001 D-007 status; the plan's Technical Context ("flattening runs on a remeshed proxy"); research R6 S1 result; tasks.md 001 T001 and T002 (the remeshed-proxy dial); data-model §3 last-resort row; plan.md Primary dependencies (`baby_shark` pending S1) and Trade-offs ("remeshed flattening proxy"); research.md's `[verify]` note on rayon via baby_shark.
+* Revisit when (a) `baby_shark` publishes opt-out features, (b) S2 reports SLIM wall time on raw-size charts, or (c) fixture runs show 001 T080 convergence failures on poorly shaped input. If (b) or (c) arrives before (a), option 5 is the preferred fallback [speculative].
 * Botsch, Kobbelt, "A Remeshing Approach to Multiresolution Modeling" (SGP 2004), the algorithm `IncrementalRemesher` implements.

@@ -6,7 +6,7 @@ This is non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/
 
 ## The question
 
-Task T003 asks whether `i_overlay` panics or returns wrong geometry when it builds seam allowances, and so how defensive the allowance construction (T085) must be. Research R2 picked `i_overlay` for "seam allowance offset + union" and recorded an open outline-offset panic upstream (iOverlay issue 74).
+Task 001 T003 asks whether `i_overlay` panics or returns wrong geometry when it builds seam allowances, and so how defensive the allowance construction (001 T085) must be. Research R2 picked `i_overlay` for "seam allowance offset + union" and recorded an open outline-offset panic upstream (iOverlay issue 74).
 
 A single-distance polygon offset is not enough. Data-model §7 needs a different allowance on each edge (seam default, per-seam override, opening, hem, and 0 for a fold or an edge-stitched edge), so the cut region is a union of per-edge strips. The spike builds that union, fuzzes it, and checks every result against facts computed without `i_overlay`. Panics matter, but Constitution III cares more about output that is quietly wrong.
 

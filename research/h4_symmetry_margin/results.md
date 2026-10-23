@@ -2,7 +2,7 @@
 
 Run on 2026-10-19, Linux x86_64, standard library only. `python3 sweep.py` prints the two tables below; the output is byte-identical on CPython 3.11.17, 3.12.3 and 3.13.16 (the committed tables are the 3.13 run). `python3 -m unittest -v`: 14 tests, OK, on all three. `mypy --strict --python-version 3.11 mirror.py variants.py sweep.py test_h4.py` (mypy 2.3.1, `MYPYPATH=../fixtures_gen`): no issues.
 
-Scores are RMS reflected-vertex-to-surface distance over the bounding-box diagonal (179 mm for the heads). The acceptance threshold is 0.01, the H002 oracle's bound. What the rows are and what they show is in [`README.md`](README.md).
+Scores are RMS reflected-vertex-to-surface distance over the bounding-box diagonal (179 mm for the heads). The acceptance threshold is 0.01, the 002 T002 oracle's bound. What the rows are and what they show is in [`README.md`](README.md).
 
 Timings: one score 11 ms, one full candidate search 8 s, the whole sweep 3 min, on one core.
 

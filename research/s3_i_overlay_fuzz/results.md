@@ -111,7 +111,7 @@ No panic, but **wrong orientation or self-intersection gives quietly wrong outpu
 
 ## 3. Construction defects the fuzz found in the spike's own code (and fixed)
 
-Each one is a trap T085 could fall into too:
+Each one is a trap 001 T085 could fall into too:
 
 1. **A zero allowance makes a wedge vertex coincide with the corner.** A repeated vertex breaks a convexity test. Fix: dedup the vertices.
 2. **With unequal allowances, the miter point can lie behind an offset's start**, and the wedge becomes a bowtie. The first run showed it as a detached island. Fix: miter only if the point is ahead of the incoming offset end and behind the outgoing offset start; otherwise bevel.

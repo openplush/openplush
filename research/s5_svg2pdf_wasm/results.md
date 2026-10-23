@@ -81,7 +81,7 @@ svg2pdf             4921 B  hash 11445119838395906974  1.023415ms/page
 svg2pdf_dpi72       4918 B  hash   461375733877581731  1.169629ms/page
 ```
 
-Three further separate processes gave the same three hashes; with `--features svg2pdf-default` the svg2pdf hash is unchanged (text is still dropped: no fonts). Times vary run to run: direct 42–47 µs, svg2pdf 0.86–1.02 ms per page, mean of 200 runs. The direct PDF is uncompressed; pdf-writer doesn't compress, so T091 would deflate content streams itself (`miniz_oxide`, already in svg2pdf's graph) if size matters.
+Three further separate processes gave the same three hashes; with `--features svg2pdf-default` the svg2pdf hash is unchanged (text is still dropped: no fonts). Times vary run to run: direct 42–47 µs, svg2pdf 0.86–1.02 ms per page, mean of 200 runs. The direct PDF is uncompressed; pdf-writer doesn't compress, so 001 T091 would deflate content streams itself (`miniz_oxide`, already in svg2pdf's graph) if size matters.
 
 ## 5. Determinism
 

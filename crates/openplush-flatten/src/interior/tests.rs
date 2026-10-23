@@ -38,8 +38,8 @@ fn half_cylinder() -> (Vec<DVec3>, Faces) {
     (xyz, grid(8, 3))
 }
 
-/// The northern hemisphere of the unit sphere, 16 rings (1536 triangles), as in the S7
-/// corpus's `cap-90`.
+/// The northern hemisphere of the unit sphere, 16 rings (1536 triangles), as in the
+/// `research/boundary_pinned/` corpus's `cap-90`.
 fn hemisphere() -> (Vec<DVec3>, Faces) {
     rings(16, |r, a| {
         let theta = FRAC_PI_2 * r;
@@ -80,8 +80,8 @@ fn a_half_cylinder_unrolls_with_no_distortion() -> Result<(), FlattenError> {
 }
 
 #[test]
-fn a_hemisphere_pinned_to_its_boundary_settles_near_the_s7_energy() -> Result<(), FlattenError> {
-    // research/s7_boundary_pinned/results.md, cap-90: pinned SD mean 5.200, no face flipped.
+fn a_hemisphere_pinned_to_its_boundary_settles_near_the_spike_energy() -> Result<(), FlattenError> {
+    // research/boundary_pinned/results.md, cap-90: pinned SD mean 5.200, no face flipped.
     let (xyz, f) = hemisphere();
     let uv = dense(&flatten(CHART, &xyz, &f)?, xyz.len());
     let c = corners(&f);

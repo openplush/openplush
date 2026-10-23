@@ -9,7 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-# Exact pin: the version research/s3_i_overlay_fuzz audited; re-run it before bumping.
+# Exact pin: the version research/i_overlay_fuzz audited; re-run it before bumping.
 i_overlay = { version = "=9.0.1", default-features = false }
 openplush-geom = { path = "../openplush-geom" }
 openplush-mesh = { path = "../openplush-mesh" }
@@ -17,9 +17,11 @@ openplush-seams = { path = "../openplush-seams" }
 thiserror = "2.0.21"
 
 [dev-dependencies]
-# The S3 corpus generator's trigonometry, identical on every target; the version i_float pulls in.
+# The `research/i_overlay_fuzz/` corpus generator's trigonometry, identical on every target;
+# the version i_float pulls in.
 libm = "=0.2.16"
-# The S3 oracle's exact orientation, independent of the engine; the version openplush-geom uses.
+# The `research/i_overlay_fuzz/` oracle's exact orientation, independent of the engine; the
+# version openplush-geom uses.
 robust = "=1.2.0"
 
 [lints]

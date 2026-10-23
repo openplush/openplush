@@ -37,5 +37,5 @@ Facts measured 2026-10-20 on `main` at `684ff43`.
   - 28 of the 50 carried at least one merge-up; 16 of those had a conflicting one (20 conflicting merges).
   - Files, counted once per PR: a `specs/*/tasks.md` in 9 (ticks and as-built notes on neighbouring lines); an index list in 7 (`docs/SUMMARY.md`, `docs/explanation/README.md`, `docs/start/README.md`, `docs/adr/README.md`, `docs/reference/crates.md`); a Decision Ledger row in `specs/*/plan.md` in 2 (#267, #300, both two rows added after the same last row); other content in 7.
   - Limit: a PR whose author resolved a conflict by rebasing instead of merging leaves no merge commit and is not counted, so these are lower bounds.
-- **Decision**: proposed in plan.md, F-003.
+- **Decision**: proposed in plan.md, D-003.
 - **Alternatives**: one file per decision with a generated table (removes ledger conflicts, adds a generator and a file per row); an append-only section (still conflicts when two branches append after the same row).

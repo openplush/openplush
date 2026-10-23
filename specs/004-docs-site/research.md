@@ -16,7 +16,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | Zensical (Material's successor) is 0.0.71, "Alpha", and adds a Python toolchain | [solid] PyPI |
 | Starlight is pre-1.0 and Astro's CLI sends telemetry unless disabled. Docusaurus has no offline search built in. VitePress stable has been idle since 2025-08 | [solid] |
 
-**Decision**: mdBook (W-001).
+**Decision**: mdBook (D-001).
 
 ## R2. How mdBook treats this repo's docs
 
@@ -32,7 +32,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | A ```` ```rust ```` block is a playground block by default and `book.js` then POSTs to `play.rust-lang.org` on page load; `runnable = false` stops it. MathJax loads from cdnjs but is off by default | [solid] tested |
 | The default theme's Source Code Pro font is OFL-1.1; Open Sans is Apache-2.0 | [solid] |
 
-**Decisions**: hand-curated SUMMARY with a completeness check (W-004); links rewritten and lychee on HTML (W-005); network-free config and check (W-006).
+**Decisions**: hand-curated SUMMARY with a completeness check (D-004); links rewritten and lychee on HTML (D-005); network-free config and check (D-006).
 
 ## R3. Content: what a junior developer meets today
 
@@ -49,7 +49,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | Diátaxis' author warns against empty quadrant sections | [solid] diataxis how-to-use |
 | Agent context files raised agent cost and step count with no significant gain in success; keep them to what the codebase does not already say | [likely] Gloaguen et al., arXiv 2602.11988 (search summary) |
 
-**Decisions**: journey-ordered contributor book (spec FR-020); glossary and status page first (Phase 3); facts move out of agent files (W-009).
+**Decisions**: journey-ordered contributor book (spec FR-020); glossary and status page first (Phase 3); facts move out of agent files (D-009).
 
 ## R4. API docs and publishing
 
@@ -64,7 +64,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | `taiki-e/install-action` installs a pinned mdbook with checksum verification (its `manifests/mdbook.json` lists 0.5.4 for Linux, macOS and Windows) | [solid] checked 2026-10-20 |
 | `taiki-e/install-action` does not offer lychee: it is absent from `TOOLS.md` and `manifests/lychee.json` does not exist on `main`. `scripts/check.sh --setup` installs it with `cargo install --locked`, as it does `cargo-deny` | [solid] checked 2026-10-20 |
 
-**Decisions**: rustdoc under `/dev/api/` with a generated index, gated on W-007; artifact previews (W-012).
+**Decisions**: rustdoc under `/dev/api/` with a generated index, gated on D-007; artifact previews (D-012).
 
 ## Sources
 

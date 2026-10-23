@@ -8,7 +8,7 @@ deciders: Lavender (maintainer, accepted 2026-10-20 by merging #277)
 
 ## Context and problem statement
 
-Feature 004 publishes `docs/` as a static site: a contributor book, a maker guide, and the workspace rustdoc under `/dev/api/` ([spec](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/spec.md), [plan](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/plan.md)). Three questions need an answer before its tasks land. Which generator builds the books? May the site carry the fonts the generators bundle, which are OFL-1.1 and not on the allow-list? And does Constitution IX govern tools that only run in CI, such as `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows, and the tools `cargo install` puts on a runner, which `cargo deny` never sees? This ADR records the plan's decisions W-001, W-007 and W-008 (task W001).
+Feature 004 publishes `docs/` as a static site: a contributor book, a maker guide, and the workspace rustdoc under `/dev/api/` ([spec](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/spec.md), [plan](https://github.com/openplush/openplush/blob/main/specs/004-docs-site/plan.md)). Three questions need an answer before its tasks land. Which generator builds the books? May the site carry the fonts the generators bundle, which are OFL-1.1 and not on the allow-list? And does Constitution IX govern tools that only run in CI, such as `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows, and the tools `cargo install` puts on a runner, which `cargo deny` never sees? This ADR records the plan's decisions 004 D-001, 004 D-007 and 004 D-008 (task 004 T001).
 
 ## Decision drivers
 
@@ -20,18 +20,18 @@ Feature 004 publishes `docs/` as a static site: a contributor book, a maker guid
 
 ## Considered options
 
-Generator (W-001):
+Generator (004 D-001):
 * A: mdBook 0.5.x
 * B: Zola
 * C: Material for MkDocs, or its successor Zensical
 * D: Starlight, Docusaurus or VitePress
 
-Fonts (W-007):
+Fonts (004 D-007):
 * E: accept OFL-1.1 font files and CC BY 4.0 icons in the published docs site only
 * F: strip or replace the bundled fonts
 * G: publish no rustdoc
 
-CI-only tooling (W-008):
+CI-only tooling (004 D-008):
 * H: IX governs what the project ships; tooling that only runs in CI is outside it, and its licences are recorded
 * I: IX covers CI tooling too; replace `Swatinem/rust-cache` and hold every CI tool to the allow-list
 
@@ -67,7 +67,7 @@ Licences of tools that `cargo install` puts on a runner or a contributor's machi
 ### Confirmation
 
 * Review: a PR that adds an OFL font, a CC BY icon, or any asset outside the allow-list, to anything but the docs site is rejected; a CI tool whose output lands in a shipped artifact or the published site is held to the allow-list.
-* The `docs` step's build (W008) is the point where every third-party asset in the built site is listed with its licence. An asset that is neither on the allow-list, an OFL-1.1 font, nor a CC BY 4.0 icon stops that task for a new ADR. mdBook 0.5.4's assets were listed before this ADR merged: Open Sans (Apache-2.0), Source Code Pro (OFL-1.1), Font Awesome icons (CC BY 4.0), and clipboard.js, elasticlunr and mark.js (MIT), highlight.js (BSD-3-Clause), mdBook's own front end (MPL-2.0) [solid: file headers and crate licences]. A version bump of mdBook repeats the list.
+* The `docs` step's build (004 T008) is the point where every third-party asset in the built site is listed with its licence. An asset that is neither on the allow-list, an OFL-1.1 font, nor a CC BY 4.0 icon stops that task for a new ADR. mdBook 0.5.4's assets were listed before this ADR merged: Open Sans (Apache-2.0), Source Code Pro (OFL-1.1), Font Awesome icons (CC BY 4.0), and clipboard.js, elasticlunr and mark.js (MIT), highlight.js (BSD-3-Clause), mdBook's own front end (MPL-2.0) [solid: file headers and crate licences]. A version bump of mdBook repeats the list.
 * A tool added to `scripts/check.sh --setup` adds its row to the table above.
 
 ## Pros and cons of the options
@@ -115,6 +115,6 @@ Licences of tools that `cargo install` puts on a runner or a contributor's machi
 
 ## More information
 
-* 004 plan, Decision Ledger W-001, W-007, W-008; research R1, R2, R4.
-* Unblocks W016 (rustdoc under `/dev/api/`), which carries `blocked:W-007`.
+* 004 plan, Decision Ledger D-001, 004 D-007, 004 D-008; research R1, R2, R4.
+* Unblocks 004 T016 (rustdoc under `/dev/api/`), which carries `blocked:004 D-007`.
 * Revisit if rustdoc gains a stable way to omit its fonts, or if a CI tool starts writing into a shipped artifact.

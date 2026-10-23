@@ -231,7 +231,7 @@ At every seam bundle, compare the mapped nap directions on each side at matched 
 
 No piece is placed on the bias in this feature (D-046).
 
-`jagua-rs` supports reflection about specified local axes, which maps directly to mirrored pieces (S4 confirms discrete rotation sets).
+`jagua-rs` supports reflection about specified local axes, which maps directly to mirrored pieces (T004 confirms discrete rotation sets).
 
 ### Anisotropic stretch — out of scope (D-014)
 Were it in scope: once θ* is fixed, the fabric's stretch tensor `M` is known in the piece frame → anisotropic re-flatten (research R3). Example: knit-backed faux fur stretches mostly crosswise, so the solver could place compression along that axis but not along the nap. FR-026 excludes this from 001; per-direction stretch feeds warnings only. Noted so the extension point is obvious and nobody designs it out.
@@ -282,7 +282,7 @@ pub struct Fabric {
 - **Zero allowance** (FR-057): legal only when `!fabric.frays`, and only on edges the user marked edge-stitched or appliqué. The cut line then coincides with the sewing line, which means the piece has no offset polygon at all — a case the offset code must handle rather than divide by zero on. Pieces with zero allowance are excluded from clip/notch-out marking (§7 tight curves), since there is no allowance to clip into.
 - **Corners**: MVP uses miter joins with a miter limit (prevents spikes at acute corners). v0.2: drafting-standard **reflected corners** — allowance ends shaped as the mirror of the adjacent seam's allowance so edges align when pressed [likely].
 - **Tight curves**: where sewing-line curvature radius < allowance, the offset self-intersects; the union resolves it, and the piece gets **clip marks** (concave) or **notch-out marks** (convex) at a spacing proportional to curvature (FR-035).
-- **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (S3). *Superseded 2026-10-15 by [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md): a panic cannot be caught on wasm32, so it is a crash on both targets and nothing catches it.*
+- **Robustness**: simplify input polygons first; catch `i_overlay` panics (known issue #74) at the stage boundary and convert to a typed error with the offending piece ID; fuzz in CI (T003). *Superseded 2026-10-15 by [ADR 0009](../../docs/adr/0009-wasm-panic-is-a-worker-crash.md): a panic cannot be caught on wasm32, so it is a crash on both targets and nothing catches it.*
 
 ## 7a. Pieces, Outlines, and Sheets (D-039)
 

@@ -10,7 +10,7 @@ deciders: maintainer, on mentor feedback (reviewed in the PR that adds this ADR)
 
 ## Context and problem statement
 
-`docs/` redirected readers to `specs/`, so agents and contributors learned the system from plans written before the code. The plans had drifted: after T028–T031 were built, #61 had to correct `tasks.md`: a stale path, a task narrowed to what could be built, and a test task that could no longer compile as written, and the engine API contract still says "signatures here are the contract" for sections the code has since settled. The question: when a spec and the built system disagree, which one is authoritative, and where does a reader find what exists?
+`docs/` redirected readers to `specs/`, so agents and contributors learned the system from plans written before the code. The plans had drifted: after 001 T028–T031 were built, #61 had to correct `tasks.md`: a stale path, a task narrowed to what could be built, and a test task that could no longer compile as written, and the engine API contract still says "signatures here are the contract" for sections the code has since settled. The question: when a spec and the built system disagree, which one is authoritative, and where does a reader find what exists?
 
 ## Decision drivers
 
@@ -41,7 +41,7 @@ The rules:
 * Good, because a reader lands on a page that describes what exists, and the code can't silently disagree with the reference: rustdoc is generated from it, and error and warning strings are pinned by tests.
 * Good, because docs are written in small pieces by whoever made the change, while they still remember it.
 * Bad, because a reader who wants the full picture of a part-built feature reads two places, the as-built docs and the spec for the unbuilt rest. Each spec section says which applies.
-* Bad, because existing spec tasks that wrote docs at the end (001's T168, 002's H079) and one that treats the contract as authoritative (002's H034) need rewording.
+* Bad, because existing spec tasks that wrote docs at the end (001's T168, 002's T079) and one that treats the contract as authoritative (002's T034) need rewording.
 
 ### Confirmation
 

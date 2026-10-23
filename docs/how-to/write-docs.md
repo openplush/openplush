@@ -72,7 +72,7 @@ Each rule has its reason; if the reason doesn't apply, raise it in review rather
 **Contributor pages**
 
 - **Open with the page's purpose**: one or two sentences on what the reader gets from it, before any detail.
-- **Process IDs only as links**, or in one closing "Decisions" line. `D-013` in running text means nothing to a newcomer; [why seam lengths are pinned](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md) does, and still leads to the decision.
+- **Process IDs only as links**, or in one closing "Decisions" line. `001 D-013` in running text means nothing to a newcomer; [why seam lengths are pinned](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md) does, and still leads to the decision.
 - **Every domain term in the glossary** (`docs/reference/glossary.md`). Link the term the first time a page uses it.
 - **Explain, don't instruct agents.** Directives for agents belong in agent files; a contributor page explains the fact and the reasoning behind it.
 

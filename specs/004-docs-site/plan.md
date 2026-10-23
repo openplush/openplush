@@ -34,10 +34,10 @@ No `data-model.md` or `contracts/`: the feature adds no types and no public engi
 | V Determinism | ✅ mdBook and rustdoc output measured byte-identical across builds (research R1, R4); SC-007 keeps it checked |
 | VI Units | ✅ Not applicable |
 | VII Explicit repair | ✅ Not applicable |
-| VIII Local-first, no telemetry | ⚠️ mdBook's playground and MathJax defaults make network calls; both are turned off and a check forbids remote references (W-006) |
-| IX Licences | ⚠️ rustdoc and mdBook bundle OFL-1.1 fonts (research R4); W-007 proposes accepting OFL for the docs site only, through an ADR. `Swatinem/rust-cache` (LGPL-3.0) is already in three workflows; W-008 proposes recording CI-only tooling as outside IX |
+| VIII Local-first, no telemetry | ⚠️ mdBook's playground and MathJax defaults make network calls; both are turned off and a check forbids remote references (D-006) |
+| IX Licences | ⚠️ rustdoc and mdBook bundle OFL-1.1 fonts (research R4); D-007 proposes accepting OFL for the docs site only, through an ADR. `Swatinem/rust-cache` (LGPL-3.0) is already in three workflows; D-008 proposes recording CI-only tooling as outside IX |
 
-The two ⚠️ rows are resolved by the ADR (W001) before any task that depends on them; those tasks carry `blocked:W-007`.
+The two ⚠️ rows are resolved by the ADR (T001) before any task that depends on them; those tasks carry `blocked:D-007`.
 
 ## Project Structure
 
@@ -50,17 +50,17 @@ specs/004-docs-site/
 ├── research.md                # tool comparison, mdBook behaviour, rustdoc and Pages, content audit
 ├── quickstart.md
 ├── checklists/requirements.md
-└── tasks.md                   # W001–W036
+└── tasks.md                   # T001–T036
 ```
 
 ### Repository changes
 
 ```text
 book.toml                      # contributor book: src = "docs", build-dir = "target/site/dev"
-docs/SUMMARY.md                # contributor navigation, hand-curated, journey-ordered (W-004)
+docs/SUMMARY.md                # contributor navigation, hand-curated, journey-ordered (D-004)
 docs/start/                    # NEW: start here, status, setup
 docs/explanation/              # + pipeline, meshes, seams, flattening, sewing, agents
-docs/how-to/write-docs.md      # NEW: the writing guide, the one home for doc rules (W-011)
+docs/how-to/write-docs.md      # NEW: the writing guide, the one home for doc rules (D-011)
 docs/reference/glossary.md     # NEW: terms and ID legend
 docs/reference/crates/         # crates.md split one page per crate
 docs/_templates/               # NEW: one template per page kind; excluded from navigation by rule
@@ -77,7 +77,7 @@ scripts/check.sh               # + docs step; + MDBOOK_VERSION, LYCHEE_VERSION p
 AGENTS.md                      # Specs and docs: + maker-guide trigger, + docs skill pointer
 ```
 
-**Structure decision**: two books, not one book with two parts (W-002). A maker who opens the guide should never see a sidebar full of crate names, and mdBook gives each book one sidebar. The maker book lives under `docs/user/` so the contributor book's `src = "docs"` keeps today's paths; the summary check assigns `docs/user/**` to the maker book and everything else to the contributor book.
+**Structure decision**: two books, not one book with two parts (D-002). A maker who opens the guide should never see a sidebar full of crate names, and mdBook gives each book one sidebar. The maker book lives under `docs/user/` so the contributor book's `src = "docs"` keeps today's paths; the summary check assigns `docs/user/**` to the maker book and everything else to the contributor book.
 
 ## Architecture
 
@@ -88,7 +88,7 @@ https://openplush.github.io/openplush/
 ├── index.html        landing page: "For makers" (after release) · "For contributors"
 ├── dev/              contributor book
 │   └── api/          workspace rustdoc + generated crate index
-└── guide/            maker book (published from the first release; W-003)
+└── guide/            maker book (published from the first release; D-003)
 ```
 
 The URLs are fixed from the first deploy, so the release adds `/guide/` without moving anything.
@@ -103,7 +103,7 @@ cp docs/site/index.html      ─▶ target/site/
 checks: summary completeness (sources) · remote references (output) · plain language (maker sources) · lychee --offline (output)
 ```
 
-The deploy job removes `target/site/guide/` before upload until W-003 is lifted, so the checks always see the whole site but only the contributor part ships.
+The deploy job removes `target/site/guide/` before upload until D-003 is lifted, so the checks always see the whole site but only the contributor part ships.
 
 As built, the rustdoc is documented one crate at a time, dependencies first: [Checks, Generated API pages](../../docs/reference/checks.md#generated-api-pages-docs).
 
@@ -116,7 +116,7 @@ As built, the rustdoc is documented one crate at a time, dependencies first: [Ch
 
 ### Agent files and human docs
 
-`docs/` holds every fact a human needs. Agent files keep directives (stop conditions, never-do rules, procedures) and link to `docs/` for the facts. One exception: the commands table stays in `AGENTS.md`, because agents read it every turn, and the site includes it by anchor (W-009). The docs skill is procedure only and links into the writing guide.
+`docs/` holds every fact a human needs. Agent files keep directives (stop conditions, never-do rules, procedures) and link to `docs/` for the facts. One exception: the commands table stays in `AGENTS.md`, because agents read it every turn, and the site includes it by anchor (D-009). The docs skill is procedure only and links into the writing guide.
 
 ## Phasing
 
@@ -131,30 +131,30 @@ As built, the rustdoc is documented one crate at a time, dependencies first: [Ch
 | 6 | Reference reshape | Mixed |
 | 7 | Maker guide skeleton and FAQ | Auto-merge tier; publishing is a maintainer decision |
 
-Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
+Phases 3, 5 and 7 can run in parallel once Phase 1 and T008 are in.
 
 ## Decision Ledger
 
 | Date | ID | Decision | Status |
 |---|---|---|---|
-| 2026-10-20 | W-001 | **mdBook 0.5.x** for both books. The only candidate on the licence allow-list that is a single binary, privacy-clean by default and actively maintained; Zola is EUPL-1.2 since 0.22, Material for MkDocs reaches end of life 2026-11, Zensical is alpha, Starlight's build sends telemetry by default (research R1) | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20 |
-| 2026-10-20 | W-002 | **Two books, one site**: contributor book at `/dev/`, maker book at `/guide/`, a static landing page at `/`. Separate sidebars keep the maker guide free of contributor vocabulary | Proposed |
-| 2026-10-20 | W-003 | **The maker guide is built and checked from its first page but published only at the first public release.** Pages describe what exists on `main`; publishing waits until that is released (spec FR-005, FR-032); lifting this is a maintainer decision | Proposed |
-| 2026-10-20 | W-004 | **Hand-curated `SUMMARY.md` per book, journey-ordered**, with a check that fails on any page in neither navigation, and `create-missing = false`. A generated sidebar would sort alphabetically or need a second file for the order (research R2) | Proposed |
-| 2026-10-20 | W-005 | **Links leaving the published tree become GitHub URLs**, rewritten once; the 37 existing ones are fixed in one task. `lychee --offline --include-fragments` checks the built HTML, not the Markdown, because mdBook rewrites `.md` to `.html` without checking (research R2) | Proposed |
-| 2026-10-20 | W-006 | **No network on page load**: `[output.html.playground] runnable = false`, no MathJax, no remote `additional-*`; a check fails on any `http(s)://` resource reference (`src`, `href` on `link`, CSS `url()`, `@import`) in the built output | Proposed |
-| 2026-10-20 | W-007 | **OFL-1.1 accepted for font files, and CC BY 4.0 for mdBook's inlined Font Awesome icons, in the published docs site only**, not the app, the WASM package or exported PDFs. rustdoc bundles OFL fonts with no stable way to drop them, so `/api/` needs this; ADR 0008's PDF font question stays separate | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20. Blocks W016 |
-| 2026-10-20 | W-008 | **CI-only tooling is outside Constitution IX**, which governs what the project ships (ADR 0011's reading). Ratifies `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows. The ADR also records the licences of `cargo install`ed tools, which `cargo deny` never sees | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20 |
-| 2026-10-20 | W-009 | **`docs/` is the home of every fact a human needs; agent files keep directives and link.** Exception: the commands table stays in `AGENTS.md` and the site includes it by anchor | Accepted (maintainer, 2026-10-20) |
-| 2026-10-20 | W-010 | **Maker-facing message explanations live in the maker guide.** `docs/reference/` keeps the exact strings and codes for contributors and links to the maker explanation, so each fact has one home | Proposed |
-| 2026-10-20 | W-011 | **The writing guide (`docs/how-to/write-docs.md`) is the one home for documentation rules.** Templates carry structure; the docs skill carries steps and links to the guide | Proposed |
-| 2026-10-20 | W-012 | **PR previews are a downloadable workflow artifact**, not a live host. GitHub's native Pages previews are not public, and branch-based preview actions need write tokens and fail for forks (research R4) | Proposed |
-| 2026-10-20 | W-013 | **No diagrams tool until a page needs one.** `mdbook-mermaid` adds ~2.7 MB per page; the first diagram task decides between it and committed SVG | Proposed |
-| 2026-10-20 | W-014 | **CONTRIBUTING.md is a short pointer into the site** (Bevy's model): GitHub shows it on new issues and PRs, so it keeps only what a first-time contributor needs at that moment and links the site for the rest; two full homes would drift | Accepted (standing authorization, 2026-10-20) |
-| 2026-10-20 | W-015 | **The first-change tutorial is written now**, on crates that exist, rather than after the pipeline runs end to end: a newcomer needs a code path today, and a tutorial built on stable leaf crates survives later stages landing | Accepted (standing authorization, 2026-10-20) |
-| 2026-10-20 | W-016 | **Copied facts are generated, not hand-kept**: an in-repo generator writes them at build time, into an include the `docs` step creates before building the book and git ignores. Not `mdbook-cmdrun`, which renders a failing command's error into the page instead of failing the build and runs arbitrary commands at build time. Not a committed include with a diff check either: every tick anywhere left it stale and made it a conflict point between pull requests | Accepted (maintainer, 2026-10-21: build-time) |
-| 2026-10-20 | W-017 | **A lint that meets a decision agents cannot make reports it through a reviewed exceptions file**, each line with its reason, and fails when the exception goes stale; it never changes a decision's status to get green | Accepted (standing authorization, 2026-10-21; grant on the 004 ledger #271) |
-| 2026-10-20 | W-018 | **`docs/SUMMARY.md` stays hand-curated** (W-004's reading order), **but each folder's index list is generated** from its pages, since parallel docs PRs conflict on those lists ([#320](https://github.com/openplush/openplush/issues/320)). The decision-ledger layout is decided in 005 | Accepted (maintainer, 2026-10-21) |
+| 2026-10-20 | D-001 | **mdBook 0.5.x** for both books. The only candidate on the licence allow-list that is a single binary, privacy-clean by default and actively maintained; Zola is EUPL-1.2 since 0.22, Material for MkDocs reaches end of life 2026-11, Zensical is alpha, Starlight's build sends telemetry by default (research R1) | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20 |
+| 2026-10-20 | D-002 | **Two books, one site**: contributor book at `/dev/`, maker book at `/guide/`, a static landing page at `/`. Separate sidebars keep the maker guide free of contributor vocabulary | Proposed |
+| 2026-10-20 | D-003 | **The maker guide is built and checked from its first page but published only at the first public release.** Pages describe what exists on `main`; publishing waits until that is released (spec FR-005, FR-032); lifting this is a maintainer decision | Proposed |
+| 2026-10-20 | D-004 | **Hand-curated `SUMMARY.md` per book, journey-ordered**, with a check that fails on any page in neither navigation, and `create-missing = false`. A generated sidebar would sort alphabetically or need a second file for the order (research R2) | Proposed |
+| 2026-10-20 | D-005 | **Links leaving the published tree become GitHub URLs**, rewritten once; the 37 existing ones are fixed in one task. `lychee --offline --include-fragments` checks the built HTML, not the Markdown, because mdBook rewrites `.md` to `.html` without checking (research R2) | Proposed |
+| 2026-10-20 | D-006 | **No network on page load**: `[output.html.playground] runnable = false`, no MathJax, no remote `additional-*`; a check fails on any `http(s)://` resource reference (`src`, `href` on `link`, CSS `url()`, `@import`) in the built output | Proposed |
+| 2026-10-20 | D-007 | **OFL-1.1 accepted for font files, and CC BY 4.0 for mdBook's inlined Font Awesome icons, in the published docs site only**, not the app, the WASM package or exported PDFs. rustdoc bundles OFL fonts with no stable way to drop them, so `/api/` needs this; ADR 0008's PDF font question stays separate | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20. Blocks T016 |
+| 2026-10-20 | D-008 | **CI-only tooling is outside Constitution IX**, which governs what the project ships (ADR 0011's reading). Ratifies `Swatinem/rust-cache` (LGPL-3.0), already pinned in three workflows. The ADR also records the licences of `cargo install`ed tools, which `cargo deny` never sees | Accepted in [ADR 0017](../../docs/adr/0017-docs-site.md), 2026-10-20 |
+| 2026-10-20 | D-009 | **`docs/` is the home of every fact a human needs; agent files keep directives and link.** Exception: the commands table stays in `AGENTS.md` and the site includes it by anchor | Accepted (maintainer, 2026-10-20) |
+| 2026-10-20 | D-010 | **Maker-facing message explanations live in the maker guide.** `docs/reference/` keeps the exact strings and codes for contributors and links to the maker explanation, so each fact has one home | Proposed |
+| 2026-10-20 | D-011 | **The writing guide (`docs/how-to/write-docs.md`) is the one home for documentation rules.** Templates carry structure; the docs skill carries steps and links to the guide | Proposed |
+| 2026-10-20 | D-012 | **PR previews are a downloadable workflow artifact**, not a live host. GitHub's native Pages previews are not public, and branch-based preview actions need write tokens and fail for forks (research R4) | Proposed |
+| 2026-10-20 | D-013 | **No diagrams tool until a page needs one.** `mdbook-mermaid` adds ~2.7 MB per page; the first diagram task decides between it and committed SVG | Proposed |
+| 2026-10-20 | D-014 | **CONTRIBUTING.md is a short pointer into the site** (Bevy's model): GitHub shows it on new issues and PRs, so it keeps only what a first-time contributor needs at that moment and links the site for the rest; two full homes would drift | Accepted (standing authorization, 2026-10-20) |
+| 2026-10-20 | D-015 | **The first-change tutorial is written now**, on crates that exist, rather than after the pipeline runs end to end: a newcomer needs a code path today, and a tutorial built on stable leaf crates survives later stages landing | Accepted (standing authorization, 2026-10-20) |
+| 2026-10-20 | D-016 | **Copied facts are generated, not hand-kept**: an in-repo generator writes them at build time, into an include the `docs` step creates before building the book and git ignores. Not `mdbook-cmdrun`, which renders a failing command's error into the page instead of failing the build and runs arbitrary commands at build time. Not a committed include with a diff check either: every tick anywhere left it stale and made it a conflict point between pull requests | Accepted (maintainer, 2026-10-21: build-time) |
+| 2026-10-20 | D-017 | **A lint that meets a decision agents cannot make reports it through a reviewed exceptions file**, each line with its reason, and fails when the exception goes stale; it never changes a decision's status to get green | Accepted (standing authorization, 2026-10-21; grant on the 004 ledger #271) |
+| 2026-10-20 | D-018 | **`docs/SUMMARY.md` stays hand-curated** (D-004's reading order), **but each folder's index list is generated** from its pages, since parallel docs PRs conflict on those lists ([#320](https://github.com/openplush/openplush/issues/320)). The decision-ledger layout is decided in 005 | Accepted (maintainer, 2026-10-21) |
 
 ### Trade-offs accepted
 
@@ -165,5 +165,5 @@ Phases 3, 5 and 7 can run in parallel once Phase 1 and W008 are in.
 ### Open questions
 
 - **CI cost**: does the `docs` step join the default `scripts/check.sh` run and the required checks, or stay a separate non-required workflow? `cargo doc` adds build time.
-- **CONTRIBUTING.md**: resolved 2026-10-20 by W-014: a short pointer into the site, as W030 assumed.
-- **First tutorial**: resolved 2026-10-20 by W-015: a code-level tutorial on existing crates now, as W033 assumed.
+- **CONTRIBUTING.md**: resolved 2026-10-20 by D-014: a short pointer into the site, as T030 assumed.
+- **First tutorial**: resolved 2026-10-20 by D-015: a code-level tutorial on existing crates now, as T033 assumed.

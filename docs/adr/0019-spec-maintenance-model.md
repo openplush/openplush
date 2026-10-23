@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-[ADR 0003](0003-as-built-docs.md) made code and `docs/` authoritative once built, and froze built spec sections as the record of intent. It did not say how the facts that still change after a feature starts (which tasks are done, what is built) stay true in the places that repeat them. On `main` on 2026-10-20 three had drifted: the status page undercounted 002's ticked tasks by one, the README's task count for 001 was ten short and listed neither 003 nor 004, and ADR 0014 was Proposed while ADRs 0015, 0016 and 0018, all Accepted, amended it. Each was copied by hand, and the only check was a diff-scoped, advisory review that never sees a file the PR does not touch. Spec Kit itself never reconciles `spec.md`, `plan.md` and `tasks.md`; it leaves the maintenance model to the project ([Spec persistence models](https://github.github.com/spec-kit/concepts/spec-persistence.html)). Feature 004, task W042.
+[ADR 0003](0003-as-built-docs.md) made code and `docs/` authoritative once built, and froze built spec sections as the record of intent. It did not say how the facts that still change after a feature starts (which tasks are done, what is built) stay true in the places that repeat them. On `main` on 2026-10-20 three had drifted: the status page undercounted 002's ticked tasks by one, the README's task count for 001 was ten short and listed neither 003 nor 004, and ADR 0014 was Proposed while ADRs 0015, 0016 and 0018, all Accepted, amended it. Each was copied by hand, and the only check was a diff-scoped, advisory review that never sees a file the PR does not touch. Spec Kit itself never reconciles `spec.md`, `plan.md` and `tasks.md`; it leaves the maintenance model to the project ([Spec persistence models](https://github.github.com/spec-kit/concepts/spec-persistence.html)). Feature 004, task T042.
 
 ## Decision drivers
 
@@ -33,25 +33,25 @@ The model, as `AGENTS.md` "Specs and docs" already states it in part:
 * **`tasks.md` is live**: a tick and its as-built note land in the PR that finishes the task.
 * **Status is stated on one page** (`docs/start/status.md`); its counts are generated from the ticks, and its prose is hand-written.
 * **A copied count or status claim anywhere else fails a check**, or, where a check cannot tell, is graded blocking in review.
-* **A lint that meets a decision only the maintainer can make reports it through a reviewed exceptions file**, never by editing the decision (004's W-017).
+* **A lint that meets a decision only the maintainer can make reports it through a reviewed exceptions file**, never by editing the decision (004's D-017).
 
 What enforces it (004, Phase 8):
 
 | Task | Mechanism | Kind |
 |---|---|---|
-| W037 | `scripts/gen-status.py` writes the status counts into an include the `docs` step generates before building the book; it is never committed, so it cannot go stale | Generated |
-| W038 | `scripts/check-docs-facts.sh` fails on a copied task count outside the include and warns on unlinked status words | Gate (hygiene) |
-| W039 | `scripts/check-adr-lifecycle.sh` fails when an Accepted ADR amends or supersedes one that does not record it, with exceptions in `scripts/adr-lifecycle-exceptions.txt` | Gate (hygiene) |
-| W040 | `docs-reviewer` runs on `tasks.md`, `README.md`, `CONTRIBUTING.md` and `docs/adr/`, and grades a status claim outside the status page 🔴 | Review |
-| W041 | `scripts/report-tick-lag.sh` lists tasks named in `main`'s commits but still unticked | Report only |
+| 004 T037 | `scripts/gen-status.py` writes the status counts into an include the `docs` step generates before building the book; it is never committed, so it cannot go stale | Generated |
+| 004 T038 | `scripts/check-docs-facts.sh` fails on a copied task count outside the include and warns on unlinked status words | Gate (hygiene) |
+| 004 T039 | `scripts/check-adr-lifecycle.sh` fails when an Accepted ADR amends or supersedes one that does not record it, with exceptions in `scripts/adr-lifecycle-exceptions.txt` | Gate (hygiene) |
+| 004 T040 | `docs-reviewer` runs on `tasks.md`, `README.md`, `CONTRIBUTING.md` and `docs/adr/`, and grades a status claim outside the status page 🔴 | Review |
+| 004 T041 | `scripts/report-tick-lag.sh` lists tasks named in `main`'s commits but still unticked | Report only |
 
 ### Consequences
 
 * Good, because the three drifts found on 2026-10-20 become a failing check or a listed exception, not a reader's surprise.
 * Good, because the checks run on every PR over the whole tree, so the PR that makes a sentence false fails even when it never touched that sentence.
 * Bad, because a bare `mdbook build` needs the include generated first; `scripts/check.sh docs` does it.
-* Bad, because the copied-facts check matches patterns, so a count phrased another way passes; review (W040) is the backstop.
-* Bad, because ticks can still lag merged work; W041 reports the lag but never gates on it, since a tick waits on a person for `human:` tasks.
+* Bad, because the copied-facts check matches patterns, so a count phrased another way passes; review (004 T040) is the backstop.
+* Bad, because ticks can still lag merged work; 004 T041 reports the lag but never gates on it, since a tick waits on a person for `human:` tasks.
 
 ### Confirmation
 
@@ -77,4 +77,4 @@ What enforces it (004, Phase 8):
 
 ## More information
 
-Builds on ADR 0003. Decisions: W-016 (generated, not `mdbook-cmdrun`), W-017 (exceptions file) in `specs/004-docs-site/plan.md`. Accepted by the maintainer on 2026-10-21. Revisit if the exceptions file grows past a handful of lines. Amended by [ADR 0021](0021-one-id-scheme.md): the one-time ID rename is an exception to specs stopping once their code lands.
+Builds on ADR 0003. Decisions: 004 D-016 (generated, not `mdbook-cmdrun`), 004 D-017 (exceptions file) in `specs/004-docs-site/plan.md`. Accepted by the maintainer on 2026-10-21. Revisit if the exceptions file grows past a handful of lines. Amended by [ADR 0021](0021-one-id-scheme.md): the one-time ID rename is an exception to specs stopping once their code lands.

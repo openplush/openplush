@@ -111,7 +111,7 @@ The maintainer gives a factory run one structured, time-boxed grant (hours, feat
 
 ### User Story 7 - Stacked PRs stop conflicting on shared lists (Priority: P3)
 
-Parallel and stacked PRs that each add a page no longer conflict on the same folder index list. The decision ledger stays as it is: it caused 2 of 16 measured conflicts (F-003, accepted 2026-10-21). Issue [#320](https://github.com/openplush/openplush/issues/320).
+Parallel and stacked PRs that each add a page no longer conflict on the same folder index list. The decision ledger stays as it is: it caused 2 of 16 measured conflicts (D-003, accepted 2026-10-21). Issue [#320](https://github.com/openplush/openplush/issues/320).
 
 **Why this priority**: Each conflict costs a merge-up push and a CI run, nearly every time; but the layout is a maintainer decision and the cost is time, not correctness.
 
@@ -203,10 +203,10 @@ The maintainer reads a ledger comment, a handoff or a PR body and learns what ha
 - The maintainer's identity is the one in the repository's commit history; agent identities are the ones in the history check above.
 - The merge gate's stale-summary and changes-requested handling (ADR 0018) is correct and tested; this feature only confirms it.
 - US8 renames IDs in specs whose code has landed; [ADR 0021](../../docs/adr/0021-one-id-scheme.md) makes that one exception to [ADR 0019](../../docs/adr/0019-spec-maintenance-model.md), since it changes no intent.
-- US6 and US7 waited on decisions the maintainer accepted on 2026-10-21 (F-002, F-003).
+- US6 and US7 waited on decisions the maintainer accepted on 2026-10-21 (D-002, D-003).
 
 ## Out of scope
 
 - Rewriting history to remove past attribution.
 - Changing who merges which tier (ADR 0014, ADR 0018) except through the grant decision.
-- Generating `docs/SUMMARY.md` itself, which stays hand-curated for its reading order (004's W-004 and W-018).
+- Generating `docs/SUMMARY.md` itself, which stays hand-curated for its reading order (004's D-004 and D-018).

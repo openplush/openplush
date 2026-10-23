@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-Since 2026-10-13 a pull request has been "one reviewable slice": at most 400 changed lines of hand-written source, one test task plus its implementation, one story and one crate. The budget kept early reviews focused, but on algorithm work it cut tasks into pieces that cannot be judged alone. T079 landed as three PRs (#194, #195, #197), each with its own review run, CI run and merge, and no single PR showed the boundary laid flat end to end. Each split also added stack bookkeeping and a separate PR just to tick the task.
+Since 2026-10-13 a pull request has been "one reviewable slice": at most 400 changed lines of hand-written source, one test task plus its implementation, one story and one crate. The budget kept early reviews focused, but on algorithm work it cut tasks into pieces that cannot be judged alone. 001 T079 landed as three PRs (#194, #195, #197), each with its own review run, CI run and merge, and no single PR showed the boundary laid flat end to end. Each split also added stack bookkeeping and a separate PR just to tick the task.
 
 Review runs cost the maintainer's subscription. They were spent twice on one PR within ten minutes, because the PR steward skill told agents to add the `rereview` label after fixing a 🔴 finding, sometimes with `mutation-audit` beside it, and each label is a separate trigger.
 

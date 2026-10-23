@@ -28,6 +28,6 @@ Chosen option: **1**. Export is the last stage and consumes layout's output, so 
 
 ### Consequences
 
-* T090 waits for this ADR to be accepted.
+* 001 T090 waits for this ADR to be accepted.
 * `openplush-pipeline` is unchanged: it already depends on both.
 * If export ever needs more of layout than its output types, revisit option 3.

@@ -38,8 +38,8 @@
 No spec changes were needed during planning, which is the outcome you want: the design fit the spec rather than the spec bending to the design. Three things the design *clarified* without changing the spec text, recorded here so a reader of the spec alone is not misled:
 
 - **FR-030 for dart candidates** means the cluster region, not a specific dart polygon. The detector locates where a dart is needed; direction and size come from 001's dart machinery on acceptance (research R1, data-model section 6). Promising a specific dart would mean duplicating seam optimisation inside a hints feature.
-- **FR-006's monotonicity** turned out to be a genuine architectural constraint rather than a UI nicety. It forbids percentile and adaptive thresholds entirely (plan H-003), because those are not nested and can remove the hint the maker was examining as sensitivity rises.
-- **FR-005's "report none"** splits into two distinct cases the spec treats as one: no candidate scored well, and two candidates scored too closely to choose between. The UI says which (H056), because a maker can act on the difference.
+- **FR-006's monotonicity** turned out to be a genuine architectural constraint rather than a UI nicety. It forbids percentile and adaptive thresholds entirely (plan D-003), because those are not nested and can remove the hint the maker was examining as sensitivity rises.
+- **FR-005's "report none"** splits into two distinct cases the spec treats as one: no candidate scored well, and two candidates scored too closely to choose between. The UI says which (T056), because a maker can act on the difference.
 
 ### Validation run 2 — 2026-10-13, after clarification integration
 
@@ -54,8 +54,8 @@ Q1 through Q3 resolved; see the spec's Clarifications section. SC-010 was also f
 | Principle | Covered by |
 |---|---|
 | I Engine/shell separation | New leaf crate `openplush-hints`; overlay and panel in `apps/web` only |
-| II CLI parity | FR-050, task H035 |
-| III Invariants as contracts | Detection cannot violate an invariant; acceptance goes through 001's existing validation (H049) |
+| II CLI parity | FR-050, task T035 |
+| III Invariants as contracts | Detection cannot violate an invariant; acceptance goes through 001's existing validation (T049) |
 | IV Test-first oracles | Sphere-yields-zero, cube-yields-12, symmetry-refusal — all independent of the implementation |
 | V Determinism | FR-009, SC-008, data-model section 9 |
 | VI Units | FR-007, physical thresholds in mm and degrees |
@@ -66,11 +66,11 @@ Q1 through Q3 resolved; see the spec's Clarifications section. SC-010 was also f
 
 ### The one real hole
 
-**SC-001 cannot be measured yet.** The feature's headline claim — that 70% of hand-placed seam length falls within 5 mm of a hint — requires fixtures that ship with known-good hand-made patterns. None exist. That is task H004, it is fixture-lane work rather than code, and it is called out in the plan's trade-offs, the quickstart's "what done means", and H082.
+**SC-001 cannot be measured yet.** The feature's headline claim — that 70% of hand-placed seam length falls within 5 mm of a hint — requires fixtures that ship with known-good hand-made patterns. None exist. That is task T004, it is fixture-lane work rather than code, and it is called out in the plan's trade-offs, the quickstart's "what done means", and T082.
 
-The consequence is worth stating plainly: this feature can pass every test, be fully deterministic, and ship on time while its central premise remains unverified. H082 says to disclose that at release rather than quietly dropping the criterion.
+The consequence is worth stating plainly: this feature can pass every test, be fully deterministic, and ship on time while its central premise remains unverified. T082 says to disclose that at release rather than quietly dropping the criterion.
 
 ### Not measurable yet, lower stakes
 
-- **SC-002** (30% faster first seam, n ≥ 5) needs recruiting and a protocol — H081. Gates the release claim, not the build.
-- **H005's threshold tuning** depends on H001's quadruped fixture. Until it lands, every default threshold in the design is an educated guess, same as 001's fabric preset values.
+- **SC-002** (30% faster first seam, n ≥ 5) needs recruiting and a protocol — T081. Gates the release claim, not the build.
+- **T005's threshold tuning** depends on T001's quadruped fixture. Until it lands, every default threshold in the design is an educated guess, same as 001's fabric preset values.

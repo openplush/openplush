@@ -10,7 +10,7 @@
 #
 # Fails on a copied task count, case-insensitive:
 #   - a number then "task(s)" or "work item(s)". A zero-padded number is a feature
-#     ("003 tasks U008"), not a count, so it never matches.
+#     (as in "003 tasks" before a task ID), not a count, so it never matches.
 #   - "N of M" on a line that says "task", "ticked" or "work item", or in a table
 #     whose header row says so. A table ends at its first line not starting "|".
 # A number counts only when it stands alone: a letter, digit, "_", "-" or "." on

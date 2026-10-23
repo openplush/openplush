@@ -2,7 +2,7 @@
 
 **Feature**: `002-seam-placement-hints` | **Date**: 2026-10-13 | **Status**: Draft — describes the target state
 
-Nothing here runs yet, and it cannot until 001's flatten and pattern stages work (plan H-008). This is the acceptance walkthrough: when every step produces what it claims, feature 002 is done.
+Nothing here runs yet, and it cannot until 001's flatten and pattern stages work (plan D-008). This is the acceptance walkthrough: when every step produces what it claims, feature 002 is done.
 
 ## 0. Prerequisites
 
@@ -10,12 +10,12 @@ Same toolchain as 001. Additionally, these 001 tasks must be green:
 
 | Needed from 001 | Why |
 |---|---|
-| T069–T077 seams and charts | Accepting a hint creates a seam |
-| T078–T083 flatten | FR-031's preview is a flat-pattern preview |
-| T084–T087 pattern | Same |
-| T107 proposal preview-then-accept | Hints reuse it rather than duplicating it |
-| T144 curvature | The dart-candidate signal |
-| T035 fixtures | Nothing below is measurable without models |
+| 001 T069–T077 seams and charts | Accepting a hint creates a seam |
+| 001 T078–T083 flatten | FR-031's preview is a flat-pattern preview |
+| 001 T084–T087 pattern | Same |
+| 001 T107 proposal preview-then-accept | Hints reuse it rather than duplicating it |
+| 001 T144 curvature | The dart-candidate signal |
+| 001 T035 fixtures | Nothing below is measurable without models |
 
 ## 1. Headless (Constitution II, FR-050)
 
@@ -71,7 +71,7 @@ jq -e --slurpfile hi out/s0.5.json '[.hints[].id] - [$hi[0].hints[].id] | length
 jq -e --slurpfile hi out/s0.8.json '[.hints[].id] - [$hi[0].hints[].id] | length == 0' out/s0.5.json
 ```
 
-If either assertion fails, a threshold somewhere is adaptive rather than absolute — see plan H-003, which exists specifically to prevent this.
+If either assertion fails, a threshold somewhere is adaptive rather than absolute — see plan D-003, which exists specifically to prevent this.
 
 ### Physical thresholds (FR-007, FR-040)
 

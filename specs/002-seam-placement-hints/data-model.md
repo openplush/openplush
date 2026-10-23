@@ -83,7 +83,7 @@ pub struct CategorySetting { pub enabled: bool, pub sensitivity: f64 /* 0..1 */ 
 
 Sensitivity maps to a threshold that **decreases monotonically**, and each detector is a pure threshold filter over a precomputed signal. The hint sets are therefore nested: `s1 < s2` implies `hints(s1)` is a subset of `hints(s2)`.
 
-This is the reason H-003 forbids percentile or adaptive thresholds. "Show the top 10%" is not nested — raising sensitivity can reshuffle which features qualify and remove a hint the maker was looking at.
+This is the reason D-003 forbids percentile or adaptive thresholds. "Show the top 10%" is not nested — raising sensitivity can reshuffle which features qualify and remove a hint the maker was looking at.
 
 **Two places the guarantee can leak, both handled:**
 
@@ -176,7 +176,7 @@ The first two are warnings and acceptance proceeds. The last is 001's typed erro
 
 ## 7. Persistence
 
-No schema migration. `project.schema.json` v1 already defines `dismissedHints` and `hintSettings` (001 contract, H-009), so a file written by a 002-aware build opens in a 001-only build and vice versa.
+No schema migration. `project.schema.json` v1 already defines `dismissedHints` and `hintSettings` (001 contract, D-009), so a file written by a 002-aware build opens in a 001-only build and vice versa.
 
 | Stored | Not stored |
 |---|---|
@@ -196,7 +196,7 @@ Each row is an edge case from the spec and the design decision that handles it.
 | Faceted or low-poly model (cube, icosphere) | Minimum chain length filter removes near-coplanar edge noise; whatever survives past 50 per category is reported as `flooded` rather than truncated |
 | Dense scanned mesh with surface noise | Integration over a physical-radius geodesic disk, not per-vertex, so curvature describes shape rather than tessellation |
 | Near-symmetric model (one ear tilted) | Plane reported with its match score so the maker judges; FR-005 requires the score, not just the plane |
-| Several plausible mirror planes, or none | Report none when a second distinct candidate plane also scores within the acceptance threshold. Ambiguous beats arbitrary (H-006, H-010) |
+| Several plausible mirror planes, or none | Report none when a second distinct candidate plane also scores within the acceptance threshold. Ambiguous beats arbitrary (D-006, D-010) |
 | Multiple disconnected components | Creases and darts detected per component; symmetry evaluated on the whole model, since a plush is symmetric as an object, not limb by limb |
 | Hint on a part already marked as a non-sewn detail | Suppressed. Detail parts produce placement marks, not pieces (001 FR-005, FR-042), so a seam there is meaningless |
 | Hint coincides with or runs close to an existing seam | Suppressed when it overlaps an existing seam within a tolerance. A hint telling the maker to do what they already did is noise that makes the panel worth ignoring |

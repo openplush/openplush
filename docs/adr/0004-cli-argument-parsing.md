@@ -1,14 +1,14 @@
 ---
 status: Proposed
 date: 2026-10-14
-deciders: maintainer (accepts in review of the T038 PR); proposed by the implementing agent
+deciders: maintainer (accepts in review of the 001 T038 PR); proposed by the implementing agent
 ---
 
 # Use `clap` to parse the CLI's arguments
 
 ## Context and problem statement
 
-T038 builds `bindings/openplush-cli`, the headless shell that Constitution II makes the reference path ("if it can't run headless, it isn't done") and that golden and determinism tests will run through. It needs subcommands, typed flags, and generated `--help`. This is the project's first command-line parsing dependency, so AGENTS.md asks for an ADR. The plan's tree already names `clap` for this binding.
+001 T038 builds `bindings/openplush-cli`, the headless shell that Constitution II makes the reference path ("if it can't run headless, it isn't done") and that golden and determinism tests will run through. It needs subcommands, typed flags, and generated `--help`. This is the project's first command-line parsing dependency, so AGENTS.md asks for an ADR. The plan's tree already names `clap` for this binding.
 
 ## Decision drivers
 

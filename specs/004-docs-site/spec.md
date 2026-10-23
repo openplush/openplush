@@ -26,7 +26,7 @@ A developer in their first job opens the site from the repository's README. A "S
 
 1. **Given** the published site, **When** a reader opens it, **Then** the first page names the audience of each part (contributors, makers) and the path through the contributor part, in order.
 2. **Given** a reader following the contributor path, **When** they reach the setup page, **Then** it gets them to a passing run of every gate in three documented commands or fewer (Constitution IX).
-3. **Given** a page that uses a domain term (half-edge, chart, dart, seam allowance, nap) or a process ID (D-013, T074, FR-002), **When** a reader meets it, **Then** the term or the ID's prefix is defined in one glossary that the page links to.
+3. **Given** a page that uses a domain term (half-edge, chart, dart, seam allowance, nap) or a process ID (001 D-013, 001 T074, FR-002), **When** a reader meets it, **Then** the term or the ID's prefix is defined in one glossary that the page links to.
 4. **Given** a question "is X built yet?", **When** a reader looks it up, **Then** exactly one page answers it, and every other place that mentions status links to that page.
 
 ---
@@ -86,7 +86,7 @@ Someone about to write documentation, a person or an agent, starts from one guid
 
 From a guide page that names a type or function, a developer opens the generated API documentation for it on the same site.
 
-**Why this priority**: The API docs already exist locally; publishing them beside the guide removes a build step for a reader who just wants to look something up. It is P3 because it hinges on a licence decision (plan, W-007).
+**Why this priority**: The API docs already exist locally; publishing them beside the guide removes a build step for a reader who just wants to look something up. It is P3 because it hinges on a licence decision (plan, D-007).
 
 **Independent Test**: The published site contains the API documentation for every workspace crate, reachable from the contributor navigation, and it passes the link and network checks.
 

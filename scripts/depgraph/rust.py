@@ -6,11 +6,14 @@ from collections import defaultdict
 
 MOD_DECL = re.compile(r"(#\[cfg\(test\)\]\s*)?(?:#\[[^\]]*\]\s*)*(?:pub(?:\([^)]*\))?\s+)?\bmod\s+(\w+)\s*;")
 INLINE_TEST = re.compile(r"#\[cfg\(test\)\]\s*(?:#\[[^\]]*\]\s*)*(?:pub(?:\([^)]*\))?\s+)?mod\s+\w+\s*\{")
+# A string or char literal, or a comment, matched left to right so neither hides the other.
+LEXEME = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])\'|//[^\n]*|/\*.*?\*/', re.S)
 PATH = re.compile(r"\b((?:crate|super|self|[a-z_][a-z0-9_]*)(?:::[A-Za-z_][A-Za-z0-9_]*)+)")
 
 
 def strip_comments(text):
-    return re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", text, flags=re.S))
+    """The code with comments removed and string literals emptied, so neither adds, drops or nests anything."""
+    return LEXEME.sub(lambda m: '""' if m.group(0).startswith('"') else "''" if m.group(0).startswith("'") else "", text)
 
 
 def split_inline_tests(text):

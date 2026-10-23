@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-Each feature chose its own letters: tasks are `T` in 001, `H` in 002, `U` in 003, `W` in 004 and `F` in 005, and decisions `D-`, `H-`, `S-`, `W-` and `F-`. Spikes carry a second number that collides with those letters: `S7` is a spike in 001 and `S-014` a decision in 003; `H012`, `H2` and `H-003` are a task, a spike and a decision in 002; `Q` is a clarification question in 001 and 002 but a spike in 003. A reader decodes the kind from the feature, and agent status lines such as the ledger on [#241](https://github.com/openplush/openplush/issues/241) carry several such IDs each. Which scheme holds in every feature, and what happens to the IDs already written? Feature 005, decision F-005, task F014.
+Each feature chose its own letters: tasks are `T` in 001, `H` in 002, `U` in 003, `W` in 004 and `F` in 005, and decisions `D-`, `H-`, `S-`, `W-` and `F-`. Spikes carry a second number that collides with those letters: `S7` is a spike in 001 and `S-014` a decision in 003; `H012`, `H2` and `H-003` are a task, a spike and a decision in 002; `Q` is a clarification question in 001 and 002 but a spike in 003. A reader decodes the kind from the feature, and agent status lines such as the ledger on [#241](https://github.com/openplush/openplush/issues/241) carry several such IDs each. Which scheme holds in every feature, and what happens to the IDs already written? Feature 005, decision 005 D-005, task 005 T014.
 
 ## Decision drivers
 
@@ -43,11 +43,11 @@ This amends [ADR 0019](0019-spec-maintenance-model.md) by one exception: its rul
 * Good, because a task or decision reads the same in every feature, and the next feature needs no letter of its own.
 * Good, because every collision named above is gone, and the checks can reject any other form.
 * Bad, because the rename touches every spec file in 002 to 005 once, and old IDs in history need the glossary's rule to read.
-* Bad, because a bare `T008` outside its feature's files is ambiguous; the status-prose rule (F-006) and the checks have to hold that line.
+* Bad, because a bare `T008` outside its feature's files is ambiguous; the status-prose rule (005 D-006) and the checks have to hold that line.
 
 ### Confirmation
 
-Task F017 makes `scripts/check.sh` fail on a task line or ledger row in any other form. The rename's pull request (task F016) will carry a script run that resolves every bare `T` and `D-` in a feature's files to that feature.
+Task 005 T017 makes `scripts/check.sh` fail on a task line or ledger row in any other form. The rename's pull request (task 005 T016) carries a script run that resolves every bare `T` and `D-` in a feature's files to that feature.
 
 ## Pros and cons of the options
 
@@ -73,4 +73,4 @@ Task F017 makes `scripts/check.sh` fail on a task line or ledger row in any othe
 
 ## More information
 
-Decisions F-005 (this scheme) and F-006 (status prose) in `specs/005-factory-hardening/plan.md`; tasks F014 to F017. Accepted by the maintainer on 2026-10-22.
+Decisions 005 D-005 (this scheme) and 005 D-006 (status prose) in `specs/005-factory-hardening/plan.md`; tasks 005 T014 to T017. Accepted by the maintainer on 2026-10-22.

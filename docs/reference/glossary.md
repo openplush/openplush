@@ -49,28 +49,33 @@ Each section is in alphabetical order.
 
 ### ID prefixes
 
-[ADR 0021](../adr/0021-one-id-scheme.md) sets one scheme for every feature: tasks are `T`, decisions `D-`, and a spike is named by its task. The table lists the prefixes in use, each feature with its own letter. Spec IDs (`FR-`, `SC-`, `US`, `P`) restart in every feature: say which feature, as in "001 FR-023". A number in brackets after an ID names one numbered item inside it: D-066 (9) is item 9 of decision D-066.
+Every feature numbers its tasks `T` and its decisions `D-`, so the letter gives the kind of item ([ADR 0021](../adr/0021-one-id-scheme.md)). Numbers restart in every feature: inside a feature's own files an ID stands alone, and anywhere else it names its feature, as in "001 T084" or "003 D-014". A number in brackets after an ID names one numbered item inside it: 001 D-066 (9) is item 9 of that decision.
 
-| Prefix | Example | What it names | Feature | Defined in |
-|---|---|---|---|---|
-| `#` | #241 | A pull request or issue | All | GitHub |
-| `ADR` | ADR 0013 | An architecture decision record | All | `docs/adr/` |
-| `D-` | D-013 | A decision | 001 | `plan.md`, Decision Ledger |
-| `FR-` | FR-023 | A functional requirement | Each | `spec.md` |
-| `H` | H012 | A task | 002 | `tasks.md` |
-| `H` (one digit) | H2 | A spike: a timeboxed experiment that answers one question | 002 | `tasks.md`, `research.md` |
-| `H-` | H-003 | A decision | 002 | `plan.md`, Decision Ledger |
-| `P` | P1 | A user story's priority, P1 highest | Each | `spec.md` |
-| `Q` | Q2 | A clarification question and its answer | 001, 002 | `spec.md`, Clarifications |
-| `Q` | Q1 | A spike | 003 | `research.md`, `tasks.md` |
-| `R` | R7 | A numbered research section | Each | `research.md` |
-| `S` | S7 | A spike | 001 | `tasks.md`, `research.md` |
-| `S-` | S-014 | A decision | 003 | `plan.md`, Decision Ledger |
-| `SC-` | SC-005 | A measurable success criterion | Each | `spec.md` |
-| `T` | T079 | A task | 001 | `tasks.md` |
-| `U` | U042 | A task | 003 | `tasks.md` |
-| `US` | US1 | A user story | Each | `spec.md` |
-| `W` | W018 | A task | 004 | `tasks.md` |
-| `W-` | W-004 | A decision | 004 | `plan.md`, Decision Ledger |
-| `§` | data-model §3 | A numbered section of a document | Each | `data-model.md`, the contracts |
-| Roman numeral | Constitution IX | A principle | All | The constitution |
+| Prefix | Example | What it names | Defined in |
+|---|---|---|---|
+| `#` | #241 | A pull request or issue | GitHub |
+| `ADR` | ADR 0013 | An architecture decision record | `docs/adr/` |
+| `D-` | 001 D-013 | A decision | `plan.md`, Decision Ledger |
+| `FR-` | 001 FR-023 | A functional requirement | `spec.md` |
+| `P` | P1 | A user story's priority, P1 highest | `spec.md` |
+| `Q` | Q2 | A clarification question and its answer | `spec.md`, Clarifications |
+| `R` | 001 R7 | A numbered research section | `research.md` |
+| `SC-` | 001 SC-005 | A measurable success criterion | `spec.md` |
+| `T` | 001 T079 | A task; a spike, a timeboxed experiment that answers one question, is a task marked **Spike** | `tasks.md` |
+| `US` | US1 | A user story | `spec.md` |
+| `§` | data-model §3 | A numbered section of a document | `data-model.md`, the contracts |
+| Roman numeral | Constitution IX | A principle | The constitution |
+
+#### IDs written before ADR 0021
+
+Merged pull requests, commits, branch names and ledger comments keep the IDs they were written with. Each maps to the current one by its feature's row, with the number unchanged:
+
+| Feature | Task | Decision | Spike |
+|---|---|---|---|
+| 001 | `T` as now | `D-` as now | S1 to S8 are T001 to T008 |
+| 002 | `H012` is T012 | `H-003` is D-003 | H1, H2, H4 and H5 are T005 to T008; H3 had no task |
+| 003 | `U042` is T042 | `S-014` is D-014 | Q1 to Q4 are T008 to T011 |
+| 004 | `W018` is T018 | `W-004` is D-004 | none |
+| 005 | `F013` is T013 | `F-003` is D-003 | none |
+
+A research folder once named with its spike's ID (`research/s7_boundary_pinned/`) is the same folder without it (`research/boundary_pinned/`).

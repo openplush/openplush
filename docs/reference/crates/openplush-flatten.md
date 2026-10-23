@@ -30,18 +30,21 @@ What `openplush-flatten` contains **today**, and what it actually depends on. Wh
 
 ### Summary
 
-`summary::summarize(chart, xyz, faces, uv)` sums a layout up from the same measures, with the same refusals:
+`summary::summarize(chart, xyz, faces, uv, stopped_by)` sums a layout up from the same measures, with the same refusals:
 
 - `most_stretched()` and `most_compressed()` (the face with the largest σ₁ or smallest σ₂ and that value, the first in input order on a tie)
 - `tail_stretch()` and `tail_compression()` (the largest σ₁, or smallest σ₂, such that the faces at least that distorted cover 5% of the 3D area)
 - `stretch_excess()` and `compression_deficit()` (Σ A·max(0, σ₁ − 1) / ΣA and Σ A·max(0, 1 − σ₂) / ΣA over 3D areas A)
 - `area_ratio()` (total flat over total 3D area)
+- `stopped_by()` (the `StoppedBy` it was given: why the flatten that made the layout stopped, which the layout cannot show)
 
 The means are running means, so σ near `f64::MAX` never overflows a partial sum.
 
 ### Flattening session
 
-`FlattenSession::new(chart, xyz, faces)` flattens one chart a step at a time; it reads `xyz` and owns `faces`, holding no borrow, so a caller can keep the session between steps: `step()` runs one SLIM iteration and returns `Progress::Working { iteration, energy }` or `Progress::Done` (further steps stay `Done`); `finish()` returns every vertex's flat position in vertex order, or `None` before `Done`, so a half-flattened layout is never handed out; dropping the session cancels it. Errors are `FlattenError`.
+`FlattenSession::new(chart, xyz, faces)` flattens one chart a step at a time; it reads `xyz` and owns `faces`, holding no borrow, so a caller can keep the session between steps: `step()` runs one SLIM iteration and returns `Progress::Working { iteration, energy }` or `Progress::Done` (further steps stay `Done`); `finish()` returns every vertex's flat position in vertex order with why the flatten stopped, or `None` before `Done`, so a half-flattened layout is never handed out; dropping the session cancels it. Errors are `FlattenError`.
+
+`StoppedBy` (`#[non_exhaustive]`) is why: `IterationCap` (200 iterations; an iteration that reaches the cap and also gains less than the threshold counts as the cap), `Settled` (an iteration lowered the energy by less than 1e-9 of its value) or `NoDescent` (no step tried lowered it, or the chart has no interior vertex to move).
 
 ## Crate-private
 

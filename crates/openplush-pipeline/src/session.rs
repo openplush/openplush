@@ -3,14 +3,14 @@ mod proposals;
 
 use std::collections::BTreeMap;
 
-use openplush_flatten::{FlattenError, FlattenSession};
+use openplush_flatten::{FlattenError, FlattenSession, StoppedBy};
 use openplush_geom::DVec2;
 use openplush_mesh::ManifoldMesh;
 use openplush_seams::{ChartId, ChartMesh, SeamSet, SewingMap};
 
 use self::memo::{Memo, key};
-use crate::flatten::{refusal, settled};
-use crate::{EngineError, Parameterization, StageResult, Staged, WarningSet, chart};
+use crate::flatten::{refusal, settled, staged};
+use crate::{EngineError, Parameterization, StageResult, chart};
 
 /// What a [`Pipeline::flatten_step`] left behind.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -134,8 +134,8 @@ impl Pipeline {
                     energy,
                 })
             }
-            Ok(Advance::Laid(uv)) => {
-                self.memo.insert(key, chart.clone(), uv);
+            Ok(Advance::Laid(uv, stopped)) => {
+                self.memo.insert(key, chart.clone(), uv, stopped);
                 Ok(match unlaid(&self.memo, charts, &self.keys) {
                     Some(_) => Progress::ChartDone {
                         chart: chart.chart(),
@@ -152,33 +152,32 @@ impl Pipeline {
     }
 
     /// Steps every chart without a layout to the end and returns every chart's layout, in
-    /// chart order, as [`flatten`](crate::flatten()) would.
+    /// chart order, as [`flatten`](crate::flatten()) would, with its warnings: a chart laid
+    /// from the memo warns as it did when it was flattened.
     ///
     /// # Errors
     /// The first refusal [`Pipeline::flatten_step`] returns.
     pub fn parameterizations(&mut self) -> StageResult<Vec<Parameterization>> {
         while self.flatten_step()? != Progress::Done {}
         let charts = &self.charts.as_ref().map_err(Clone::clone)?.value.0;
-        let value = charts
+        let laid = charts
             .iter()
             .zip(&self.keys)
             .map(|(chart, &key)| {
                 // INVARIANT: stepping reached `Done`, so every chart has a layout.
-                let uv = self.memo.get(key, chart).ok_or(EngineError::Flatten(
+                let (uv, stopped) = self.memo.get(key, chart).ok_or(EngineError::Flatten(
                     FlattenError::SolveFailed {
                         chart: chart.chart(),
                     },
                 ))?;
-                Ok(Parameterization {
+                let layout = Parameterization {
                     chart: chart.chart(),
                     uv: uv.to_vec(),
-                })
+                };
+                Ok((layout, stopped))
             })
             .collect::<Result<_, EngineError>>()?;
-        Ok(Staged {
-            value,
-            warnings: WarningSet::default(),
-        })
+        Ok(staged(laid))
     }
 }
 
@@ -189,7 +188,7 @@ enum Advance {
         iteration: u32,
         energy: f64,
     },
-    Laid(Vec<DVec2>),
+    Laid(Vec<DVec2>, StoppedBy),
 }
 
 fn advance(mut session: Box<FlattenSession>, chart: ChartId) -> Result<Advance, FlattenError> {
@@ -199,7 +198,9 @@ fn advance(mut session: Box<FlattenSession>, chart: ChartId) -> Result<Advance, 
             iteration,
             energy,
         }),
-        openplush_flatten::Progress::Done => settled(*session, chart).map(Advance::Laid),
+        openplush_flatten::Progress::Done => {
+            settled(*session, chart).map(|(uv, stopped)| Advance::Laid(uv, stopped))
+        }
         // INVARIANT: a session reports only `Working` and `Done`; anything else is refused
         // rather than guessed at.
         _ => Err(FlattenError::SolveFailed { chart }),

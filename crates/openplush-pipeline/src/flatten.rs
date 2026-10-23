@@ -1,11 +1,15 @@
 use std::collections::BTreeMap;
 
-use openplush_flatten::{FlattenError, FlattenSession, Progress};
+use openplush_flatten::{FlattenError, FlattenSession, Progress, StoppedBy};
 use openplush_geom::DVec2;
 use openplush_mesh::{EdgeId, ManifoldMesh, VertexId};
+use openplush_pattern::PieceId;
 use openplush_seams::{ChartId, ChartMesh, Proposal, ProposalKind, SeamKind};
 
-use crate::{EngineError, StageResult, Staged, WarningSet};
+use crate::{
+    EngineError, NonBlank, Remedy, StageResult, Staged, Warning, WarningCode, WarningSet,
+    WarningTarget,
+};
 
 /// One chart laid flat.
 #[derive(Debug, Clone, PartialEq)]
@@ -31,19 +35,56 @@ impl Parameterization {
 /// Lays each chart flat, in the order given, stepping each chart's session to the end; `mesh`
 /// is the one the charts were cut from, read only to name a dart's edges.
 ///
+/// Raises `flatten-iteration-cap` on the piece of each chart whose flatten stopped at the cap.
+///
 /// # Errors
 /// The first chart's refusal, and no layout for any chart: `Flip` naming the inverted faces,
 /// `BoundaryNotRealizable` with its residual and the dart that would relieve it as a proposal,
 /// or `Flatten` carrying any other refusal whole.
 pub fn flatten(mesh: &ManifoldMesh, charts: &[ChartMesh]) -> StageResult<Vec<Parameterization>> {
-    let value = charts
+    let laid = charts
         .iter()
         .map(|c| lay_flat(c).map_err(|e| refusal(mesh, c, e)))
         .collect::<Result<_, _>>()?;
-    Ok(Staged {
-        value,
-        warnings: WarningSet::default(),
-    })
+    Ok(staged(laid))
+}
+
+/// The layouts, with the warning each one's stop raises.
+pub(crate) fn staged(laid: Vec<(Parameterization, StoppedBy)>) -> Staged<Vec<Parameterization>> {
+    let mut warnings = WarningSet::default();
+    for (layout, stopped) in &laid {
+        if let Some(w) = stop_warning(layout.chart, *stopped) {
+            warnings.insert(w);
+        }
+    }
+    Staged {
+        value: laid.into_iter().map(|(layout, _)| layout).collect(),
+        warnings,
+    }
+}
+
+/// The warning a chart's stop raises: `flatten-iteration-cap` on its piece, numbered as the
+/// chart, for a stop at the cap; nothing for any other stop.
+pub(crate) fn stop_warning(chart: ChartId, stopped: StoppedBy) -> Option<Warning> {
+    if stopped != StoppedBy::IterationCap {
+        return None;
+    }
+    // INVARIANT: both texts are non-blank literals.
+    let text = |t: &str| NonBlank::new(t.to_owned()).unwrap_or_else(|| unreachable!());
+    Some(Warning::new(
+        WarningCode::FlattenIterationCap,
+        WarningTarget::Piece(PieceId::new(chart.index())),
+        text(
+            "This piece stopped flattening at the iteration limit before it settled, so the \
+             distortion shown may be more than the fabric must take.",
+        ),
+        Remedy::Advisory {
+            what_to_change: text(
+                "Add a seam or a dart in this piece, or keep it as it is: the layout is valid, \
+                 only less relaxed than it could be.",
+            ),
+        },
+    ))
 }
 
 #[cfg(test)]
@@ -58,23 +99,31 @@ impl Parameterization {
     }
 }
 
-fn lay_flat(chart: &ChartMesh) -> Result<Parameterization, FlattenError> {
+fn lay_flat(chart: &ChartMesh) -> Result<(Parameterization, StoppedBy), FlattenError> {
     let mut session = FlattenSession::new(chart.chart(), chart.xyz(), chart.faces().to_vec())?;
     while !matches!(session.step()?, Progress::Done) {}
-    Ok(Parameterization {
-        chart: chart.chart(),
-        uv: settled(session, chart.chart())?,
-    })
+    let (uv, stopped) = settled(session, chart.chart())?;
+    Ok((
+        Parameterization {
+            chart: chart.chart(),
+            uv,
+        },
+        stopped,
+    ))
 }
 
-/// The flat positions of a session that has stepped to `Done`, indexed like the chart's `xyz`.
-pub(crate) fn settled(session: FlattenSession, chart: ChartId) -> Result<Vec<DVec2>, FlattenError> {
+/// The flat positions of a session that has stepped to `Done`, indexed like the chart's `xyz`,
+/// and why it stopped.
+pub(crate) fn settled(
+    session: FlattenSession,
+    chart: ChartId,
+) -> Result<(Vec<DVec2>, StoppedBy), FlattenError> {
     // INVARIANT: a session that has stepped to `Done` finishes, with every chart vertex once in
     // vertex order, so the positions alone are indexed like `xyz`.
-    let layout = session
+    let (layout, stopped) = session
         .finish()
         .ok_or(FlattenError::SolveFailed { chart })?;
-    Ok(layout.into_iter().map(|(_, p)| p).collect())
+    Ok((layout.into_iter().map(|(_, p)| p).collect(), stopped))
 }
 
 /// `error`, from flattening `chart`, as the stage reports it.

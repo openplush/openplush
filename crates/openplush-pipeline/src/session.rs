@@ -1,4 +1,5 @@
 mod memo;
+mod proposals;
 
 use std::collections::BTreeMap;
 
@@ -33,11 +34,12 @@ pub enum Progress {
     Done,
 }
 
-/// One repaired mesh, the charts its current seams make, and each chart's layout, flattened a
-/// step at a time and remembered by the chart's content, so a seam edit flattens again only
-/// the charts it changed.
+/// One repaired mesh, its current seams and the charts they make, and each chart's layout,
+/// flattened a step at a time and remembered by the chart's content, so a seam edit flattens
+/// again only the charts it changed.
 pub struct Pipeline {
     mesh: ManifoldMesh,
+    seams: SeamSet,
     charts: StageResult<(Vec<ChartMesh>, SewingMap)>,
     /// Each chart's memo key, in chart order; empty when the chart stage refused.
     keys: Vec<u64>,
@@ -62,10 +64,12 @@ impl Pipeline {
     /// A session over `mesh` with no seams.
     #[must_use]
     pub fn new(mesh: ManifoldMesh) -> Self {
-        let charts = chart(&mesh, &SeamSet::new());
+        let seams = SeamSet::new();
+        let charts = chart(&mesh, &seams);
         let keys = pieces(&charts).iter().map(key).collect();
         Self {
             mesh,
+            seams,
             charts,
             keys,
             memo: Memo::default(),
@@ -83,6 +87,7 @@ impl Pipeline {
         let fresh = fresh(pieces(&self.charts), &self.keys, pieces(&charts), &keys);
         self.memo.retain(pieces(&charts), &keys);
         (self.charts, self.keys, self.stepping) = (charts, keys, Stepping::Idle);
+        self.seams = seams.clone();
         fresh
     }
 

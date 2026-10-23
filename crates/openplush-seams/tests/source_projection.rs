@@ -29,7 +29,7 @@ enum Pole {
 
 fn equator(n: u32, i: u32) -> DVec3 {
     let around = TAU * f64::from(i) / f64::from(n);
-    DVec3::new(10.0 * around.cos(), 10.0 * around.sin(), 0.0)
+    DVec3::new(10.0 * libm::cos(around), 10.0 * libm::sin(around), 0.0)
 }
 
 /// Face `2i` is the top face over equator edge `i`, face `2i + 1` the bottom one; each pole
@@ -202,7 +202,7 @@ fn a_vertex_on_the_surface_boundary_is_none() -> Result<(), Setup> {
 fn five_sectors() -> Result<(ManifoldMesh, Vec<DVec3>), Setup> {
     let ring = |radius: f64, k: u32| {
         let around = TAU * f64::from(k % 5) / 5.0;
-        DVec3::new(radius * around.cos(), radius * around.sin(), 0.0)
+        DVec3::new(radius * libm::cos(around), radius * libm::sin(around), 0.0)
     };
     let mut positions = vec![DVec3::ZERO];
     positions.extend((0..5).map(|k| ring(10.0, k)));

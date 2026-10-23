@@ -41,7 +41,7 @@ fn twisted_ring() -> Result<(ManifoldMesh, RepairReport), Setup> {
         .enumerate()
         .map(|(i, r)| {
             let a = std::f64::consts::TAU * i as f64 / 5.0;
-            p(r * a.cos(), r * a.sin(), 0.0)
+            p(r * libm::cos(a), r * libm::sin(a), 0.0)
         })
         .collect();
     repaired_with_report(
@@ -263,7 +263,7 @@ fn triple_book() -> Result<(ManifoldMesh, RepairReport), Setup> {
     let mut triangles = Vec::new();
     for k in 0..6u32 {
         let t = f64::from(k) * std::f64::consts::FRAC_PI_3;
-        positions.push(p(0.5, t.cos(), t.sin()));
+        positions.push(p(0.5, libm::cos(t), libm::sin(t)));
         triangles.push(if k % 2 == 0 {
             [0, 1, k + 2]
         } else {

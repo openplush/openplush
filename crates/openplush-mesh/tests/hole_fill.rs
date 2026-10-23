@@ -135,9 +135,9 @@ fn capped_sphere(rings: u32, segments: u32, cut: u32) -> Result<TriangleSoup, Se
         for s in 0..segments {
             let phi = std::f64::consts::TAU * f64::from(s) / f64::from(segments);
             positions.push(DVec3::new(
-                theta.sin() * phi.cos(),
-                theta.sin() * phi.sin(),
-                -theta.cos(),
+                libm::sin(theta) * libm::cos(phi),
+                libm::sin(theta) * libm::sin(phi),
+                -libm::cos(theta),
             ));
         }
     }
@@ -204,7 +204,7 @@ fn only_the_listed_loop_is_filled() -> Result<(), Setup> {
     for z in [0.0, 1.0] {
         for c in 0..6 {
             let a = std::f64::consts::TAU * f64::from(c) / 6.0;
-            positions.push(DVec3::new(a.cos(), a.sin(), z));
+            positions.push(DVec3::new(libm::cos(a), libm::sin(a), z));
         }
     }
     let mut faces = Vec::new();
@@ -228,7 +228,7 @@ fn fan(n: u32) -> Result<TriangleSoup, Setup> {
     let mut positions = vec![DVec3::ZERO];
     for k in 0..n {
         let a = std::f64::consts::TAU * f64::from(k) / f64::from(n);
-        positions.push(DVec3::new(a.cos(), a.sin(), 0.0));
+        positions.push(DVec3::new(libm::cos(a), libm::sin(a), 0.0));
     }
     let faces: Vec<[u32; 3]> = (0..n).map(|k| [0, 1 + k, 1 + (k + 1) % n]).collect();
     soup(positions, &faces)

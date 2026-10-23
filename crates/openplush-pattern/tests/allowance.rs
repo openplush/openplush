@@ -406,7 +406,7 @@ fn a_guard_that_cuts_a_strip_from_the_piece_is_refused() -> Result<(), PatternEr
 fn a_fold_beside_a_square_notch_is_no_conflict_at_any_angle() -> Result<(), PatternError> {
     // The L turned 0.123 rad: the fold's guard runs along the notch's other side, and rounding
     // alone makes it overlap the piece. Without the weld-sized allowance for that, this fails.
-    let (s, c) = 0.123_f64.sin_cos();
+    let (s, c) = libm::sincos(0.123);
     let turned: Vec<(f64, f64)> = ell()?
         .points()
         .iter()
@@ -423,7 +423,7 @@ fn a_fold_beside_a_square_notch_is_no_conflict_at_any_angle() -> Result<(), Patt
 
 /// An isosceles triangle 100 tall with apex angle `apex_deg` at (0, 100).
 fn spike(apex_deg: f64) -> Result<Outline, PatternError> {
-    let half = 100.0 * (apex_deg.to_radians() / 2.0).tan();
+    let half = 100.0 * libm::tan(apex_deg.to_radians() / 2.0);
     outline(&[(-half, 0.0), (half, 0.0), (0.0, 100.0)])
 }
 
@@ -450,7 +450,7 @@ fn a_corner_under_29_degrees_is_beveled() -> Result<(), PatternError> {
 fn a_corner_over_29_degrees_is_mitered() -> Result<(), PatternError> {
     // 1 / sin 20°.
     let cut = cut_line(PIECE, &spike(40.0)?, &mm(&[1.0; 3]))?;
-    assert_close(reach_at_apex(&cut), 1.0 / 20.0_f64.to_radians().sin());
+    assert_close(reach_at_apex(&cut), 1.0 / libm::sin(20.0_f64.to_radians()));
     Ok(())
 }
 

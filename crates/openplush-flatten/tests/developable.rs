@@ -78,7 +78,7 @@ fn a_cylinder_strip_unrolls_without_distortion() -> Result<(), FlattenError> {
     // rectangle, so the faceted strip is exactly developable.
     let (xyz, faces) = grid(18, 4, |u, v| {
         let a = 1.5 * PI * u;
-        DVec3::new(40.0 * a.cos(), 40.0 * a.sin(), 60.0 * v)
+        DVec3::new(40.0 * libm::cos(a), 40.0 * libm::sin(a), 60.0 * v)
     });
     assert_isometric(&xyz, &faces)
 }
@@ -87,11 +87,11 @@ fn a_cylinder_strip_unrolls_without_distortion() -> Result<(), FlattenError> {
 fn a_cone_strip_unrolls_without_distortion() -> Result<(), FlattenError> {
     // A frustum of a cone with a 30° half-angle, 20 to 80 mm from the apex, two thirds of the
     // way round. Each quad lies on two generators through the apex, so it is a flat trapezoid.
-    let (sin, cos) = (PI / 6.0).sin_cos();
+    let (sin, cos) = libm::sincos(PI / 6.0);
     let (xyz, faces) = grid(16, 5, |u, v| {
         let a = 4.0 * PI / 3.0 * u;
         let s = 20.0 + 60.0 * v;
-        DVec3::new(s * sin * a.cos(), s * sin * a.sin(), s * cos)
+        DVec3::new(s * sin * libm::cos(a), s * sin * libm::sin(a), s * cos)
     });
     assert_isometric(&xyz, &faces)
 }
@@ -113,7 +113,7 @@ fn a_folded_flat_sheet_unfolds_without_distortion() -> Result<(), FlattenError> 
 #[test]
 fn a_sheet_folded_twice_unfolds_without_distortion() -> Result<(), FlattenError> {
     // Folded 120° up at x = -20 and 120° down at x = 20 mm into a zigzag.
-    let (sin, cos) = (PI / 3.0).sin_cos();
+    let (sin, cos) = libm::sincos(PI / 3.0);
     let (xyz, faces) = grid(10, 4, |u, v| {
         let (x, y) = (100.0 * (u - 0.5), 40.0 * v);
         if x < -20.0 {

@@ -33,7 +33,7 @@ fn book(angles: &[f64], forward: &[bool]) -> TriangleSoup {
     let mut positions = vec![DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 0.0, 0.0)];
     for a in angles {
         let r = a.to_radians();
-        positions.push(DVec3::new(0.5, r.cos(), r.sin()));
+        positions.push(DVec3::new(0.5, libm::cos(r), libm::sin(r)));
     }
     let tris: Vec<[u32; 3]> = forward
         .iter()

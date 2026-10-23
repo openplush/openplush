@@ -49,11 +49,15 @@ impl Layout {
         let around = TAU * u / f64::from(self.cols);
         match self.shape {
             Shape::Sheet => DVec3::new(10.0 * u, 10.0 * v, 0.0),
-            Shape::Tube => DVec3::new(10.0 * around.cos(), 10.0 * around.sin(), 10.0 * v),
+            Shape::Tube => DVec3::new(10.0 * libm::cos(around), 10.0 * libm::sin(around), 10.0 * v),
             Shape::Torus => {
                 let tube = TAU * v / f64::from(self.rows);
-                let ring = 20.0 + 8.0 * tube.cos();
-                DVec3::new(ring * around.cos(), ring * around.sin(), 8.0 * tube.sin())
+                let ring = 20.0 + 8.0 * libm::cos(tube);
+                DVec3::new(
+                    ring * libm::cos(around),
+                    ring * libm::sin(around),
+                    8.0 * libm::sin(tube),
+                )
             }
         }
     }

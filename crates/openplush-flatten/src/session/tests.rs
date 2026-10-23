@@ -15,7 +15,11 @@ const CHART: ChartId = ChartId::new(9);
 fn hemisphere() -> (Vec<DVec3>, Faces) {
     rings(16, |r, a| {
         let theta = FRAC_PI_2 * r;
-        DVec3::new(theta.sin() * a.cos(), theta.sin() * a.sin(), theta.cos())
+        DVec3::new(
+            libm::sin(theta) * libm::cos(a),
+            libm::sin(theta) * libm::sin(a),
+            libm::cos(theta),
+        )
     })
 }
 

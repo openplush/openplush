@@ -3,9 +3,10 @@
 # asserts the graph the generator embeds in the page it writes.
 #
 # What matters: edges follow what the code names (Rust mod and use paths, including a
-# test crate's own modules, TypeScript imports, Python imports a requirements.txt
-# declares, script references); a dev-dependency or an inline test module never reads
-# as a production edge, so a loop through test code is not reported as a cycle; the
+# test crate's own modules and a dependency renamed in its manifest, TypeScript
+# imports, Python imports a requirements.txt declares, script references); a
+# dev-dependency or an inline test module never reads as a production edge, so a
+# loop through test code is not reported as a cycle; the
 # page loads nothing from the network; the output is byte-identical run to run; and a
 # manifest the graph cannot be read from fails, naming the file, with nothing written.
 set -euo pipefail
@@ -58,6 +59,8 @@ new_repo() {
   write "$root" crates/beta/src/lib.rs "use alpha::util::Thing;" "pub fn f(_: Thing) {}"
   write "$root" crates/beta/tests/it.rs "mod helper;" "use kit::assert_ok;" "#[test] fn t() { helper::h() }"
   write "$root" crates/beta/tests/helper/mod.rs "pub fn h() { beta::f(alpha::Thing) }"
+  crate "$root" crates/gamma gamma "[dependencies]" 'renamed = { package = "alpha", path = "../alpha" }'
+  write "$root" crates/gamma/src/lib.rs "use renamed::util::Thing;" "pub fn g(_: Thing) {}"
   crate "$root" crates/kit kit
   write "$root" crates/kit/src/lib.rs "pub fn assert_ok() {}"
   write "$root" packages/client/package.json '{ "name": "@x/client", "exports": { ".": "./src/index.ts" },' \
@@ -108,6 +111,9 @@ has "a dev-dependency is a dev edge" "$facts" "edge crates/beta/tests/it.rs crat
 has "an inline test module's use is a test edge" "$facts" "edge crates/alpha/src/loop_a.rs crates/alpha/src/loop_b.rs test"
 has "an external crate is a node" "$facts" "edge crates/alpha/src/lib.rs ext:crates.io:thiserror use"
 has "a declared dependency no source names still shows" "$facts" "edge crates/beta/src/lib.rs ext:crates.io:unused manifest"
+has "a renamed dependency resolves by the name the source uses" "$facts" \
+  "edge crates/gamma/src/lib.rs crates/alpha/src/util.rs use"
+lacks "a renamed dependency the source uses is not reported unnamed" "$facts" "^edge crates/gamma/src/lib.rs .* manifest$"
 has "a production loop is a cycle" "$facts" "cycle crates/alpha/src/first.rs crates/alpha/src/second.rs"
 lacks "a loop closed only by test code is not a cycle" "$facts" "^cycle .*loop_a"
 has "a relative TypeScript import resolves to the file" "$facts" "edge packages/client/src/index.ts packages/client/src/x.ts import"

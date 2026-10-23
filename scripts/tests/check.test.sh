@@ -74,6 +74,13 @@ if [[ -n $api && -n $book && -n $remote && -n $links && $book -lt $api && $api -
 else
   bad "docs step assembles the API docs after the book and before the site checks" "$out"
 fi
+# The dependency graph is written into dev/ the same way, after the book empties it.
+graph=$(grep -nxF "+ scripts/gen-depgraph.py . target/site/dev/depgraph" <<<"$out" | cut -d: -f1 || true)
+if [[ -n $graph && -n $book && -n $remote && -n $links && $book -lt $graph && $graph -lt $remote && $graph -lt $links ]]; then
+  ok "docs step writes the dependency graph after the book and before the site checks"
+else
+  bad "docs step writes the dependency graph after the book and before the site checks" "$out"
+fi
 status=0
 out=$("$check" --dry-run status 2>&1) || status=$?
 if [[ $status -eq 2 ]]; then ok "status is not a step: the counts are never committed"; else bad "status is not a step (exit $status)" "$out"; fi

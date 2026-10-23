@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Tick lag: tasks whose work has merged but whose box in tasks.md is still empty.
-# A commit subject on the branch names its tasks in parentheses, as "(A001)" or
-# "(A001, A002)"; every comma-separated item that is exactly a task ID counts, so
-# a range "(A001–A003)" and a word such as "repair" are not read as tasks. Each
+# A commit subject on the branch names its tasks in parentheses, as "(001 A001)" or
+# "(A001, A002)"; every comma-separated item that is exactly a task ID, with or
+# without its feature, counts, so a range "(A001–A003)" and a word such as
+# "repair" are not read as tasks. Task numbers repeat across features (ADR 0021),
+# so an item without its feature keeps the meaning it had before: T is 001's, and
+# H, U, W and F are 002, 003, 004 and 005's T tasks. Each
 # such ID whose line in the branch's specs/*/tasks.md is unticked is printed with its feature,
 # its age in days and the newest subject naming it, sorted by feature then ID.
 # A report only, never a gate: exit 0 whenever it ran, 2 on a usage error.
@@ -58,23 +61,27 @@ open_tasks() {
     done
 }
 
-# named_ids <ref>: "<ID>\t<commit time>\t<subject>" for the newest subject naming each ID.
+# named_ids <ref>: "<feature>\t<ID>\t<commit time>\t<subject>" for the newest subject
+# naming each task; <feature> is its number, or * for a letter no feature used.
 named_ids() {
   git log --format='%ct%x09%s' "$1" | awk -F '\t' '
+    BEGIN { split("T 001 H 002 U 003 W 004 F 005", m, " "); for (i = 1; i < 10; i += 2) was[m[i]] = m[i + 1] }
     {
       ct = $1; subject = substr($0, length($1) + 2); rest = subject
       while (match(rest, /\([^()]*\)/)) {
         n = split(substr(rest, RSTART + 1, RLENGTH - 2), items, ",")
         for (i = 1; i <= n; i++) {
           id = items[i]; gsub(/^ +| +$/, "", id)
-          if (id ~ /^[A-Z][0-9][0-9][0-9][a-z]?$/ && (!(id in when) || ct > when[id])) {
-            when[id] = ct; line[id] = subject
-          }
+          if (id ~ /^[0-9][0-9][0-9] [A-Z][0-9][0-9][0-9][a-z]?$/) key = substr(id, 1, 3) "\t" substr(id, 5)
+          else if (id !~ /^[A-Z][0-9][0-9][0-9][a-z]?$/) continue
+          else if (substr(id, 1, 1) in was) key = was[substr(id, 1, 1)] "\tT" substr(id, 2)
+          else key = "*\t" id
+          if (!(key in when) || ct > when[key]) { when[key] = ct; line[key] = subject }
         }
         rest = substr(rest, RSTART + RLENGTH)
       }
     }
-    END { for (id in when) printf "%s\t%s\t%s\n", id, when[id], line[id] }'
+    END { for (key in when) printf "%s\t%s\t%s\n", key, when[key], line[key] }'
 }
 
 ref=""
@@ -98,10 +105,10 @@ now=$(to_epoch "${now:-$(date -u +%s)}")
 
 lagging=$(awk -F '\t' -v now="$now" '
   NR == FNR { split($0, ft, " "); feature[ft[2]] = feature[ft[2]] " " ft[1]; next }
-  $1 in feature {
-    d = (now - $2) / 86400; age = int(d); if (d < 0 && d != age) age--
-    n = split(substr(feature[$1], 2), fs, " ")
-    for (i = 1; i <= n; i++) printf "%s %s %dd %s\n", fs[i], $1, age, $3
+  $2 in feature {
+    d = (now - $3) / 86400; age = int(d); if (d < 0 && d != age) age--
+    n = split(substr(feature[$2], 2), fs, " ")
+    for (i = 1; i <= n; i++) if ($1 == "*" || substr(fs[i], 1, 3) == $1) printf "%s %s %dd %s\n", fs[i], $2, age, $4
   }' <(open_tasks "$ref") <(named_ids "$ref") | sort -t ' ' -k1,1 -k2,2)
 
 [[ -z $lagging ]] || echo "$lagging"

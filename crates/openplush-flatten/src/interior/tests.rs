@@ -32,7 +32,7 @@ fn half_cylinder() -> (Vec<DVec3>, Faces) {
         .flat_map(|r| (0..=8).map(move |c| (c, r)))
         .map(|(c, r)| {
             let a = f64::from(c) * step;
-            DVec3::new(a.cos(), a.sin(), 0.4 * f64::from(r))
+            DVec3::new(libm::cos(a), libm::sin(a), 0.4 * f64::from(r))
         })
         .collect();
     (xyz, grid(8, 3))
@@ -43,7 +43,11 @@ fn half_cylinder() -> (Vec<DVec3>, Faces) {
 fn hemisphere() -> (Vec<DVec3>, Faces) {
     rings(16, |r, a| {
         let theta = FRAC_PI_2 * r;
-        DVec3::new(theta.sin() * a.cos(), theta.sin() * a.sin(), theta.cos())
+        DVec3::new(
+            libm::sin(theta) * libm::cos(a),
+            libm::sin(theta) * libm::sin(a),
+            libm::cos(theta),
+        )
     })
 }
 

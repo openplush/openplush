@@ -322,9 +322,9 @@ impl Globe {
                 2.0 * PI * f64::from(i) / f64::from(SEGMENTS),
             );
             DVec3::new(
-                10.0 * lat.sin() * around.cos(),
-                10.0 * lat.sin() * around.sin(),
-                10.0 * lat.cos(),
+                10.0 * libm::sin(lat) * libm::cos(around),
+                10.0 * libm::sin(lat) * libm::sin(around),
+                10.0 * libm::cos(lat),
             )
         };
         let bottom = RINGS * SEGMENTS + 1;

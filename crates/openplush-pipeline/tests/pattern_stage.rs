@@ -289,7 +289,13 @@ fn helical_ramp() -> String {
     for k in 0..=steps {
         let t = f64::from(k) * TAU / per_turn;
         for r in [10.0, 10.0 + width] {
-            let _ = writeln!(s, "v {} {} {}", r * t.cos(), r * t.sin(), 3.0 * t / TAU);
+            let _ = writeln!(
+                s,
+                "v {} {} {}",
+                r * libm::cos(t),
+                r * libm::sin(t),
+                3.0 * t / TAU
+            );
         }
     }
     for k in 0..steps {
@@ -325,7 +331,11 @@ fn cap(rings: u32) -> String {
         let polar = f64::from(k) * (PI / 3.0) / f64::from(rings);
         for j in 0..n {
             let a = f64::from(j) * TAU / f64::from(n);
-            let (x, y, z) = (polar.sin() * a.cos(), polar.sin() * a.sin(), polar.cos());
+            let (x, y, z) = (
+                libm::sin(polar) * libm::cos(a),
+                libm::sin(polar) * libm::sin(a),
+                libm::cos(polar),
+            );
             let _ = writeln!(s, "v {} {} {}", 10.0 * x, 10.0 * y, 10.0 * z);
         }
     }
@@ -352,7 +362,7 @@ fn a_dart_on_a_curved_piece_opens_into_a_wedge() -> Result<(), Setup> {
             .map(VertexId::new)
             .find(|&v| {
                 let p = mesh.position(v);
-                p.y == 0.0 && (p.x - 10.0 * polar.sin()).abs() < 1e-9 && p.x > 0.0
+                p.y == 0.0 && (p.x - 10.0 * libm::sin(polar)).abs() < 1e-9 && p.x > 0.0
             })
             .ok_or_else(|| format!("no meridian vertex on ring {k}").into())
     };

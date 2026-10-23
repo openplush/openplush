@@ -1148,7 +1148,7 @@ fn polygon_scene(n: i32) -> Scene {
     let points = (0..n)
         .flat_map(|k| {
             let a = f64::from(k) * std::f64::consts::TAU / f64::from(n);
-            [a.cos(), a.sin(), 0.0]
+            [libm::cos(a), libm::sin(a), 0.0]
         })
         .collect();
     let mut corners: Vec<i32> = (0..n).collect();

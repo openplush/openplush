@@ -3,7 +3,7 @@ use super::proxy;
 type Mat = [[f64; 2]; 2];
 
 fn rot(a: f64) -> Mat {
-    let (s, c) = a.sin_cos();
+    let (s, c) = libm::sincos(a);
     [[c, -s], [s, c]]
 }
 
@@ -54,7 +54,7 @@ fn a_uniform_scale_weighs_by_the_scale() {
     // J = s I: both singular values are s, the weight is w(s) I.
     let s = 3.0;
     let p = proxy(diag(s, s));
-    let w = (s - s.powi(-3)) / (s - 1.0);
+    let w = (s - libm::pow(s, -3.0)) / (s - 1.0);
     assert!(near(p.weight, diag(w, w)));
     assert!(near(p.rotation, diag(1.0, 1.0)));
 }

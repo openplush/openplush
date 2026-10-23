@@ -12,6 +12,9 @@ publish = false
 robust = "1.2.0"
 thiserror = "2.0.21"
 
+[dev-dependencies]
+libm = "0.2.16"
+
 # Native only: proptest pulls in getrandom, which does not build for
 # wasm32-unknown-unknown without a JS backend, so tests/predicates.rs (which uses
 # it) runs natively only. tests/wasm_predicates.rs runs the predicates on wasm32

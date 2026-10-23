@@ -20,7 +20,7 @@ fn grid(w: usize, h: usize, diagonals: &[bool], cylinder: bool) -> (Vec<DVec3>, 
         for i in 0..cols {
             if cylinder {
                 let a = std::f64::consts::TAU * i as f64 / w as f64;
-                pos.push(p(a.cos(), a.sin(), j as f64 * 0.5));
+                pos.push(p(libm::cos(a), libm::sin(a), j as f64 * 0.5));
             } else {
                 pos.push(p(i as f64, j as f64, ((i * 7 + j * 3) % 5) as f64 * 0.1));
             }

@@ -32,8 +32,8 @@ fn tube() -> (Vec<DVec3>, Vec<[u32; 3]>) {
         .map(|(c, r)| {
             let around = TAU * f64::from(c) / f64::from(COLS);
             DVec3::new(
-                10.0 * around.cos(),
-                10.0 * around.sin(),
+                10.0 * libm::cos(around),
+                10.0 * libm::sin(around),
                 10.0 * f64::from(r),
             )
         })

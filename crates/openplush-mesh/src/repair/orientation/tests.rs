@@ -205,7 +205,7 @@ fn mobius() -> TriangleSoup {
         .enumerate()
         .map(|(i, r)| {
             let angle = std::f64::consts::TAU * i as f64 / 5.0;
-            p(r * angle.cos(), r * angle.sin(), 0.0)
+            p(r * libm::cos(angle), r * libm::sin(angle), 0.0)
         })
         .collect();
     soup(

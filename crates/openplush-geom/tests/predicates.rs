@@ -79,7 +79,7 @@ fn exact_incircle(a: DVec2, b: DVec2, c: DVec2, d: DVec2) -> Sign {
 fn orient2d_is_exact_on_the_classroom_grid() {
     let b = DVec2::new(12.0, 12.0);
     let c = DVec2::new(24.0, 24.0);
-    let ulp = 2f64.powi(-53);
+    let ulp = libm::ldexp(1.0, -53);
     let mut naive_wrong = 0;
     for i in 0..256 {
         for j in 0..256 {
@@ -292,7 +292,7 @@ proptest! {
     fn incircle_matches_exact_near_cocircular(cx in coord(), cy in coord(), r in 1e-2f64..1e3,
                                               t in proptest::array::uniform4(0.0f64..std::f64::consts::TAU),
                                               w in -3i32..=3) {
-        let on = |angle: f64| DVec2::new(cx + r * angle.cos(), cy + r * angle.sin());
+        let on = |angle: f64| DVec2::new(cx + r * libm::cos(angle), cy + r * libm::sin(angle));
         // Move d by |w| ULPs (0 leaves it as rounded onto the circle).
         let d = near_line(on(t[3]), on(t[3]), 0.0, (w, 0));
         let (a, b, c) = (on(t[0]), on(t[1]), on(t[2]));
@@ -356,7 +356,7 @@ fn near_degenerate_generators_defeat_naive_evaluation() {
             s.next_f64(-1e3, 1e3),
             s.next_f64(1e-2, 1e3),
         );
-        let on = |t: f64| DVec2::new(cx + r * t.cos(), cy + r * t.sin());
+        let on = |t: f64| DVec2::new(cx + r * libm::cos(t), cy + r * libm::sin(t));
         let tau = std::f64::consts::TAU;
         let (a, b, c) = (
             on(s.next_f64(0.0, tau)),

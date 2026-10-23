@@ -15,7 +15,7 @@ const RINGS: u32 = 6;
 /// A cone of height 0.8 over the unit disk, apex at vertex 0.
 fn cone() -> (Vec<DVec3>, Faces) {
     rings(RINGS, |r, a| {
-        DVec3::new(r * a.cos(), r * a.sin(), 0.8 * (1.0 - r))
+        DVec3::new(r * libm::cos(a), r * libm::sin(a), 0.8 * (1.0 - r))
     })
 }
 
@@ -76,7 +76,9 @@ fn the_dart_runs_the_shortest_way_from_the_rim_to_the_cone_tip() {
 #[test]
 fn the_dart_heads_for_the_vertex_with_the_most_angle_defect() {
     // A flat disk with one raised vertex off the middle: that vertex is the only cone.
-    let (mut xyz, faces) = rings(RINGS, |r, a| DVec3::new(r * a.cos(), r * a.sin(), 0.0));
+    let (mut xyz, faces) = rings(RINGS, |r, a| {
+        DVec3::new(r * libm::cos(a), r * libm::sin(a), 0.0)
+    });
     xyz[10].z = 0.3;
     let (_, dart) = parts(not_realizable(CHART, &xyz, &faces)).expect("BoundaryNotRealizable");
     assert_eq!(

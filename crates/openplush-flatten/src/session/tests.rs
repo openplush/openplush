@@ -141,5 +141,11 @@ fn a_step_that_fails_leaves_the_session_as_it_was() -> Result<(), FlattenError> 
         Err(FlattenError::SolveFailed { chart: CHART })
     );
     assert_eq!(state(&session), before);
+    // A failed step must not settle the solve, or the next step would hand out the layout.
+    assert_eq!(
+        session.step(),
+        Err(FlattenError::SolveFailed { chart: CHART })
+    );
+    assert_eq!(session.finish(), None);
     Ok(())
 }

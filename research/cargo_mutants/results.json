@@ -348,6 +348,211 @@
           "mutation": "delete ! in FlattenSession::step"
         }
       ]
+    },
+    {
+      "package": "openplush-pattern",
+      "runs": [
+        {
+          "started_utc": "2026-10-23T05:09:24Z",
+          "finished_utc": "2026-10-23T05:19:05Z",
+          "wall_seconds": 581
+        }
+      ],
+      "fraction_run": "1/1",
+      "counts": {
+        "generated": 274,
+        "caught": 222,
+        "missed": 22,
+        "timeout": 1,
+        "unviable": 29
+      },
+      "missed": [
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 56,
+          "column": 50,
+          "function": "cut_line",
+          "mutation": "replace > with >= in cut_line",
+          "test_guess": "equality at the touching threshold; no test lands on it exactly"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 109,
+          "column": 55,
+          "function": "merge_short_edges",
+          "mutation": "replace < with <= in merge_short_edges",
+          "test_guess": "equality at the shortest-edge threshold; a test with an edge of exactly that length"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 116,
+          "column": 32,
+          "function": "merge_short_edges",
+          "mutation": "replace < with <= in merge_short_edges",
+          "test_guess": "equivalent: j == i needs a one-edge outline, and the loop runs only above three"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 126,
+          "column": 17,
+          "function": "strip",
+          "mutation": "replace > with >= in strip",
+          "test_guess": "zero-width edges arrive with zero-allowance edges (T152); unreachable until then"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 153,
+          "column": 62,
+          "function": "join",
+          "mutation": "replace / with * in join",
+          "test_guess": "gap: a miter at a corner that is not a right angle (at 90\u00b0 cross = \u00b11, so / and * agree)"
+        },
+        {
+          "file": "crates/openplush-pattern/src/cut.rs",
+          "line": 31,
+          "column": 9,
+          "function": "CutCount::as_printed",
+          "mutation": "replace CutCount::as_printed -> u32 with 1",
+          "test_guess": "gap: a cut count other than one as printed"
+        },
+        {
+          "file": "crates/openplush-pattern/src/cut.rs",
+          "line": 36,
+          "column": 9,
+          "function": "CutCount::flipped",
+          "mutation": "replace CutCount::flipped -> u32 with 1",
+          "test_guess": "gap: a cut count other than one flipped"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 45,
+          "function": "check_simple",
+          "mutation": "replace + with * in check_simple",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 45,
+          "function": "check_simple",
+          "mutation": "replace + with - in check_simple",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 50,
+          "function": "check_simple",
+          "mutation": "replace % with + in check_simple",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 50,
+          "function": "check_simple",
+          "mutation": "replace % with / in check_simple",
+          "test_guess": "gap: a fold refusal's second edge index is never asserted"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 14,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with <= in check_counter_clockwise",
+          "test_guess": "likely equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 14,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with > in check_counter_clockwise",
+          "test_guess": "likely equivalent: the mutated choice is still an extreme vertex, which is convex, so its turn is the orientation"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 46,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with <= in check_counter_clockwise",
+          "test_guess": "likely equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 46,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with > in check_counter_clockwise",
+          "test_guess": "likely equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 97,
+          "column": 5,
+          "function": "turns_cleanly",
+          "mutation": "replace turns_cleanly -> Result<bool, GeomError> with Ok(true)",
+          "test_guess": "gap: an outline whose corner folds back along its own edge (a collinear spike)"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 98,
+          "column": 9,
+          "function": "turns_cleanly",
+          "mutation": "delete match arm Sign::Zero in turns_cleanly",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 98,
+          "column": 48,
+          "function": "turns_cleanly",
+          "mutation": "replace || with && in turns_cleanly",
+          "test_guess": "gap: a spike that folds past the corner on one side only"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 107,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "equivalent: the box test only skips the exact predicates, which give the same answer"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 108,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 109,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 122,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "gap: a vertex lying on a non-adjacent edge (a collinear touch)"
+        }
+      ],
+      "timeout": [
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 118,
+          "column": 15,
+          "function": "merge_short_edges",
+          "mutation": "replace += with *= in merge_short_edges"
+        }
+      ]
     }
   ]
 }

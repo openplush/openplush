@@ -1,6 +1,6 @@
 # Spike 001 T204: how much do the flatten and pattern tests catch, by mutation testing?
 
-**Status (2026-10-23): closed. Data and a recommendation in [results.md](results.md); adoption is a later decision.**
+**Status (2026-10-23): closed. Both crates ran in full; data and a recommendation in [results.md](results.md); adoption is a later decision.**
 
 Non-shipping research. There is no code here: the spike runs an installed tool against two engine crates and records what it reports. Nothing in `crates/`, `apps/`, or `packages/` depends on it, and `scripts/check.sh` never runs it.
 

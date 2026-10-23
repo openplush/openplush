@@ -28,16 +28,16 @@ When a maker imports a model they already cut and organised in a modelling tool,
 ### Hard dependency on 001
 
 From 001's `tasks.md`:
-- **T050, T051, T053**: importers that record materials. This feature extends their output (data-model §1); it doesn't replace them.
-- **T060, T066**: weld and hole fill.
-- **T069–T076**: the seam set, seam graph, charts, topology and `propose_cuts`.
-- **T084**: `Fabric`.
-- **T107**: proposal preview-then-accept.
-- **T124–T125**: the project document and provenance keys.
-- **T128**: undo.
-- **T137**: regions.
+- **001 T050, 001 T051, 001 T053**: importers that record materials. This feature extends their output (data-model §1); it doesn't replace them.
+- **001 T060, 001 T066**: weld and hole fill.
+- **001 T069–T076**: the seam set, seam graph, charts, topology and `propose_cuts`.
+- **001 T084**: `Fabric`.
+- **001 T107**: proposal preview-then-accept.
+- **001 T124–T125**: the project document and provenance keys.
+- **001 T128**: undo.
+- **001 T137**: regions.
 
-Work can start partway through 001's Phase 3, like 002. The material extension (data-model §1) is two tasks in two crates, because one PR never spans two: first `openplush-mesh` (`SourceMaterials` on the soup and `ManifoldMesh`, carried by repair), then `openplush-io` (importers fill it, alongside T053).
+Work can start partway through 001's Phase 3, like 002. The material extension (data-model §1) is two tasks in two crates, because one PR never spans two: first `openplush-mesh` (`SourceMaterials` on the soup and `ManifoldMesh`, carried by repair), then `openplush-io` (importers fill it, alongside 001 T053).
 
 ## Constitution Check
 
@@ -47,7 +47,7 @@ Work can start partway through 001's Phase 3, like 002. The material extension (
 |---|---|
 | I Engine/Shell separation | ✅ Detection and matching are in `crates/`; the preview is `apps/web` only. The shell reaches the stage through `openplush-pipeline` |
 | II CLI parity | ✅ `import-seams` subcommand, plus `--seams-from-model` and `--accept-closing` on `pattern` (contract §3). Headless never accepts a proposal without a flag naming it |
-| III Invariants as contracts | ✅ A dead-ended cut is never dropped and never silently turned into anything: it becomes a located, explained dart proposal the maker accepts or declines (S-014). Imported seams then pass 001's chart validation like any other |
+| III Invariants as contracts | ✅ A dead-ended cut is never dropped and never silently turned into anything: it becomes a located, explained dart proposal the maker accepts or declines (D-014). Imported seams then pass 001's chart validation like any other |
 | IV Test-first oracles | ✅ Independent oracles: fixtures with a recorded cut layout (SC-001); a hard-shaded twin that must give the identical edge set (SC-002); a property test that no `Dart` or `Opening` kind is ever produced |
 | V Determinism | ✅ Edges and faces in index order, regions by `MaterialIndex`, name matching locale-free, ties broken by index (data-model §3) |
 | VI Units | ✅ No physical quantity is introduced. `UV_CUT` is dimensionless and documented as such beside the other tolerances |
@@ -73,7 +73,7 @@ specs/003-source-seam-import/
 ├── quickstart.md
 ├── contracts/source-import.md # stage signatures, error, CLI, worker op
 ├── checklists/requirements.md
-└── tasks.md                   # task list (U001–U068)
+└── tasks.md                   # task list (T001–T068)
 ```
 
 ### Source code
@@ -120,7 +120,7 @@ The dead-end chains are split off before the seam proposal is built, so a chain 
 
 ### Accepting
 
-"Accept all" is three edits in one undo step: apply `seams`, apply each `closing` proposal, then `set_fabrics` with the regions and new profiles. It reuses T107's apply path, so imported seams become indistinguishable from drawn ones (FR-043) except for the optional `origin` field.
+"Accept all" is three edits in one undo step: apply `seams`, apply each `closing` proposal, then `set_fabrics` with the regions and new profiles. It reuses 001 T107's apply path, so imported seams become indistinguishable from drawn ones (FR-043) except for the optional `origin` field.
 
 ### Re-import
 
@@ -137,25 +137,25 @@ The dead-end chains are split off before the seam proposal is built, so a chain 
 
 | Date | ID | Decision | Status |
 |---|---|---|---|
-| 2026-10-16 | S-001 | **No new crate.** Detection in `openplush-seams`, regions in `openplush-pattern`, composition in `openplush-pipeline`. No new dependency edge | Accepted |
-| 2026-10-16 | S-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside T053. 2026-10-16: 001 D-034 replaced `tobj` with a reader that already splits at `usemtl`, so Q3 needs no spike |
-| 2026-10-16 | S-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** `1e-5`, confirmed by spike Q1 on UV spheres (research R2) | Accepted, research R2 |
-| 2026-10-16 | S-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` (error replaced by dart proposals, S-014) | Accepted, research R3, spec FR-011 and FR-013 |
-| 2026-10-16 | S-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
-| 2026-10-16 | S-006 | **Name match = Unicode-lowercase, trimmed, first in project order.** No fuzzy matching | Accepted, research R4 |
-| 2026-10-16 | S-007 | **New profiles copy the minky preset** under the material's name, via one `Fabric::with_defaults(name)` that 001's "add fabric" can also use, and carry an `UnreviewedFabric` advisory warning until edited (spec FR-025) | Accepted. Maintainer, 2026-10-16 (research R4) |
-| 2026-10-16 | S-008 | **Re-import re-places old seams and regions by position, not provenance key.** Unplaceable ones are listed and located; spec FR-051 amended to say so. Amended by S-017 (split edges) | Accepted, research R5; spike Q4 measures it |
-| 2026-10-16 | S-009 | **Optional `seams[].origin`** (`drawn`/`imported`/`proposed`, default `drawn`), so FR-051 can count hand-drawn seams. Additive; v1 files unchanged | Accepted |
-| 2026-10-16 | S-010 | **Headless never accepts a proposal implicitly.** `--accept-closing` names the act | Accepted, Constitution II and VII |
-| 2026-10-16 | S-011 | **`ManifoldMesh` carries `SourceMaterials` and `extra_uv_sets`**, moved unchanged from the soup by repair, so stages that take the mesh can read them. A repair-filled face is distinguishable from a source face with no material, so filled holes never make material-boundary seams | Accepted. Changes 001's `ManifoldMesh`; review of #99 |
-| 2026-10-16 | S-012 | **Dead ends ignore seams already in the project.** The file must be consistent on its own, because Replace would discard those seams | Accepted, spec FR-013; review of #99 |
-| 2026-10-16 | S-013 | **FR-014's undersized-piece mark comes from 001's piece-size check, applied to the flattened, scaled proposal and reached by the preview through `@openplush/engine-client`, not from `SourceImport`.** The minimum (001 data-model §5: provisional 20 mm in each principal direction at target scale) is measured on flat pieces in mm, and `source_import` runs before flattening and takes no scale. Same route as 002 FR-036 (H049). 001 has no task for that check or its worker operation yet; both features need them | Proposed, found while writing tasks.md (#107) |
-| 2026-10-17 | S-014 | **A dead-ended UV cut is a dart proposal, not an error.** Spike Q1 found the usual sphere unwrap (a meridian to the pole) ends inside the surface at each pole, and the unwrap opens it into the wedge a dart closes, so the error would refuse correct models. Each dead-end chain is one `SourceDart` proposal, located and explained, shown apart from imported seams, included in "accept all", declinable on its own (spec FR-010–FR-012, FR-015). The CLI declines darts unless `--accept-darts` is given. Replaces S-004's error (its graph and tip definition stand) and the 2026-10-16 "never a dart" answer | Accepted. Maintainer, 2026-10-17 |
-| 2026-10-17 | S-015 | **Projection maps get a report hint, not a special rule.** Spike Q1 found Blender's default UV sphere map gives each pole triangle its own pole UV, so the pole reads as 24 cuts and 22 dart proposals. UV-cut detection stays exact (S-003). `openplush-seams::source` also finds *projection points*, interior vertices with at least `PROJECTION_MIN_FACES = 5` incident faces whose corner UVs are pairwise more than `UV_CUT` apart, and the report lists them with a plain-language hint (spec FR-006). Treating them as uncut was rejected: it would also hide a real five-way seam junction | Accepted. Maintainer, 2026-10-17; research R2 |
-| 2026-10-17 | S-016 | **More than one UV set is a warning in the import report.** Spike Q2 found glTF's `TEXCOORD_0` is Blender's first-listed UV map, not the active one, while OBJ carries only the active map, so a glTF import can read a different map from the one the maker cut. Whenever `extra_uv_sets > 0`, the report warns before acceptance, names the first map in the tool's list as the one read, and says how to read another (spec FR-004). It is a report warning, not a pattern `WarningCode`: it concerns the import decision and means nothing once the seams are accepted. No new field: `extra_uv_sets` already carries it, and OBJ always has 0 | Accepted. Maintainer, 2026-10-17; research R1 |
-| 2026-10-17 | S-017 | **A split old seam edge re-places as its pieces.** Spike Q4 found a loop cut splits the old seam edges it crosses, so S-008's exact endpoint match loses them. An old edge (p, q) now also re-places as a path p … q in the new mesh whose interior vertices lie on segment pq within the weld tolerance, walked monotonically from p. Endpoints still match exactly, so it is not snapping. Faces are unchanged: a split face stays not placeable | Accepted. Maintainer, 2026-10-17, who delegated the choice to the agent; research R5 |
-| 2026-10-17 | S-018 | **No whole-model move detection; a hint when nothing places.** Q4 found moving or smoothing the whole model re-places no seam. Fitting a rigid transform to recover them would guess (Constitution III). `ReimportDiff` gains `placed_seams`, and when it is 0 while old seams exist, the difference says the model may have been moved, scaled or smoothed as a whole. Proportional-edit losses get no special case: they are listed and located like other unplaceable seams | Accepted. Maintainer, 2026-10-17, who delegated the choice to the agent; research R5 |
-| 2026-10-18 | S-019 | **Materials are set by `TriangleSoup::with_materials`, not `new`.** `new` already takes four of the five parameters the engine rules allow, and two more would break every caller. `new` gives an empty table; `with_materials(materials, extra_uv_sets)` validates and sets both. A short table is not allocated by `new`, because a primitive number is file input and sizing a table from it can abort the process. `SourceMaterials::material(primitive)` reads a missing entry as no material | Accepted. Stated in #137's Skipped section; the maintainer merged #137 on 2026-10-18 |
+| 2026-10-16 | D-001 | **No new crate.** Detection in `openplush-seams`, regions in `openplush-pattern`, composition in `openplush-pipeline`. No new dependency edge | Accepted |
+| 2026-10-16 | D-002 | **Materials are keyed by source primitive**, with the new invariant that a primitive has at most one material. No per-face array. The OBJ importer splits primitives at material changes if `tobj` doesn't (spike Q3) | Accepted. Changes 001 data-model §2; a mesh task, then an io task alongside 001 T053. 2026-10-16: 001 D-034 replaced `tobj` with a reader that already splits at `usemtl`, so Q3 needs no spike |
+| 2026-10-16 | D-003 | **UV cut = endpoint UV mismatch beyond an absolute `UV_CUT`, with UVs on both sides.** `1e-5`, confirmed by spike Q1 on UV spheres (research R2) | Accepted, research R2 |
+| 2026-10-16 | D-004 | **Dead ends are judged on the seam graph over UV cuts ∪ material boundaries ∪ mandatory seams**, reusing 001's node classification. All tips are reported in one `DeadEndCut` (error replaced by dart proposals, D-014) | Accepted, research R3, spec FR-011 and FR-013 |
+| 2026-10-16 | D-005 | **An edge that is both a UV cut and a material boundary becomes one `FabricBoundary` seam** | Accepted, spec FR-021 |
+| 2026-10-16 | D-006 | **Name match = Unicode-lowercase, trimmed, first in project order.** No fuzzy matching | Accepted, research R4 |
+| 2026-10-16 | D-007 | **New profiles copy the minky preset** under the material's name, via one `Fabric::with_defaults(name)` that 001's "add fabric" can also use, and carry an `UnreviewedFabric` advisory warning until edited (spec FR-025) | Accepted. Maintainer, 2026-10-16 (research R4) |
+| 2026-10-16 | D-008 | **Re-import re-places old seams and regions by position, not provenance key.** Unplaceable ones are listed and located; spec FR-051 amended to say so. Amended by D-017 (split edges) | Accepted, research R5; spike Q4 measures it |
+| 2026-10-16 | D-009 | **Optional `seams[].origin`** (`drawn`/`imported`/`proposed`, default `drawn`), so FR-051 can count hand-drawn seams. Additive; v1 files unchanged | Accepted |
+| 2026-10-16 | D-010 | **Headless never accepts a proposal implicitly.** `--accept-closing` names the act | Accepted, Constitution II and VII |
+| 2026-10-16 | D-011 | **`ManifoldMesh` carries `SourceMaterials` and `extra_uv_sets`**, moved unchanged from the soup by repair, so stages that take the mesh can read them. A repair-filled face is distinguishable from a source face with no material, so filled holes never make material-boundary seams | Accepted. Changes 001's `ManifoldMesh`; review of #99 |
+| 2026-10-16 | D-012 | **Dead ends ignore seams already in the project.** The file must be consistent on its own, because Replace would discard those seams | Accepted, spec FR-013; review of #99 |
+| 2026-10-16 | D-013 | **FR-014's undersized-piece mark comes from 001's piece-size check, applied to the flattened, scaled proposal and reached by the preview through `@openplush/engine-client`, not from `SourceImport`.** The minimum (001 data-model §5: provisional 20 mm in each principal direction at target scale) is measured on flat pieces in mm, and `source_import` runs before flattening and takes no scale. Same route as 002 FR-036 (T049). 001 has no task for that check or its worker operation yet; both features need them | Proposed, found while writing tasks.md (#107) |
+| 2026-10-17 | D-014 | **A dead-ended UV cut is a dart proposal, not an error.** Spike Q1 found the usual sphere unwrap (a meridian to the pole) ends inside the surface at each pole, and the unwrap opens it into the wedge a dart closes, so the error would refuse correct models. Each dead-end chain is one `SourceDart` proposal, located and explained, shown apart from imported seams, included in "accept all", declinable on its own (spec FR-010–FR-012, FR-015). The CLI declines darts unless `--accept-darts` is given. Replaces D-004's error (its graph and tip definition stand) and the 2026-10-16 "never a dart" answer | Accepted. Maintainer, 2026-10-17 |
+| 2026-10-17 | D-015 | **Projection maps get a report hint, not a special rule.** Spike Q1 found Blender's default UV sphere map gives each pole triangle its own pole UV, so the pole reads as 24 cuts and 22 dart proposals. UV-cut detection stays exact (D-003). `openplush-seams::source` also finds *projection points*, interior vertices with at least `PROJECTION_MIN_FACES = 5` incident faces whose corner UVs are pairwise more than `UV_CUT` apart, and the report lists them with a plain-language hint (spec FR-006). Treating them as uncut was rejected: it would also hide a real five-way seam junction | Accepted. Maintainer, 2026-10-17; research R2 |
+| 2026-10-17 | D-016 | **More than one UV set is a warning in the import report.** Spike Q2 found glTF's `TEXCOORD_0` is Blender's first-listed UV map, not the active one, while OBJ carries only the active map, so a glTF import can read a different map from the one the maker cut. Whenever `extra_uv_sets > 0`, the report warns before acceptance, names the first map in the tool's list as the one read, and says how to read another (spec FR-004). It is a report warning, not a pattern `WarningCode`: it concerns the import decision and means nothing once the seams are accepted. No new field: `extra_uv_sets` already carries it, and OBJ always has 0 | Accepted. Maintainer, 2026-10-17; research R1 |
+| 2026-10-17 | D-017 | **A split old seam edge re-places as its pieces.** Spike Q4 found a loop cut splits the old seam edges it crosses, so D-008's exact endpoint match loses them. An old edge (p, q) now also re-places as a path p … q in the new mesh whose interior vertices lie on segment pq within the weld tolerance, walked monotonically from p. Endpoints still match exactly, so it is not snapping. Faces are unchanged: a split face stays not placeable | Accepted. Maintainer, 2026-10-17, who delegated the choice to the agent; research R5 |
+| 2026-10-17 | D-018 | **No whole-model move detection; a hint when nothing places.** Q4 found moving or smoothing the whole model re-places no seam. Fitting a rigid transform to recover them would guess (Constitution III). `ReimportDiff` gains `placed_seams`, and when it is 0 while old seams exist, the difference says the model may have been moved, scaled or smoothed as a whole. Proportional-edit losses get no special case: they are listed and located like other unplaceable seams | Accepted. Maintainer, 2026-10-17, who delegated the choice to the agent; research R5 |
+| 2026-10-18 | D-019 | **Materials are set by `TriangleSoup::with_materials`, not `new`.** `new` already takes four of the five parameters the engine rules allow, and two more would break every caller. `new` gives an empty table; `with_materials(materials, extra_uv_sets)` validates and sets both. A short table is not allocated by `new`, because a primitive number is file input and sizing a table from it can abort the process. `SourceMaterials::material(primitive)` reads a missing entry as no material | Accepted. Stated in #137's Skipped section; the maintainer merged #137 on 2026-10-18 |
 
 ### Trade-offs accepted
 
@@ -166,4 +166,4 @@ The dead-end chains are split off before the seam proposal is built, so a chain 
 ### Open questions
 
 - Spikes Q1–Q4 ([research R6](./research.md)).
-- 001's own "add a fabric profile by hand" has no default defined either. S-007 fills that gap for both features; 001 records it as D-035.
+- 001's own "add a fabric profile by hand" has no default defined either. D-007 fills that gap for both features; 001 records it as D-035.

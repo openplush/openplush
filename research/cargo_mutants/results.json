@@ -1,0 +1,563 @@
+{
+  "tool": "cargo-mutants 27.1.0",
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "machine": {
+    "nproc": 4,
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "mem_gib": 15,
+    "os": "Linux 6.18"
+  },
+  "commit": "2ad8d23",
+  "settings": "--timeout-multiplier 3 -j 2",
+  "crates": [
+    {
+      "package": "openplush-flatten",
+      "runs": [
+        {
+          "started_utc": "2026-10-23T03:40:32Z",
+          "finished_utc": "2026-10-23T04:34:29Z",
+          "wall_seconds": 3237,
+          "note": "cut off by a container restart after 514 of 723 mutants"
+        },
+        {
+          "started_utc": "2026-10-23T04:37:15Z",
+          "finished_utc": "2026-10-23T05:08:06Z",
+          "wall_seconds": 1851,
+          "note": "--iterate: the 242 not caught in the first run"
+        }
+      ],
+      "fraction_run": "1/1",
+      "counts": {
+        "generated": 723,
+        "caught": 608,
+        "missed": 9,
+        "timeout": 34,
+        "unviable": 72
+      },
+      "missed": [
+        {
+          "file": "crates/openplush-flatten/src/boundary/closure.rs",
+          "line": 62,
+          "column": 49,
+          "function": "gap",
+          "mutation": "replace + with - in gap",
+          "test_guess": "equivalent: negating the summed vector leaves its length unchanged"
+        },
+        {
+          "file": "crates/openplush-flatten/src/boundary/closure.rs",
+          "line": 111,
+          "column": 43,
+          "function": "damped",
+          "mutation": "replace < with <= in damped",
+          "test_guess": "equality between a trial's error and the current one; no test reaches it exactly"
+        },
+        {
+          "file": "crates/openplush-flatten/src/fallback.rs",
+          "line": 58,
+          "column": 32,
+          "function": "dart",
+          "mutation": "replace + with * in dart",
+          "test_guess": "gap: a test that the proposed dart is the shortest path, on a chart with two candidate paths of different length"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 25,
+          "column": 39,
+          "function": "Rest::jacobian",
+          "mutation": "replace + with - in Rest::jacobian",
+          "test_guess": "equivalent: inv[1][0] is always 0 (rest_shapes builds it so)"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 29,
+          "column": 39,
+          "function": "Rest::jacobian",
+          "mutation": "replace + with - in Rest::jacobian",
+          "test_guess": "equivalent: inv[1][0] is always 0"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 39,
+          "column": 18,
+          "function": "Rest::operator",
+          "mutation": "replace + with - in Rest::operator",
+          "test_guess": "equivalent: b[0] is inv[1][0], always 0"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 124,
+          "column": 24,
+          "function": "first_positive_root",
+          "mutation": "replace && with || in first_positive_root",
+          "test_guess": "a unit test of max_step with a non-finite coefficient; callers pass finite layouts, so unreachable from the session"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 134,
+          "column": 24,
+          "function": "first_positive_root",
+          "mutation": "replace > with >= in first_positive_root",
+          "test_guess": "a unit test with a root at exactly 0 (an already-collapsed face); unreachable while det J > 0"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 110,
+          "column": 77,
+          "function": "Solve::iterate",
+          "mutation": "replace < with <= in Solve::iterate",
+          "test_guess": "equality at the 1e-9 threshold; no realistic input lands on it exactly"
+        }
+      ],
+      "timeout": [
+        {
+          "file": "crates/openplush-flatten/src/fallback.rs",
+          "line": 58,
+          "column": 32,
+          "function": "dart",
+          "mutation": "replace + with - in dart"
+        },
+        {
+          "file": "crates/openplush-flatten/src/fallback.rs",
+          "line": 59,
+          "column": 53,
+          "function": "dart",
+          "mutation": "replace < with > in dart"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 56,
+          "column": 31,
+          "function": "rest_shapes",
+          "mutation": "replace - with + in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 56,
+          "column": 38,
+          "function": "rest_shapes",
+          "mutation": "replace - with + in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 38,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 38,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 59,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 59,
+          "column": 59,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 29,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 29,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 39,
+          "function": "rest_shapes",
+          "mutation": "delete - in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 42,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 42,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 52,
+          "function": "rest_shapes",
+          "mutation": "replace * with + in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 52,
+          "function": "rest_shapes",
+          "mutation": "replace * with / in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 69,
+          "function": "rest_shapes",
+          "mutation": "replace / with % in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 60,
+          "column": 69,
+          "function": "rest_shapes",
+          "mutation": "replace / with * in rest_shapes"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 107,
+          "column": 37,
+          "function": "max_step",
+          "mutation": "replace + with * in max_step"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 18,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 28,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 32,
+          "function": "first_positive_root",
+          "mutation": "replace * with + in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 128,
+          "column": 32,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 131,
+          "column": 18,
+          "function": "first_positive_root",
+          "mutation": "replace * with / in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 131,
+          "column": 23,
+          "function": "first_positive_root",
+          "mutation": "replace + with * in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 8,
+          "function": "first_positive_root",
+          "mutation": "replace / with % in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 8,
+          "function": "first_positive_root",
+          "mutation": "replace / with * in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 15,
+          "function": "first_positive_root",
+          "mutation": "replace / with % in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/energy.rs",
+          "line": 132,
+          "column": 15,
+          "function": "first_positive_root",
+          "mutation": "replace / with * in first_positive_root"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 106,
+          "column": 37,
+          "function": "Solve::iterate",
+          "mutation": "replace - with + in Solve::iterate"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 106,
+          "column": 37,
+          "function": "Solve::iterate",
+          "mutation": "replace - with / in Solve::iterate"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/mod.rs",
+          "line": 110,
+          "column": 52,
+          "function": "Solve::iterate",
+          "mutation": "replace || with && in Solve::iterate"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/slim.rs",
+          "line": 134,
+          "column": 75,
+          "function": "terms",
+          "mutation": "replace + with * in terms"
+        },
+        {
+          "file": "crates/openplush-flatten/src/interior/slim.rs",
+          "line": 157,
+          "column": 35,
+          "function": "descend",
+          "mutation": "replace * with / in descend"
+        },
+        {
+          "file": "crates/openplush-flatten/src/session.rs",
+          "line": 50,
+          "column": 12,
+          "function": "FlattenSession::step",
+          "mutation": "delete ! in FlattenSession::step"
+        }
+      ]
+    },
+    {
+      "package": "openplush-pattern",
+      "runs": [
+        {
+          "started_utc": "2026-10-23T05:09:24Z",
+          "finished_utc": "2026-10-23T05:19:05Z",
+          "wall_seconds": 581
+        }
+      ],
+      "fraction_run": "1/1",
+      "counts": {
+        "generated": 274,
+        "caught": 222,
+        "missed": 22,
+        "timeout": 1,
+        "unviable": 29
+      },
+      "missed": [
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 56,
+          "column": 50,
+          "function": "cut_line",
+          "mutation": "replace > with >= in cut_line",
+          "test_guess": "equality at the touching threshold; no test lands on it exactly"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 109,
+          "column": 55,
+          "function": "merge_short_edges",
+          "mutation": "replace < with <= in merge_short_edges",
+          "test_guess": "equality at the shortest-edge threshold; a test with an edge of exactly that length"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 116,
+          "column": 32,
+          "function": "merge_short_edges",
+          "mutation": "replace < with <= in merge_short_edges",
+          "test_guess": "equivalent: j == i needs a one-edge outline, and the loop runs only above three"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 126,
+          "column": 17,
+          "function": "strip",
+          "mutation": "replace > with >= in strip",
+          "test_guess": "zero-width edges arrive with zero-allowance edges (T152); unreachable until then"
+        },
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 153,
+          "column": 62,
+          "function": "join",
+          "mutation": "replace / with * in join",
+          "test_guess": "gap: a miter at a corner that is not a right angle (at 90\u00b0 cross = \u00b11, so / and * agree)"
+        },
+        {
+          "file": "crates/openplush-pattern/src/cut.rs",
+          "line": 31,
+          "column": 9,
+          "function": "CutCount::as_printed",
+          "mutation": "replace CutCount::as_printed -> u32 with 1",
+          "test_guess": "gap: a cut count other than one as printed"
+        },
+        {
+          "file": "crates/openplush-pattern/src/cut.rs",
+          "line": 36,
+          "column": 9,
+          "function": "CutCount::flipped",
+          "mutation": "replace CutCount::flipped -> u32 with 1",
+          "test_guess": "gap: a cut count other than one flipped"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 45,
+          "function": "check_simple",
+          "mutation": "replace + with * in check_simple",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 45,
+          "function": "check_simple",
+          "mutation": "replace + with - in check_simple",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 50,
+          "function": "check_simple",
+          "mutation": "replace % with + in check_simple",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 59,
+          "column": 50,
+          "function": "check_simple",
+          "mutation": "replace % with / in check_simple",
+          "test_guess": "gap: a fold refusal's second edge index is never asserted"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 14,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with <= in check_counter_clockwise",
+          "test_guess": "likely equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 14,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with > in check_counter_clockwise",
+          "test_guess": "likely equivalent: the mutated choice is still an extreme vertex, which is convex, so its turn is the orientation"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 46,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with <= in check_counter_clockwise",
+          "test_guess": "likely equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 79,
+          "column": 46,
+          "function": "check_counter_clockwise",
+          "mutation": "replace < with > in check_counter_clockwise",
+          "test_guess": "likely equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 97,
+          "column": 5,
+          "function": "turns_cleanly",
+          "mutation": "replace turns_cleanly -> Result<bool, GeomError> with Ok(true)",
+          "test_guess": "gap: an outline whose corner folds back along its own edge (a collinear spike)"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 98,
+          "column": 9,
+          "function": "turns_cleanly",
+          "mutation": "delete match arm Sign::Zero in turns_cleanly",
+          "test_guess": "gap: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 98,
+          "column": 48,
+          "function": "turns_cleanly",
+          "mutation": "replace || with && in turns_cleanly",
+          "test_guess": "gap: a spike that folds past the corner on one side only"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 107,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "equivalent: the box test only skips the exact predicates, which give the same answer"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 108,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 109,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "equivalent: as above"
+        },
+        {
+          "file": "crates/openplush-pattern/src/outline.rs",
+          "line": 122,
+          "column": 9,
+          "function": "segments_meet",
+          "mutation": "replace || with && in segments_meet",
+          "test_guess": "gap: a vertex lying on a non-adjacent edge (a collinear touch)"
+        }
+      ],
+      "timeout": [
+        {
+          "file": "crates/openplush-pattern/src/allowance.rs",
+          "line": 118,
+          "column": 15,
+          "function": "merge_short_edges",
+          "mutation": "replace += with *= in merge_short_edges"
+        }
+      ]
+    }
+  ],
+  "recheck": {
+    "commit": "85fd6bc",
+    "crate": "openplush-flatten",
+    "what": "each of the nine missed mutants applied by hand and the crate's tests run; all nine still survive, and a control mutation in Rest::jacobian (energy.rs:26) is caught"
+  }
+}

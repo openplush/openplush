@@ -19,8 +19,8 @@
 
 ## Tasks
 
-<!-- Every task this PR finishes, each ticked in tasks.md in this PR:
-     T080, T082 (specs/001-pattern-pipeline/tasks.md)
+<!-- Every task this PR finishes, each ticked in tasks.md in this PR, with its feature and a link:
+     [001 T080](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md), [001 T082](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md)
      Or: "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
 
 ## Reading order

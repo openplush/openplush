@@ -9,7 +9,7 @@ body:
     id: task
     attributes:
       label: Task ID
-      placeholder: "e.g. T050 (specs/001-pattern-pipeline/tasks.md), or 'none yet'"
+      placeholder: "e.g. 001 T050 (specs/001-pattern-pipeline/tasks.md), or 'none yet'"
     validations:
       required: true
   - type: dropdown

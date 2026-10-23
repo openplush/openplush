@@ -13,7 +13,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 - Never add `rereview` or `mutation-audit`: only the maintainer requests a rerun (ADR 0013). If the review run failed without a summary, say so to the maintainer once.
 - Fix a 🔴 yourself and prove it before pushing: the test that shows the defect fails before and passes after, and, for a missing check, the mutation it should kill. Then reply on the thread with the commit and resolve it.
 - A PR is ready to merge when CI is green on its head, the review found no 🔴 that is not fixed and proven, no 🔴 thread is open, and every 🟡 has been fixed or answered.
-- Push only to fix a 🔴, a failing check, or a defect you have confirmed. Answer the other 🟡 findings in one short PR comment, and resolve their threads.
+- Push only to fix a 🔴, a failing check, or a defect you have confirmed. Answer the other 🟡 findings in one short PR comment, written as `AGENTS.md`'s status prose, and resolve their threads.
 - If a finding repeats an earlier one, link to the earlier answer rather than writing the answer again.
 
 ## Local review
@@ -56,6 +56,6 @@ Which paths put a PR in which tier, and who merges each: [the tier table](../../
 
 ## Sessions
 
-- One intent per session, or one `factory` firing. When it merges or the context grows long, write a short handoff for a fresh session (merged PRs, open PRs with their heads, next steps, these rules) rather than carrying on.
+- One intent per session, or one `factory` firing. When it merges or the context grows long, write a short handoff for a fresh session in status prose (`AGENTS.md`): merged PRs, open PRs with their heads, next steps, these rules rather than carrying on.
 - Read only the files a step needs: grep `tasks.md` and the plan's ledger for the IDs in hand instead of reading them whole. Ask GitHub for one thread or the latest summary, not every thread on the PR.
 - Check `main`, the open PRs and the next free branch position, decision and task numbers once, at the start of a session.

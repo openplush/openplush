@@ -1,4 +1,4 @@
-# T019. Review routing by contribution lane (docs/start/README.md#the-lanes). Each lane has
+# Review routing by contribution lane (docs/start/README.md#the-lanes). Each lane has
 # its own line so a lane reviewer can be added without touching the others.
 # Later lines win, so the catch-all comes first.
 *                         @lvndrpup

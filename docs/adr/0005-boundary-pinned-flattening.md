@@ -1,14 +1,14 @@
 ---
 status: Proposed
 date: 2026-10-15
-deciders: maintainer (proposed by the implementing agent from spike S7, decided in review of the 001 T007 PR)
+deciders: maintainer (proposed by the implementing agent from spike 001 T007, decided in review of its PR)
 ---
 
 # Boundary-pinned flattening holds; the fallback stays a rare typed error and the dart signal is area-integrated compression
 
 ## Context and problem statement
 
-001 D-013 (plan Decision Ledger) made seam parity exact and hard: every chart's boundary edges are pinned to their 3D lengths, and the interior absorbs all distortion. Research R3 named two risks: the pinned outline may not close, and the pinned map may not be injective, where free-boundary SLIM had a local guarantee. Constitution III makes det J > 0 and a non-overlapping outline a contract, so each failure must be a typed error with a dart or extra-seam proposal (001 T082), never relaxed parity. 001 T007 (spike S7) asked how often those failures happen on the fixture corpus, and what pinning costs in interior distortion. The answer sets how aggressive 001 T082 must be, and which distortion measure should drive dart suggestions (001 T105). Evidence: [`research/s7_boundary_pinned/`](https://github.com/openplush/openplush/blob/main/research/s7_boundary_pinned/README.md).
+001 D-013 (plan Decision Ledger) made seam parity exact and hard: every chart's boundary edges are pinned to their 3D lengths, and the interior absorbs all distortion. Research R3 named two risks: the pinned outline may not close, and the pinned map may not be injective, where free-boundary SLIM had a local guarantee. Constitution III makes det J > 0 and a non-overlapping outline a contract, so each failure must be a typed error with a dart or extra-seam proposal (001 T082), never relaxed parity. 001 T007, a spike, asked how often those failures happen on the fixture corpus, and what pinning costs in interior distortion. The answer sets how aggressive 001 T082 must be, and which distortion measure should drive dart suggestions (001 T105). Evidence: [`research/s7_boundary_pinned/`](https://github.com/openplush/openplush/blob/main/research/s7_boundary_pinned/README.md).
 
 ## Decision drivers
 
@@ -26,9 +26,9 @@ deciders: maintainer (proposed by the implementing agent from spike S7, decided 
 
 ## Decision outcome
 
-Chosen option: **Option 1**, because on every input S7 tried, the failures 001 T082 guards against did not occur, while the cost of pinning is real but shows up as interior compression, which is exactly what the heatmap and dart suggestions are for.
+Chosen option: **Option 1**, because on every input 001 T007 tried, the failures 001 T082 guards against did not occur, while the cost of pinning is real but shows up as interior compression, which is exactly what the heatmap and dart suggestions are for.
 
-**S7 verdict on 001 D-013, fixture corpus** [likely]: 36 fixture runs (the 10 charts of the three reference seam sets: 6 sphere gores, 2 capsule caps, a capsule tube and a cube net; the same 10 with seeded asymmetric jitter; and 16 runs at one and two levels of refinement, up to 1,728 triangles): **0 closure failures, 0 injectivity failures**. Every outline was simple and counter-clockwise, no all-boundary triangle was inverted, every run started from an injective cotan fill (the uniform fallback was never needed) and converged with zero flips (each solve stopped at the gradient tolerance, or with the energy unchanged to machine precision, |ΔE| ≤ 1e-15·E, which is an energy criterion, not proof of stationarity: some synthetic stress charts stalled with a gradient norm of about 1e-5 to 9e-5; none hit the iteration or line-search limit). Closing the outline with lengths held exact needed at most 0.026° of turning-angle change at any corner. The synthetic stress set (19 charts plus a 12-run resolution sweep, up to 6,144 triangles, 55 reflex corners, caps covering 175° of the sphere) gave the same: no failure on any geometrically valid chart.
+001 T007 verdict on 001 D-013, fixture corpus** [likely]: 36 fixture runs (the 10 charts of the three reference seam sets: 6 sphere gores, 2 capsule caps, a capsule tube and a cube net; the same 10 with seeded asymmetric jitter; and 16 runs at one and two levels of refinement, up to 1,728 triangles): **0 closure failures, 0 injectivity failures**. Every outline was simple and counter-clockwise, no all-boundary triangle was inverted, every run started from an injective cotan fill (the uniform fallback was never needed) and converged with zero flips (each solve stopped at the gradient tolerance, or with the energy unchanged to machine precision, |ΔE| ≤ 1e-15·E, which is an energy criterion, not proof of stationarity: some synthetic stress charts stalled with a gradient norm of about 1e-5 to 9e-5; none hit the iteration or line-search limit). Closing the outline with lengths held exact needed at most 0.026° of turning-angle change at any corner. The synthetic stress set (19 charts plus a 12-run resolution sweep, up to 6,144 triangles, 55 reflex corners, caps covering 175° of the sphere) gave the same: no failure on any geometrically valid chart.
 
 **Distortion penalty** (pinned vs free-boundary SLIM, symmetric Dirichlet, 4.0 is isometric) [likely]:
 
@@ -45,13 +45,13 @@ Developable charts pay nothing, and the pinned pipeline reproduces the exact net
 * **001 T082 is a rare path, not a routine one** [likely]. It fires only on an actual failure: closure did not converge, the outline self-touches, an all-boundary triangle is inverted, or neither linear start is injective. Each returns its typed error with a dart or extra-seam proposal, and parity is never relaxed. No pre-emptive splitting. It must still exist and be tested on constructed failures, because the corpus never triggers it.
 * **Distortion is a fabric-tolerance question, handled by 001 T103–T105, not 001 T082** [likely]. A hemisphere flattens validly, but its fabric must gather: a 37% mean compression deficit, and σ₂ down to 0.61. That is a warning and a dart suggestion against the fabric profile, not a flattening failure.
 * **The dart signal uses area-integrated compression** [likely]: the mean compression deficit `Σ A·max(0, 1 − σ₂) / ΣA` and the compression at the 5% area quantile, per chart and per cluster. Under refinement of the unjittered fixtures the deficit settles (gore 7.03%, 6.89%, 6.86%; cap 37.3%, 36.5%, 36.3%), and on the jittered polyhedra, refined flat so their cones stay fixed, its steps shrink each level (cube 0.53%, 0.44%, 0.40%). The single worst triangle's σ₂ does not settle: it kept falling on the synthetic stress caps (0.145 to 0.051) and by a near-constant step per level on the jittered polyhedra (cube 0.963, 0.957, 0.951). Per-triangle σ stays the heatmap's input (FR-021); it must not be the threshold in 001 T105 steps 1 and 4. This matches data-model §5, whose distortion term D is already area-weighted.
-* **Input validation stays upstream** [likely]: folded 3D input was the only source of injectivity failures S7 ever saw (its first synthetic draft). That is 001 T174's typed error, before 001 T079.
+* **Input validation stays upstream** [likely]: folded 3D input was the only source of injectivity failures 001 T007 ever saw (its first synthetic draft). That is 001 T174's typed error, before 001 T079.
 
 ### Consequences
 
 * Good, because parity stays exact with no cross-chart coupling, and the measured cost lands where FR-021 and FR-022 can show and relieve it.
 * Good, because 001 T082 stays small: a typed error plus a proposal on failure, no heuristics about when a chart is "too curved".
-* Good, because the dart signal was stable under refinement on the corpus [likely], so the darts suggested should not depend much on how finely the user's model happens to be meshed. v0.1 does not remesh (S1, ADR 0001), so input mesh resolution is exactly what varies between models.
+* Good, because the dart signal was stable under refinement on the corpus [likely], so the darts suggested should not depend much on how finely the user's model happens to be meshed. v0.1 does not remesh (001 T001, ADR 0001), so input mesh resolution is exactly what varies between models.
 * Bad, because 001 T082's fallback is never exercised by the corpus; its tests must construct failing charts (a non-closing length sequence, a self-touching outline, a rim triangle inverted at a reflex corner).
 * Bad, because the evidence is thin where it matters most: see the corpus limits below. The decision is [likely], not [solid].
 
@@ -73,7 +73,7 @@ Developable charts pay nothing, and the pinned pipeline reproduces the exact net
 ### Option 2: pre-emptive darts or splits
 
 * Good, because a user would rarely see a flattening error.
-* Bad, because it changes seams without a failure to justify it, which Constitution VII forbids without approval, and the threshold would be a guess: nothing in S7 predicts failure from curvature.
+* Bad, because it changes seams without a failure to justify it, which Constitution VII forbids without approval, and the threshold would be a guess: nothing in 001 T007 predicts failure from curvature.
 * Bad, because it duplicates 001 T105, which already proposes darts from measured distortion.
 
 ### Option 3: heavy boundary weight where pinning is costly

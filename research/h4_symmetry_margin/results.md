@@ -1,4 +1,4 @@
-# Spike H4: results
+# Spike 002 T007: results
 
 Run on 2026-10-19, Linux x86_64, standard library only. `python3 sweep.py` prints the two tables below; the output is byte-identical on CPython 3.11.17, 3.12.3 and 3.13.16 (the committed tables are the 3.13 run). `python3 -m unittest -v`: 14 tests, OK, on all three. `mypy --strict --python-version 3.11 mirror.py variants.py sweep.py test_h4.py` (mypy 2.3.1, `MYPYPATH=../fixtures_gen`): no issues.
 

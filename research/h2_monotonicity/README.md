@@ -1,4 +1,4 @@
-# Spike H2: does monotonicity survive chaining and clustering? (002 T006)
+# Spike 002 T006: does monotonicity survive chaining and clustering? (002 T006)
 
 **Status (2026-10-20): confirmed on the corpus.** Built once at the most permissive threshold and filtered per sensitivity, the crease chains and the dart clusters give a hint set that is a subset of the looser setting's in every one of 500 random ordered pairs per detector. Rebuilt per threshold, the same signals break the subset relation on the quadruped in 31 of 100 pairs for chains (20 by covered edges, not only by identity) and 80 of 100 for clusters. Nothing here ships; 002 T012 is this check as a `proptest` over the Rust detectors, and 002 T027 and 002 T029 implement the build-once rule.
 
@@ -15,7 +15,7 @@ FR-006 promises that raising the sensitivity only adds hints and lowering it onl
 
 ## Method
 
-`monotone.py` turns the H1 signals into hints two ways. **Filtered**: chains built once at 10° (clusters at 30°), a hint kept at a setting when its length-weighted mean fold and its length (its peak curvature) reach the thresholds. **Rebuilt**: chains built from the edges that qualify at the setting's fold (clusters from the vertices that reach the setting's curvature), then filtered by length. A crease hint's identity is its sorted edge list; a dart hint's is its peak vertex.
+`monotone.py` turns the 002 T005 signals into hints two ways. **Filtered**: chains built once at 10° (clusters at 30°), a hint kept at a setting when its length-weighted mean fold and its length (its peak curvature) reach the thresholds. **Rebuilt**: chains built from the edges that qualify at the setting's fold (clusters from the vertices that reach the setting's curvature), then filtered by length. A crease hint's identity is its sorted edge list; a dart hint's is its peak vertex.
 
 `property.py` draws, with one seeded RNG, 100 ordered pairs of settings per fixture and detector, the first at least as strict as the second in every number, and counts the pairs where the strict hint set is not a subset of the loose one. For chains it also counts the pairs where the edges the strict hints cover are not a subset of the edges the loose hints cover: a weaker property a UI could live with if identity were all that broke.
 

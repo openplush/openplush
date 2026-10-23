@@ -1,4 +1,4 @@
-# Spike H1: default thresholds for the hint detectors (002 T005)
+# Spike 002 T005: default thresholds for the hint detectors (002 T005)
 
 **Status (2026-10-20): the defaults below were accepted as 002 D-011 in the 002 plan's Decision Ledger, as provisional values.** They are tuned on five procedural fixtures and no real plush model, so they are [likely], not [solid]; 002 T004's hand-made patterns are what would settle them. Nothing here ships; 002 T028, 002 T029 and 002 T031 implement the same definitions.
 
@@ -12,7 +12,7 @@ python3 -m unittest -v       # 8 oracles
 
 ## The question
 
-Research R1 and 002 D-003 fix the shape of each detector (a pure threshold over a precomputed signal, fixed absolute thresholds, chains and clusters built once) and leave the numbers open: the dihedral threshold for sharp edges, the lower one for concave creases, the minimum chain length, and the curvature threshold and integration radius for dart candidates. H1 asks which defaults let a typical plush yield useful hints with no adjustment.
+Research R1 and 002 D-003 fix the shape of each detector (a pure threshold over a precomputed signal, fixed absolute thresholds, chains and clusters built once) and leave the numbers open: the dihedral threshold for sharp edges, the lower one for concave creases, the minimum chain length, and the curvature threshold and integration radius for dart candidates. 002 T005 asks which defaults let a typical plush yield useful hints with no adjustment.
 
 ## Method
 

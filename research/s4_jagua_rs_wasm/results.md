@@ -1,4 +1,4 @@
-# S4 results (2026-10-15)
+# 001 T004 results (2026-10-15)
 
 ## Versions
 
@@ -183,7 +183,7 @@ warning[no-license-field]: license expression was not specified in manifest for 
 bans FAILED, licenses ok
 ```
 
-As a git dependency it would also fail `sources` (`unknown-git = "deny"`). As a non-root crate without a license field it would need a `[[licenses.clarify]]` entry, as S6 found.
+As a git dependency it would also fail `sources` (`unknown-git = "deny"`). As a non-root crate without a license field it would need a `[[licenses.clarify]]` entry, as 001 T006 found.
 
 **Source facts**:
 

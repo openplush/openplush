@@ -1,4 +1,4 @@
-# Spike S1: does `baby_shark` build and run on `wasm32-unknown-unknown`?
+# Spike 001 T001: does `baby_shark` build and run on `wasm32-unknown-unknown`?
 
 **Status (2026-10-14): closed.** Decision: [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed).
 

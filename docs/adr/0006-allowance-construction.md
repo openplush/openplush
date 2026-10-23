@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-15
-deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent from spike S3, 001 T003
+deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent from spike 001 T003
 ---
 
 # Build allowances as one `i_overlay` boolean of per-edge strips on the `i64` engine, validated before and after
@@ -10,7 +10,7 @@ deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementi
 
 Seam allowance differs along one outline: a seam default, per-seam overrides, a separate opening allowance, hem allowance on unsewn edges, and zero on folds and on edge-stitched or appliqué edges (FR-030, FR-057). A single-distance polygon offset can't express that, so [data-model §7](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#7-seam-allowance) builds the cut line as a union of per-edge strips with `i_overlay`. Research R2 recorded an open outline-offset panic upstream (iOverlay issue 74) and asked for fuzzing.
 
-001 T003 (spike S3) asks how robust that is, and so how defensive 001 T085 (`openplush-pattern/src/allowance.rs`) must be. Evidence: [`research/s3_i_overlay_fuzz/`](https://github.com/openplush/openplush/blob/main/research/s3_i_overlay_fuzz/README.md).
+001 T003, a spike, asks how robust that is, and so how defensive 001 T085 (`openplush-pattern/src/allowance.rs`) must be. Evidence: [`research/s3_i_overlay_fuzz/`](https://github.com/openplush/openplush/blob/main/research/s3_i_overlay_fuzz/README.md).
 
 ## Decision drivers
 
@@ -32,7 +32,7 @@ Seam allowance differs along one outline: a seam default, per-seam overrides, a 
 
 Chosen option: **4**. It is the only option that expresses per-edge allowances and stayed exact against an independent oracle on 10,000 near-degenerate cases.
 
-What S3 found (10,000 seeded cases, near-degenerate by design):
+What 001 T003 found (10,000 seeded cases, near-degenerate by design):
 
 * **No panics** on valid input, in release or with debug assertions and overflow checks on (byte-identical output in both). None on six invalid inputs either, including upstream's regression contour [solid for this corpus]. Issue 74 is very likely the outline `debug_assert!` that upstream's PR #75 removed on 2026-05-18, which ships in 9.0.1 [likely; the issue page was not reachable].
 * **No wrong booleans**. The strip construction never lost or gained area against an independent membership oracle, on either engine [solid for this corpus].
@@ -78,7 +78,7 @@ What S3 found (10,000 seeded cases, near-degenerate by design):
 
 ### Confirmation
 
-* 001 T085's tests port the S3 oracle (independent membership plus exact topology checks) as seeded property tests, on native and wasm32.
+* 001 T085's tests port the T003 oracle (independent membership plus exact topology checks) as seeded property tests, on native and wasm32.
 * The determinism job compares native and WASM output on the allowance stage.
 * `cargo deny` keeps `rayon` out; a review checklist item keeps `allow_multithreading` off.
 * Re-run the spike before bumping `i_overlay`: change the pin in `research/s3_i_overlay_fuzz/Cargo.toml`, update `CORPUS_200` only if the output legitimately changed, and run both profiles.
@@ -115,5 +115,5 @@ What S3 found (10,000 seeded cases, near-degenerate by design):
 ## More information
 
 * Evidence: [`research/s3_i_overlay_fuzz/README.md`](https://github.com/openplush/openplush/blob/main/research/s3_i_overlay_fuzz/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s3_i_overlay_fuzz/results.md): commands, versions, counts per failure class, reproducers.
-* Follow-ups for the lead's docs PR: research R2's `i_overlay` row (issue 74 status, "simplify first" becomes "merge short edges"); research R6 S3 result; tasks.md 001 T003 (done) and 001 T085 (defensiveness, error variants); data-model §7 "Corners" and "Robustness" bullets.
+* Follow-ups for the lead's docs PR: research R2's `i_overlay` row (issue 74 status, "simplify first" becomes "merge short edges"); research R6 001 T003 result; tasks.md 001 T003 (done) and 001 T085 (defensiveness, error variants); data-model §7 "Corners" and "Robustness" bullets.
 * Revisit when (a) fixture runs measure the conflict rate on real pieces, (b) `i_overlay` is bumped (9.1.0 is out; its changes are performance work in the tree solver [likely, from the commit log]), or (c) v0.2 adds reflected corners.

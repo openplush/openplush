@@ -1,4 +1,4 @@
-# S2a results (2026-10-18)
+# 001 T002, first half: results (2026-10-18)
 
 Toolchain: rustc 1.97.0 (2d8144b78 2026-07-07). Runner: wasm-bindgen-test-runner 0.2.129 on Node v22.22.0. cargo-deny 0.20.2. Native CPU flags: avx2, avx512f, fma, sse4_2.
 

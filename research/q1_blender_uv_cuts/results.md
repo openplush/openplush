@@ -1,4 +1,4 @@
-# Spike Q1: results
+# Spike 003 T008: results
 
 Run on 2026-10-17, Linux x86_64. Blender `bpy` 5.2.2 LTS (PyPI), CPython 3.13.16 for the export; `measure.py` and its tests on CPython 3.11.17, 3.12.3 and 3.13.16 (10 tests, OK); `mypy --strict --python-version 3.11 measure.py test_measure.py` clean (`export_models.py` is not type-checked, because `bpy` has no stubs). Eight full export-and-measure runs gave identical counts every time. The gaps vary: the slit's smallest gap took values from 1.81e-4 to 1.84e-4 across runs, while 6.65e-2 and 8.33e-2 held to 3 significant figures.
 
@@ -71,4 +71,4 @@ Blender's default UV sphere map gives each pole triangle its own pole UV, so the
 ## Not measured
 
 - Hard-shaded edges in a smooth model, beyond the flat-shaded primitive's normal splits. `capsule-hardshade` covers that in the fixtures, and nothing here contradicts it.
-- Smart UV Project, Follow Active Quads, or multiple UV maps (that is Q2).
+- Smart UV Project, Follow Active Quads, or multiple UV maps (that is 003 T009).

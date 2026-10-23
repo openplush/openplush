@@ -17,7 +17,7 @@ How to prove the feature works end to end once it is built. Commands follow [con
 | `three-materials.glb` | "minky / cuddle" (case), "Polar fleece " (trailing space) and "Felt Nose" (US3) |
 | `dead-end.glb` | Two deliberate dead-ended cuts, one cut ending on a material boundary (US4, FR-013) |
 | `no-uv.obj` | No texture coordinates, one material (FR-005) |
-| `reshaped-v1.glb`, `reshaped-v2.glb` | Same model before and after stretching one end cap (FR-050); spike Q4 measures the same on a real Blender edit |
+| `reshaped-v1.glb`, `reshaped-v2.glb` | Same model before and after stretching one end cap (FR-050); spike T011 measures the same on a real Blender edit |
 
 ## Scenarios
 

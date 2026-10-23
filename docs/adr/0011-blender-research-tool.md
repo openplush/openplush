@@ -8,7 +8,7 @@ deciders: maintainer (accepted 2026-10-17)
 
 ## Context and problem statement
 
-Feature 003 imports seams and fabric regions from models exported by a modelling tool, Blender above all. Its fixtures come from the standard-library generator in `research/fixtures_gen/`, which imitates Blender's export conventions. Whether real Blender exports follow those conventions is for the spikes Q1, Q2 and Q4 to answer (003 research R6, tasks T008, T009, T011), and they need Blender itself.
+Feature 003 imports seams and fabric regions from models exported by a modelling tool, Blender above all. Its fixtures come from the standard-library generator in `research/fixtures_gen/`, which imitates Blender's export conventions. Whether real Blender exports follow those conventions is for three spikes to answer (003 research R6; 003 tasks T008, T009 and T011), and they need Blender itself.
 
 Blender's Python module, `bpy` on PyPI, is GPL-3.0 [solid: the 5.2.2 package metadata says `License: GPL-3.0`]. The research lane requires spike dependencies to pass the same allowlist as the engine's (`research/AGENTS.md`), and GPL is not on it. So these spikes need either an exception or no Blender at all. This ADR is task 003 T069 (the 003 task list, `specs/003-source-seam-import/tasks.md`, arrives with PR #107).
 
@@ -74,6 +74,6 @@ The rules:
 
 ## More information
 
-* 003 research R6 (spikes Q1, Q2, Q4); 003 tasks T008, T009, T011, T069.
+* 003 research R6; 003 tasks T008, T009 and T011 (spikes) and T069.
 * `research/AGENTS.md` gains a one-line pointer to this ADR beside its allowlist rule.
 * Revisit if a Blender add-on is built (003 plan, Phasing). That add-on is GPL too, and would live in its own package or repository under the same boundary.

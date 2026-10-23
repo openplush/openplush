@@ -46,14 +46,14 @@ Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inf
 |---|---|---|---|---|---|
 | [foundlings/qew](https://github.com/foundlings/qew) | **Not a geometry library.** Offline-first, git-backed work ledger: items, dependency graph, readiness queue, mirrored to GitHub/Forgejo/GitLab; agent hooks for Claude/Codex/Cursor. Python 3.15+, no runtime deps. | Apache-2.0 | 2 stars, 0 forks, ~700 commits; single maintainer | n/a | **Maintainer tooling, not engine.** Fits SDD gating (drafts become approved work only on a human's quoted approval). Use for `tasks.md` → work items; keep GitHub Issues as the contributor-facing view. Never required for contributors. Bus-factor risk: keep `tasks.md` canonical in the repo. |
 | [dima634/baby_shark](https://github.com/dima634/baby_shark) | Pure-Rust geometry processing: voxel remeshing, volume booleans, offsetting, isotropic remeshing, decimation, deformation. IO: STL, OBJ, PLY. Corner-table mesh. | MIT | 97 stars, 9 forks | Unverified — **spike** [verify] | **Preprocessing only.** Isotropic remeshing before flattening (triangle quality drives solver conditioning); decimation for preview; voxel remesh as opt-in last-resort repair. Not our core mesh type (no per-corner attributes, no seam flags, no glTF) → adapter at the boundary. |
-| [rajgandhi1/threecrate](https://github.com/rajgandhi1/threecrate) | Rust point-cloud + mesh library with Python bindings: registration, Poisson/BPA reconstruction, simplification, IO (PLY/OBJ/PCD/LAS/E57), wgpu GPU path. | MIT OR Apache-2.0 [solid — S6] | 46 stars, 9 forks, v0.8 | **Roadmap only** | **Not MVP.** Post-MVP native-only "scan an object → mesh" path via reconstruction. Overlaps baby_shark for simplification. |
+| [rajgandhi1/threecrate](https://github.com/rajgandhi1/threecrate) | Rust point-cloud + mesh library with Python bindings: registration, Poisson/BPA reconstruction, simplification, IO (PLY/OBJ/PCD/LAS/E57), wgpu GPU path. | MIT OR Apache-2.0 [solid — T006] | 46 stars, 9 forks, v0.8 | **Roadmap only** | **Not MVP.** Post-MVP native-only "scan an object → mesh" path via reconstruction. Overlaps baby_shark for simplification. |
 | [microsoft/onnxruntime](https://github.com/microsoft/onnxruntime) | ML inference runtime; web build (WASM/WebGPU) [solid]; Rust bindings via `ort` [likely]. | MIT [solid] | Very mature | Yes (onnxruntime-web) | **No MVP role.** No off-the-shelf model for plush seam prediction exists that I know of [speculative] — would need a dataset. Post-MVP behind `SeamProposer` / `FeatureDetector` traits (Constitution X). |
-| `faer` | Pure-Rust dense + sparse linear algebra: sparse Cholesky (supernodal/simplicial), sparse QR. | MIT [solid — S6] | Mature, active | Yes (no `rayon`) | **Core solver.** Symbolic factorization reused across iterations. |
-| `i_overlay` | Pure-Rust polygon booleans, slicing, polygon outline offset; powers `geo`'s booleans. | MIT OR Apache-2.0 [solid — S6] | Active (v9.0.1 audited; `jagua-rs` → `geo` also brings v4.5.2) | Pure Rust [likely] | **Seam allowance offset + union.** Offset requires valid input polygons (simplify first); an outline-offset panic is open as iOverlay #74 → fuzz our inputs and validate them first (ADR 0006); a remaining panic is a crash, not caught (ADR 0009). |
-| [JeroenGar/jagua-rs](https://github.com/JeroenGar/jagua-rs) | Collision-detection engine for 2D irregular nesting: bin + strip packing, continuous rotation, reflections about chosen axes, container holes/quality zones, minimum separation; WASM target. Paper in INFORMS JoC. | MPL-2.0 | 205 stars, v1.0 | **Yes** | **Layout engine.** Strip packing = fabric roll; quality zones = fabric flaws; min separation = cutting gap; reflection axes = mirrored pieces. Optimizer: `sparrow` (same author) — MIT, but **not on crates.io**; see S6 result. MPL-2.0 is file-level copyleft — fine as a dependency of an MIT/Apache project [solid]. |
-| `gltf`, `tobj` | glTF 2.0 and OBJ parsers. | `gltf` MIT OR Apache-2.0, `tobj` MIT [solid — S6] | Mature | Yes | Import. *2026-10-16: `tobj` not adopted; OBJ uses our own reader (plan D-034).* |
+| `faer` | Pure-Rust dense + sparse linear algebra: sparse Cholesky (supernodal/simplicial), sparse QR. | MIT [solid — T006] | Mature, active | Yes (no `rayon`) | **Core solver.** Symbolic factorization reused across iterations. |
+| `i_overlay` | Pure-Rust polygon booleans, slicing, polygon outline offset; powers `geo`'s booleans. | MIT OR Apache-2.0 [solid — T006] | Active (v9.0.1 audited; `jagua-rs` → `geo` also brings v4.5.2) | Pure Rust [likely] | **Seam allowance offset + union.** Offset requires valid input polygons (simplify first); an outline-offset panic is open as iOverlay #74 → fuzz our inputs and validate them first (ADR 0006); a remaining panic is a crash, not caught (ADR 0009). |
+| [JeroenGar/jagua-rs](https://github.com/JeroenGar/jagua-rs) | Collision-detection engine for 2D irregular nesting: bin + strip packing, continuous rotation, reflections about chosen axes, container holes/quality zones, minimum separation; WASM target. Paper in INFORMS JoC. | MPL-2.0 | 205 stars, v1.0 | **Yes** | **Layout engine.** Strip packing = fabric roll; quality zones = fabric flaws; min separation = cutting gap; reflection axes = mirrored pieces. Optimizer: `sparrow` (same author) — MIT, but **not on crates.io**; see T006 result. MPL-2.0 is file-level copyleft — fine as a dependency of an MIT/Apache project [solid]. |
+| `gltf`, `tobj` | glTF 2.0 and OBJ parsers. | `gltf` MIT OR Apache-2.0, `tobj` MIT [solid — T006] | Mature | Yes | Import. *2026-10-16: `tobj` not adopted; OBJ uses our own reader (plan D-034).* |
 | `three`, `three-mesh-bvh` | Rendering; BVH raycasting for edge picking while drawing seams. | MIT [likely] | Mature | n/a (TS) | Shell. |
-| `svg2pdf` (typst) | SVG → PDF conversion in Rust. | MIT OR Apache-2.0 [solid — S6] | Mature | [verify] | Tiled PDF export. |
+| `svg2pdf` (typst) | SVG → PDF conversion in Rust. | MIT OR Apache-2.0 [solid — T006] | Mature | [verify] | Tiled PDF export. |
 | `insta`, `proptest` | Snapshot and property testing. | MIT/Apache [solid] | Mature | Native tests | Golden + property tests. |
 
 ## R3. Flattening Algorithm
@@ -79,7 +79,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 - **Option A — chosen (D-013)**: boundary lengths fixed to 3D lengths (BFF prescribes exactly this; Sawhney & Crane 2017) → exact parity, interior absorbs distortion.
 - **Option B — rejected**: SLIM/ARAP with a heavy boundary-length weight → small residual mismatch, reported as ease. Rejected because FR-023 now forbids handing the sewist a residual.
 
-**Risk this introduces** [likely — S7 found no failure, see S7 result]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
+**Risk this introduces** [likely — T007 found no failure, see T007 result]: prescribing boundary lengths can fail two ways. The boundary polygon may not close (the prescribed lengths are not realizable for a flat disk), and the resulting map is "usually" but not provably injective, where SLIM's barrier gave a local guarantee. Constitution III requires det J > 0 on every face, so a failure must surface as a typed error with a proposal — the fallback is a dart or extra-seam proposal that makes the chart flattenable, **never** relaxing parity. Parity is a contract now, not a preference.
 
 **Anisotropic fabric — out of scope (D-014)**: the obvious extension is to replace the identity target metric with a per-fabric tensor `M` (allowed stretch along warp vs. weft), alternating isotropic flatten → grain angle → anisotropic re-flatten. Spec FR-026 excludes it from this feature: per-direction stretch is recorded in the fabric profile and drives warnings (FR-058) only. Recorded here so a future feature does not have to rediscover the approach.
 
@@ -107,16 +107,16 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 
 | Spike | Question | Box |
 |---|---|---|
-| S1 | Does `baby_shark` (isotropic remesh, decimate) build and run on `wasm32-unknown-unknown`? | 0.5 day |
-| S2 | SLIM in Rust + `faer` on a 50k-tri chart in WASM: wall time per iteration vs. native | 2 days |
-| S3 | `i_overlay` offset robustness: fuzz 10k random valid piece outlines with mixed per-edge allowances | 1 day |
-| S4 | `jagua-rs` WASM bundle size + discrete rotation sets {0°} / {0°,180°} support | 0.5 day |
-| S5 | `svg2pdf` WASM viability vs. generating PDF directly | 0.5 day |
-| S6 | Licenses: confirm `faer`, `i_overlay`, `sparrow`, `svg2pdf`, threecrate (MIT vs. dual) | 0.5 day |
-| **S7** | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
-| S8 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
+| T001 | Does `baby_shark` (isotropic remesh, decimate) build and run on `wasm32-unknown-unknown`? | 0.5 day |
+| T002 | SLIM in Rust + `faer` on a 50k-tri chart in WASM: wall time per iteration vs. native | 2 days |
+| T003 | `i_overlay` offset robustness: fuzz 10k random valid piece outlines with mixed per-edge allowances | 1 day |
+| T004 | `jagua-rs` WASM bundle size + discrete rotation sets {0°} / {0°,180°} support | 0.5 day |
+| T005 | `svg2pdf` WASM viability vs. generating PDF directly | 0.5 day |
+| T006 | Licenses: confirm `faer`, `i_overlay`, `sparrow`, `svg2pdf`, threecrate (MIT vs. dual) | 0.5 day |
+| T007 | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
+| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
 
-### S1 result: baby_shark on wasm32 (2026-10-14) ✅ closed
+### T001 result: baby_shark on wasm32 (2026-10-14) ✅ closed
 
 Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_shark_wasm/README.md). Decision: [ADR 0001](../../docs/adr/0001-preprocessing.md) (Proposed).
 
@@ -136,11 +136,11 @@ Spike and full results: [`research/s1_baby_shark_wasm/`](../../research/s1_baby_
   - there is no step or yield API.
 - **Implication**:
   - both targets flatten the repaired mesh, so T080 cannot assume isotropic triangles;
-  - S2 must size charts at raw-input size;
+  - T002 must size charts at raw-input size;
   - the §3 voxel last resort is out of v0.1;
   - re-adopt only from a crates.io release that has opt-out features.
 
-### S3 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
+### T003 result: `i_overlay` allowance robustness (2026-10-15) ✅ closed
 
 Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../research/s3_i_overlay_fuzz/README.md). Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
 
@@ -170,7 +170,7 @@ Prototype, numbers and reproducers: [`research/s3_i_overlay_fuzz/`](../../resear
   - corners sharper than about 29° are beveled;
   - strips stay off the outer side of any zero-allowance edge.
 
-### S4 result: `jagua-rs` on wasm32, bundle size, rotation sets (2026-10-15) ✅ closed
+### T004 result: `jagua-rs` on wasm32, bundle size, rotation sets (2026-10-15) ✅ closed
 
 Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md). Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).
 
@@ -193,7 +193,7 @@ Spike: [`research/s4_jagua_rs_wasm/`](../../research/s4_jagua_rs_wasm/README.md)
   - It is not adoptable as a dependency: it is git-only, has no license field, pulls `rayon` unconditionally, and its defaults run on wall-clock time, which breaks Constitution V.
   - v0.2 writes its own deterministic placer over the jagua-rs core.
 
-### S5 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
+### T005 result: `svg2pdf` under WASM vs. direct PDF (2026-10-15) ✅ closed
 
 **Write the PDF directly with `pdf-writer` 0.15; don't use `svg2pdf`.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted). Evidence: [`research/s5_svg2pdf_wasm/`](../../research/s5_svg2pdf_wasm/README.md).
 
@@ -216,7 +216,7 @@ The spike wrote one A3 pattern page (a 400-vertex outline, the 50.00 mm square, 
   - T091 returns a typed error for any character outside WinAnsi.
   - Non-Latin text would need an ADR (OFL) or an allowlisted font.
 
-### S6 result — licenses (2026-10-14) ✅ closed
+### T006 result — licenses (2026-10-14) ✅ closed
 
 **Every candidate dependency, and every crate in their combined dependency graph, passes the Constitution IX allowlist.** No ADR or replacement needed.
 
@@ -241,13 +241,13 @@ Transitive crates with a non-allowlist license (LGPL-2.1/3.0, BSL-1.0, Unlicense
 1. **The crates.io crate named `sparrow` is a different project**, an unrelated in-memory database (Apache-2.0, `DonaCrio/sparrow`). `sparrow = "…"` in a manifest would silently pull the wrong crate.
 2. **JeroenGar's `sparrow` is not published** and must be a git dependency. `deny.toml` denies unknown git sources, so adopting it means an `allow-git` entry pinned to a commit.
 3. **Its `Cargo.toml` has no `license` field.** The MIT license exists only as a `LICENSE` file. That needs a `[[licenses.clarify]]` entry in `deny.toml` keyed to the file's hash, so a future relicense fails the gate instead of passing silently.
-4. **Its library is not WASM-ready as a dependency**: it is a lib + bin crate, and the library's non-optional dependencies include `clap`, `fern`, `num_cpus`, `rayon`, and `jiff`. Its manifest already gates `ctrlc` off wasm32 and enables `getrandom`'s `wasm_js`, so the author targets WASM, but `rayon` conflicts with `crates/AGENTS.md`. Upstream feature-gating, or our own optimizer over `jagua-rs`, is a question for **S4**, recorded here because the audit surfaced it.
+4. **Its library is not WASM-ready as a dependency**: it is a lib + bin crate, and the library's non-optional dependencies include `clap`, `fern`, `num_cpus`, `rayon`, and `jiff`. Its manifest already gates `ctrlc` off wasm32 and enables `getrandom`'s `wasm_js`, so the author targets WASM, but `rayon` conflicts with `crates/AGENTS.md`. Upstream feature-gating, or our own optimizer over `jagua-rs`, is a question for T004, recorded here because the audit surfaced it.
 
 **Advisories (not part of T006)** [solid — `cargo deny check advisories` on the same graph, 2026-10-14]: four crates are flagged **unmaintained**, and there are no vulnerability advisories. `paste` (RUSTSEC-2024-0436, a proc-macro) via **`faer` 0.24 itself** (→ `gemm` 0.19), and again via `baby_shark` → `faer` 0.22 → `gemm` 0.18. Because `faer` is the v0.1 core solver, the PR that adopts it must carry a reasoned `ignore` for this advisory (a build-time proc-macro, no runtime code) or wait for an upstream fix. `rustybuzz` (RUSTSEC-2026-0206) and `ttf-parser` (RUSTSEC-2026-0192) via `svg2pdf` → `usvg`. `bincode` 1 (RUSTSEC-2025-0141) via `threecrate`. `deny.toml` will fail on each, so the PR that adopts the dependency decides: a replacement, or a targeted `[advisories] ignore = [{ id, reason }]`. The gate stays strict until then.
 
-**Also surfaced (not license issues; for S1/S4)** [verify; the `baby_shark` part is confirmed by S1 above]: `rayon` arrives via `baby_shark` 0.3.12 (which also brings its own `faer` 0.22 beside 0.24), `jagua-rs` 1.1.0 (default features), `sparrow`, and `threecrate`. `faer` 0.24 itself does not pull `rayon` with these features. Since `deny.toml` bans `rayon` (#26), each of these fails `cargo deny` until `rayon` is feature-gated off or the crate is replaced. That is a hard gate now, not a review item. `crates/AGENTS.md` forbids `rayon` on the WASM path, so S1 and S4 need to check whether those dependencies are optional.
+**Also surfaced (not license issues; for T001 and T004)** [verify; the `baby_shark` part is confirmed by T001 above]: `rayon` arrives via `baby_shark` 0.3.12 (which also brings its own `faer` 0.22 beside 0.24), `jagua-rs` 1.1.0 (default features), `sparrow`, and `threecrate`. `faer` 0.24 itself does not pull `rayon` with these features. Since `deny.toml` bans `rayon` (#26), each of these fails `cargo deny` until `rayon` is feature-gated off or the crate is replaced. That is a hard gate now, not a review item. `crates/AGENTS.md` forbids `rayon` on the WASM path, so T001 and T004 need to check whether those dependencies are optional.
 
-### S7 result — boundary-pinned flattening (2026-10-15) ✅ closed
+### T007 result — boundary-pinned flattening (2026-10-15) ✅ closed
 
 Prototype and full results: [`research/s7_boundary_pinned/`](../../research/s7_boundary_pinned/README.md). Verdict: [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md).
 
@@ -288,13 +288,13 @@ The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) 
   - no interior cone sharper than 20°;
   - no scan or sculpt, and no human-drawn seams.
 
-  Re-run S7 when such a fixture lands. Any failure reopens ADR 0005.
+  Re-run T007 when such a fixture lands. Any failure reopens ADR 0005.
 
 ## R7. Fabric Profiles (FR-050, D-018)
 
 Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
 
-> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike S8 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker. Per D-046, fleece, minky and long faux fur ship first, with the maintainer's measured values replacing these rows; the other four wait for their own measurements.
+> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike T008 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker. Per D-046, fleece, minky and long faux fur ship first, with the maintainer's measured values replacing these rows; the other four wait for their own measurements.
 
 | Preset | Category | Stretch grain / cross / bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
 |---|---|---|---|---|---|---|---|---|

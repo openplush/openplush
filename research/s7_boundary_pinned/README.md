@@ -1,4 +1,4 @@
-# Spike S7: boundary-pinned flattening (001 D-013)
+# Spike 001 T007: boundary-pinned flattening (001 D-013)
 
 **Status (2026-10-15): 001 T007 answered on the fixture corpus.** Every chart of every reference seam set in `fixtures/` closes and flattens injectively with its boundary pinned, as do seeded asymmetric variants and two refinement levels: 36 fixture runs (10 charts, the same 10 jittered, 16 refined), zero closure failures, zero injectivity failures. The verdict and what it means for 001 T079–T082 are in [ADR 0005](../../docs/adr/0005-boundary-pinned-flattening.md). The corpus is three coarse, smooth or piecewise-flat shapes (see Limits), so the verdict is [likely], not [solid]; the synthetic results below are the stress evidence the fixtures cannot give yet.
 
@@ -117,7 +117,7 @@ Full table in [`results.md`](./results.md). Read the columns as:
 
 ## Recommendations for 001 T079–T082
 
-Unchanged by the fixture run, which confirmed each one; ADR 0005 records them as the S7 verdict.
+Unchanged by the fixture run, which confirmed each one; ADR 0005 records them as the 001 T007 verdict.
 
 - **Before 001 T079 (new, upstream)**: validate the 3D chart (consistently oriented, no folded-over faces) and return a typed input error. This spike's own first mistake is the reason.
 - **001 T079 (boundary)**: BFF curvature with u_B = 0, then a least-squares *angle* closure, weighted by dual length: minimise Σ Δκᵢ² / Lᵢ with Lᵢ = (ℓᵢ₋₁ + ℓᵢ)/2, and run the Gauss-Newton polish in the same metric. The prototype's unweighted version is fine on these near-uniform meshes but would over-penalise short edges on real ones. Never adjust lengths. Return a typed error if closure fails, the outline self-touches, or an all-boundary triangle comes out inverted.

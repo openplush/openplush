@@ -1,4 +1,4 @@
-# Spike S2a: does `faer` without default features pass the repo's gates?
+# Spike 001 T002, first half: does `faer` without default features pass the repo's gates?
 
 **Status (2026-10-18): closed. One gate fails: `cargo deny` advisories, on `paste` (RUSTSEC-2024-0436, unmaintained).** Per 001 D-041 and the maintainer's E-3, 001 T078 waits for the maintainer's decision.
 
@@ -6,7 +6,7 @@ Non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/` import
 
 ## The question
 
-001 D-041 splits S2 (001 T002). S2a runs before 001 T078: does `faer` with `default-features = false` pass every gate an engine crate must pass (`cargo deny`, `scripts/check-boundary.sh`, wasm32) and give the same bits on native and wasm32 (Constitution V)? S2b, the timing, waits for SLIM (001 T080).
+001 D-041 splits 001 T002. This first half runs before 001 T078: does `faer` with `default-features = false` pass every gate an engine crate must pass (`cargo deny`, `scripts/check-boundary.sh`, wasm32) and give the same bits on native and wasm32 (Constitution V)? S2b, the timing, waits for SLIM (001 T080).
 
 ## Method
 

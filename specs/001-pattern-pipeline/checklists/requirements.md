@@ -53,7 +53,7 @@ Marking this item as failing is the honest reading: markers do remain. Closing i
 
 Q1, Q2, and Q3 closed 2026-10-13 and are recorded in the spec's Clarifications section with their consequences traced into the plan's Decision Ledger (D-012 through D-019). Two of them changed the design rather than merely confirming it:
 
-- **Q2 (exact seam parity)** selected a different flattening approach than research R3 had been leaning toward — boundary-pinned rather than free-boundary with a heavy weight. That is D-013, it supersedes D-005, and it introduces an injectivity risk now tracked as spike S7 (T007).
+- **Q2 (exact seam parity)** selected a different flattening approach than research R3 had been leaning toward — boundary-pinned rather than free-boundary with a heavy weight. That is D-013, it supersedes D-005, and it introduces an injectivity risk now tracked as spike T007.
 - **Q1 (fabric shell)** removed inflation compensation from the roadmap entirely rather than deferring it, which is why it moved from "v0.3" to the spec's out-of-scope list.
 
 The two follow-up decisions on warning semantics (FR-064, FR-065) came out of noticing that the spec had five "warn when..." requirements and never said what a warning *does*.

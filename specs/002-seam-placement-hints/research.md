@@ -16,7 +16,7 @@ For each edge, take the dihedral angle between its two incident faces. Above a t
 
 - **Why edges and not vertices**: a crease is a curve. Reporting vertices gives the maker dots to interpret; reporting chained polylines gives them something a seam can follow directly, which FR-030 requires.
 - **Chaining**: walk from each crease edge to adjacent crease edges, preferring the continuation with the smallest turning angle. Stop at junctions, and emit junctions as their own short hints so a T-junction is not arbitrarily resolved into one arm.
-- **Filtering**: drop chains shorter than a physical length (20 mm at target scale, D-011). Chaining by smallest turning angle already merges a faceted model's edges into few long chains, and the mean-fold threshold keeps a coarse sphere or icosphere silent at the default; the length filter drops the single-facet chains that remain (spike H1: 45 concave chains on the quadruped become 13).
+- **Filtering**: drop chains shorter than a physical length (20 mm at target scale, D-011). Chaining by smallest turning angle already merges a faceted model's edges into few long chains, and the mean-fold threshold keeps a coarse sphere or icosphere silent at the default; the length filter drops the single-facet chains that remain (spike T005: 45 concave chains on the quadruped become 13).
 - **Note on units**: dihedral angle is scale-independent [solid], so FR-007's physical-units rule applies to the *length* filter, not to the angle. Both still move when the model is resized, because the length filter is in millimetres.
 
 **Rejected**: per-face normal clustering (segments the surface but loses the curve), and curvature-derivative ridge extraction (Ohtake et al. 2004 — sharper on smooth organic surfaces, far more sensitive to mesh noise, and overkill when the target is "where would a sewist cut").
@@ -53,7 +53,7 @@ Gaussian curvature is the right signal because it *is* the obstruction to flatte
 
 This is the approach 001's data-model section 5 already names for mirroring seams, so this feature *supplies* that plane rather than inventing a second mechanism.
 
-**Multiple planes**: a sphere or any radially symmetric shape has infinitely many. FR-005 caps the output at one dominant plane. Picking the best-scoring plane on a sphere is arbitrary but harmless; picking one on a *nearly* radially symmetric animal would be actively misleading. Mitigation: when a second distinct candidate plane also scores within the acceptance threshold, report none and say why; the gap between two fitting planes ranks how exactly each mirrors the shape, not which one the maker sews by (D-010, spike H4). Ambiguous is closer to the truth than arbitrary.
+**Multiple planes**: a sphere or any radially symmetric shape has infinitely many. FR-005 caps the output at one dominant plane. Picking the best-scoring plane on a sphere is arbitrary but harmless; picking one on a *nearly* radially symmetric animal would be actively misleading. Mitigation: when a second distinct candidate plane also scores within the acceptance threshold, report none and say why; the gap between two fitting planes ranks how exactly each mirrors the shape, not which one the maker sews by (D-010, spike T007). Ambiguous is closer to the truth than arbitrary.
 
 ## R2. Sensitivity, and the monotonicity requirement
 
@@ -111,8 +111,8 @@ Two consequences. No ADR is required (no new dependency category, per `AGENTS.md
 
 | Spike | Question | Box |
 |---|---|---|
-| H1 | Default thresholds: tune the dihedral, concave, and curvature defaults against the fixture corpus so a typical plush yields useful hints with no adjustment. Needs the hand-made-pattern fixtures first | 1 day, after fixtures |
-| H2 | Does the monotonicity guarantee (R2) survive chaining and clustering in practice? Property test over random sensitivity pairs asserting subset containment | 0.5 day |
-| H3 | Re-match overlap threshold (R3): is 50% right? Needs recorded editing sessions, so it ships configurable and gets tuned when there is data | deferred |
-| H4 | Symmetry on near-symmetric models: how close must two candidate planes score before reporting none beats reporting the best? | 0.5 day |
-| H5 | SC-001 measurement harness: compare hint sets against hand-made patterns. **Blocked** on `fixtures/` gaining models with known-good hand-made patterns — the criterion cannot be evaluated at all until then | 1 day, blocked |
+| T005 | Default thresholds: tune the dihedral, concave, and curvature defaults against the fixture corpus so a typical plush yields useful hints with no adjustment. Needs the hand-made-pattern fixtures first | 1 day, after fixtures |
+| T006 | Does the monotonicity guarantee (R2) survive chaining and clustering in practice? Property test over random sensitivity pairs asserting subset containment | 0.5 day |
+| none | Re-match overlap threshold (R3): is 50% right? Needs recorded editing sessions, so it ships configurable and gets tuned when there is data | deferred |
+| T007 | Symmetry on near-symmetric models: how close must two candidate planes score before reporting none beats reporting the best? | 0.5 day |
+| T008 | SC-001 measurement harness: compare hint sets against hand-made patterns. **Blocked** on `fixtures/` gaining models with known-good hand-made patterns — the criterion cannot be evaluated at all until then | 1 day, blocked |

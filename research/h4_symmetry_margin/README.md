@@ -1,4 +1,4 @@
-# Spike H4: the symmetry ambiguity margin (002 D-006)
+# Spike 002 T007: the symmetry ambiguity margin (002 D-006)
 
 **Status (2026-10-19): the recommendation below was accepted as 002 D-010 in the 002 plan's Decision Ledger the same day.** Nothing here ships; 002 T030 implements the rule.
 
@@ -18,7 +18,7 @@ Research R1 and 002 D-006 say the symmetry hint reports at most one plane, and *
 - **Score**: the 002 T002 oracle's definition (`research/fixtures_gen/test_symmetry.py`): RMS distance from each vertex's reflection in the plane to the surface, over the bounding-box diagonal. Zero for an exact mirror plane; the committed `near-symmetric.glb` scores 0.0035 about x = 0 and `asymmetric.glb`'s best plane 0.015, so the numbers here and in the fixture oracle compare directly.
 - **Candidates**: the three area-weighted PCA planes (the design's starting set) plus the best three of a 60-normal Fibonacci sweep, each refined by a bounded pattern search over the normal **and the plane's offset**, then merged when their normals lie within 10° (as lines, so n and −n are one plane). "Second" below always means the second *distinct* plane.
 - **Models**: the two committed heads; the 002 T002 generator's head with upright ears at ±x, so x = 0 and y = 0 both mirror it exactly, plus a 2 mm lump at +x (breaks x = 0 only) and a snout of 0–12 mm at +y (breaks y = 0 only, by as much as its height says), which places the two candidate planes at any distance apart or tied; two bare spheroids; and seeded isotropic vertex jitter at 0.1–1 mm on the exact-plane head and on a rebuild of `near-symmetric`, to see what tessellation asymmetry or scan noise does to the scores.
-- **Decision**: `mirror.decide`: none when the best candidate scores above the acceptance threshold; none ("ambiguous") when a second distinct plane both fits within the threshold and scores within the margin of the best; else the best. A margin equal to the threshold reduces the rule to "ambiguous whenever two distinct planes fit". The tables sweep the margin from 0 to the threshold with the threshold at 0.01, the 002 T002 oracle's bound; H1 (T005) owns the threshold itself, and the recommendation is stated relative to it.
+- **Decision**: `mirror.decide`: none when the best candidate scores above the acceptance threshold; none ("ambiguous") when a second distinct plane both fits within the threshold and scores within the margin of the best; else the best. A margin equal to the threshold reduces the rule to "ambiguous whenever two distinct planes fit". The tables sweep the margin from 0 to the threshold with the threshold at 0.01, the 002 T002 oracle's bound; T005 owns the threshold itself, and the recommendation is stated relative to it.
 
 ## Findings
 
@@ -33,7 +33,7 @@ Numbers in [`results.md`](results.md).
 
 **Report none ("ambiguous: two planes fit") whenever a second distinct candidate plane also scores within the acceptance threshold; no separate margin constant.** Equivalently, the margin is the acceptance threshold itself.
 
-- It is the only rule under which a tie and a near-tie are treated the same, which finding 2 says they must be, and it needs no number that H1's threshold tuning could later contradict.
+- It is the only rule under which a tie and a near-tie are treated the same, which finding 2 says they must be, and it needs no number that 002 T005's threshold tuning could later contradict.
 - Its cost is confined to bodies with two fitting planes, which are the near-radially-symmetric ones 002 D-006 already names as the case to refuse; a quadruped, a head with a snout, anything with a front, has one fitting plane and is unaffected (finding 4).
 - The report should still list every fitting candidate with its score (data-model: `symmetry: Vec<SymmetryCandidate>`, best first), so a maker who knows which plane they want can pick it; the rule decides only what the tool offers unasked.
 
@@ -43,5 +43,5 @@ If the maintainer prefers a fixed margin below the threshold, the tables support
 
 - Six candidate starts, so a continuum of exact planes (the 45 × 55 × 45 spheroid) shows as three distinct planes, not many; enough to be ambiguous, not a map of the continuum.
 - The offset search's finest step is 0.125 mm, above the 0.01 mm centroid drift, so exact planes keep their 0.0002 floor; the floor is reported, not removed.
-- The threshold 0.01 is the fixture oracle's bound, not a tuned value; H1 sets the real one, and the recommended rule is stated relative to it so it survives that tuning.
+- The threshold 0.01 is the fixture oracle's bound, not a tuned value; 002 T005 sets the real one, and the recommended rule is stated relative to it so it survives that tuning.
 - Three synthetic heads and two spheroids; no real plush model yet (002 T001, 002 T004).

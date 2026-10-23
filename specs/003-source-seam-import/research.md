@@ -14,10 +14,10 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 | Blender's glTF exporter splits a vertex wherever its corners differ in UV or normal, so a UV seam arrives as two coincident vertices. 001's weld (T060) merges them by position and keeps per-corner UVs, so the cut is recoverable after repair | [solid] |
 | Blender's glTF exporter writes one primitive per material slot used by a mesh. A primitive has at most one material; one with none uses glTF's default material | [solid] |
 | OBJ stores `vt` per face corner (`f v/vt`), so UV discontinuities survive without vertex splitting. `usemtl` switches the material for the faces that follow; faces before any `usemtl` have none | [solid] |
-| glTF can carry several UV sets (`TEXCOORD_0`, `TEXCOORD_1`, …). Blender writes them in its UV map list order, so `TEXCOORD_0` is the first map in the list, whichever map is active or set to render; a texture on another map points at its own `TEXCOORD_n` without reordering the sets. Blender's OBJ export carries only the active map. So the two formats read different maps when the active map isn't first (spike Q2, `research/q2_blender_texcoord/results.md`) | [solid] for Blender 5.2.2 |
+| glTF can carry several UV sets (`TEXCOORD_0`, `TEXCOORD_1`, …). Blender writes them in its UV map list order, so `TEXCOORD_0` is the first map in the list, whichever map is active or set to render; a texture on another map points at its own `TEXCOORD_n` without reordering the sets. Blender's OBJ export carries only the active map. So the two formats read different maps when the active map isn't first (spike T009, `research/q2_blender_texcoord/results.md`) | [solid] for Blender 5.2.2 |
 | 001's OBJ reader (its own, not `tobj`: 001 D-034) starts a new source primitive at each `o`, `g` and `usemtl` line, so a primitive has at most one material | [solid] 001 D-034, T050 |
-| A dead-ended Blender seam (one that doesn't separate the UV island) still gives its edges different UVs on each side: it shows up in the UV editor as a slit. So a dead end is detectable from the export alone. Measured by spike Q1: both slit edges read as cuts, but the slit barely opens (smallest gap 1.81e-4 to 1.84e-4 UV units) | [solid] on UV spheres, spike Q1 |
-| Blender's OBJ exporter keeps quads (3- and 4-corner faces). 001 triangulates polygons at import (001 D-021); a diagonal inside one face joins two corners of that face, so it carries the same UVs on both sides and is never a cut | [solid] spike Q1 for the quads; [likely] for the diagonals |
+| A dead-ended Blender seam (one that doesn't separate the UV island) still gives its edges different UVs on each side: it shows up in the UV editor as a slit. So a dead end is detectable from the export alone. Measured by spike T008: both slit edges read as cuts, but the slit barely opens (smallest gap 1.81e-4 to 1.84e-4 UV units) | [solid] on UV spheres, spike T008 |
+| Blender's OBJ exporter keeps quads (3- and 4-corner faces). 001 triangulates polygons at import (001 D-021); a diagonal inside one face joins two corners of that face, so it carries the same UVs on both sides and is never a cut | [solid] spike T008 for the quads; [likely] for the diagonals |
 
 **Decision**: read only what the file carries. UV cuts come from per-corner texture coordinates, and materials from the primitive a face came from. No `.blend` reading (out of scope).
 
@@ -28,7 +28,7 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 **Rationale**:
 - Testing per endpoint, not per edge midpoint, catches a cut that runs into a junction: one endpoint's UVs agree while the other's differ [solid].
 - The tolerance is absolute because UV space is dimensionless. The model-space tolerances (relative to the bbox diagonal) and the physical ones (mm) both mean nothing here. glTF stores UVs as `f32`, and an exporter writes one value per deduplicated vertex, so an uncut edge normally carries bit-identical UVs [likely]. `1e-5` sits about two orders above `f32` spacing near 1.0 and far below any real cut. UDIM tiles (u up to ~10) still clear it [likely].
-- Spike Q1 confirmed the value on Blender 5.2 exports of UV spheres, in glTF and OBJ: every marked seam read as a cut and nothing else did. Across every unmarked edge the corner UVs were bit-identical (largest gap 0.0). The tightest real cut was a dead-ended slit near its tip, at 1.81e-4 to 1.84e-4, 18 times `UV_CUT`; a seam that separates the surface measured 6.65e-2 [solid] for these models. `UV_CUT = 1e-5` stands.
+- Spike T008 confirmed the value on Blender 5.2 exports of UV spheres, in glTF and OBJ: every marked seam read as a cut and nothing else did. Across every unmarked edge the corner UVs were bit-identical (largest gap 0.0). The tightest real cut was a dead-ended slit near its tip, at 1.81e-4 to 1.84e-4, 18 times `UV_CUT`; a seam that separates the surface measured 6.65e-2 [solid] for these models. `UV_CUT = 1e-5` stands.
 - Requiring UVs on both sides keeps repair-filled faces (001 T066, which have no source UVs) from creating a ring of false cuts around every filled hole. That is the mechanism behind spec FR-024's "never create a seam of their own".
 
 **Alternatives rejected**:
@@ -38,7 +38,7 @@ Confidence tags: `[solid]` consensus or verified, `[likely]` reasoned inference,
 
 ### Projection maps (pole fans)
 
-Spike Q1 found that Blender's default UV sphere map, a projection made without marked seams, gives every pole triangle its own UV at the pole. Under the per-endpoint rule all 24 pole edges read as cuts, and their far ends become 22 dead-end tips, so import would offer 22 darts the maker never meant [solid]. After a marked unwrap there are none.
+Spike T008 found that Blender's default UV sphere map, a projection made without marked seams, gives every pole triangle its own UV at the pole. Under the per-endpoint rule all 24 pole edges read as cuts, and their far ends become 22 dead-end tips, so import would offer 22 darts the maker never meant [solid]. After a marked unwrap there are none.
 
 **Decision** (maintainer, 2026-10-17, plan D-015): the rule stays exact. The import report adds a hint. A **projection point** is an interior vertex with at least `PROJECTION_MIN_FACES = 5` incident faces whose corner UVs there are pairwise more than `UV_CUT` apart. When any exist, the report lists them, says the UVs may come from an automatic projection rather than marked seams, and suggests marking seams and unwrapping. The proposals are unchanged.
 
@@ -50,7 +50,7 @@ Spike Q1 found that Blender's default UV sphere map, a projection made without m
 
 **Decision**: build the seam graph (001 T070) over the union of UV cuts, material boundaries, and mandatory repair seams, with surface-boundary vertices counted as endpoints. Seams already in the project are left out: the file must be consistent on its own, because Replace would discard them. Any interior vertex of seam-valence 1 is a dead-end tip. Collect all tips, and walk each back to its chain: the cut edges from the tip to the first vertex of seam-valence 3 or more, or to the surface boundary. Each chain becomes one dart proposal (spec FR-011, 2026-10-17).
 
-**Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4), and that is what these are. Spike Q1 (`research/q1_blender_uv_cuts/`) found that Blender's usual sphere unwrap, a meridian to the pole, makes one at each pole, and that the unwrap opens it into the wedge a dart closes [solid on UV spheres]. So the 2026-10-16 choice to make them an error would have refused correct models. Reusing the classifier means no second definition of "endpoint" to drift.
+**Rationale**: 001's graph already classifies a "free endpoint" as a dart tip (data-model §4), and that is what these are. Spike T008 (`research/q1_blender_uv_cuts/`) found that Blender's usual sphere unwrap, a meridian to the pole, makes one at each pole, and that the unwrap opens it into the wedge a dart closes [solid on UV spheres]. So the 2026-10-16 choice to make them an error would have refused correct models. Reusing the classifier means no second definition of "endpoint" to drift.
 
 **Superseded**: on 2026-10-16 a dead end failed the import with one error listing every tip. Replaced on 2026-10-17 by the maintainer's choice of dart proposals (spec Clarifications).
 
@@ -81,14 +81,14 @@ Spike Q1 found that Blender's default UV sphere map, a projection made without m
 
 This needs one sentence in spec FR-051 (made in the same change as this plan).
 
-**Measured by spike Q4** (`research/q4_blender_reshape/results.md`, a 166-vertex quadruped, Blender 5.2.2):
+**Measured by spike T011** (`research/q4_blender_reshape/results.md`, a 166-vertex quadruped, Blender 5.2.2):
 - Blender's export writes every vertex an edit didn't move bit-for-bit, so a seam whose vertices an edit leaves alone always re-places [solid]. After a stretch, a loop cut and an extrusion of one leg, 44 of 44 seams away from it re-placed.
 - How many seams a maker's edit leaves alone depends on the edit [likely]. A proportional edit with a 20 mm falloff also moved a neighbouring leg and lost its 3 sole seams.
 - A loop cut splits the old seam edges it crosses, and plain position matching loses them (3 of 8 on the edited leg).
 - Smoothing or moving the whole model moves most or all vertices, and no seam re-places.
 
-**Decisions after Q4** (plan D-017, D-018):
-- *Split edges re-place as their pieces.* An old seam edge (p, q) re-places as a path p = v0, …, vk = q in the new mesh when every vi lies on segment pq within the weld tolerance and the path moves monotonically from p to q. That is not snapping: the endpoints still match exactly and nothing moves. Q4's split edges were axis-aligned, so their new vertices lay exactly on them; for a general edge, the new vertex's `f32` rounding is far below the weld tolerance [likely]. Faces are not split this way, and a split face stays not placeable, because regions usually come back from materials [likely].
+**Decisions after T011** (plan D-017, D-018):
+- *Split edges re-place as their pieces.* An old seam edge (p, q) re-places as a path p = v0, …, vk = q in the new mesh when every vi lies on segment pq within the weld tolerance and the path moves monotonically from p to q. That is not snapping: the endpoints still match exactly and nothing moves. T011's split edges were axis-aligned, so their new vertices lay exactly on them; for a general edge, the new vertex's `f32` rounding is far below the weld tolerance [likely]. Faces are not split this way, and a split face stays not placeable, because regions usually come back from materials [likely].
 - *No whole-model move detection.* Fitting a rigid transform would guess. When no old seam re-places at all, the difference carries a plain-language hint instead, and every old seam stays listed as not placeable.
 - *No special case for proportional-edit losses.* They are listed and located like any other unplaceable seam.
 
@@ -98,7 +98,7 @@ This needs one sentence in spec FR-051 (made in the same change as this plan).
 
 | ID | Question | Blocks | Effort |
 |---|---|---|---|
-| Q1 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? **Done 2026-10-17 on UV spheres** (`research/q1_blender_uv_cuts/results.md`): yes to both (the dead end on one slit), so `UV_CUT` stands (R2); projection maps make pole fans (R2); dead ends become darts (R3). The capsule and quadruped were not built | `UV_CUT` value; FR-011 detection | 0.5 day |
-| Q2 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? **Done 2026-10-17**: the first listed; OBJ carries the active map (R1). FR-004 now warns whenever a model has more than one set (plan D-016) | FR-004 wording in the import report | 1 h |
-| Q3 | ~~Does `tobj` split a model on `usemtl` inside one group?~~ Answered by 001 D-034: 001 reads OBJ with its own reader, which splits at `usemtl` | — | none |
-| Q4 | Edit one limb of a quadruped in Blender, re-export, re-import: what share of untouched seams re-place by position? The spike builds its own quadruped, since Q1 did not. **Done 2026-10-17**: every seam whose vertices the edit left alone; whole-model edits lose all (R5) | R5 confidence | 0.5 day |
+| T008 | On Blender exports (5.x, the current release) (glTF and OBJ) of the capsule and a quadruped: does every marked seam, and only those, read as a UV cut at `UV_CUT = 1e-5`? Does a dead-ended seam read as a slit? **Done 2026-10-17 on UV spheres** (`research/q1_blender_uv_cuts/results.md`): yes to both (the dead end on one slit), so `UV_CUT` stands (R2); projection maps make pole fans (R2); dead ends become darts (R3). The capsule and quadruped were not built | `UV_CUT` value; FR-011 detection | 0.5 day |
+| T009 | Which Blender UV map becomes `TEXCOORD_0`: active, or first listed? **Done 2026-10-17**: the first listed; OBJ carries the active map (R1). FR-004 now warns whenever a model has more than one set (plan D-016) | FR-004 wording in the import report | 1 h |
+| T010 | ~~Does `tobj` split a model on `usemtl` inside one group?~~ Answered by 001 D-034: 001 reads OBJ with its own reader, which splits at `usemtl` | — | none |
+| T011 | Edit one limb of a quadruped in Blender, re-export, re-import: what share of untouched seams re-place by position? The spike builds its own quadruped, since T008 did not. **Done 2026-10-17**: every seam whose vertices the edit left alone; whole-model edits lose all (R5) | R5 confidence | 0.5 day |

@@ -68,4 +68,4 @@ Chosen option: **1**, because it is the only one that works on the pinned stable
 ## More information
 
 * As built, once 001 T040 and 001 T099 land: `docs/reference/` gets the worker protocol page. Until then the contract is [`contracts/worker-protocol.md`](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/worker-protocol.md) §4 and §6.
-* Changes ADR 0006 step 7, 001 D-026, the 001 T003 note, research.md's S3 recommendation 5 and data-model §7's Robustness bullet. Each said "catch panics at the stage boundary".
+* Changes ADR 0006 step 7, 001 D-026, the 001 T003 note, research.md's 001 T003 recommendation 5 and data-model §7's Robustness bullet. Each said "catch panics at the stage boundary".

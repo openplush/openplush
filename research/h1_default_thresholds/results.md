@@ -1,4 +1,4 @@
-# Spike H1: results
+# Spike 002 T005: results
 
 Run on 2026-10-20, Linux x86_64, standard library only. `python3 sweep.py` prints the tables below (about 2 s); the output is byte-identical on CPython 3.11.17, 3.12.3 and 3.13.16, and so is `python3 sweep.py --absolute`. `python3 -m unittest -v`: 8 tests, OK, on all three. `mypy --strict --python-version 3.11 signals.py sweep.py test_h1.py` (mypy 2.3.1, `MYPYPATH=../h4_symmetry_margin`): no issues.
 

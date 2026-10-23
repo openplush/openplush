@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-15
-deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent from spike S5, 001 T005
+deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementing agent from spike 001 T005
 ---
 
 # Write the tiled PDF directly with `pdf-writer`; label with standard-14 Helvetica, embed no fonts
@@ -10,7 +10,7 @@ deciders: Lavender (maintainer), accepted 2026-10-18; proposed by the implementi
 
 FR-061 puts PDF print export in v0.1 because browsers print SVG at unreliable scale: tiled Letter and A4 with overlap, registration marks, a page map, and a 50 mm scale-check square on every page, plus the FR-064 warning summary on the first page (001 D-053 later moved the page map and the summary to a cover page before the tiles). 001 T091 (`crates/openplush-export/src/pdf.rs`) writes it. Research R2 listed `svg2pdf` for this with WASM support `[verify]`.
 
-001 T005 (spike S5) asks whether `svg2pdf` works under WASM or whether 001 T091 should write PDF directly. Evidence: [`research/s5_svg2pdf_wasm/`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/README.md).
+001 T005, a spike, asks whether `svg2pdf` works under WASM or whether 001 T091 should write PDF directly. Evidence: [`research/s5_svg2pdf_wasm/`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/README.md).
 
 ## Decision drivers
 
@@ -32,7 +32,7 @@ FR-061 puts PDF print export in v0.1 because browsers print SVG at unreliable sc
 
 Chosen option: **3**. It matches option 2 on scale and determinism, costs about a sixth of the WASM size, has no font problem, and is the API 001 T091 would need for pages, marks and the page map anyway.
 
-What S5 found:
+What 001 T005 found:
 
 * **Both routes run on wasm32 and match native byte for byte; neither writes a date or a file ID** [solid]. pdf-writer writes `/ID` and an info dictionary only when asked. svg2pdf writes a constant `/Producer (svg2pdf)`, and its deflate output is deterministic.
 * **Both measure the 50 mm square at exactly 141.73228 pt** [solid], checked by an independent pypdf content-stream interpreter. svg2pdf gets there only with `PageOptions { dpi: 96.0 }`. Its default (72) prints a `mm`-sized SVG **4/3 too large** (the square measures 66.67 mm), with no error and no warning, because usvg resolves `mm` at the CSS 96 px/in.
@@ -61,7 +61,7 @@ Why not the others:
 
 ### Confirmation
 
-* 001 T091's tests: the scale-check square on every page measures 50 mm in page space (an independent content-stream oracle, as in S5's `test_scale.py`); same input twice gives the same bytes; native bytes equal wasm32 bytes; no `/CreationDate`, `/ModDate`, or random `/ID`; an unencodable label is a typed error.
+* 001 T091's tests: the scale-check square on every page measures 50 mm in page space (an independent content-stream oracle, as in 001 T005's `test_scale.py`); same input twice gives the same bytes; native bytes equal wasm32 bytes; no `/CreationDate`, `/ModDate`, or random `/ID`; an unencodable label is a typed error.
 * `cargo deny` on the workspace stays green with `pdf-writer` added. Any later font embedding comes with an ADR covering the font's own license.
 
 ## Pros and cons of the options
@@ -89,6 +89,6 @@ Why not the others:
 ## More information
 
 * Evidence: [`research/s5_svg2pdf_wasm/README.md`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/README.md) and [`results.md`](https://github.com/openplush/openplush/blob/main/research/s5_svg2pdf_wasm/results.md): commands, versions, hashes, sizes, and the font license table.
-* Follow-ups for the lead's docs PR: research.md R2 `svg2pdf` row (WASM `[verify]` → result, role → not used); research R6 S5 result; tasks.md 001 T005 and 001 T091 ("approach chosen by S5"); plan.md Primary dependencies, if it names `svg2pdf`.
+* Follow-ups for the lead's docs PR: research.md R2 `svg2pdf` row (WASM `[verify]` → result, role → not used); research R6 001 T005 result; tasks.md 001 T005 and 001 T091 ("approach chosen by T005"); plan.md Primary dependencies, if it names `svg2pdf`.
 * Revisit when labels or the warning page need non-Latin text, or a font under an allowlisted license (or an OFL ADR) becomes available.
 * PDF 1.7 (ISO 32000-1) §8.3 coordinate systems, §9.6.2.2 standard Type 1 fonts, Annex D WinAnsiEncoding.

@@ -1,4 +1,4 @@
-# Spike S3: is `i_overlay` robust enough for per-edge seam allowances?
+# Spike 001 T003: is `i_overlay` robust enough for per-edge seam allowances?
 
 **Status (2026-10-15): closed.** Decision: [ADR 0006](../../docs/adr/0006-allowance-construction.md) (Accepted).
 

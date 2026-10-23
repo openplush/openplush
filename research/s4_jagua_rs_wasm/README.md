@@ -1,4 +1,4 @@
-# Spike S4: `jagua-rs` on wasm32, bundle size, and discrete rotation sets
+# Spike 001 T004: `jagua-rs` on wasm32, bundle size, and discrete rotation sets
 
 **Status (2026-10-15): closed.** Decision: [ADR 0007](../../docs/adr/0007-layout-nesting-engine.md) (Proposed).
 
@@ -6,12 +6,12 @@ This is non-shipping research code. Nothing in `crates/`, `apps/`, or `packages/
 
 ## The question
 
-Task 001 T004 (research R6, S4) asks two things about `jagua-rs`, the nesting engine research R2 picked for v0.2:
+Task 001 T004 (research R6, 001 T004) asks two things about `jagua-rs`, the nesting engine research R2 picked for v0.2:
 
 - **Bundle size.** Nesting is v0.2, but v0.1 already fixes the layout design and the WASM bundle. If jagua-rs is large, that changes what v0.1 should plan for.
 - **Discrete rotation sets.** Data-model §6 passes layout one rotation set per fabric: {0°} for napped fabric, {0°, 180°} for non-napped, {45°, 225°} for bias. Mirrored copies reflect about a named axis. Does jagua-rs express these, and does it enforce them?
 
-S6 left a third question: jagua-rs 1.1.0 and `sparrow` (the optimizer from the same author) both pull `rayon`. Can that be switched off?
+001 T006 left a third question: jagua-rs 1.1.0 and `sparrow` (the optimizer from the same author) both pull `rayon`. Can that be switched off?
 
 ## Method
 
@@ -24,7 +24,7 @@ S6 left a third question: jagua-rs 1.1.0 and `sparrow` (the optimizer from the s
 | Repeat runs | The native binary run 20 times as separate processes | Catches per-process hash seeds and scheduling |
 | Size probe | `probe/` is a `cdylib` with one `#[wasm_bindgen]` export. Without features it is an empty baseline; `--features jagua` links the harness. `probe/measure.sh` builds both at `opt-level` `z` and `s` (LTO, one codegen unit, `panic = "abort"`, strip), runs `wasm-bindgen --target nodejs`, calls the export under Node, and prints raw and gzip sizes | The delta over the baseline is what jagua-rs plus a minimal placer cost |
 | Patch experiment | A scratch copy of jagua-rs with `rayon` and `web-time` moved behind the `spp`/`bpp` features and `getrandom` removed. Same tests, `cargo deny`, and size probe. Not committed; the diff is in `results.md` | Shows whether a feature flag upstream is all that stands between the crate and the gates |
-| `sparrow` | Clone at `1fe3e31`. Build its library for wasm32, run `cargo deny`, and run a scratch probe that calls `sparrow::optimizer::optimize` on the same six pieces with an iteration-count `Terminator`. Native vs wasm32, sizes. Not committed; the probe is summarised in `results.md` | S6 asked whether sparrow's library can run on wasm32 without `rayon` |
+| `sparrow` | Clone at `1fe3e31`. Build its library for wasm32, run `cargo deny`, and run a scratch probe that calls `sparrow::optimizer::optimize` on the same six pieces with an iteration-count `Terminator`. Native vs wasm32, sizes. Not committed; the probe is summarised in `results.md` | 001 T006 asked whether sparrow's library can run on wasm32 without `rayon` |
 
 ## Run it
 

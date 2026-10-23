@@ -1,11 +1,11 @@
-# S3 results (2026-10-15)
+# 001 T003 results (2026-10-15)
 
 ## Versions
 
 | Tool / crate | Version |
 |---|---|
 | rustc / cargo | 1.97.0 (2d8144b78 2026-07-07) / 1.97.0 (c980f4866 2026-06-30) |
-| `i_overlay` | **9.0.1**, MIT OR Apache-2.0. This is the version S6 audited. 9.1.0 is on crates.io, but its changes since 9.0.1 are tree-solver performance work (commit log), so nothing required the bump |
+| `i_overlay` | **9.0.1**, MIT OR Apache-2.0. This is the version 001 T006 audited. 9.1.0 is on crates.io, but its changes since 9.0.1 are tree-solver performance work (commit log), so nothing required the bump |
 | `i_float` / `i_shape` / `i_tree` / `i_key_sort` / `libm` | 5.0.0 / 5.0.0 / 0.19.1 / 0.11.0 / 0.2.16, all MIT |
 | `robust` | 1.2.0 (oracle only; the root workspace's version) |
 | `wasm-bindgen` / `wasm-bindgen-test` / runner | 0.2.129 / 0.3.79 / 0.2.129 (same as the root `Cargo.lock`) |

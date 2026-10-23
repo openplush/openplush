@@ -1,4 +1,4 @@
-# Spike S5: `svg2pdf` under WASM vs. writing PDF directly
+# Spike 001 T005: `svg2pdf` under WASM vs. writing PDF directly
 
 **Status (2026-10-15): closed.** Decision: [ADR 0008](../../docs/adr/0008-pdf-export.md) (Accepted).
 

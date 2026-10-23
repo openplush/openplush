@@ -1,12 +1,12 @@
-# Spike Q1: do Blender's UV cuts read as seams at `UV_CUT = 1e-5`?
+# Spike 003 T008: do Blender's UV cuts read as seams at `UV_CUT = 1e-5`?
 
 > **License: GPL-3.0-or-later** (see [`LICENSE`](LICENSE)). `export_models.py` imports Blender's `bpy`, which is GPL-3.0, so this whole directory is GPL. Nothing outside it may import it ([ADR 0011](../../docs/adr/0011-blender-research-tool.md)). Copying code from here into the MIT/Apache parts of the project is not allowed.
 
-Non-shipping research code for feature 003, task T008 (research R2, R6 Q1).
+Non-shipping research code for feature 003, task T008 (research R2, R6 T008).
 
 **Status (2026-10-17): `UV_CUT = 1e-5` holds for marked seams, but the spike found two spec problems.** First, a meridian seam's ends at the poles are dead ends under FR-011, which rejected the usual sphere unwrap and three of the committed fixtures; decided 2026-10-17 (003 D-014): such a cut becomes a dart proposal. Second, Blender's default projection UVs put false cuts on pole fans. Numbers are in [`results.md`](results.md).
 
-**Scope delivered**: UV spheres only. 003 T008 also asked for a capsule and a quadruped, and 003 T011 (Q4) assumes this spike's quadruped; neither was built. Recording the results in 003 research.md (R1, R2, R6) is a separate spec change.
+**Scope delivered**: UV spheres only. 003 T008 also asked for a capsule and a quadruped, and 003 T011 assumes this spike's quadruped; neither was built. Recording the results in 003 research.md (R1, R2, R6) is a separate spec change.
 
 ## The question
 

@@ -36,9 +36,10 @@ An ADR that another one amends or supersedes must say so, and the newer one must
 - an Accepted ADR amends or supersedes one that is still Proposed;
 - an Accepted ADR amends or supersedes one that does not record it, by a "Superseded by ADR-NNNN" status or a line naming the newer ADR with "amended" or "superseded";
 - an ADR says another amends or supersedes it, and that other ADR does not name it;
-- an ADR has no status, two ADRs share a number, or an amendment names an ADR that does not exist.
+- an ADR has no status, two ADRs share a number, or an amendment names an ADR that does not exist;
+- a row of a feature plan's Decision Ledger has an ID that is not `D-` and three digits, the form every feature uses ([ADR 0021](../adr/0021-one-id-scheme.md)).
 
-Each failure names both ADRs and the fix. An ADR's status is the maintainer's decision and its body is a record, so a finding only the maintainer can settle is not fixed by editing the ADR: it gets a line, with its reason, in [`scripts/adr-lifecycle-exceptions.txt`](https://github.com/openplush/openplush/blob/main/scripts/adr-lifecycle-exceptions.txt), and a line whose finding is gone fails as stale. The script's header lists the phrasings it reads as an amendment ("Supersedes, in ADR 0014: …", "amended by", "Changes ADR 0006 …") and what it misses.
+Each ADR failure names both ADRs and the fix. An ADR's status is the maintainer's decision and its body is a record, so a finding only the maintainer can settle is not fixed by editing the ADR: it gets a line, with its reason, in [`scripts/adr-lifecycle-exceptions.txt`](https://github.com/openplush/openplush/blob/main/scripts/adr-lifecycle-exceptions.txt), and a line whose finding is gone fails as stale. The script's header lists the phrasings it reads as an amendment ("Supersedes, in ADR 0014: …", "amended by", "Changes ADR 0006 …") and what it misses.
 
 The check also prints, without failing, the Proposed rows of every feature plan's Decision Ledger, sorted, as a reminder of the decisions waiting on the maintainer.
 
@@ -95,7 +96,7 @@ IDs are case-sensitive. A missing licence, `SEE LICENSE IN …`, `UNLICENSED` an
 
 The task counts on the [status page](../start/status.md#by-feature) are generated, because counts copied by hand drift each time a task is ticked. Before it builds the book, the `docs` step runs `scripts/gen-status.py`, which reads every `specs/*/tasks.md` and writes `docs/start/status-counts.inc` for the page to include: the product features first, then, under their own heading, any whose front matter says `kind: process`. The file is git-ignored and never committed, so a tick needs no regeneration and no pull request conflicts on it. A bare `mdbook build` fails on the missing file; run `scripts/gen-status.py` first, or build through `scripts/check.sh docs`.
 
-A task line starts `- [ ] ` or `- [x] ` and then a task ID. The generator fails the build, rather than count around it, on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), on a `tasks.md` with no task lines, and on a `kind:` other than `product` (the default) or `process`.
+A task line starts `- [ ] ` or `- [x] ` and then a task ID: `T` and three digits, in every feature ([ADR 0021](../adr/0021-one-id-scheme.md)). The generator fails the build, rather than count around it, on a task line with another letter, naming it; on a line that starts with a checkbox but is not a task line (indented, `[X]`, a stray space in the box, another bullet or no ID), on a `tasks.md` with no task lines, and on a `kind:` other than `product` (the default) or `process`.
 
 ### Generated index lists (`docs`)
 

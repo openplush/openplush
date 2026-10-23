@@ -26,6 +26,7 @@
 #   number, or an amendment names an ADR that does not exist.
 # Each key that only the maintainer can settle is a line `<key> <reason>` in the
 # exceptions file; a line whose key no longer matches a finding fails as stale.
+# Also fails on a Decision Ledger row whose ID is not D- and three digits (ADR 0021).
 # Also prints, never failing, the Proposed rows of every specs/*/plan.md Decision
 # Ledger (feature, ID, first eight words), sorted: decisions agents cannot make.
 #
@@ -136,7 +137,8 @@ END {
 '
 
 # Reads one plan.md; prints `  <feature> <ID> <first eight words>` for each
-# Proposed row of its Decision Ledger table.
+# Proposed row of its Decision Ledger table, or, with -v ids=1, each row whose ID
+# is not D- and three digits (ADR 0021).
 ledger_awk='
 /^## / { inl = ($0 ~ /^## Decision Ledger/); idc = 0; next }
 !inl || !/^\|/ { next }
@@ -145,6 +147,11 @@ ledger_awk='
   for (i = 2; i < n; i++) gsub(/^[ \t]+|[ \t]+$/, "", c[i])
   if (!idc) {
     for (i = 2; i < n; i++) { if (c[i] == "ID") idc = i; if (c[i] == "Decision") dc = i; if (c[i] == "Status") sc = i }
+    next
+  }
+  if (c[idc] ~ /^:?-+:?$/) next
+  if (ids) {
+    if (c[idc] !~ /^D-[0-9][0-9][0-9]$/) print FILENAME ": ledger row " c[idc] ": a decision ID is D- and three digits in every feature (ADR 0021)"
     next
   }
   if (c[sc] !~ /^Proposed/) next
@@ -198,6 +205,9 @@ print_proposed
 results=""
 ((${#adrs[@]} == 0)) || results=$(awk "$parse_awk" "${adrs[@]}" | awk "$judge_awk" | sort)
 errors=()
+while IFS= read -r msg; do
+  [[ -n $msg ]] && errors+=("$msg")
+done < <(for f in specs/*/plan.md; do [[ ! -f $f ]] || awk -v ids=1 "$ledger_awk" "$f"; done)
 while IFS=$'\t' read -r tag msg; do
   [[ $tag == E ]] && errors+=("$msg")
 done <<<"$results"

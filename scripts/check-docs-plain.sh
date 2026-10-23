@@ -17,9 +17,10 @@ dir=${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/docs/user}
 [[ -d $dir ]] || { echo "docs-plain: $dir is not a directory" >&2; exit 1; }
 
 # An ID is a prefix the specs use, bounded so that dates, paper sizes and
-# counts never match: D-NNN, W-NNN, FR-NNN, SC-NNN, R4, Q2, S1; TNNN, HNNN,
-# UNNN, WNNN; US3; ADR NNNN; #NNN.
-id='((D|W|H|S|R|Q|FR|SC)-[0-9]+|[THUW][0-9]{3}|US[0-9]|ADR ?[0-9]{4}|[RSQ][0-9]{1,2})'
+# counts never match: D-NNN, FR-NNN, SC-NNN, R4, Q2; TNNN; US3; ADR NNNN; #NNN; and
+# the forms written before ADR 0021: W-, H-, S-NNN, HNNN, UNNN, WNNN, FNNN, S1. F-NNN
+# is left out: it reads as a model name, such as the F-150 truck.
+id='((D|W|H|S|R|Q|FR|SC)-[0-9]+|[THUWF][0-9]{3}|US[0-9]|ADR ?[0-9]{4}|[RSQ][0-9]{1,2})'
 before='(^|[^A-Za-z0-9_-])'
 after='([^A-Za-z0-9-]|$)'
 

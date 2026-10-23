@@ -167,5 +167,16 @@ else
   bad "an unparseable manifest fails, naming the file, with nothing written (exit $status)" "$out"
 fi
 
+root=$(new_repo misshapen)
+write "$root" packages/client/package.json "[]"
+git -C "$root" add -A
+status=0
+out=$("$gen" "$root" "$tmp/misshapen-out" 2>&1) || status=$?
+if [[ $status -eq 1 && $out == "gen-depgraph: packages/client/package.json"* && ! -e $tmp/misshapen-out ]]; then
+  ok "a manifest that parses but is not an object fails, naming the file, with nothing written"
+else
+  bad "a manifest that parses but is not an object fails, naming the file, with nothing written (exit $status)" "$out"
+fi
+
 echo "gen-depgraph tests: $pass passed, $fail failed"
 ((fail == 0))

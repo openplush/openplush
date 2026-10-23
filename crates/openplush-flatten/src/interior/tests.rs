@@ -14,6 +14,7 @@ use crate::injectivity;
 use crate::solver::SolveError;
 
 mod gradient;
+mod stops;
 
 const CHART: ChartId = ChartId::new(3);
 

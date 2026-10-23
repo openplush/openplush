@@ -112,12 +112,13 @@ class Crates:
             elif head == own and root != self.lib[own]:
                 yield resolve(self.mods[self.lib[own]], segs[1:]), "use"
             elif head in info["deps"]:
-                yield self._dependency(head, info["deps"][head], segs)
+                yield self._dependency(info["deps"][head], segs)
 
-    def _dependency(self, ident, dep, segs):
+    def _dependency(self, dep, segs):
         real, kind = dep
-        if ident in self.dir_of:
-            target = resolve(self.mods[self.lib[ident]], segs[1:]) or self.lib[ident]
+        crate = real.replace("-", "_")
+        if crate in self.dir_of:
+            target = resolve(self.mods[self.lib[crate]], segs[1:]) or self.lib[crate]
         else:
             target = self.graph.external("crates.io", "Rust", real)
         return target, "dev" if kind == "dev" else "use"
@@ -143,10 +144,11 @@ def add_unnamed_dependencies(graph, cargo, crates):
         root = info["root"]
         if not root:
             continue
-        for ident, (real, kind) in info["deps"].items():
-            target_pkg = crates.dir_of.get(ident, "ext:crates.io")
-            target = crates.lib.get(ident) or graph.external("crates.io", "Rust", real)
-            named = any(graph.nodes[s]["pkg"] == d and (t == target or ident in crates.dir_of and graph.nodes[t]["pkg"] == target_pkg)
+        for real, kind in info["deps"].values():
+            crate = real.replace("-", "_")
+            target_pkg = crates.dir_of.get(crate, "ext:crates.io")
+            target = crates.lib.get(crate) or graph.external("crates.io", "Rust", real)
+            named = any(graph.nodes[s]["pkg"] == d and (t == target or crate in crates.dir_of and graph.nodes[t]["pkg"] == target_pkg)
                         for s, t, _ in graph.edges)
             if not named:
                 graph.edge(root, target, "dev" if kind == "dev" else "manifest")

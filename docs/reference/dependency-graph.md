@@ -7,8 +7,8 @@ The [dependency graph](../depgraph/index.html) shows how the repository's parts 
 ## Entries
 
 - **Levels**, switched with the buttons or the keys `1`, `2` and `3`:
-  - **System**: one node per category below, sized by file count. Only links carrying at least 5 file-level edges are drawn.
-  - **Modules**: the 45 most important packages (each Cargo crate, the npm package, and each second-level folder elsewhere), ranked by (dependents × 3) + (lines / 100) and grouped by their top-level folder. Double-clicking a category on the System level shows all of its packages instead.
+  - **System**: one node per category below, sized by file count. Only the major links are drawn; the hint under the graph says how many file-level edges make a link major.
+  - **Modules**: the most important packages (each Cargo crate, the npm package, and each second-level folder elsewhere), as many as the hint under the graph says, ranked by (dependents × 3) + (lines / 100) and grouped by their top-level folder. Double-clicking a category on the System level shows all of its packages instead.
   - **Full graph**: every file, plus each external package. Double-clicking a package on the Modules level shows its files and their direct neighbours.
 - **Categories**, which the sidebar filters by:
   - Frontend: `apps/` and `packages/`.

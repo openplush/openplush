@@ -79,7 +79,7 @@ def loc(text):
 
 
 def parse_cargo(repo):
-    """Each Cargo package by directory: its name and dependencies by crate identifier."""
+    """Each Cargo package by directory: its name and dependencies by the identifier its source uses."""
     pkgs = {}
     for f in repo.files:
         if os.path.basename(f) != "Cargo.toml":
@@ -95,7 +95,8 @@ def parse_cargo(repo):
             for section, kind in (("dependencies", "normal"), ("build-dependencies", "build"), ("dev-dependencies", "dev")):
                 for name, spec in (table.get(section) or {}).items():
                     real = spec.get("package", name) if isinstance(spec, dict) else name
-                    deps.setdefault(real.replace("-", "_"), (real, kind))
+                    # Source names a dependency by its key; `package` renames only the crate it resolves to.
+                    deps.setdefault(name.replace("-", "_"), (real, kind))
         pkgs[os.path.dirname(f)] = {"name": data["package"]["name"], "deps": deps}
     return pkgs
 

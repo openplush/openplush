@@ -1,4 +1,5 @@
-//! How a chart's refusal becomes the stage's: a dart's chart vertices become mesh edges.
+//! How a chart's refusal becomes the stage's: a dart's chart vertices become mesh edges; and
+//! how a chart's stop becomes a warning on its piece.
 #![allow(clippy::expect_used, clippy::panic, reason = "test setup")]
 
 use std::collections::BTreeMap;
@@ -7,8 +8,11 @@ use openplush_io::obj;
 use openplush_mesh::{EdgeId, FaceId, ManifoldMesh, RepairPlan, VertexId, into_manifold};
 use openplush_seams::{ChartId, ChartMesh, ProposalKind, SeamKind, SeamSet};
 
-use super::{chart_edge, refusal};
-use crate::{EngineError, FlattenError, chart};
+use openplush_flatten::StoppedBy;
+use openplush_pattern::PieceId;
+
+use super::{chart_edge, refusal, stop_warning};
+use crate::{EngineError, FlattenError, Remedy, WarningTarget, chart, flatten};
 
 /// A square of side 10 split into four triangles round its centre, the one interior vertex.
 const FAN: &str = "v 0 0 0\nv 10 0 0\nv 10 10 0\nv 0 10 0\nv 5 5 0\n\
@@ -222,4 +226,38 @@ fn a_dart_over_a_parallel_edge_names_the_copy_inside_its_own_chart() {
     }
     assert_eq!(charts.len(), 2);
     assert_ne!(copies[0], copies[1], "the layers share no copy of the edge");
+}
+
+#[test]
+fn a_stop_at_the_cap_warns_on_the_piece_numbered_as_its_chart() {
+    let w = stop_warning(ChartId::new(4), StoppedBy::IterationCap).expect("a warning");
+    assert_eq!(w.code().as_str(), "flatten-iteration-cap");
+    assert_eq!(w.target(), WarningTarget::Piece(PieceId::new(4)));
+    assert_eq!(
+        w.explanation(),
+        "This piece stopped flattening at the iteration limit before it settled, so the \
+         distortion shown may be more than the fabric must take."
+    );
+    let Remedy::Advisory { what_to_change } = w.remedy() else {
+        panic!("advisory: {:?}", w.remedy());
+    };
+    assert_eq!(
+        what_to_change.as_str(),
+        "Add a seam or a dart in this piece, or keep it as it is: the layout is valid, only \
+         less relaxed than it could be."
+    );
+}
+
+#[test]
+fn a_stop_that_settles_or_finds_no_descent_warns_of_nothing() {
+    for stopped in [StoppedBy::Settled, StoppedBy::NoDescent] {
+        assert_eq!(stop_warning(ChartId::new(4), stopped), None, "{stopped:?}");
+    }
+}
+
+#[test]
+fn the_stage_raises_nothing_for_a_chart_that_settles() {
+    let (mesh, one) = fan();
+    let staged = flatten(&mesh, &[one]).expect("the fan flattens");
+    assert_eq!(staged.warnings.iter().count(), 0);
 }

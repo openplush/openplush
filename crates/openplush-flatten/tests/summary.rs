@@ -1,7 +1,7 @@
 //! `summary::summarize`: one chart's distortion in numbers, against hand-computed soups.
 
-use openplush_flatten::FlattenError;
 use openplush_flatten::summary::{Summary, summarize};
+use openplush_flatten::{FlattenError, StoppedBy};
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
 use openplush_seams::ChartId;
@@ -37,7 +37,7 @@ impl Soup {
     }
 
     fn summarize(&self) -> Result<Summary, FlattenError> {
-        summarize(CHART, &self.xyz, &self.faces, &self.uv)
+        summarize(CHART, &self.xyz, &self.faces, &self.uv, StoppedBy::Settled)
     }
 }
 
@@ -233,4 +233,15 @@ fn a_flipped_face_is_refused_rather_than_summarized() {
             faces: vec![FaceId::new(1)],
         })
     );
+}
+
+#[test]
+fn the_summary_carries_the_stop_it_is_given() -> Result<(), FlattenError> {
+    let soup = Soup::default().push(1.0, 1.0, 1.0);
+    assert_eq!(soup.summarize()?.stopped_by(), StoppedBy::Settled);
+    for stopped in [StoppedBy::IterationCap, StoppedBy::NoDescent] {
+        let s = summarize(CHART, &soup.xyz, &soup.faces, &soup.uv, stopped)?;
+        assert_eq!(s.stopped_by(), stopped);
+    }
+    Ok(())
 }

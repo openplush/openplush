@@ -37,6 +37,9 @@ pub enum WarningCode {
     ImportIgnored,
     /// The finished size is outside the supported range of the longest dimension.
     SizeOutOfRange,
+    /// A piece's flattening stopped at the iteration cap, so its layout may be less relaxed
+    /// than it could be.
+    FlattenIterationCap,
     /// Declared first, sorts last: proves order follows the string.
     #[cfg(test)]
     TestZulu,
@@ -53,6 +56,7 @@ impl WarningCode {
         match self {
             Self::ImportIgnored => "import-ignored",
             Self::SizeOutOfRange => "size-out-of-range",
+            Self::FlattenIterationCap => "flatten-iteration-cap",
             #[cfg(test)]
             Self::TestZulu => "test-zulu",
             #[cfg(test)]

@@ -1,4 +1,4 @@
-use std::f64::consts::{FRAC_PI_2, PI};
+use std::f64::consts::FRAC_PI_2;
 
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
@@ -6,6 +6,7 @@ use openplush_seams::ChartId;
 use openplush_testkit::oracles::{Chart, developable, injective};
 
 use super::energy::{energy, rest_shapes};
+use super::fixtures::half_cylinder;
 use super::{Solve, Step, refuse, solve_failed};
 use crate::FlattenError;
 use crate::boundary::BoundaryError;
@@ -27,18 +28,6 @@ fn flatten(
     let mut solve = Solve::start(chart, xyz, faces.to_vec())?;
     while solve.iterate()? == Step::Improved {}
     Ok(solve.layout())
-}
-
-fn half_cylinder() -> (Vec<DVec3>, Faces) {
-    let step = PI / 8.0;
-    let xyz = (0..=3)
-        .flat_map(|r| (0..=8).map(move |c| (c, r)))
-        .map(|(c, r)| {
-            let a = f64::from(c) * step;
-            DVec3::new(libm::cos(a), libm::sin(a), 0.4 * f64::from(r))
-        })
-        .collect();
-    (xyz, grid(8, 3))
 }
 
 /// The northern hemisphere of the unit sphere, 16 rings (1536 triangles), as in the

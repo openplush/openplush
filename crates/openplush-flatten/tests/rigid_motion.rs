@@ -72,7 +72,7 @@ fn flatten(xyz: &[DVec3], faces: &Faces) -> Result<(u32, f64, Vec<DVec2>), Flatt
     while let Progress::Working { iteration, energy } = session.step()? {
         (iterations, last) = (iteration, energy);
     }
-    let layout = session.finish().unwrap_or_default();
+    let layout = session.finish().map(|(l, _)| l).unwrap_or_default();
     assert_eq!(layout.len(), xyz.len(), "every vertex is laid out");
     Ok((
         iterations,

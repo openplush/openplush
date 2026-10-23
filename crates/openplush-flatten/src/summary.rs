@@ -7,8 +7,8 @@ use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
 use openplush_seams::ChartId;
 
-use crate::FlattenError;
 use crate::metrics::{Distortion, distortion_and_area};
+use crate::{FlattenError, StoppedBy};
 
 /// The share of the area the tails cover. The single worst face keeps moving as a mesh is
 /// refined; the worst 5% of the area settles.
@@ -24,6 +24,7 @@ pub struct Summary {
     stretch_excess: f64,
     compression_deficit: f64,
     area_ratio: f64,
+    stopped_by: StoppedBy,
 }
 
 impl Summary {
@@ -61,9 +62,15 @@ impl Summary {
     pub fn area_ratio(&self) -> f64 {
         self.area_ratio
     }
+
+    /// Why the flatten that made the layout stopped, as given to [`summarize`].
+    pub fn stopped_by(&self) -> StoppedBy {
+        self.stopped_by
+    }
 }
 
-/// `chart`'s summary. `uv` is indexed like `xyz`.
+/// `chart`'s summary. `uv` is indexed like `xyz`; `stopped_by` is why the flatten that made it
+/// stopped, which the layout alone cannot show.
 ///
 /// # Errors
 /// Those of [`distortion`](crate::metrics::distortion).
@@ -72,6 +79,7 @@ pub fn summarize(
     xyz: &[DVec3],
     faces: &[(FaceId, [VertexId; 3])],
     uv: &[DVec2],
+    stopped_by: StoppedBy,
 ) -> Result<Summary, FlattenError> {
     let measured = distortion_and_area(chart, xyz, faces, uv)?;
     let stretch = extremes(&measured, Distortion::stretch, |a, b| b.total_cmp(a));
@@ -89,6 +97,7 @@ pub fn summarize(
         stretch_excess: mean(&measured, |d| (d.stretch() - 1.0).max(0.0)),
         compression_deficit: mean(&measured, |d| (1.0 - d.compression()).max(0.0)),
         area_ratio: mean(&measured, Distortion::area_ratio),
+        stopped_by,
     })
 }
 

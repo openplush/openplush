@@ -14,4 +14,4 @@ mod solver;
 pub mod summary;
 
 pub use error::FlattenError;
-pub use session::{FlattenSession, Progress};
+pub use session::{FlattenSession, Progress, StoppedBy};

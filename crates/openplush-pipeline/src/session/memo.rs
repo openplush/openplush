@@ -1,12 +1,13 @@
 use std::collections::BTreeMap;
 
+use openplush_flatten::StoppedBy;
 use openplush_geom::DVec2;
 use openplush_seams::ChartMesh;
 
 const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
 const FNV_PRIME: u64 = 0x0000_0100_0000_01b3;
 
-/// Each laid-out chart's flat positions, filed under its content's key and checked against the
+/// Each laid-out chart's flat positions and why its flatten stopped, filed under its content's key and checked against the
 /// whole chart it was laid out for, so two charts whose keys collide each get their own.
 #[derive(Debug, Default)]
 pub(crate) struct Memo {
@@ -17,20 +18,30 @@ pub(crate) struct Memo {
 struct Entry {
     chart: ChartMesh,
     uv: Vec<DVec2>,
+    stopped: StoppedBy,
 }
 
 impl Memo {
-    /// The positions laid out for `chart`, filed under `key`.
-    pub(crate) fn get(&self, key: u64, chart: &ChartMesh) -> Option<&[DVec2]> {
+    /// The positions laid out for `chart`, filed under `key`, and why its flatten stopped.
+    pub(crate) fn get(&self, key: u64, chart: &ChartMesh) -> Option<(&[DVec2], StoppedBy)> {
         self.filed
             .get(&key)?
             .iter()
             .find(|e| e.chart == *chart)
-            .map(|e| &e.uv[..])
+            .map(|e| (&e.uv[..], e.stopped))
     }
 
-    pub(crate) fn insert(&mut self, key: u64, chart: ChartMesh, uv: Vec<DVec2>) {
-        self.filed.entry(key).or_default().push(Entry { chart, uv });
+    pub(crate) fn insert(
+        &mut self,
+        key: u64,
+        chart: ChartMesh,
+        uv: Vec<DVec2>,
+        stopped: StoppedBy,
+    ) {
+        self.filed
+            .entry(key)
+            .or_default()
+            .push(Entry { chart, uv, stopped });
     }
 
     /// Keeps only the entries laid out for one of `charts`, each beside its key.

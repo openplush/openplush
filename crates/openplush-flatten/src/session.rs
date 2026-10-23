@@ -24,6 +24,19 @@ pub enum Progress {
     Done,
 }
 
+/// Why a chart's flatten stopped.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum StoppedBy {
+    /// It reached the 200-iteration cap; when the last iteration also gained too little to
+    /// go on, it is still the cap. The layout is valid but may be less relaxed than it could be.
+    IterationCap,
+    /// An iteration lowered the energy by less than 1e-9 of its value.
+    Settled,
+    /// No step tried lowered the energy, or the chart has no interior vertex to move.
+    NoDescent,
+}
+
 /// One chart's flatten in progress, owning the chart's faces so a caller can hold it between
 /// steps.
 pub struct FlattenSession {
@@ -60,10 +73,12 @@ impl FlattenSession {
         })
     }
 
-    /// Every vertex of the chart with its flat position, in vertex order; `None` until a step
-    /// has returned `Done`, so a half-flattened layout is never handed out.
-    pub fn finish(self) -> Option<Vec<(VertexId, DVec2)>> {
-        self.done.then(|| self.solve.layout())
+    /// Every vertex of the chart with its flat position, in vertex order, and why the flatten
+    /// stopped; `None` until a step has returned `Done`, so a half-flattened layout is never
+    /// handed out.
+    pub fn finish(self) -> Option<(Vec<(VertexId, DVec2)>, StoppedBy)> {
+        let stopped = self.solve.stopped_by().filter(|_| self.done)?;
+        Some((self.solve.layout(), stopped))
     }
 }
 

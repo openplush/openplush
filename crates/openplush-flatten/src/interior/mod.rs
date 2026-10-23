@@ -20,9 +20,9 @@ pub(crate) use self::energy::{Rest, rest_shapes};
 use self::energy::energy;
 use self::free::Free;
 use self::slim::{System, descend};
-use crate::FlattenError;
 use crate::boundary::{self, BoundaryError};
 use crate::solver::SolveError;
+use crate::{FlattenError, StoppedBy};
 
 /// Iterations before the solve settles with the layout it has; every one keeps all faces
 /// unflipped, so reaching the cap is a valid, if less relaxed, layout.
@@ -52,7 +52,7 @@ pub(crate) struct Solve {
     iterations: u32,
     /// Iterations allowed in all; a field so tests can reach the cap.
     cap: u32,
-    settled: bool,
+    stopped: Option<StoppedBy>,
 }
 
 impl Solve {
@@ -87,7 +87,7 @@ impl Solve {
             rest,
             uv,
             energy,
-            settled: system.is_none(),
+            stopped: system.is_none().then_some(StoppedBy::NoDescent),
             system,
             iterations: 0,
             cap: MAX_ITERATIONS,
@@ -96,7 +96,7 @@ impl Solve {
 
     /// One SLIM iteration: a solve, then a line search that never flips a face.
     pub(crate) fn iterate(&mut self) -> Result<Step, FlattenError> {
-        let Some(system) = self.system.as_ref().filter(|_| !self.settled) else {
+        let Some(system) = self.system.as_ref().filter(|_| self.stopped.is_none()) else {
             return Ok(Step::Settled);
         };
         let target = system
@@ -109,12 +109,22 @@ impl Solve {
             (self.uv, self.energy) = (uv, e);
             gain
         });
-        self.settled = self.iterations >= self.cap || gain.is_none_or(|g| g < SETTLED_BELOW);
-        Ok(if self.settled {
+        self.stopped = match gain {
+            _ if self.iterations >= self.cap => Some(StoppedBy::IterationCap),
+            None => Some(StoppedBy::NoDescent),
+            Some(g) if g < SETTLED_BELOW => Some(StoppedBy::Settled),
+            Some(_) => None,
+        };
+        Ok(if self.stopped.is_some() {
             Step::Settled
         } else {
             Step::Improved
         })
+    }
+
+    /// Why the solve stopped; `None` while another iteration may still help.
+    pub(crate) fn stopped_by(&self) -> Option<StoppedBy> {
+        self.stopped
     }
 
     /// Iterations taken so far.

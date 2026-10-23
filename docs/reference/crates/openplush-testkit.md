@@ -31,4 +31,4 @@ Each reports an `OracleFailure`, which names the face, edge or lengths involved 
 
 ## Depends on
 
-`openplush-geom`, `openplush-mesh`, `thiserror`, `fbxcel` (`writer` only)
+`openplush-geom`, `openplush-mesh`, `thiserror`, `fbxcel` (`writer` only), `libm`

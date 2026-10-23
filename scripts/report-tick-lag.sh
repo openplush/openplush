@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Tick lag: tasks whose work has merged but whose box in tasks.md is still empty.
-# A commit subject on the branch names its tasks in parentheses, as "(001 A001)" or
-# "(A001, A002)"; every comma-separated item that is exactly a task ID, with or
-# without its feature, counts, so a range "(A001–A003)" and a word such as
-# "repair" are not read as tasks. Task numbers repeat across features (ADR 0021),
-# so an item without its feature keeps the meaning it had before: T is 001's, and
-# H, U, W and F are 002, 003, 004 and 005's T tasks. Each
+# A commit subject on the branch names its tasks in parentheses, as "(001 TNNN)" or
+# "(001 TNNN, TNNN)"; every comma-separated item that is exactly a task ID, with or
+# without its feature, counts, so a range "(TNNN–TNNN)" and a word such as "repair"
+# are not read as tasks. Task numbers repeat across features (ADR 0021): a feature
+# named in the parentheses covers the bare T IDs after it, and an ID with no feature
+# keeps the meaning it had before: T is 001's, and H, U, W and F are 002, 003, 004
+# and 005's T tasks. Each
 # such ID whose line in the branch's specs/*/tasks.md is unticked is printed with its feature,
 # its age in days and the newest subject naming it, sorted by feature then ID.
 # A report only, never a gate: exit 0 whenever it ran, 2 on a usage error.
@@ -70,10 +71,12 @@ named_ids() {
       ct = $1; subject = substr($0, length($1) + 2); rest = subject
       while (match(rest, /\([^()]*\)/)) {
         n = split(substr(rest, RSTART + 1, RLENGTH - 2), items, ",")
+        group = ""
         for (i = 1; i <= n; i++) {
           id = items[i]; gsub(/^ +| +$/, "", id)
-          if (id ~ /^[0-9][0-9][0-9] [A-Z][0-9][0-9][0-9][a-z]?$/) key = substr(id, 1, 3) "\t" substr(id, 5)
+          if (id ~ /^[0-9][0-9][0-9] [A-Z][0-9][0-9][0-9][a-z]?$/) { group = substr(id, 1, 3); key = group "\t" substr(id, 5) }
           else if (id !~ /^[A-Z][0-9][0-9][0-9][a-z]?$/) continue
+          else if (group != "" && substr(id, 1, 1) == "T") key = group "\t" id
           else if (substr(id, 1, 1) in was) key = was[substr(id, 1, 1)] "\tT" substr(id, 2)
           else key = "*\t" id
           if (!(key in when) || ct > when[key]) { when[key] = ct; line[key] = subject }

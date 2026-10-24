@@ -383,7 +383,7 @@ fn a_fabric_file_the_schema_or_the_engine_refuses_is_refused() -> Result<(), Set
             r#"{"id": "f", "name": "F", "category": "felt", "colour": "red"}"#,
             "colour",
         ),
-        ("missing", r#"{"id": "f", "category": "felt"}"#, "name"),
+        ("no-name", r#"{"id": "f", "category": "felt"}"#, "name"),
         (
             "category",
             r#"{"id": "f", "name": "F", "category": "silk"}"#,

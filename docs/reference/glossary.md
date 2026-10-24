@@ -33,11 +33,9 @@ Each section is in alphabetical order.
 ### Process
 
 - **ADR**: an architecture decision record in `docs/adr/`: one decision, the options weighed, and why one won. A change to a principle, a new dependency category or a licence outside the allowlist needs one ([the ADR index](../adr/README.md)).
-- **Constitution**: the binding principles, numbered I to X, that every spec, plan and review defers to ([the constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md)).
+- **Constitution**: the binding principles, numbered I to X, that every spec, plan and review defers to ([the constitution](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md)).
 - **Decision ledger**: the table in each feature's `plan.md` that lists the feature's decisions, each with its date, ID, what was decided, and its status (proposed, or accepted by the maintainer).
-- **Factory**: the unattended task factory. Each run, a *firing*, starts as `/factory <feature>`, takes the next ready [tasks](#process) of a feature, opens a stacked pull request for each, and stops at a named condition instead of asking a question ([the factory skill](https://github.com/openplush/openplush/blob/main/.claude/skills/factory/SKILL.md)).
 - **Fixture**: a test model or data file under `fixtures/`, such as a mesh, a model with exactly one repair defect, or a reference seam set. A *golden* fixture is a stage's expected output. What each folder holds, and how the files are generated: [the fixtures README](https://github.com/openplush/openplush/blob/main/fixtures/README.md).
-- **Grant**, or **standing authorization**: a time-boxed permission the maintainer gives a [factory](#process) run as one argument (hours, features, paths, decisions); no grant lets a run merge ([Standing authorizations](../explanation/agents.md#standing-authorizations), [ADR 0020](../adr/0020-factory-grants.md)).
 - **Plan**: a feature's `plan.md`: how it will be built, with the architecture, the technology choices, the decision ledger and the order of work.
 - **Review finding**: one comment from the automated review, marked 🔴 blocking (fixed, or answered with why it stands), 🟡 optional, or 🟣 pre-existing (there before the pull request, needing nothing) ([Get a pull request reviewed and merged](../how-to/review-and-merge.md)).
 - **Spec**: a feature's `spec.md`: what the feature does and why, as user stories, numbered requirements and success criteria, with no technology choices.
@@ -74,6 +72,5 @@ Merged pull requests, commits, branch names and ledger comments keep the IDs the
 | 002 | `H012` is T012 | `H-003` is D-003 | H1, H2, H4 and H5 are T005 to T008; H3 had no task |
 | 003 | `U042` is T042 | `S-014` is D-014 | Q1 to Q4 are T008 to T011 |
 | 004 | `W018` is T018 | `W-004` is D-004 | none |
-| 005 | `F013` is T013 | `F-003` is D-003 | none |
 
 A research folder once named with its spike's ID (`research/s7_boundary_pinned/`) is the same folder without it (`research/boundary_pinned/`).

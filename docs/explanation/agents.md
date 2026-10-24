@@ -1,45 +1,32 @@
 # How agents work in this repo
 
-<!-- index: how AI agents take a feature from spec to merged pull request: Spec Kit, the factory, steward, the review on opening and who merges. -->
+<!-- index: how AI agents take a feature from spec to merged pull request: specs, steward, the review on opening and who merges. -->
 
 AI coding agents write most of OpenPlush's pull requests. This page explains, for a contributor who wants to know how that is organised, what the agents do from a feature idea to a merged change, and what keeps a person in charge. The rules themselves live in the skills and ADRs this page links to; it explains them and never replaces them.
 
 ## The short answer
 
-Work starts as a Spec Kit feature: a spec, a plan and a numbered task list. An agent picks a ready task, writes the failing test and then the code, and opens one pull request per intent. An automated review runs once, when the PR opens. The maintainer merges every PR; agents never do.
+Work starts as a feature: a spec, a plan and a numbered task list. An agent picks a ready task, writes the failing test and then the code, and opens one pull request per intent. An automated review runs once, when the PR opens. The maintainer merges every PR; agents never do.
 
 ## How it works
 
 ### Every rule has one home
 
-Agents read [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md) first; `CLAUDE.md` only imports it. Rules for a single job live in a skill under [`.claude/skills/`](https://github.com/openplush/openplush/tree/main/.claude/skills), which an agent loads when it starts that job, and reviewers are described as agents under [`.claude/agents/`](https://github.com/openplush/openplush/tree/main/.claude/agents). Above all of them sits the [constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md), which wins any conflict. The reasoning behind a process rule is in an ADR, so a skill can stay short and point there.
+Agents read [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md) first; `CLAUDE.md` only imports it. Rules for a single job live in a skill under [`.claude/skills/`](https://github.com/openplush/openplush/tree/main/.claude/skills), which an agent loads when it starts that job, and reviewers are described as agents under [`.claude/agents/`](https://github.com/openplush/openplush/tree/main/.claude/agents). Above all of them sits the [constitution](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md), which wins any conflict. The reasoning behind a process rule is in an ADR, so a skill can stay short and point there.
 
-### From an idea to tasks: Spec Kit
+### From an idea to tasks
 
-OpenPlush is built spec first, with [Spec Kit](https://github.com/github/spec-kit). Each feature gets a numbered folder under [`specs/`](https://github.com/openplush/openplush/tree/main/specs), and work moves through it in order: specify, clarify, plan, tasks, implement. Each step is a skill an agent or a person runs as a slash command:
+OpenPlush is built spec first. Each feature gets a numbered folder under [`specs/`](https://github.com/openplush/openplush/tree/main/specs), and work moves through it in order: specify, clarify, plan, tasks, implement. Each file starts from a template in [`specs/templates/`](https://github.com/openplush/openplush/tree/main/specs/templates):
 
-- [`speckit-specify`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-specify/SKILL.md) writes `spec.md`: what the feature does and why, with no technology in it.
-- [`speckit-clarify`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-clarify/SKILL.md) asks the few questions the spec leaves open and writes the answers back.
-- [`speckit-plan`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-plan/SKILL.md) writes `plan.md` and its companions: research, data model, contracts and a quickstart. The plan holds the Decision Ledger, where each design choice waits for the maintainer to accept it.
-- [`speckit-tasks`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-tasks/SKILL.md) turns the plan into `tasks.md`: numbered tasks, each naming its files and, where there is code, its test first.
-- [`speckit-implement`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-implement/SKILL.md) works through those tasks.
+- `spec.md`: what the feature does and why, with no technology in it. Questions the spec leaves open are asked and answered in it before planning.
+- `plan.md` and its companions: research, data model, contracts and a quickstart. The plan holds the Decision Ledger, where each design choice waits for the maintainer to accept it.
+- `tasks.md`: numbered tasks, each naming its files and, where there is code, its test first. Agents then work through those tasks.
 
-What each file in a feature folder holds is in the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). The task list matters most to agents: every change that is not trivial maps to a task ID, and an agent with no task stops rather than invent scope. Tasks also carry tokens that say when they are ready: `needs:` names tasks that must land first, `blocked:` names a decision only the maintainer can clear, and `human:` marks work no agent picks up. The Spec Kit files themselves are generated, so they are changed with the `specify` tool, never by hand.
+What each file in a feature folder holds is in the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). The task list matters most to agents: every change that is not trivial maps to a task ID, and an agent with no task stops rather than invent scope. Tasks also carry tokens that say when they are ready: `needs:` names tasks that must land first, `blocked:` names a decision only the maintainer can clear, and `human:` marks work no agent picks up.
 
 ### Landing a task as a pull request
 
 A task becomes a branch, a test commit that fails, and the commit that makes it pass. Tasks are grouped into pull requests by intent: one PR brings in one thing toward a feature and says why, so that someone who follows `git blame` back to it months later finds what brought the change in. There is no line budget. Work that depends on other unfinished work is stacked, each PR based on the one below it. [How to scope and open a pull request](../how-to/pull-requests.md) walks through this with examples, and [ADR 0013](../adr/0013-intent-sized-pull-requests.md) records why intents replaced the old 400-line limit.
-
-### The factory: unattended firings
-
-The [`factory`](https://github.com/openplush/openplush/blob/main/.claude/skills/factory/SKILL.md) skill is how that work happens without anyone at the keyboard. A scheduled task fires `/factory <feature>` into a fresh session, hourly, for the hours the maintainer turns it on. One firing:
-
-1. looks at `main` and the open PRs, and first drives any open PR that has a blocking finding, red CI or a conflict;
-2. picks up to four ready tasks that touch different crates and share no file;
-3. lands each one as a stacked PR, test commit first, with its local gates green;
-4. writes one comment on the feature's factory ledger issue (what it opened and skipped, and why it stopped), then ends with a handoff: the state of its PRs, the next steps, the decisions it needs and a kickoff of five lines or fewer that starts the next firing in a fresh session.
-
-A firing never asks a question. Anything that would need one is a skip or a stop, and every stop has a named reason: an unfilled placeholder such as `<window>` left in the kickoff (checked before anything else, so such a firing writes nothing), no ready task, a gate failing twice, a golden snapshot that would change, a task needing a decision or a spec change, a usage limit, or the session's context growing past a set size. A session runs one firing, so long sessions do not drift, and its agents share one build directory whose WebAssembly output is removed after each step, so builds do not fill the disk. The firing does not wait for CI or review; the next firing picks the PR up. The maintainer reads the ledger, accepts decisions, merges the PRs and ticks the `human:` work.
 
 ### Steward: driving a pull request
 
@@ -52,7 +39,7 @@ Once a PR is open, the [`steward`](https://github.com/openplush/openplush/blob/m
 | Reviewer | Runs when |
 |---|---|
 | [`pr-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/pr-reviewer.md) | always |
-| [`spec-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/spec-reviewer.md) | `specs/` or `.specify/memory/` changed |
+| [`spec-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/spec-reviewer.md) | `specs/` or `CONSTITUTION.md` changed |
 | [`docs-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/docs-reviewer.md) | `docs/` or a public surface changed: the pipeline crate's source, `bindings/`, the engine client, or a feature's contracts; or a file that can state what is built changed: a feature's `tasks.md`, `README.md` or `CONTRIBUTING.md`, so a status claim outside [the status page](../start/status.md) is caught |
 | [`mutation-auditor`](https://github.com/openplush/openplush/blob/main/.claude/agents/mutation-auditor.md) | only when the maintainer asks for it, and Rust under `crates/` or `bindings/` changed |
 
@@ -60,11 +47,7 @@ The review is advisory. It posts each finding on its line, marked 🔴 blocking,
 
 ### Who merges
 
-The maintainer merges every pull request, bottom-up through a stack, with a merge commit. Agents never merge and never turn on auto-merge, under a factory grant or not. A PR is ready for the maintainer once CI is green on its current head, the review has nothing blocking left, its threads are answered, and its base is `main`.
-
-### Standing authorizations
-
-Grants given as free text were read differently by each session, so a grant is one structured, time-boxed argument to a factory run: which features it works on, which protected paths (CI, scripts, agent rules, ADRs) it may edit, and whether it may accept a decision on its own recommendation. No grant lets a run merge. [ADR 0020](../adr/0020-factory-grants.md) sets the fields and the limits.
+The maintainer merges every pull request, bottom-up through a stack, with a merge commit. Agents never merge and never turn on auto-merge. A PR is ready for the maintainer once CI is green on its current head, the review has nothing blocking left, its threads are answered, and its base is `main`.
 
 ## Why not the alternative
 
@@ -72,4 +55,4 @@ The alternative is to let something other than a person merge: an agent that jud
 
 ## Decisions
 
-[ADR 0013](../adr/0013-intent-sized-pull-requests.md), [ADR 0020](../adr/0020-factory-grants.md).
+[ADR 0013](../adr/0013-intent-sized-pull-requests.md).

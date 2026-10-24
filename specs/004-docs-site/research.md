@@ -26,7 +26,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | Every SUMMARY generator on crates.io (`mdbook-autosummary`, `mdbook-auto-gen-summary`, `mdbook-fs-summary`) is still on mdBook 0.4 and incompatible with 0.5 | [solid] |
 | Well-regarded contributor guides (rustc-dev-guide, the Servo book) order their sidebars by a contributor's path, not by folder | [solid] |
 | The `index` preprocessor renames `README.md` chapters to `index.html`, but body links are rewritten `.md` → `.html` with no existence check: `how-to/README.md` becomes a dead `how-to/README.html`, and `../AGENTS.md` becomes a dead `../AGENTS.html`. No warning is printed | [solid] tested |
-| `docs/` has 37 relative links that leave `docs/` (to `specs/`, `research/`, `.specify/`, `AGENTS.md`, `crates/AGENTS.md`, `.github/`) | [solid] audit |
+| `docs/` has 37 relative links that leave `docs/` (to `specs/`, `research/`, the constitution, `AGENTS.md`, `crates/AGENTS.md`, `.github/`) | [solid] audit |
 | Disabling the default `index` preprocessor makes README links consistent: on mdBook 0.5.4, `[build] use-default-preprocessors = false` plus `[preprocessor.links]` writes `README.html`, links to `README.md` resolve, and `{{#include}}` still works. `[preprocessor] index = false` is rejected | [solid] tested 2026-10-20: dead relative hrefs in the built book 86 → 0 |
 | `mdbook-linkcheck2` 0.13 supports 0.5 but checks Markdown sources, so it misses the README breakage. lychee 0.24 (Apache-2.0 OR MIT) with `--offline` checks the built HTML | [likely] |
 | A ```` ```rust ```` block is a playground block by default and `book.js` then POSTs to `play.rust-lang.org` on page load; `runnable = false` stops it. MathJax loads from cdnjs but is off by default | [solid] tested |

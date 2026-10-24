@@ -18,7 +18,7 @@ Turn a 3D model into a sewable plush pattern. Free, open source, and it runs ent
 - **Private.** Your model never leaves your computer. No uploads, no telemetry.
 - **Correct or loud.** A pattern that silently comes out wrong is worse than an error.
 
-The full set is in the [constitution](.specify/memory/constitution.md).
+The full set is in the [constitution](CONSTITUTION.md).
 
 ## Design documents
 

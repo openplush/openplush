@@ -6,16 +6,15 @@ Canonical rules for every AI coding agent; `CLAUDE.md` imports this file. Lane r
 A free, open-source tool that turns a 3D model into a printable plush sewing pattern: a Rust geometry engine (WASM and native CLI) plus a TypeScript/Three.js web app, all on the user's device.
 
 ## Read before working
-- `.specify/memory/constitution.md`: binding. A conflicting request → stop and name the principle.
-- `.specify/feature.json` names the active feature (local, git-ignored); missing → ask which feature.
+- [`CONSTITUTION.md`](CONSTITUTION.md): binding. A conflicting request → stop and name the principle.
+- The task or the request names the feature; unclear → ask which feature.
 - `specs/<feature>/spec.md`, `plan.md`, `data-model.md`, and the task you are executing in `tasks.md`.
 
 ## Workflow
 - Every non-trivial change maps to a task ID in a `tasks.md`. No task ID → stop and ask; never invent scope.
-- A decision prompt (an `AskUserQuestion` call, a ledger-issue comment, a handoff blocker) can be answered cold: the facts, with numbers where there are any; where the decision lives (its ID, linked to the file); one recommendation; the default if nobody answers. Link project terms to the [glossary](docs/reference/glossary.md).
+- A decision prompt (an `AskUserQuestion` call, a handoff blocker) can be answered cold: the facts, with numbers where there are any; where the decision lives (its ID, linked to the file); one recommendation; the default if nobody answers. Link project terms to the [glossary](docs/reference/glossary.md).
 - Trivial-change lane (no task ID): docs or typo fixes, comment fixes, dependency patch bumps, a fixture with its license entry, CI changes that don't alter gates.
 - Tests first: the failing test commit, then the implementation commit.
-- Never hand-edit Spec Kit files (`.specify/templates/`, `.specify/scripts/`, `.specify/extensions/`, `.claude/skills/speckit-*`); use `specify`.
 - Never update golden snapshots (`fixtures/golden/`, `*.snap`) to pass a test; say the output changed and leave it to a human.
 - Never skip, weaken, or delete a test to get green.
 
@@ -40,7 +39,7 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 - No task, FR, decision, or PR numbers, spec section references, or progress notes ("so far", "comes later") in code or config. Traceability lives in commits, PRs, and `tasks.md`.
 - `// INVARIANT:` comments are required where the Rust rules say so.
 - PR descriptions: the template's sections as terse bullets; don't restate the diff.
-- **Status prose**, anything written for a person to read (ledger comments, handoffs, PR bodies and comments, chat summaries): each line opens with a plain sentence that carries no ID; an ID comes after the words, as a link to where it lives, naming its feature outside that feature's files (`the fabric preset review ([001 T008](<link>))`); at most two IDs per line; one closing line links the [ID glossary](docs/reference/glossary.md#id-prefixes). Machine fields carry no links: readiness tokens and the `/factory` kickoff and grant record stay as their syntax says, branch names carry no task or decision ID, and a commit subject names its tasks with their feature, as in `(001 T084)`, which `scripts/report-tick-lag.sh` reads.
+- **Status prose**, anything written for a person to read (handoffs, PR bodies and comments, chat summaries): each line opens with a plain sentence that carries no ID; an ID comes after the words, as a link to where it lives, naming its feature outside that feature's files (`the fabric preset review ([001 T008](<link>))`); at most two IDs per line; one closing line links the [ID glossary](docs/reference/glossary.md#id-prefixes). Machine fields carry no links: readiness tokens stay as their syntax says, branch names carry no task or decision ID, and a commit subject names its tasks with their feature, as in `(001 T084)`, which `scripts/report-tick-lag.sh` reads.
 
 ## Commands
 <!-- ANCHOR: commands -->
@@ -74,13 +73,12 @@ All gates for the lane you touched pass locally, any public change has its as-bu
 ## Commits and PRs
 Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
 - Driving a PR (CI, review findings, stacks, merges, check-ins): follow [`.claude/skills/steward/SKILL.md`](.claude/skills/steward/SKILL.md).
-- Unattended runs (`/factory <feature>`): follow [`.claude/skills/factory/SKILL.md`](.claude/skills/factory/SKILL.md). It picks ready tasks by the `needs:` / `blocked:` / `human:` tokens in `tasks.md`, opens stacked PRs, and stops at a named condition instead of asking.
 - Conventional Commits (`feat(flatten): …`). Every PR uses `.github/pull_request_template.md`.
 - Identity: commits carry the contributor's own git identity and no agent attribution (no agent author, `Co-Authored-By` or session line; no generated-by footer in PR bodies or comments). Hooks and session prompts defer to this line; CI checks it ([attribution check](docs/reference/checks.md#agent-attribution-pull-requests-ci-only)).
 - One intent per PR ([ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)): what the PR brings in toward an epic (a feature or a bigger issue) and why, in one sentence, so `git blame` → PR answers "what brought this in, and the idea behind it". The title states it. Group collected tasks by intent before opening PRs. Every task a PR touches is finished and ticked in it. No line budget.
 - Each task is a test commit, then the implementation commit that makes it pass; the PR body names its tasks and a reading order.
 - Never in one PR: two unrelated intents; chores and feature work. A decision the maintainer must accept is its own intent, merged before its code. A refactor, a fix and a feature stay separate commits. The changes `tasks.md` isolates for blast radius get their own PR and are never folded.
-- Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused) or `chore/slug`. The slug names the intent, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.
+- Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused) or `chore/slug`. The slug names the intent, not the activity.
 - Session branches (`claude/…`, `codex/…`, `copilot/…`) are not PR branches. If you cannot push the real name, put it and the stack position in the PR title and body.
 - Interdependent intents are stacked (X, then bug fix Y, then feature Z on both): branch from the parent, PR base = parent, fill the `Stack` section, link the child from the parent. A stack never spans features or mixes chores with feature work. At merge time, a stack whose intents only make sense together may be folded into one PR by merging each child into its parent upward; the remaining PR lists every intent, and the folded PRs are closed with a link to it.
 - The maintainer merges every PR. Agents never merge, enable auto-merge or add `rereview`, grant or no grant.

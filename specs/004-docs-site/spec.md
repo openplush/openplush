@@ -8,7 +8,7 @@
 
 **Input**: User description: "A developer-friendly wiki for the repo: somewhere easy to go. Build it as a published site from `docs/`, not a separate wiki. Today's docs are written for AI agents; a junior developer must be able to get the whole picture without it being cognitively jarring. Add a separate section for what end users will see once the project is released: a user guide and an FAQ. Back the whole thing with a docs skill, templates and a plan, so humans and agents write pages the same way. Get to a good place to refine later, not a huge undertaking."
 
-> Spec Kit rule: this file states **what** and **why** only. Tool choices live in `research.md` and `plan.md`.
+> Rule: this file states **what** and **why** only. Tool choices live in `research.md` and `plan.md`.
 
 Builds on [ADR 0003](../../docs/adr/0003-as-built-docs.md): once code lands, the code and `docs/` are the source of truth. This feature does not change that rule. It gives `docs/` readers, a shape, and a way to publish it.
 

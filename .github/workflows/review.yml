@@ -187,7 +187,7 @@ jobs:
                dies with it, so stopping with one still running posts nothing.
                Several foreground agent calls in one message still run in parallel.
                - pr-reviewer: always.
-               - spec-reviewer: if anything under specs/ or .specify/memory/ changed.
+               - spec-reviewer: if anything under specs/ or CONSTITUTION.md changed.
                - docs-reviewer: if anything under crates/openplush-pipeline/src/,
                  bindings/, packages/engine-client/, specs/*/contracts/, or docs/
                  (docs/adr/ included) changed, or specs/*/tasks.md, README.md or

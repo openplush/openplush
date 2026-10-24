@@ -31,7 +31,7 @@
 /research/                @lvndrpup
 
 # Rules, specs, and gates: changes here change what every lane must do.
-/.specify/                @lvndrpup
+/CONSTITUTION.md          @lvndrpup
 /specs/                   @lvndrpup
 /AGENTS.md                @lvndrpup
 /crates/AGENTS.md         @lvndrpup

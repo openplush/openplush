@@ -1,6 +1,6 @@
 # Specifications
 
-OpenPlush uses spec-driven development ([Spec Kit](https://github.com/github/spec-kit)). Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`.
+OpenPlush uses spec-driven development. Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`. New files start from [`templates/`](./templates/); [Start a feature's spec](../docs/how-to/author-specs.md) has the steps.
 
 This index lists the features and how to read their files. How far each feature's spec, plan and implementation have got is on the [status page](../docs/start/status.md).
 
@@ -19,13 +19,12 @@ Work on how the repository runs: agents, merging, checks. No maker sees a change
 
 | Feature | What it specifies |
 |---|---|
-| [005 factory hardening](./005-factory-hardening/) | Unattended factory runs: one structured grant, a handoff from every run |
 
 ## Reading order
 
 New to the project? Read in this order:
 
-1. [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) — the binding principles. Everything else defers to it.
+1. [`CONSTITUTION.md`](../CONSTITUTION.md) — the binding principles. Everything else defers to it.
 2. [`001-pattern-pipeline/spec.md`](./001-pattern-pipeline/spec.md) — what the product is.
 3. [`001-pattern-pipeline/plan.md`](./001-pattern-pipeline/plan.md) — the architecture and the Decision Ledger.
 4. [`001-pattern-pipeline/tasks.md`](./001-pattern-pipeline/tasks.md) — where to start working.
@@ -69,13 +68,3 @@ Worth knowing before planning a release:
 - **Fixtures and models**: what the corpus still lacks, and what that leaves unmeasurable, is on the [status page](../docs/start/status.md#known-gaps).
 - **001's fabric preset values** in research R7: stretch is the Fabric Stretch Guide's estimate, `[likely]` (short faux fur `[speculative]`); the other fields are `[verify]`. What that leaves is on the [status page](../docs/start/status.md#known-gaps).
 - **001's minor spec defaults** are open questions, each with a default already wired into `project.schema.json`. Listed in 001's spec under "Open Clarifications".
-
-## Active feature pointer
-
-`.specify/feature.json` is local and git-ignored; it tells Spec Kit commands which feature you are working on. Point it at the one you are actually working on:
-
-```json
-{"feature_directory":"specs/001-pattern-pipeline"}
-```
-
-The Spec Kit git extension creates a local `NNN-feature-slug` branch from `main`, which is the trunk. Rename it to the slice name before pushing (`git branch -m 003/01-spec`); see [`AGENTS.md`](../AGENTS.md#commits-and-prs).

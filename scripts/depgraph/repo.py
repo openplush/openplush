@@ -13,7 +13,7 @@ LANG = {".rs": "Rust", ".ts": "TypeScript", ".py": "Python", ".sh": "Shell", ".y
 MANIFESTS = ("Cargo.toml", "package.json", "pyproject.toml", "requirements.txt", "go.mod", "pom.xml", "build.gradle")
 CODE_EXT = (".rs", ".ts", ".py", ".sh")
 # Directories of prose and data: one node per second-level folder, not per file.
-GROUP_TOPS = ("docs", "specs", "fixtures", ".claude", ".specify")
+GROUP_TOPS = ("docs", "specs", "fixtures", ".claude")
 # Blender's own modules ship inside bpy, which is what requirements.txt declares.
 PY_ALIASES = {"bmesh": "bpy", "mathutils": "bpy"}
 

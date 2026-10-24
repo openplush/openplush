@@ -114,7 +114,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 | T005 | `svg2pdf` WASM viability vs. generating PDF directly | 0.5 day |
 | T006 | Licenses: confirm `faer`, `i_overlay`, `sparrow`, `svg2pdf`, threecrate (MIT vs. dual) | 0.5 day |
 | T007 | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
-| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
+| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Closed 2026-10-23 by the spec-sheet route (D-075): stretch is sourced below; pile, thickness, allowance and roll width are still guesses | 0.5 day + outside review |
 
 ### T001 result: baby_shark on wasm32 (2026-10-14) ✅ closed
 
@@ -314,8 +314,8 @@ Seven shipped presets, all editable, all persisted in the project. The schema is
 |---|---|---|
 | Minky / cuddle | Shannon Fabrics' Cuddle pages and *Cuddle 101* (<https://shannonfabrics.com/download_patterns/Cuddle101_2024.pdf>, via search summary; the host was unreachable for a direct read) | Cuddle 3 stretches widthwise, not lengthwise; Quilting Cuddle "minimal". No percentage. Agrees in direction with [G4] |
 | Polar fleece | Mill and retail listings (<https://www.mh-chine.com/products/100-polar-fleece-19nw-2050>, <https://en.wikipedia.org/wiki/Polar_fleece>) | Composition, weight and width; stretch only as "comfortable stretch" or "more in one direction" |
-| Faux fur | Retail listings (<https://sewingmachine.com/products/rabbit-soft-plush-short-pile-faux-fur-fabric>, <https://sewingmachine.com/products/luxury-long-pile-shaggy-faux-fur-fabric>) | Stretch "none"; width 58–60 in; pile 0.5–4 in |
-| Velboa | Retail listings | "2-way stretch", width 58/60 in; no percentage |
+| Faux fur | Retail listings (<https://sewingmachine.com/products/rabbit-soft-plush-short-pile-faux-fur-fabric>, <https://sewingmachine.com/products/luxury-long-pile-shaggy-faux-fur-fabric>) | Stretch "none"; width 58–60 in; pile 0.5–4 in. Conflicts with [G6]'s 10–20% cross; a listing's "none" is a seller's word, not a figure under load, so [G6] stands |
+| Velboa | Retail listings | "2-way stretch", width 58/60 in; no percentage (listing URLs not recorded) |
 | Craft felt, quilting cotton | Felt makers' and retailers' data (<https://www.mcmaster.com/f10-felt>, <https://woollyfelt.com/2024/06/17>) | Tensile strength, no elongation. Quilting cotton not found |
 
 **Fabric Stretch Guide (the maintainer's copy, 2026-10-23).** Its figures are estimates for a typical fabric under EN ISO 20932-1's conditions; every row used here is marked "Estimate" in the guide, with no public test data behind it. The value is the midpoint of the guide's range, cross and length.

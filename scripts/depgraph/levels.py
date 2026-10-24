@@ -116,7 +116,7 @@ def package_category(p, cargo, cats):
     if p in cargo and p.startswith("crates/"):
         return "Tests" if p.endswith("-testkit") else "Core"
     for prefix, cat in (("bindings/", "Backend"), ("research/", "Research"), ("scripts/tests", "Tests"),
-                        ("fixtures", "Tests"), ("scripts", "Tools"), (".claude", "Tools"), (".specify", "Tools"),
+                        ("fixtures", "Tests"), ("scripts", "Tools"), (".claude", "Tools"),
                         (".github", "Tools"), ("docs", "Docs"), ("specs", "Docs")):
         if p.startswith(prefix):
             return cat

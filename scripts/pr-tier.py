@@ -19,8 +19,8 @@ from typing import TypeVar
 from pathlib import PurePosixPath
 
 # Tier H: what defines the gate, the checks and the rules; the gate never merges it.
-H_DIRS = (".specify/", "docs/adr/", ".github/", ".claude/", "scripts/")
-H_NAMES = frozenset({"AGENTS.md", "CLAUDE.md", "GOVERNANCE.md", "CODE_OF_CONDUCT.md", "deny.toml", "rust-toolchain.toml"})
+H_DIRS = ("docs/adr/", ".github/", ".claude/", "scripts/")
+H_NAMES = frozenset({"AGENTS.md", "CLAUDE.md", "CONSTITUTION.md", "GOVERNANCE.md", "CODE_OF_CONDUCT.md", "deny.toml", "rust-toolchain.toml"})
 H_ROOT_NAMES = frozenset({"clippy.toml", "rustfmt.toml", ".gitattributes"})  # rules files; a change passes CI silently
 H_ROOT_PREFIX = "LICENSE-"
 C_DIRS = ("crates/", "specs/", "bindings/")

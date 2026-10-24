@@ -258,7 +258,7 @@ pub struct Fabric {
 }
 ```
 
-- **Presets** (research R7) ship as data, not code: `Fabric` values the user can edit or delete, with values from supplier spec sheets or the Fabric Stretch Guide's estimates (D-075), except bias stretch: an unsourced placeholder, since 001 cuts nothing on the bias. An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
+- **Presets** (research R7) ship as data, not code: `Fabric` values the user can edit or delete, with values from supplier spec sheets or the Fabric Stretch Guide's estimates (D-075), except bias stretch: an unsourced placeholder, `[verify]`, since 001 cuts nothing on the bias. An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
 - **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether export must ask about mirrored printing (FR-054: `category == Pile`; the answer is the maker's, never a stored default), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
 - **Invariants**: `pile_len_mm > 0 ⇒ nap` for `Pile`; all stretch percentages ≥ 0; `roll_width_mm > 0`; `default_allowance_mm ≥ 0` (zero is legal only when `!frays`, FR-057).
 - **Per-piece assignment** comes from painted fabric regions (FR-041). A piece spanning two fabrics is impossible by construction, because region boundaries are seams.
@@ -269,7 +269,7 @@ pub struct Fabric {
 |---|---|---|
 | `PieceSmallerThanPile` (FR-055) | piece or detail extent < `k × pile_len_mm`, `k = 2` (D-046) | `Advisory` — shorter-pile fabric, or scale the toy up |
 | `CurveTighterThanPile` (FR-055) | seam-curve radius < `k × pile_len_mm` | `Advisory` — same |
-| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, 20 percentage points (D-046), compared per-direction after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
+| `StretchMismatch` (FR-058) | \|stretch of fabric A − fabric B\| > threshold on a shared seam, 20 percentage points (D-046), compared per-direction (along and across grain only) after each piece's grain angle is known | `Advisory` — change one fabric, or accept and stabilize the seam |
 | `LowNapCoherence` (FR-052) | R < 0.85 (warn), R < 0.7 (suggest split) | `Actionable` — proposed split curve |
 | `UnsupportedConcavity` (FR-025) | concave crease with no seam along it | `Actionable` — proposed seam along the crease |
 

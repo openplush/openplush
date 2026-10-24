@@ -116,6 +116,82 @@ fn the_capsule_becomes_an_svg_and_a_pdf_in_a_new_directory() -> Result<(), Setup
     Ok(())
 }
 
+type Outline = Vec<(f64, f64)>;
+
+/// The points of every `<path class="{class}" d="M x y L x y … Z">` in `svg`, in document order.
+fn outlines(svg: &str, class: &str) -> Result<Vec<Outline>, Setup> {
+    let open = format!("<path class=\"{class}\" d=\"");
+    let mut found = Vec::new();
+    for rest in svg.split(open.as_str()).skip(1) {
+        let d = rest.split('"').next().ok_or("an unclosed path")?;
+        let numbers = d
+            .split_whitespace()
+            .filter(|t| !matches!(*t, "M" | "L" | "Z"))
+            .map(str::parse::<f64>)
+            .collect::<Result<Vec<_>, _>>()?;
+        found.push(numbers.chunks_exact(2).map(|p| (p[0], p[1])).collect());
+    }
+    Ok(found)
+}
+
+fn size(outline: &Outline) -> (f64, f64) {
+    let (xs, ys): (Vec<f64>, Vec<f64>) = outline.iter().copied().unzip();
+    let span = |v: &[f64]| {
+        v.iter().copied().fold(f64::MIN, f64::max) - v.iter().copied().fold(f64::MAX, f64::min)
+    };
+    (span(&xs), span(&ys))
+}
+
+fn perimeter(outline: &Outline) -> f64 {
+    let next = outline.iter().cycle().skip(1);
+    outline
+        .iter()
+        .zip(next)
+        .map(|(a, b)| {
+            let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+            (dx * dx + dy * dy).sqrt()
+        })
+        .sum()
+}
+
+fn assert_mm(got: f64, want: f64, what: &str) {
+    assert!(
+        (got - want).abs() <= 0.05,
+        "{what}: {got:.3} mm, want {want:.2} mm"
+    );
+}
+
+fn assert_size(got: (f64, f64), want: (f64, f64), what: &str) {
+    let got = if got.0 < got.1 { got } else { (got.1, got.0) };
+    assert_mm(got.0, want.0, what);
+    assert_mm(got.1, want.1, what);
+}
+
+// At 240 mm the capsule (120 model units long) scales by 2. The tube is its 12-sided ring of
+// radius 30 unrolled: 12 sides of 2·30·sin(15°) units, ×2, is 372.70 mm; its 60 units are 120 mm.
+#[test]
+fn the_capsule_s_pieces_measure_what_its_shape_and_the_allowance_give() -> Result<(), Setup> {
+    let dir = scratch("measure")?;
+    let out = Run {
+        size_mm: "240".into(),
+        ..Run::capsule()
+    }
+    .write_to(&dir.0)?;
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
+    let (sew, cut) = (outlines(&svg, "sew")?, outlines(&svg, "cut")?);
+    assert_eq!((sew.len(), cut.len()), (3, 3), "{svg}");
+    let tube = (0..3)
+        .max_by(|&a, &b| perimeter(&sew[a]).total_cmp(&perimeter(&sew[b])))
+        .ok_or("no pieces")?;
+    assert_size(size(&sew[tube]), (120.0, 372.70), "tube sewing line");
+    assert_size(size(&cut[tube]), (132.0, 384.70), "tube cut line");
+    for cap in (0..3).filter(|&i| i != tube) {
+        assert_mm(perimeter(&sew[cap]), 372.70, "cap sewing line");
+    }
+    Ok(())
+}
+
 #[test]
 fn the_same_inputs_give_the_same_bytes() -> Result<(), Setup> {
     let dir = scratch("same")?;
@@ -159,11 +235,11 @@ fn warnings_print_in_the_files_and_do_not_stop_the_run() -> Result<(), Setup> {
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
     let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
     assert!(
-        svg.contains(">1. size-out-of-range: the whole pattern<"),
+        svg.contains(">3. size-out-of-range: the whole pattern<"),
         "{svg}"
     );
     let pdf = String::from_utf8_lossy(&fs::read(dir.0.join("pattern.pdf"))?).into_owned();
-    assert!(pdf.contains("(1. size-out-of-range: the whole pattern) Tj"));
+    assert!(pdf.contains("(3. size-out-of-range: the whole pattern) Tj"));
     Ok(())
 }
 
@@ -307,7 +383,7 @@ fn a_fabric_file_the_schema_or_the_engine_refuses_is_refused() -> Result<(), Set
             r#"{"id": "f", "name": "F", "category": "felt", "colour": "red"}"#,
             "colour",
         ),
-        ("missing", r#"{"id": "f", "category": "felt"}"#, "name"),
+        ("no-name", r#"{"id": "f", "category": "felt"}"#, "name"),
         (
             "category",
             r#"{"id": "f", "name": "F", "category": "silk"}"#,
@@ -391,16 +467,16 @@ fn a_one_based_file_is_refused_in_its_own_numbering() -> Result<(), Setup> {
 }
 
 #[test]
-fn a_seam_the_seam_set_refuses_is_the_engine_s_refusal() -> Result<(), Setup> {
-    let capsule = fs::read_to_string(fixture("seams/capsule.json"))?;
-    let mut set: serde_json::Value = serde_json::from_str(&capsule)?;
-    let seams = set["seams"].as_array_mut().ok_or("no seams")?;
-    seams.insert(
-        0,
-        serde_json::json!({"edge": [25, 26], "kind": "mandatory"}),
-    );
-    let err = refused_seams("mandatory", &set.to_string())?;
-    assert!(err.starts_with("openplush-cli: Seams: "), "{err}");
+fn a_kind_the_seam_set_file_cannot_carry_is_refused_naming_the_seam() -> Result<(), Setup> {
+    for kind in ["dart", "opening", "mandatory"] {
+        let capsule = fs::read_to_string(fixture("seams/capsule.json"))?;
+        let mut set: serde_json::Value = serde_json::from_str(&capsule)?;
+        let seams = set["seams"].as_array_mut().ok_or("no seams")?;
+        seams.insert(0, serde_json::json!({"edge": [25, 26], "kind": kind}));
+        let err = refused_seams(kind, &set.to_string())?;
+        let says = format!("seam 0: \"kind\" \"{kind}\" is not supported in a seam-set file");
+        assert!(err.contains(&says), "{kind}: {err}");
+    }
     Ok(())
 }
 
@@ -443,5 +519,39 @@ fn a_refusal_after_the_pattern_stage_writes_nothing() -> Result<(), Setup> {
     )?;
     assert_eq!(code, Some(1), "{err}");
     assert!(err.starts_with("openplush-cli: Layout: "), "{err}");
+    Ok(())
+}
+
+#[test]
+fn a_seam_repair_forces_is_sewn_even_where_it_leaves_no_disk() -> Result<(), Setup> {
+    let dir = scratch("fin")?;
+    // An octahedron with a fin on its edge from +x to +y: repair splits that edge, so the body
+    // keeps a slit there that must be sewn to the fin.
+    let model = file(
+        &dir.0,
+        "fin.obj",
+        "v 10 0 0\nv -10 0 0\nv 0 10 0\nv 0 -10 0\nv 0 0 10\nv 0 0 -10\nv 10 10 0\n\
+         f 1 3 5\nf 3 2 5\nf 2 4 5\nf 4 1 5\nf 3 1 6\nf 2 3 6\nf 4 2 6\nf 1 4 6\nf 1 3 7\n",
+    )?;
+    // A cut from +z through -x to -z opens the body; with the slit as well it is a ring.
+    let seams = file(
+        &dir.0,
+        "seams.json",
+        &seam_set(r#"{"edge": [4, 1], "kind": "cut"}, {"edge": [1, 5], "kind": "cut"}"#),
+    )?;
+    let out_dir = dir.0.join("out");
+    let out = Run {
+        model,
+        seams,
+        ..Run::capsule()
+    }
+    .write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert!(
+        stderr(&out).starts_with("openplush-cli: ChartNotDisk: "),
+        "{}",
+        stderr(&out)
+    );
+    assert!(!out_dir.exists());
     Ok(())
 }

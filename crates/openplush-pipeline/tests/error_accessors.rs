@@ -542,6 +542,9 @@ fn mesh_locates_a_loop_by_its_source_corner() {
         MeshError::UnknownHoleLoop {
             loop_ref: LoopRef::new(corner),
         },
+        MeshError::AmbiguousHoleLoop {
+            loop_ref: LoopRef::new(corner),
+        },
         MeshError::HoleNotFillable {
             loop_ref: LoopRef::new(corner),
         },

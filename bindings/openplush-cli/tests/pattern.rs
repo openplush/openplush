@@ -147,7 +147,10 @@ fn perimeter(outline: &Outline) -> f64 {
     outline
         .iter()
         .zip(next)
-        .map(|(a, b)| (b.0 - a.0).hypot(b.1 - a.1))
+        .map(|(a, b)| {
+            let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+            (dx * dx + dy * dy).sqrt()
+        })
         .sum()
 }
 

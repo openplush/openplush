@@ -438,9 +438,9 @@ fn the_capsule_s_caps_warn_on_woven_and_not_on_a_fabric_that_stretches_enough() 
         .collect();
     assert_eq!(caps.len(), 2);
     assert_eq!(compressed(woven.clone())?, caps);
-    // The caps need about 56%.
-    assert_eq!(compressed(stretching(60.0, 60.0)?)?, []);
-    // The lesser direction counts, and no fabric gives less than 5%.
-    assert_eq!(compressed(stretching(0.0, 60.0)?)?, caps);
+    // 100% stretch warns only from a deficit of 0.5, far above the caps'.
+    assert_eq!(compressed(stretching(100.0, 100.0)?)?, []);
+    // The lesser direction counts.
+    assert_eq!(compressed(stretching(0.0, 100.0)?)?, caps);
     Ok(())
 }

@@ -281,3 +281,41 @@ fn a_piece_needing_more_stretch_than_its_fabric_warns_with_both_and_one_needing_
         "Add a dart or a seam in this piece."
     );
 }
+
+#[test]
+fn the_fabric_gives_its_lesser_stretch_never_under_5_percent_and_equal_need_does_not_warn() {
+    let fabric = |grain: f64, cross: f64| {
+        Fabric::new(FabricSpec {
+            stretch_grain_pct: grain,
+            stretch_cross_pct: cross,
+            ..options(1.0).fabric.spec().clone()
+        })
+        .expect("a fabric")
+    };
+    let warns = |deficit, grain, cross| {
+        let layout = Parameterization {
+            compression_deficit: deficit,
+            ..Parameterization::by_hand(ChartId::new(4), Vec::new())
+        };
+        squeeze_warning(&layout, fabric(grain, cross).spec()).map(|w| w.explanation().to_owned())
+    };
+    // A deficit of 0.2 needs exactly 25%.
+    assert_eq!(warns(0.2, 25.0, 25.0), None);
+    assert!(warns(0.2, 24.0, 24.0).is_some());
+    assert_eq!(
+        warns(0.2, 10.0, 30.0).as_deref(),
+        Some(
+            "This piece must stretch about 25% to fill its shape, more than this fabric's 10%, \
+             so it will sew up flatter than the model."
+        )
+    );
+    // A deficit of 0.04 needs about 4.2%: under the 5% floor, over 3%.
+    assert_eq!(warns(0.04, 3.0, 3.0), None);
+    assert_eq!(
+        warns(0.364, 3.0, 3.0).as_deref(),
+        Some(
+            "This piece must stretch about 57% to fill its shape, more than this fabric's 5%, so \
+             it will sew up flatter than the model."
+        )
+    );
+}

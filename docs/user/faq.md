@@ -10,6 +10,10 @@ Yes. OpenPlush costs nothing, has no paid version and no subscription, and the p
 
 No. OpenPlush runs entirely on your own device. Your model, your seams and your pattern are never uploaded anywhere, there is no account to create, and nothing about what you make or how you use the tool is collected or sent to anyone. It works without an internet connection.
 
+## How do I print my pattern at the right size?
+
+Print the PDF at **Actual size** (or **100%**). Many print windows start on **Fit to page** or **Shrink to fit**, which makes every piece a little too small. Before you cut, measure the square marked "50 mm" on any page with a ruler. If it is not 50 mm, print again at actual size.
+
 ## Which files can I open?
 
 Models saved as OBJ, STL or PLY files, which is what most 3D modelling and sculpting programs can export. The model is read as it was saved: OpenPlush never changes the file on your disk. A model saved in another format does not open; save it as one of those three from your modelling program first.

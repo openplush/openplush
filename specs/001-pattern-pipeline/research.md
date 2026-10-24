@@ -1,6 +1,6 @@
 # Phase 0 Research — 001-pattern-pipeline
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Last updated**: 2026-10-13 | **Status**: Active — R3 resolved by spec Q2; R7 added for the fabric profile presets
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Last updated**: 2026-10-24 | **Status**: Active — R3 resolved by spec Q2; R7 added for the fabric profile presets
 
 Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inference · **[speculative]** guess · **[verify]** check before committing.
 
@@ -114,7 +114,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 | T005 | `svg2pdf` WASM viability vs. generating PDF directly | 0.5 day |
 | T006 | Licenses: confirm `faer`, `i_overlay`, `sparrow`, `svg2pdf`, threecrate (MIT vs. dual) | 0.5 day |
 | T007 | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
-| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Every number below is currently an educated guess | 0.5 day + outside review |
+| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Closed 2026-10-23 by the spec-sheet route (D-075): stretch is sourced below; pile, thickness, allowance and roll width are still guesses | closed |
 
 ### T001 result: baby_shark on wasm32 (2026-10-14) ✅ closed
 
@@ -294,17 +294,42 @@ The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) 
 
 Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
 
-> **Every number in this table is `[verify]`** — plausible craft-fabric values, not measured ones, and not sourced from supplier data. Spike T008 exists to replace them with reviewed figures. They are good enough to build and test against (the feature's correctness does not depend on their accuracy, only on the plumbing that carries them), and wrong enough that shipping them unreviewed would mislead a maker. Per D-046, fleece, minky and long faux fur ship first, with the maintainer's measured values replacing these rows; the other four wait for their own measurements.
+> **Stretch is sourced; the other numbers are `[verify]`.** Under D-075 each stretch value comes from a supplier spec sheet, or failing that from the midpoint of the Fabric Stretch Guide's range, and is tagged `[likely]`, short faux fur `[speculative]` (below). Pile, thickness, allowance and roll width are still plausible craft-fabric values with no source; they are good enough to build and test against, since correctness depends on the plumbing that carries them, not on their accuracy. A measured value from `research/fabric_stretch/protocol.md` replaces any of them. Bias is not read in 001, since nothing is cut on the bias (D-046), but `Fabric::new` requires one, so each preset keeps R7's earlier unsourced estimate, `[verify]`.
 
-| Preset | Category | Stretch grain / cross / bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
-|---|---|---|---|---|---|---|---|---|
-| Quilting cotton | woven | 0 / 0 / 5% | no | 0 | 0.3 | **yes** | 6 | 1120 |
-| Craft felt | felt | 0 / 0 / 0 | no | 0 | 1.2 | no | 6 | 1800 |
-| Polar fleece | knit | 5 / 25 / 30% | no | 1 | 2.0 | no | 6 | 1500 |
-| Minky / cuddle | knit (pile) | 10 / 40 / 45% | **yes** | 3 | 2.5 | no | 10 | 1500 |
-| Velboa | knit (pile) | 5 / 30 / 35% | **yes** | 1.5 | 1.5 | no | 6 | 1500 |
-| Short faux fur | knit (pile) | 5 / 30 / 35% | **yes** | 8 | 3.0 | no | 10 | 1500 |
-| Long faux fur | knit (pile) | 5 / 30 / 35% | **yes** | 30 | 4.0 | no | 12 | 1500 |
+| Preset | Category | Stretch grain / cross | Bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
+|---|---|---|---|---|---|---|---|---|---|
+| Quilting cotton | woven | 1.5 / 3% [G1] `[likely]` | 5% `[verify]` | no | 0 | 0.3 | **yes** | 6 | 1120 |
+| Craft felt | felt | 10 / 10% [G2] `[likely]` | 0% `[verify]` | no | 0 | 1.2 | no | 6 | 1800 |
+| Polar fleece | knit | 20 / 55% [G3] `[likely]` | 30% `[verify]` | no | 1 | 2.0 | no | 6 | 1500 |
+| Minky / cuddle | knit (pile) | 12.5 / 52.5% [G4] `[likely]` | 45% `[verify]` | **yes** | 3 | 2.5 | no | 10 | 1500 |
+| Velboa | knit (pile) | 8.5 / 27.5% [G5] `[likely]` | 35% `[verify]` | **yes** | 1.5 | 1.5 | no | 6 | 1500 |
+| Short faux fur | knit (pile) | 4.5 / 15% [G6] `[speculative]` | 35% `[verify]` | **yes** | 8 | 3.0 | no | 10 | 1500 |
+| Long faux fur | knit (pile) | 4.5 / 15% [G6] `[likely]` | 35% `[verify]` | **yes** | 30 | 4.0 | no | 12 | 1500 |
+
+### Stretch sources
+
+**Spec sheets (searched 2026-10-23): none gives a number.** Each search below found only qualitative statements, so every value falls back to the guide (D-075). D-075's URL and read date go beside a value taken from a spec sheet; none is, so these rows record the searches.
+
+| Fabric | Searched | Found |
+|---|---|---|
+| Minky / cuddle | Shannon Fabrics' Cuddle pages and *Cuddle 101* (<https://shannonfabrics.com/download_patterns/Cuddle101_2024.pdf>, via search summary; the host was unreachable for a direct read) | Cuddle 3 stretches widthwise, not lengthwise; Quilting Cuddle "minimal". No percentage. Agrees in direction with [G4] |
+| Polar fleece | Mill and retail listings (<https://www.mh-chine.com/products/100-polar-fleece-19nw-2050>, <https://en.wikipedia.org/wiki/Polar_fleece>) | Composition, weight and width; stretch only as "comfortable stretch" or "more in one direction" |
+| Faux fur | Retail listings (<https://sewingmachine.com/products/rabbit-soft-plush-short-pile-faux-fur-fabric>, <https://sewingmachine.com/products/luxury-long-pile-shaggy-faux-fur-fabric>) | Stretch "none"; width 58–60 in; pile 0.5–4 in. Conflicts with [G6]'s 10–20% cross; a listing's "none" is a seller's word, not a figure under load, so [G6] stands |
+| Velboa | Retail listings | Searched, no figure found: "2-way stretch", width 58/60 in (listing URLs not recorded) |
+| Craft felt, quilting cotton | Felt makers' and retailers' data (<https://www.mcmaster.com/f10-felt>, <https://woollyfelt.com/2024/06/17>) | Tensile strength, no elongation. Quilting cotton: searched, no figure found |
+
+**Fabric Stretch Guide (the maintainer's copy, 2026-10-23).** Its figures are estimates for a typical fabric under EN ISO 20932-1's conditions; every row used here is marked "Estimate" in the guide, with no public test data behind it. The value is the midpoint of the guide's range, cross and length.
+
+| Ref | Guide row | Method, load | Cross (range) | Length (range) |
+|---|---|---|---|---|
+| [G1] | Quilting cotton | A, 6 N/cm | 2–4% | 1–2% |
+| [G2] | Felt (wool or acrylic, nonwoven) | A, 6 N/cm | 5–15% | 5–15% |
+| [G3] | Polar fleece | B, 3–4 N/cm | 40–70% | 15–25% |
+| [G4] | Minky (plush cuddle fleece) | B, 3–4 N/cm | 45–60% | 10–15% |
+| [G5] | Velboa / short plush | B, 3–4 N/cm | 20–35% | 5–12% |
+| [G6] | Faux fur (long-pile) | A, 6 N/cm | 10–20% | 3–6% |
+
+Short faux fur has no row of its own. It takes [G6], the faux-fur row, on the assumption that its knitted backing, not its pile length, sets its stretch, and is tagged `[speculative]` for that reason. The guide's other candidates, Teddy / sherpa and Velboa / short plush ([G5]), both have a 27.5% cross midpoint. Across the seven presets the choice changes FR-058's 20-point result in one pairing only: against quilting cotton, the cross gap is 12 points with [G6] and 24.5 with either alternative.
 
 ### Why these fields and not others
 

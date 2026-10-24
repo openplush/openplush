@@ -33,7 +33,7 @@ Each section is in alphabetical order.
 ### Process
 
 - **ADR**: an architecture decision record in `docs/adr/`: one decision, the options weighed, and why one won. A change to a principle, a new dependency category or a licence outside the allowlist needs one ([the ADR index](../adr/README.md)).
-- **Constitution**: the binding principles, numbered I to X, that every spec, plan and review defers to ([the constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md)).
+- **Constitution**: the binding principles, numbered I to X, that every spec, plan and review defers to ([the constitution](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md)).
 - **Decision ledger**: the table in each feature's `plan.md` that lists the feature's decisions, each with its date, ID, what was decided, and its status (proposed, or accepted by the maintainer).
 - **Factory**: the unattended task factory. Each run, a *firing*, starts as `/factory <feature>`, takes the next ready [tasks](#process) of a feature, opens a stacked pull request for each, and stops at a named condition instead of asking a question ([the factory skill](https://github.com/openplush/openplush/blob/main/.claude/skills/factory/SKILL.md)).
 - **Fixture**: a test model or data file under `fixtures/`, such as a mesh, a model with exactly one repair defect, or a reference seam set. A *golden* fixture is a stage's expected output, and a pull request that changes one is [tier B](../how-to/review-and-merge.md#tiers). What each folder holds, and how the files are generated: [the fixtures README](https://github.com/openplush/openplush/blob/main/fixtures/README.md).

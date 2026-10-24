@@ -41,7 +41,7 @@
   - [Get a pull request reviewed and merged](how-to/review-and-merge.md)
   - [Set up the merge gate](how-to/set-up-merge-gate.md)
   - [Write a documentation page](how-to/write-docs.md)
-  - [Set up Spec Kit to author specs](how-to/author-specs.md)
+  - [Start a feature's spec](how-to/author-specs.md)
 - [Reference](reference/README.md)
   - [Checks](reference/checks.md)
   - [Code rules for the engine](reference/code-rules.md)

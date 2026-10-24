@@ -28,4 +28,4 @@ The obvious alternative is a face-vertex list, triangles holding three vertex in
 
 ## Decisions
 
-[Constitution, Principle VII: explicit repair, never silent mutation](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md)
+[Constitution, Principle VII: explicit repair, never silent mutation](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md)

@@ -80,4 +80,4 @@ The obvious alternative is one call from file to PDF. The pipeline is staged ins
 
 ## Decisions
 
-[Constitution, Principles I, III and VII](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md) · [pipeline architecture](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#pipeline-architecture) · [engine API contract](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/engine-api.md) · [ADR 0012, export reads layout](../adr/0012-export-reads-layout.md)
+[Constitution, Principles I, III and VII](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md) · [pipeline architecture](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/plan.md#pipeline-architecture) · [engine API contract](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/contracts/engine-api.md) · [ADR 0012, export reads layout](../adr/0012-export-reads-layout.md)

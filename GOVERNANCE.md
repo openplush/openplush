@@ -17,10 +17,10 @@ A contributor becomes a lane reviewer after several merged PRs in that lane, on 
 From smallest to largest:
 
 1. **Code and docs** — a PR, reviewed against [`AGENTS.md`](AGENTS.md) and the constitution. One intent per PR (a finishable outcome; [ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)), each task test first, merge commits only. Detail: [docs/how-to/pull-requests.md](docs/how-to/pull-requests.md).
-2. **What gets built** — a spec, plan, and tasks under `specs/<feature>/`, written with [Spec Kit](https://github.com/github/spec-kit). Every non-trivial change maps to a task ID.
+2. **What gets built** — a spec, plan, and tasks under `specs/<feature>/`, started from the templates in [`specs/templates/`](specs/templates/). Every non-trivial change maps to a task ID.
 3. **Design decisions inside a feature** — an entry in that feature's Decision Ledger (`plan.md`), with an absolute date and a reason.
 4. **Principle or public-contract changes, new dependency categories, non-allowlist licenses, sideways crate edges, `unsafe` exceptions** — an ADR in [`docs/adr/`](docs/adr/). The full list is in the [ADR README](docs/adr/README.md).
-5. **The constitution** ([`.specify/memory/constitution.md`](.specify/memory/constitution.md)) — amended as its own Governance section says: one PR containing the change, an ADR, and a version bump (MAJOR, MINOR, or PATCH by the kind of change), ratified by maintainer approval. It binds everything above it: a PR, spec, or ADR that conflicts with it is changed, not the reverse.
+5. **The constitution** ([`CONSTITUTION.md`](CONSTITUTION.md)) — amended as its own Governance section says: one PR containing the change, an ADR, and a version bump (MAJOR, MINOR, or PATCH by the kind of change), ratified by maintainer approval. It binds everything above it: a PR, spec, or ADR that conflicts with it is changed, not the reverse.
 
 When people disagree, the tie-breaker is evidence: a failing test, a measurement against the fixture corpus, or a spike result beats an argument. Without evidence, the maintainer decides and records why.
 

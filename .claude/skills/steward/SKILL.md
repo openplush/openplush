@@ -20,7 +20,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 - Don't run `pr-reviewer`, `spec-reviewer` or `docs-reviewer` locally: the review on opening runs them, and a rerun reviews only what changed since.
 - Run `mutation-auditor` once before opening a PR that adds checks to Rust under `crates/` or `bindings/`, in its own worktree (`isolation: "worktree"`) so it never shares a checkout with other work. Close each real survivor with a test and re-run that mutation to prove the test bites.
-- At most two subagents at a time. A `factory` firing may run up to four through the Workflow tool, one task each in its own worktree, with nothing else running beside them.
+- At most two subagents at a time.
 
 ## Stacks
 
@@ -38,14 +38,14 @@ Which paths put a PR in which tier, and who merges each: [the tier table](../../
 - Read the gate's comment on the PR (it starts "Merge gate"): it lists the tier and each condition as pass or fail, and `merge:ready` is its verdict. Never enable auto-merge yourself, on any tier, and never apply `merge:ready`: the gate removes what it did not set.
 - On a stall, fix what the comment names: a failing check, an open thread (answer it, then resolve it: an unresolved thread is an unanswered finding to the gate), a conflict, a base that is not `main`, or a reviewer's changes requested. A push revokes the verdict; the gate judges the new head when its CI completes.
 - The review summary must name the current head. After a push the gate adds `rereview` itself, once per head, and judges the new summary; you never add the label. If the review ran on a head without posting a summary, the comment says the maintainer must look.
-- Never merge a PR yourself, on any tier, except a tier H PR under a `factory` grant with `merge=yes`, by its rule (`factory`, Merging under a grant; [ADR 0020](../../../docs/adr/0020-factory-grants.md)). Otherwise tier H waits for the maintainer; the comment says so.
+- Never merge a PR yourself, on any tier. Tier H waits for the maintainer; the comment says so.
 
 ## Waiting
 
 - After opening a PR, subscribe to it, so CI and review results wake you. Also schedule one safety-net check-in of about 30 minutes, for what sends no event (a conflict with `main`, another agent's push); re-arm it silently while nothing changed. Unsubscribe when the PR merges or closes, and cancel the check-in.
 - Every check-in starts with the PR's `mergeable_state`. `dirty` means a conflict with `main`, and then CI and the review never start: merge `origin/main` in, resolve, push.
 - Before reading CI or a review, check it is for the PR's current head SHA; an event for an older head says nothing about the new one.
-- A check not started 15 minutes after the head was pushed, or not finished 60 minutes after it started, is stalled (runners start within minutes; the slowest job takes under 30). Report it once, to the user or in a `factory` firing's ledger comment, and stop polling it; look again only on the next event or check-in.
+- A check not started 15 minutes after the head was pushed, or not finished 60 minutes after it started, is stalled (runners start within minutes; the slowest job takes under 30). Report it once, to the user, and stop polling it; look again only on the next event or check-in.
 - A turn that would only say "nothing new" is not worth taking. Report when a merge needs the maintainer, something is blocked, or a PR has merged.
 
 ## Pushing and posting
@@ -56,6 +56,6 @@ Which paths put a PR in which tier, and who merges each: [the tier table](../../
 
 ## Sessions
 
-- One intent per session, or one `factory` firing. When it merges or the context grows long, write a short handoff for a fresh session in status prose (`AGENTS.md`): merged PRs, open PRs with their heads, next steps, these rules rather than carrying on.
+- One intent per session. When it merges or the context grows long, write a short handoff for a fresh session in status prose (`AGENTS.md`): merged PRs, open PRs with their heads, next steps, these rules rather than carrying on.
 - Read only the files a step needs: grep `tasks.md` and the plan's ledger for the IDs in hand instead of reading them whole. Ask GitHub for one thread or the latest summary, not every thread on the PR.
 - Check `main`, the open PRs and the next free branch position, decision and task numbers once, at the start of a session.

@@ -55,6 +55,7 @@ Nothing is written if repair fails. `-o` is written before `--plan-out`, so if t
 Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` into `-o`, which is created if missing. Nothing is written unless every stage succeeds.
 
 - The model is read as above and repaired with the default plan, every step on. A model that needs another plan is repaired first with `repair -o`, and that OBJ is patterned.
+- Where repair split an edge into a boundary (a third face on an edge, or a cut where the faces' winding cannot agree), every copy of that edge is added as a `mandatory` seam, so the copies are sewn back together. If these seams and the seam file's together leave a piece that is not a disk, the run exits 1 with `ChartNotDisk` or `Flatten`.
 - `--seams` is a seam-set file in the [`openplush-seam-set` format](https://github.com/openplush/openplush/blob/main/fixtures/README.md#seam-set-format), version 1. Each edge's two indices are OBJ vertex indices (the order of `v` lines), counted from `vertexIndexBase`, 0 or 1. Each is found on the repaired model through the corners repair kept from it. Exit 1, naming the seam by its place in the list (`seam 0` is the first):
   - an index below `vertexIndexBase`;
   - an index no vertex came from;

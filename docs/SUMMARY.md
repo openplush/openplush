@@ -28,6 +28,7 @@
   - [0019 Spec maintenance model](adr/0019-spec-maintenance-model.md)
   - [0020 Factory grants](adr/0020-factory-grants.md)
   - [0021 One ID scheme](adr/0021-one-id-scheme.md)
+  - [0022 Hand-written specs](adr/0022-hand-written-specs.md)
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
   - [The pipeline, one model at a time](explanation/pipeline.md)

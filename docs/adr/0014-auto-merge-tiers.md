@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-Every PR waits for the maintainer to merge it, including tick PRs, docs fixes and shell changes that CI and the automated review have already passed. Factory firings open PRs hourly ([ADR 0013](0013-intent-sized-pull-requests.md), `.claude/skills/factory/SKILL.md`), so the merge queue grows faster than one person clears it, and stacked work waits on merges nobody needs to judge.
+Every PR waits for the maintainer to merge it, including tick PRs, docs fixes and shell changes that CI and the automated review have already passed. Agents open PRs faster than that ([ADR 0013](0013-intent-sized-pull-requests.md)), so the merge queue grows faster than one person clears it, and stacked work waits on merges nobody needs to judge.
 
 The maintainer set three tiers on 2026-10-19: A, CI green and a review with no ðŸ”´, which an agent may auto-merge; B, the same held 24 h, for golden, SVG or PDF output changes; and C, crates, specs, ADRs, decisions and `human:` work, which the maintainer merges. The automated review skips `docs(tasks): tick` PRs, `chore/` PRs and docs-only PRs.
 
@@ -17,7 +17,7 @@ The maintainer set three tiers on 2026-10-19: A, CI green and a review with no ð
 * The defect this project fears most is plausible-looking wrong geometry (Constitution III); engine code and specs keep a human merge.
 * The rules, gates and dependencies that every other check relies on must not change without the maintainer seeing it, or one unreviewed PR can switch the other checks off.
 * Review runs cost the maintainer's subscription (ADR 0013); a PR that cannot hold a geometry defect does not need one.
-* Factory firings must make progress without the maintainer present.
+* Agent work must make progress without the maintainer present.
 
 ## Considered options
 
@@ -58,7 +58,7 @@ The automated review (`.github/workflows/review.yml`) skips, on opening, a PR ti
 * Bad, because a docs-only or tick PR merges with no review at all; a wrong as-built note or reference page can land. The maintainer can read the merged history, and the next docs-reviewer run on a public change compares docs against code.
 * Bad, because the tier is applied by the agent from the paths; nothing in CI checks the label yet. A mislabelled C PR would auto-merge. Revisit with a workflow that computes the tier from the diff if that happens once.
 * Bad, because tier B rarely applies today: agents never edit expected output (`AGENTS.md`), and expected output changes come with engine code, which is C. B covers a maintainer's or contributor's output update outside `crates/`.
-* `CONTRIBUTING.md`'s "a maintainer still merges" and the factory skill's "never merge" are amended to the tiers.
+* `CONTRIBUTING.md`'s "a maintainer still merges" is amended to the tiers.
 
 ### Confirmation
 
@@ -71,7 +71,7 @@ The automated review (`.github/workflows/review.yml`) skips, on opening, a PR ti
 ### Option 1: the maintainer merges everything
 
 * Good, because nothing merges unseen.
-* Bad, because the queue grows with every firing, and stacks stall.
+* Bad, because the queue grows with every agent PR, and stacks stall.
 
 ### Option 2: A/B/C as first stated
 
@@ -85,6 +85,6 @@ The automated review (`.github/workflows/review.yml`) skips, on opening, a PR ti
 
 ## More information
 
-The merge mechanics (who labels the tier, who enables auto-merge, when it is disabled) are superseded by [ADR 0015](0015-merge-gate.md). [ADR 0016](0016-standing-merge-authorization.md) let an agent merge tier C PRs under a time-boxed standing authorization; [ADR 0018](0018-hands-off-merging.md) supersedes both tier C's "the maintainer merges" and its list of paths: the gate merges tier C, and a new tier H keeps the gate, the workflows, the rules, the decisions and the licence files with the maintainer. Tiers A and B and the tick exception stand.
+The merge mechanics (who labels the tier, who enables auto-merge, when it is disabled) are superseded by [ADR 0015](0015-merge-gate.md). [ADR 0018](0018-hands-off-merging.md) supersedes both tier C's "the maintainer merges" and its list of paths: the gate merges tier C, and a new tier H keeps the gate, the workflows, the rules, the decisions and the licence files with the maintainer. Tiers A and B and the tick exception stand.
 
-Revisit once the factory has run a week under the tiers: count PRs per tier, and any tier-A merge that had to be reverted.
+Revisit once agents have worked a week under the tiers: count PRs per tier, and any tier-A merge that had to be reverted.

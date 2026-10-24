@@ -128,7 +128,7 @@ kind() {
   mv "$file.new" "$file"
 }
 
-# Process work (the factory, the gate) is no maker-visible progress, so it is listed apart.
+# Process work (the gate) is no maker-visible progress, so it is listed apart.
 r=$(new_case process)
 tasks "$r" 005-process-work "- [x] $T1 done" "- [ ] $T2 open"
 kind "$r" 005-process-work process

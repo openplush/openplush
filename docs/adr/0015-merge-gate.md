@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-[ADR 0014](0014-auto-merge-tiers.md) sets the tiers and leaves the mechanics to the agent that opens a PR: it labels the tier from the paths, judges the conditions, and enables auto-merge. The ADR names its own hole: "nothing in CI checks the label yet. A mislabelled C PR would auto-merge. Revisit with a workflow that computes the tier from the diff." Events also reach only the session that opened a PR, and that session is gone by the time CI finishes, so a tier-A PR waits for the next factory firing to enable auto-merge.
+[ADR 0014](0014-auto-merge-tiers.md) sets the tiers and leaves the mechanics to the agent that opens a PR: it labels the tier from the paths, judges the conditions, and enables auto-merge. The ADR names its own hole: "nothing in CI checks the label yet. A mislabelled C PR would auto-merge. Revisit with a workflow that computes the tier from the diff." Events also reach only the session that opened a PR, and that session is gone by the time CI finishes, so a tier-A PR waits for the next agent session to enable auto-merge.
 
 This ADR supersedes the merge mechanics of ADR 0014: who computes the tier, who enables auto-merge, and what the visible verdict is. The tiers themselves, their paths and the tick exception are unchanged.
 
@@ -43,7 +43,7 @@ Chosen option: **2**. Option 1 is the hole ADR 0014 names. Option 3 puts a non-d
 * **The gate enables auto-merge** (merge commit, matched to the head commit so a push between judgement and merge cannot merge unjudged) with a GitHub App's installation token, not `GITHUB_TOKEN`: a merge made with `GITHUB_TOKEN` starts no `push` workflow, so `main`'s CI would silently stop running [solid]. The App needs contents write, pull requests write and checks read; its ID and private key are repository secrets. Without them the gate skips with a notice.
 * **The gate never checks out or runs the PR's code.** It runs on `pull_request_target`, `workflow_run` and `schedule`, all of which take the workflow from the base branch, reads the PR through the API, and checks out only `scripts/` from the default branch. A PR therefore cannot change the gate that judges it, which `pull_request` would allow [solid].
 * **Rollout by a repository variable, `MERGE_GATE_MODE`**: unset or `off` runs nothing; `dry-run` computes, comments and labels `merge:ready` but never touches auto-merge; `on` enables auto-merge too. It ships as `dry-run`. The maintainer flips it after reading a handful of verdicts, and can stop the gate from the settings page with no PR.
-* **Agents read the verdict.** `steward`, Merging becomes: read the gate's comment; never enable auto-merge yourself; on a stall, fix what the comment names. `factory` no longer enables auto-merge on its walk of the open PRs.
+* **Agents read the verdict.** `steward`, Merging becomes: read the gate's comment; never enable auto-merge yourself; on a stall, fix what the comment names.
 
 ### Consequences
 
@@ -83,7 +83,7 @@ Chosen option: **2**. Option 1 is the hole ADR 0014 names. Option 3 puts a non-d
 
 ## More information
 
-Accepted on 2026-10-20 after the first evening in `dry-run`. Every verdict was checked by hand against ADR 0014 and the PR's state on GitHub, and every one was right: tier C from `crates/` and `specs/` paths (#252, #253, #254), from `docs/adr/` (#257) and from `scripts/` (#258); tier A through the tick exception with `merge:ready` applied once CI was green and the review skipped (#256); "base is main" refused for a stacked PR (#253, #258) and granted once the parent merged; a verdict revoked on push and re-judged on the new head six minutes after its CI completed (#254). The verdicts are recorded in the 002 factory ledger (#241).
+Accepted on 2026-10-20 after the first evening in `dry-run`. Every verdict was checked by hand against ADR 0014 and the PR's state on GitHub, and every one was right: tier C from `crates/` and `specs/` paths (#252, #253, #254), from `docs/adr/` (#257) and from `scripts/` (#258); tier A through the tick exception with `merge:ready` applied once CI was green and the review skipped (#256); "base is main" refused for a stacked PR (#253, #258) and granted once the parent merged; a verdict revoked on push and re-judged on the new head six minutes after its CI completed (#254).
 
 One limit stays with the conventions rather than the gate: the review row accepts the newest review summary without checking that it was written for the current head, because a push starts no new review (steward). The rule that a push only fixes a 🔴 or a confirmed defect is what keeps that honest.
 

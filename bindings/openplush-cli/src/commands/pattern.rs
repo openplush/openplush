@@ -5,9 +5,9 @@ use std::fs;
 use std::path::Path;
 
 use openplush_pipeline::{
-    LayoutOptions, Mm, Paper, PatternInput, PatternOptions, PatternPiece, RepairPlan, Sheet,
-    SizeTarget, Staged, WarningSet, chart, export_pdf, export_svg, flatten, import, layout,
-    pattern, repair, size,
+    EdgeId, LayoutOptions, ManifoldMesh, Mm, Paper, PatternInput, PatternOptions, PatternPiece,
+    RepairPlan, RepairReport, SeamKind, SeamSet, SeamsError, Sheet, SizeTarget, Staged, WarningSet,
+    chart, export_pdf, export_svg, flatten, import, layout, pattern, repair, size,
 };
 
 use crate::failure::{Failure, io};
@@ -33,14 +33,15 @@ pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let seam_file = read(inputs.seams, seam_set::parse)?;
     let mut warnings = WarningSet::default();
     let soup = keep(&mut warnings, import(&files(inputs.model, CAP)?)?);
-    let (mesh, _) = keep(&mut warnings, repair(&soup, &RepairPlan::default())?);
-    let seams = seam_set::apply(&seam_file, &mesh).map_err(|why| match why {
+    let (mesh, report) = keep(&mut warnings, repair(&soup, &RepairPlan::default())?);
+    let mut seams = seam_set::apply(&seam_file, &mesh).map_err(|why| match why {
         seam_set::Unplaced::Seam(detail) => Failure::Input {
             path: inputs.seams.to_path_buf(),
             detail,
         },
         seam_set::Unplaced::Set(e) => Failure::Engine(e.into()),
     })?;
+    forced(&mut seams, &mesh, &report).map_err(|e| Failure::Engine(e.into()))?;
     let (charts, sewing) = keep(&mut warnings, chart(&mesh, &seams)?);
     let layouts = keep(&mut warnings, flatten(&mesh, &charts)?);
     let target = SizeTarget::LongestDimension(inputs.size);
@@ -56,6 +57,31 @@ pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let pieces = keep(&mut warnings, pattern(&input, &opts)?);
     let sheet = print(&pieces, roll, &mut warnings)?;
     write(inputs, &sheet, &pieces, &warnings)
+}
+
+/// Marks mandatory every copy of each edge repair split where it forced a seam, so the copies
+/// are sewn back together instead of left open; another kind already on one is refused.
+fn forced(
+    seams: &mut SeamSet,
+    mesh: &ManifoldMesh,
+    report: &RepairReport,
+) -> Result<(), SeamsError> {
+    let is_forced = |e: &EdgeId| {
+        let h = e.half_edge();
+        let mut ends = [mesh.origin(h), mesh.dest(h)];
+        ends.sort();
+        report.mandatory_seams().contains(&ends)
+    };
+    for group in mesh
+        .edge_copies()
+        .iter()
+        .filter(|g| g.iter().any(is_forced))
+    {
+        for &e in group {
+            seams.insert(e, SeamKind::Mandatory)?;
+        }
+    }
+    Ok(())
 }
 
 /// The print's one sheet: every piece once, on a roll as wide as the fabric's.

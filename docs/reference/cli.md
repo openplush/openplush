@@ -61,6 +61,7 @@ Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` in
   - an index more than one vertex came from;
   - two vertices with no edge between them;
   - a `format`, `version`, `vertexIndexBase`, `edge` or `kind` the format does not allow.
+- Where repair split an edge into a boundary (a third face on an edge, or a cut where the faces' winding cannot agree), every copy of that edge is added as a `mandatory` seam, so the copies are sewn back together. If these seams and the seam file's together leave a piece that is not a disk, the run exits 1 with `ChartNotDisk` or `Flatten:`.
 - `--fabric` is one JSON object in the project schema's `fabric` shape:
   - required fields `id`, `name` and `category` (`woven`, `knit`, `pile`, `felt`);
   - optional fields take the schema's defaults, including a 6 mm allowance and a 1500 mm roll;

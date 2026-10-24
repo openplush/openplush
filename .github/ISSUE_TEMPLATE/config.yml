@@ -2,4 +2,4 @@ blank_issues_enabled: false
 contact_links:
   - name: How work flows here (specs, tasks, small PRs)
     url: https://github.com/openplush/openplush/blob/main/CONTRIBUTING.md
-    about: Read this before proposing work. Every non-trivial change maps to a task ID.
+    about: Read this before proposing work. Feature work maps to a task ID; a fix needs a failing test.

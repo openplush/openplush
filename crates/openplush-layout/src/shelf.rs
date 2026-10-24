@@ -25,10 +25,12 @@ pub fn pack(pieces: &[PatternPiece], opts: &LayoutOptions) -> Result<Vec<Sheet>,
             )?);
         }
     }
-    place(items, opts)
+    Ok(vec![place(items, opts)?.0])
 }
 
 /// The print: one template per piece, mirrored when the print is, laid out as `pack` lays copies.
+///
+/// The sheet is as wide as the pieces reach, not the roll, so no page is tiled over empty roll.
 pub fn pack_templates(
     pieces: &[PatternPiece],
     opts: &LayoutOptions,
@@ -37,10 +39,13 @@ pub fn pack_templates(
         .iter()
         .map(|p| Item::new(p, opts.mirrored, 1, 0))
         .collect::<Result<Vec<_>, _>>()?;
-    place(items, opts)
+    let (mut sheet, used) = place(items, opts)?;
+    sheet.width_mm = used;
+    Ok(vec![sheet])
 }
 
-fn place(mut items: Vec<Item>, opts: &LayoutOptions) -> Result<Vec<Sheet>, LayoutError> {
+/// The sheet across the whole roll, and how far right its pieces reach.
+fn place(mut items: Vec<Item>, opts: &LayoutOptions) -> Result<(Sheet, f64), LayoutError> {
     if items.is_empty() {
         return Err(LayoutError::NoPieces);
     }
@@ -51,6 +56,7 @@ fn place(mut items: Vec<Item>, opts: &LayoutOptions) -> Result<Vec<Sheet>, Layou
     let mut placements = Vec::new();
     let (mut x, mut y, mut shelf_height) = (0.0_f64, 0.0_f64, 0.0_f64);
     let mut shelf_empty = true;
+    let mut used = 0.0_f64;
     for item in &items {
         if item.width > roll {
             return Err(LayoutError::PieceTooWide {
@@ -67,15 +73,17 @@ fn place(mut items: Vec<Item>, opts: &LayoutOptions) -> Result<Vec<Sheet>, Layou
             let left = if shelf_empty { 0.0 } else { x + gap };
             placements.push(item.placement(copy, DVec2::new(left, y)));
             x = left + item.width;
+            used = used.max(x);
             shelf_height = shelf_height.max(item.height);
             shelf_empty = false;
         }
     }
-    Ok(vec![Sheet {
+    let sheet = Sheet {
         width_mm: roll,
         length_mm: y + shelf_height,
         placements,
-    }])
+    };
+    Ok((sheet, used))
 }
 
 /// A piece as it will sit: its transform and the size and corner of its transformed bounding box.

@@ -69,7 +69,7 @@ Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` in
 
   `fixtures/fabrics/woven.json` is a test fabric.
 - `--size-mm` is the finished length of the model's longest dimension: a finite number above 0, in millimetres. Outside 75 mm to 1000 mm the run still succeeds, with a `size-out-of-range` warning.
-- The print places one template of every piece on a roll as wide as the fabric's `rollWidthMm`, 10 mm apart, not mirrored. `pattern.svg` is that sheet at true scale. `pattern.pdf` tiles it on `--page`.
+- The print places one template of every piece on a roll as wide as the fabric's `rollWidthMm`, 10 mm apart, not mirrored; the sheet ends at the rightmost piece. `pattern.svg` is that sheet at true scale. `pattern.pdf` tiles it on `--page`.
 - Every warning the stages raised prints in both files: under the SVG's sheet, and on the PDF's cover. Warnings never change the exit code.
 
 ## Exit codes

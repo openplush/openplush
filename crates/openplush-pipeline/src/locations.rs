@@ -39,6 +39,7 @@ pub(crate) fn mesh_locations(error: &MeshError) -> ErrorLocations {
             ..none
         },
         MeshError::UnknownHoleLoop { loop_ref }
+        | MeshError::AmbiguousHoleLoop { loop_ref }
         | MeshError::HoleNotFillable { loop_ref }
         | MeshError::HoleOnSplit { loop_ref }
         | MeshError::HoleTooLarge { loop_ref, .. } => ErrorLocations {

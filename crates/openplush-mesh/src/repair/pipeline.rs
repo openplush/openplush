@@ -287,10 +287,30 @@ fn build(
     seams.sort();
     seams.dedup();
     report.mandatory_seams = seams;
+    report.holes = fill_listed(&mut mesh, plan, tol)?;
+    Ok((mesh, report))
+}
+
+/// Step 7: classifies every boundary loop and fills those `plan` lists, in loop order.
+fn fill_listed(
+    mesh: &mut ManifoldMesh,
+    plan: &RepairPlan,
+    tol: &ModelTolerances,
+) -> Result<Vec<HoleReport>, MeshError> {
     let mut holes = Vec::new();
-    for hole in holes::classify(&mesh, plan)? {
+    for hole in holes::classify(mesh, plan)? {
         let added_faces = if hole.accidental {
-            fill::fill(&mut mesh, hole.loop_ref, &hole.half_edges, tol)?
+            // Two holes touching at one source vertex share a name; filling both would fill
+            // one the plan never chose. Checked here so a refusal of the first loop wins.
+            if holes
+                .iter()
+                .any(|h: &HoleReport| h.loop_ref == hole.loop_ref)
+            {
+                return Err(MeshError::AmbiguousHoleLoop {
+                    loop_ref: hole.loop_ref,
+                });
+            }
+            fill::fill(mesh, hole.loop_ref, &hole.half_edges, tol)?
         } else {
             Vec::new()
         };
@@ -300,8 +320,7 @@ fn build(
             added_faces,
         });
     }
-    report.holes = holes;
-    Ok((mesh, report))
+    Ok(holes)
 }
 
 /// Fills the report's edge copies and orientation conflicts from the split edges, as the

@@ -30,8 +30,9 @@ use accessor::Use;
 /// file's name in the import set; `sidecar` looks up the files beside it by name.
 ///
 /// Errors: [`IoError::Parse`] for a file the `gltf` crate refuses (including a required
-/// extension it does not implement), no scene, a node reached twice, a node rotation that is
-/// not a unit quaternion, a sparse accessor, an accessor of the wrong type, out of its view
+/// extension it does not implement), a `POSITION` accessor the file lacks, no scene, a node
+/// reached twice, a node rotation that is not a unit quaternion, a sparse accessor, an
+/// accessor of the wrong type, out of its view
 /// or with a stride shorter than its element, an index past its primitive's last vertex, a
 /// non-finite `TEXCOORD_0` value, a short buffer, or a reference outside the supplied files;
 /// [`IoError::MissingResource`] for a referenced file that was not supplied;
@@ -47,7 +48,11 @@ pub fn read<'a>(
         Format::Gltf
     };
     let parse = |detail: String| IoError::Parse { format, detail };
-    let file = ::gltf::Gltf::from_slice(bytes).map_err(|e| parse(e.to_string()))?;
+    let mut file =
+        ::gltf::Gltf::from_slice_without_validation(bytes).map_err(|e| parse(e.to_string()))?;
+    position_accessors_exist(file.document.as_json()).map_err(parse)?;
+    file.document =
+        Document::from_json(file.document.into_json()).map_err(|e| parse(e.to_string()))?;
     let beside = |n: &str| -> Option<&[u8]> { sidecar(n) };
     let buffers = buffers::resolve(&file.document, file.blob.as_deref(), name, &beside, format)?;
     let mut soup = Builder::default();
@@ -63,6 +68,25 @@ pub fn read<'a>(
         soup: soup.finish(&file.document)?,
         ignored,
     })
+}
+
+/// Refuses a `POSITION` accessor past the accessors list, which the `gltf` crate's
+/// validator indexes unchecked and would panic on.
+fn position_accessors_exist(root: &::gltf::json::Root) -> Result<(), String> {
+    let positions = ::gltf::json::validation::Checked::Valid(Semantic::Positions);
+    for (m, mesh) in root.meshes.iter().enumerate() {
+        for (p, primitive) in mesh.primitives.iter().enumerate() {
+            if let Some(a) = primitive.attributes.get(&positions)
+                && a.value() >= root.accessors.len()
+            {
+                return Err(format!(
+                    "mesh {m} primitive {p}: the POSITION accessor {} does not exist",
+                    a.value()
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 /// The soup's arrays as primitives are added.

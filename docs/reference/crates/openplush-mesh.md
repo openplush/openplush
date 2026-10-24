@@ -42,7 +42,7 @@ A soup with no triangles or an extent tolerances refuse is `Unmeasurable` (`NoTr
 
 ### Hole filling
 
-After the build every boundary loop is classified: an opening unless `fill_holes` lists it; a listed loop the mesh does not have is `UnknownHoleLoop`, the lowest named first. A listed loop is filled, in loop order, as Liepa 2003 does.
+After the build every boundary loop is classified: an opening unless `fill_holes` lists it; a listed loop the mesh does not have is `UnknownHoleLoop`, the lowest named first; a listed name more than one loop has (two holes touching at one source vertex) is `AmbiguousHoleLoop`, and nothing is filled. A listed loop is filled, in loop order, as Liepa 2003 does.
 
 - It is triangulated by dynamic programming over its vertices for the lowest largest dihedral angle (1 - cos between unit normals, against the patch and the faces across the rim), then the lowest area, ties to the lowest apex, excluding a chord the mesh already has and a sliver.
 - It is refined: a triangle is split at its centroid when the centroid is further than σ/√2 from each corner v, both for the triangle's σ (the mean of its corners') and for v's own (σ the mean edge length around a rim vertex, averaged for a new one), with Delaunay edge swaps after each round (an edge swaps when its opposite angles' cotangents sum below `-DELAUNAY_COT`).
@@ -52,7 +52,7 @@ The patch is appended after the mesh's own vertices, edges and faces, its corner
 
 ### Repair errors, conflicts and edge copies
 
-Errors beyond the build's: `NoTriangles`, `UnusableExtent`, `UnknownHoleLoop`, `HoleNotFillable`, `HoleOnSplit` and `HoleTooLarge`.
+Errors beyond the build's: `NoTriangles`, `UnusableExtent`, `UnknownHoleLoop`, `AmbiguousHoleLoop`, `HoleNotFillable`, `HoleOnSplit` and `HoleTooLarge`.
 
 A non-orientable conflict edge (two faces no flips make agree) is cut into two boundary copies, both mandatory seams, listed in `orientation_conflicts` by the ends of the copy its lower face kept; with `fix_orientation` off it reaches the build and is refused as `InconsistentOrientation`.
 

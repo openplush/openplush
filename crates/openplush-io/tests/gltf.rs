@@ -463,6 +463,14 @@ fn an_unimplemented_required_extension_is_refused_by_name() -> Result<(), Setup>
 }
 
 #[test]
+fn a_position_accessor_the_file_lacks_is_refused_naming_it() -> Result<(), Setup> {
+    let doc = r#"{"asset":{"version":"2.0"},"accessors":[{"componentType":5126,"type":"VEC3","count":3}],"meshes":[{"primitives":[{"attributes":{"POSITION":5}}]}],"nodes":[{"mesh":0}],"scenes":[{"nodes":[0]}],"scene":0}"#;
+    let detail = parse_detail(read(doc))?;
+    assert!(detail.contains("POSITION accessor 5"), "{detail}");
+    Ok(())
+}
+
+#[test]
 fn a_sparse_accessor_is_refused() -> Result<(), Setup> {
     let mut bin = Bin::default();
     let base = bin.positions(&TRIANGLE);

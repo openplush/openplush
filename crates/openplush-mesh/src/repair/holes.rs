@@ -18,7 +18,8 @@ pub(crate) struct Hole {
 /// plan names the same loop on every replay.
 ///
 /// # Errors
-/// `UnknownHoleLoop`, naming the lowest, when the plan lists a loop the mesh does not have.
+/// `UnknownHoleLoop`, naming the lowest, when the plan lists a loop the mesh does not have. A listed
+/// name more than one loop has marks each of them accidental; the fill refuses it.
 pub(crate) fn classify(mesh: &ManifoldMesh, plan: &RepairPlan) -> Result<Vec<Hole>, MeshError> {
     let holes: Vec<Hole> = mesh
         .boundary_loops()

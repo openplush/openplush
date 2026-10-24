@@ -110,6 +110,15 @@ pub enum MeshError {
         /// The loop named.
         loop_ref: LoopRef,
     },
+    /// `RepairPlan::fill_holes` names more than one loop of the repaired mesh: two holes touching
+    /// at one source vertex share their name.
+    #[error(
+        "the plan fills the loop {loop_ref:?}, but more than one hole has that name, so none was filled"
+    )]
+    AmbiguousHoleLoop {
+        /// The name the holes share.
+        loop_ref: LoopRef,
+    },
     /// A listed loop has no fill: every triangulation reuses an existing edge or has a
     /// triangle with no area, or the patch does not settle or solve.
     #[error(

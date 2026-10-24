@@ -10,7 +10,7 @@ What `openplush-layout` contains **today**, and what it actually depends on. Wha
 
 `shelf::pack(pieces, opts)` is the fabric plan: it lays every copy of every `PatternPiece` on shelves across a roll, tallest first (ties by `PieceId`), and returns one `Sheet` as wide as the roll and as long as the shelves need. Copies cut as printed come first and copies cut flipped follow, mirrored; when the print is mirrored for pile (`LayoutOptions`'s `mirrored`) the whole plan is, so a flipped copy is then the unmirrored one.
 
-`shelf::pack_templates(pieces, opts)` is the print: one template per piece (copy 0), mirrored when the print is, laid out the same way. Each piece uses its first allowed rotation, which must be a multiple of 90 degrees (the turn is exact, with no trigonometry).
+`shelf::pack_templates(pieces, opts)` is the print: one template per piece (copy 0), mirrored when the print is, laid out the same way, on a `Sheet` only as wide as its pieces reach so no page tiles empty roll. Each piece uses its first allowed rotation, which must be a multiple of 90 degrees (the turn is exact, with no trigonometry).
 
 - `LayoutOptions::new(roll_width, gap, mirrored)`
 - `Sheet` (`width_mm`, `length_mm`, `placements`; y-up, so its top edge is `y = length_mm`)

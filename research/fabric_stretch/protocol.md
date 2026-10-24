@@ -16,7 +16,7 @@ Bias is not tested. No piece is placed on the bias (D-046), so 001 uses none of 
 |---|---|---|
 | [S1] | EN ISO 20932-1:2020, *Textiles — Determination of the elasticity of fabrics — Part 1: Strip tests* (identical to ISO 20932-1:2018, confirmed 2024; replaces EN 14704-1:2005), read through the Fabric Stretch Guide's "Test conditions assumed" (the maintainer's copy, 2026-10-23) | The two specimen forms, the load left to agreement, the 5 cycles and the 30 min rest |
 | [S2] | Bureau Veritas CPS, "BS EN ISO 20932-1: textiles, determination of elasticity of fabrics", <https://www.cps.bureauveritas.com/newsroom/bs-en-iso-20932-1-textiles-determination-elasticity-fabrics>, read 2026-10-23 | Pretension values, a secondary summary of [S1] |
-| [S3] | Fabric Stretch Guide, "Test conditions assumed" and "Stretch test your fabric" panels (the maintainer's copy, 2026-10-23) | The common-practice loads, and the 10 cm home ruler test |
+| [S3] | Fabric Stretch Guide, "Test conditions assumed" and "Stretch test your fabric" panels (the maintainer's copy, 2026-10-23) | The common-practice loads, each fabric row's method and load, and the 10 cm home ruler test |
 
 The guide is an uncommitted copy with no stated licence, so the passage this protocol relies on is quoted here:
 
@@ -38,7 +38,7 @@ The standard's full text could not be fetched from this environment. Every value
 | Gauge length, extension rate | Not available from [S1] or [S2] | `[verify]` |
 | Cycle whose extension is reported | Not available from [S1] or [S2]; record all five | `[verify]` |
 
-A different load or method gives different numbers [S3], so the same load and method must be used on both fabrics of a comparison. R7 uses Method B at 3–4 N/cm for the knit and pile presets and Method A at 6 N/cm for quilting cotton, craft felt and long-pile faux fur, matching the guide's rows.
+A different load or method gives different numbers [S3], so the same load and method must be used on both fabrics of a comparison. The guide's per-fabric rows [S3] name Method B at 3–4 N/cm for fleece, minky and velboa, and Method A at 6 N/cm for quilting cotton, felt and long-pile faux fur; T008 records each row in R7.
 
 ## Home method (no tensile tester)
 
@@ -62,7 +62,7 @@ The 100 mm gauge matches the ruler test's 10 cm [S3]. The 250 mm length, the 75 
 
 1. Clamp the top 75 mm of the strip, using two binder clips across its full width, and hang it straight.
 2. Clip the weight to the bottom 75 mm across the full width. Lower it by hand so it doesn't drop.
-3. Hold for 1 min `[verify]`, then measure between the two marks to the nearest millimetre. Lift the weight off.
+3. Hold for 1 min (this protocol's choice), then measure between the two marks to the nearest millimetre. Lift the weight off.
 4. Repeat for 5 cycles in total [S1] and record each.
 5. Lay the strip flat for 30 min [S1] and measure the marks again for recovery.
 

@@ -454,6 +454,14 @@ fn a_corner_over_29_degrees_is_mitered() -> Result<(), PatternError> {
     Ok(())
 }
 
+#[test]
+fn an_obtuse_corner_is_mitered_at_the_closed_form_distance() -> Result<(), PatternError> {
+    // 1 / sin 60°; the base corners are 30°, mitered at 1 / sin 15° = 3.86, inside the limit.
+    let cut = cut_line(PIECE, &spike(120.0)?, &mm(&[1.0; 3]))?;
+    assert_close(reach_at_apex(&cut), 1.0 / libm::sin(60.0_f64.to_radians()));
+    Ok(())
+}
+
 /// Crossing-number test; `p` is never on the outline here.
 fn inside(o: &Outline, p: DVec2) -> bool {
     let pts = o.points();

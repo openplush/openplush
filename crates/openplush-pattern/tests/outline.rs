@@ -246,3 +246,37 @@ fn negative_zero_is_the_same_height_as_zero() {
     let q = [(-0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)];
     assert!(refused(&q).is_ok());
 }
+
+// A fold refused by its corner names that corner's two edges. A fold at the closing corner
+// (edge n - 1 into edge 0) is never the first refusal: with four or more points its overlap
+// meets an earlier non-adjacent edge, and three points fold at an earlier corner.
+
+#[test]
+fn a_corner_folding_back_past_its_start_names_both_edges() {
+    let p = [(0.0, 0.0), (10.0, 0.0), (-5.0, 0.0), (-5.0, 5.0)];
+    assert_eq!(refused(&p), not_simple(0, 1));
+}
+
+#[test]
+fn a_corner_folding_back_short_of_its_start_names_both_edges() {
+    let p = [(0.0, 0.0), (10.0, 0.0), (5.0, 0.0), (5.0, 5.0)];
+    assert_eq!(refused(&p), not_simple(0, 1));
+}
+
+#[test]
+fn a_fold_past_the_first_corner_names_its_own_edges() {
+    let p = [(0.0, 10.0), (0.0, 0.0), (10.0, 0.0), (5.0, 0.0), (5.0, 5.0)];
+    assert_eq!(refused(&p), not_simple(1, 2));
+}
+
+#[test]
+fn an_edge_starting_on_a_later_edge_is_not_simple() {
+    let p = [(5.0, 5.0), (10.0, 0.0), (10.0, 5.0), (0.0, 5.0), (0.0, 0.0)];
+    assert_eq!(refused(&p), not_simple(0, 2));
+}
+
+#[test]
+fn an_edge_ending_on_a_later_edge_is_not_simple() {
+    let p = [(0.0, 0.0), (5.0, 5.0), (10.0, 0.0), (10.0, 5.0), (0.0, 5.0)];
+    assert_eq!(refused(&p), not_simple(0, 3));
+}

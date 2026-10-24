@@ -11,7 +11,7 @@ use openplush_seams::{ChartId, ChartMesh, ProposalKind, SeamKind, SeamSet};
 use openplush_flatten::StoppedBy;
 use openplush_pattern::PieceId;
 
-use super::{chart_edge, compression_warning, refusal, stop_warning};
+use super::{chart_edge, refusal, stop_warning};
 use crate::{EngineError, FlattenError, Remedy, WarningTarget, chart, flatten};
 
 /// A square of side 10 split into four triangles round its centre, the one interior vertex.
@@ -260,24 +260,4 @@ fn the_stage_raises_nothing_for_a_chart_that_settles() {
     let (mesh, one) = fan();
     let staged = flatten(&mesh, &[one]).expect("the fan flattens");
     assert_eq!(staged.warnings.iter().count(), 0);
-}
-
-#[test]
-fn a_piece_compressed_past_the_limit_warns_with_its_share_and_one_at_it_does_not() {
-    assert_eq!(compression_warning(ChartId::new(4), 0.15), None);
-    let w = compression_warning(ChartId::new(4), 0.364).expect("a warning");
-    assert_eq!(w.code().as_str(), "piece-compressed");
-    assert_eq!(w.target(), WarningTarget::Piece(PieceId::new(4)));
-    assert_eq!(
-        w.explanation(),
-        "This piece is squeezed by about 36% to lie flat, so it will sew up flatter than the \
-         model."
-    );
-    let Remedy::Advisory { what_to_change } = w.remedy() else {
-        panic!("advisory: {:?}", w.remedy());
-    };
-    assert_eq!(
-        what_to_change.as_str(),
-        "Add a dart or a seam in this piece."
-    );
 }

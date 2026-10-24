@@ -1,5 +1,5 @@
-//! Seam parity, which valid layouts cannot fail, and a chart no flatten would lay out: layouts
-//! are stretched or written by hand to reach them.
+//! Seam parity, which valid layouts cannot fail, a chart no flatten would lay out, and the squeeze
+//! warning's threshold and text: layouts are stretched or written by hand to reach them.
 #![allow(clippy::expect_used, clippy::panic, reason = "test setup")]
 
 use std::fmt::Write as _;
@@ -8,11 +8,11 @@ use openplush_geom::DVec2;
 use openplush_geom::units::{Mm, Scale};
 use openplush_io::obj;
 use openplush_mesh::{ManifoldMesh, RepairPlan, VertexId, into_manifold};
-use openplush_pattern::{Fabric, FabricCategory, FabricId, FabricSpec, PatternError};
+use openplush_pattern::{Fabric, FabricCategory, FabricId, FabricSpec, PatternError, PieceId};
 use openplush_seams::{ChartId, ChartMesh, SeamGraph, SeamKind, SeamSet, SewingMap, charts};
 
-use super::{PatternInput, PatternOptions, pattern};
-use crate::{EngineError, Parameterization, chart, flatten};
+use super::{PatternInput, PatternOptions, needed_stretch, pattern, squeeze_warning};
+use crate::{EngineError, Parameterization, Remedy, WarningTarget, chart, flatten};
 
 /// One run's chart and flatten outputs, for its layouts to be changed by hand.
 struct Run {
@@ -253,5 +253,31 @@ fn a_chart_with_two_boundary_loops_cannot_be_its_layout_s() {
         Err(EngineError::StageInputMismatch {
             chart: ring.chart()
         })
+    );
+}
+
+#[test]
+fn a_piece_needing_more_stretch_than_its_fabric_warns_with_both_and_one_needing_less_does_not() {
+    let woven = options(1.0).fabric;
+    let layout = |deficit| Parameterization {
+        compression_deficit: deficit,
+        ..Parameterization::by_hand(ChartId::new(4), Vec::new())
+    };
+    assert_eq!(needed_stretch(0.2), 0.25);
+    assert_eq!(squeeze_warning(&layout(0.04), woven.spec()), None);
+    let w = squeeze_warning(&layout(0.364), woven.spec()).expect("a warning");
+    assert_eq!(w.code().as_str(), "piece-compressed");
+    assert_eq!(w.target(), WarningTarget::Piece(PieceId::new(4)));
+    assert_eq!(
+        w.explanation(),
+        "This piece must stretch about 57% to fill its shape, more than this fabric's 5%, so it \
+         will sew up flatter than the model."
+    );
+    let Remedy::Advisory { what_to_change } = w.remedy() else {
+        panic!("advisory: {:?}", w.remedy());
+    };
+    assert_eq!(
+        what_to_change.as_str(),
+        "Add a dart or a seam in this piece."
     );
 }

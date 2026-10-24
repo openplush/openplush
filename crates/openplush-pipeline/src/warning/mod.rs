@@ -40,7 +40,8 @@ pub enum WarningCode {
     /// A piece's flattening stopped at the iteration cap, so its layout may be less relaxed
     /// than it could be.
     FlattenIterationCap,
-    /// A piece is squeezed noticeably to lie flat, so it sews up flatter than its surface.
+    /// A piece is squeezed to lie flat more than its fabric stretches, so it sews up flatter
+    /// than its surface.
     PieceCompressed,
     /// Declared first, sorts last: proves order follows the string.
     #[cfg(test)]

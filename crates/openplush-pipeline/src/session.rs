@@ -170,11 +170,7 @@ impl Pipeline {
                         chart: chart.chart(),
                     },
                 ))?;
-                let layout = Parameterization {
-                    chart: chart.chart(),
-                    uv: uv.to_vec(),
-                };
-                Ok((layout, stopped))
+                Ok((uv.to_vec(), stopped))
             })
             .collect::<Result<_, EngineError>>()?;
         staged(charts, laid)

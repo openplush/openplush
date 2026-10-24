@@ -49,7 +49,7 @@ The standard's full text could not be fetched from this environment. Every value
 | Gauge length, extension rate | Not available from [S1] or [S2] | `[verify]` |
 | Cycle whose extension is reported | Not available from [S1] or [S2]; record all five | `[verify]` |
 
-A different load or method gives different numbers [S3], so the same load and method must be used on both fabrics of a comparison. The guide's per-fabric rows [S3] name Method B at 3–4 N/cm for fleece, minky and velboa, and Method A at 6 N/cm for quilting cotton, felt and long-pile faux fur; T008 records each row in R7.
+A different load or method gives different numbers [S3], so the same load and method must be used on both fabrics of a comparison. The guide's per-fabric rows [S3] name Method B at 3–4 N/cm for fleece, minky and velboa, and Method A at 6 N/cm for quilting cotton, felt and long-pile faux fur; T008 records the row beside any value it takes from the guide (D-075).
 
 ## Home method (no tensile tester)
 

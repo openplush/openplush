@@ -74,6 +74,26 @@ fn the_dart_runs_the_shortest_way_from_the_rim_to_the_cone_tip() {
 }
 
 #[test]
+fn the_dart_takes_the_shorter_of_two_unequal_ways_to_an_off_centre_tip() {
+    // The apex leans towards angle π, so its ways to the rim differ in length; on the centred
+    // cone every way is equally short and any path passes.
+    let (xyz, faces) = rings(RINGS, |r, a| {
+        DVec3::new(
+            r * libm::cos(a) - 0.6 * (1.0 - r),
+            r * libm::sin(a),
+            0.8 * (1.0 - r),
+        )
+    });
+    let (_, dart) = parts(not_realizable(CHART, &xyz, &faces)).expect("BoundaryNotRealizable");
+    let path = dart.expect("a chart with an interior vertex has a dart");
+    let first_rim = 1 + 3 * RINGS * (RINGS - 1);
+    assert!(path.first().is_some_and(|v| v.index() >= first_rim));
+    assert_eq!(path.last(), Some(&VertexId::new(0)));
+    let length: f64 = path.windows(2).map(|p| edge_length(&xyz, p[0], p[1])).sum();
+    assert!((length - shortest_from_rim(&xyz, &faces)).abs() <= 1e-12);
+}
+
+#[test]
 fn the_dart_heads_for_the_vertex_with_the_most_angle_defect() {
     // A flat disk with one raised vertex off the middle: that vertex is the only cone.
     let (mut xyz, faces) = rings(RINGS, |r, a| {

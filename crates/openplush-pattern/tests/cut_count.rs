@@ -52,3 +52,12 @@ fn the_errors_say_what_is_wrong() {
         "a piece must be cut at least once"
     );
 }
+
+#[test]
+fn each_count_reads_back_as_given() -> Result<(), PatternError> {
+    for (as_printed, flipped) in [(2, 0), (0, 2), (3, 5), (5, 3)] {
+        let c = CutCount::new(as_printed, flipped)?;
+        assert_eq!((c.as_printed(), c.flipped()), (as_printed, flipped));
+    }
+    Ok(())
+}

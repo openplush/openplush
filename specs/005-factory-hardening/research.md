@@ -15,16 +15,6 @@ Facts measured 2026-10-20 on `main` at `684ff43`.
 - **Rationale**: `pull_request` events carry the range and the body without extra API calls or write tokens; fork PRs work.
 - **Alternatives**: `pull_request_target` (gives secrets to fork code; ruled out by the repo's workflow rules).
 
-## R3. Cross-platform gate diagnostic (#322)
-
-- **Decision**: Python 3 with `gh api` subprocess calls, read-only.
-- **Rationale**: Bash and `grep` steps did not run in a PowerShell session (#322); `scripts/merge-gate.py` already sets Python as the gate's language; `gh` handles auth on every platform.
-- **Alternatives**: a PowerShell twin (two copies drift); a docs page of manual steps (the status quo that took 30 minutes).
-
-## R4. Already handled in the gate (#322)
-
-- `[solid]` `scripts/merge-gate.py` reads the review summary's head (`SUMMARY_HEAD`) and treats a summary for another head as stale, asking for one review per head; a reviewer's `CHANGES_REQUESTED` blocks (ADR 0018). `scripts/tests/merge-gate.test.sh` covers both ("a summary for another head is not ready and asks for a review", "the request is marked in the comment, so it is made once per head", and the changes-requested cases).
-
 ## R5. Placeholders in kickoffs (#317)
 
 - **Decision**: a placeholder is an angle-bracketed word (`<window>`) or angle brackets containing a pipe (`<accepted | change it>`). The first one stops the firing with its text.

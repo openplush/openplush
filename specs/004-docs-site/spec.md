@@ -78,7 +78,7 @@ Someone about to write documentation, a person or an agent, starts from one guid
 
 1. **Given** an author starting a page, **When** they open the writing guide, **Then** it tells them the audience, the kind of page, the template and the navigation position in that order.
 2. **Given** the docs skill, **When** an agent loads it, **Then** every rule it applies is a link into the writing guide; the skill holds steps, not rules.
-3. **Given** a rule that agent files and human docs both need (a command, a branch rule, a merge tier), **When** it is stated, **Then** it has one home in `docs/` and the agent file links to it, except where the plan records a reason otherwise.
+3. **Given** a rule that agent files and human docs both need (a command, a branch rule, a merge rule), **When** it is stated, **Then** it has one home in `docs/` and the agent file links to it, except where the plan records a reason otherwise.
 
 ---
 

@@ -26,19 +26,13 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 - Stack interdependent intents rather than merging them into one diff early. Merge a fix to a lower PR upward only after that PR merges, unless a child needs the change to build or to make sense. GitHub retargets the child when its parent merges, and merging `main` then carries every fix up in one push.
 - Before every push: `git grep -n '^<<<<<<< \|^>>>>>>> '` finds nothing.
-- Merge commits only, bottom-up, with the expected head SHA; auto-merge only on a PR whose base is `main` (Merging). Never force-push.
-- Folding a stack at the merge gate (AGENTS.md): merge each child into its parent upward, update the remaining PR's title and `Intent` to list every intent, close each folded PR with a link to it. Never fold a blast-radius PR or a decision into its code.
+- Merge commits only, bottom-up, and only a PR whose base is `main`. Never force-push.
+- Folding a stack at merge time (AGENTS.md): merge each child into its parent upward, update the remaining PR's title and `Intent` to list every intent, close each folded PR with a link to it. Never fold a blast-radius PR or a decision into its code.
 
 ## Merging
 
-[ADR 0014](../../../docs/adr/0014-auto-merge-tiers.md) and [ADR 0018](../../../docs/adr/0018-hands-off-merging.md) set who merges; the merge gate ([ADR 0015](../../../docs/adr/0015-merge-gate.md), `.github/workflows/merge-gate.yml`) computes the tier from the diff and enables auto-merge. A PR's tier is the highest any of its paths or tasks reaches. Label it `tier:A`, `tier:B`, `tier:C` or `tier:H` on opening as your reading of the diff; the gate raises a label that is too low and never lowers one.
-
-Which paths put a PR in which tier, and who merges each: [the tier table](../../../docs/how-to/review-and-merge.md#tiers).
-
-- Read the gate's comment on the PR (it starts "Merge gate"): it lists the tier and each condition as pass or fail, and `merge:ready` is its verdict. Never enable auto-merge yourself, on any tier, and never apply `merge:ready`: the gate removes what it did not set.
-- On a stall, fix what the comment names: a failing check, an open thread (answer it, then resolve it: an unresolved thread is an unanswered finding to the gate), a conflict, a base that is not `main`, or a reviewer's changes requested. A push revokes the verdict; the gate judges the new head when its CI completes.
-- The review summary must name the current head. After a push the gate adds `rereview` itself, once per head, and judges the new summary; you never add the label. If the review ran on a head without posting a summary, the comment says the maintainer must look.
-- Never merge a PR yourself, on any tier, except a tier H PR under a `factory` grant with `merge=yes`, by its rule (`factory`, Merging under a grant; [ADR 0020](../../../docs/adr/0020-factory-grants.md)). Otherwise tier H waits for the maintainer; the comment says so.
+- The maintainer merges every PR. Never merge one yourself, under any grant, and never enable auto-merge.
+- A PR is ready for the maintainer when, on its current head: CI is green, the review summary has no open 🔴, every thread you answered is resolved, there is no conflict, and its base is `main`. Say once that it waits on the maintainer, then wait for the next event.
 
 ## Waiting
 

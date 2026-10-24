@@ -19,7 +19,7 @@ Work on how the repository runs: agents, merging, checks. No maker sees a change
 
 | Feature | What it specifies |
 |---|---|
-| [005 factory hardening](./005-factory-hardening/) | Unattended factory runs: one structured grant, a handoff from every run, merge-gate setup |
+| [005 factory hardening](./005-factory-hardening/) | Unattended factory runs: one structured grant, a handoff from every run |
 
 ## Reading order
 

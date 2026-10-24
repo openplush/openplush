@@ -12,7 +12,7 @@ Since 2026-10-13 a pull request has been "one reviewable slice": at most 400 cha
 
 Review runs cost the maintainer's subscription. They were spent twice on one PR within ten minutes, because the PR steward skill told agents to add the `rereview` label after fixing a 🔴 finding, sometimes with `mutation-audit` beside it, and each label is a separate trigger.
 
-The maintainer set two goals on 2026-10-18: size a pull request by its intent, a finishable set of tasks toward an epic, so that `git blame` → PR answers what brought a change in and the idea behind it, with interdependent intents landing in order or folded together at the merge gate; and spend fewer automated review runs.
+The maintainer set two goals on 2026-10-18: size a pull request by its intent, a finishable set of tasks toward an epic, so that `git blame` → PR answers what brought a change in and the idea behind it, with interdependent intents landing in order or folded together at merge time; and spend fewer automated review runs.
 
 ## Decision drivers
 
@@ -35,7 +35,7 @@ Chosen option: **3**, because it is the only one that stops splitting a capabili
 * **An intent PR** brings in one thing toward an epic (a feature, or a bigger issue) and says why: one or more tasks that, merged, leave something done end to end, stated in one sentence. The test is traceability: someone who follows `git blame` to the PR, months later, must find what brought the change in and the idea behind it. The PR title states the intent, so the merge commit carries it. Every task the PR touches is finished, and ticked, in it. There is no line budget.
 * **Agents formulate the intents.** Tasks and issues collect toward an epic; before opening PRs the agent groups them by intent, rather than by size or by task.
 * **Readable by commit.** Each task is a test commit followed by the implementation commit that makes it pass, so a large PR is reviewed commit by commit. The PR body names the tasks and a reading order.
-* **Stacked intents** carry interdependencies: X must land, then bug Y is fixed, then feature Z builds on both. Each is a PR stacked on the one before. At the merge gate, a stack whose intents only make sense together may be folded into one PR: merge each child into its parent upward (merge commits, so every intent's commits keep their history), list every intent in the remaining PR's `Intent` section, and close the folded PRs with a link to it.
+* **Stacked intents** carry interdependencies: X must land, then bug Y is fixed, then feature Z builds on both. Each is a PR stacked on the one before. At merge time, a stack whose intents only make sense together may be folded into one PR: merge each child into its parent upward (merge commits, so every intent's commits keep their history), list every intent in the remaining PR's `Intent` section, and close the folded PRs with a link to it.
 * **Never in one PR**: two unrelated intents, or chores mixed with feature work. A decision the maintainer must accept (a ledger entry, an ADR) is its own intent, merged before the code that implements it; it is never folded into that code. Inside one PR, a refactor, a fix and a feature stay separate commits.
 * **Still isolated**: the changes `tasks.md` lists for their blast radius get a PR of their own and are never folded.
 * **One automated review per PR**, on opening. Agents never add `rereview` or `mutation-audit`: they fix findings, verify the fix locally (tests, and re-running a mutation the fix was meant to kill) and answer the thread. Only the maintainer requests a rerun, with `rereview`, or `mutation-audit` alone for one that includes the mutation auditor. When both labels are added in one operation, the workflow runs once.
@@ -49,7 +49,3 @@ Chosen option: **3**, because it is the only one that stops splitting a capabili
 * Bad, because a defect a rerun would have caught after a fix is now caught only by the agent's local verification and CI. Every 🔴 fix must still be shown to work before pushing.
 * Supersedes the budget clause in [ADR 0003](0003-as-built-docs.md) ("`docs/` prose does not count against the 400-line PR budget"): there is no budget to count against. Docs still ship with the change.
 * The 400-line limit on a single module (`scripts/check-hygiene.sh`) is a code-structure rule, not a PR rule, and stays.
-
-## More information
-
-The single review per PR is amended by [ADR 0018](0018-hands-off-merging.md) for pushes after the review: the merge gate adds `rereview` once per head whose newest summary is for another head, so no head merges on a summary that did not read it. Agents still never add the label.

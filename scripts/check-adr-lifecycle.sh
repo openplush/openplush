@@ -10,12 +10,12 @@
 # as `ADR NNNN`, `ADR-NNNN` or a link to `NNNN-*.md`; a self-reference is ignored.
 #   A amends B when a sentence of A has `supersedes`, `amends`, or a leading
 #     `Changes`, with no ADR named before the verb, and names B after it
-#     ("Supersedes, in ADR 0014: …", "This ADR supersedes … ADR 0014",
+#     ("Supersedes, in ADR 0004: …", "This ADR supersedes … ADR 0004",
 #     "Changes ADR 0006 step 7"); or when it names B before `is amended to` or
-#     `are amended to` ("ADR 0014's … are amended to …").
+#     `are amended to` ("ADR 0004's … are amended to …").
 #   B claims A amends it when its status is `Superseded by ADR-A`, or a sentence
 #     of B names A after `superseded by` or `amended by`, or names A before
-#     `supersedes` or `amends` ("[ADR 0018](…) supersedes two clauses").
+#     `supersedes` or `amends` ("[ADR 0013](…) supersedes two clauses").
 #   B records A when its status is `Superseded by ADR-A`, or a line of B names A
 #     and contains a word starting `supersed` or `amend`.
 # Fails, naming both ADRs and the fix, when:

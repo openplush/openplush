@@ -6,6 +6,3 @@
 #
 # Example:
 # NNNN MMMM backlink NNNN predates the note practice; the maintainer decides whether to annotate it
-0014 0015 status 0014 is Proposed while Accepted 0015, 0016 and 0018 amend it; only the maintainer can accept it or mark it superseded
-0014 0016 status 0014 is Proposed while Accepted 0015, 0016 and 0018 amend it; only the maintainer can accept it or mark it superseded
-0014 0018 status 0014 is Proposed while Accepted 0015, 0016 and 0018 amend it; only the maintainer can accept it or mark it superseded

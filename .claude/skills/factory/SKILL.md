@@ -16,7 +16,7 @@ An unattended session that takes ready tasks from a feature's `tasks.md` to open
 What a run may do beyond this file's defaults is one argument, the grant. [ADR 0020](../../../docs/adr/0020-factory-grants.md) sets its fields, their defaults and limits; this section says how a firing reads it.
 
 ```
-/factory <features> grant hours=<N> merge=<yes|no> paths=<prefixes> decisions=<yes|no>
+/factory <features> grant hours=<N> paths=<prefixes> decisions=<yes|no>
 /factory continue
 ```
 
@@ -55,9 +55,9 @@ Pick ready tasks in ID order within the earliest phase that has one. A spike who
 The placeholder scan (Arguments) runs first, then the grant is read and recorded (Arguments, Grant), then the end check; then the steps below. A session runs one firing and never starts a second: the handoff's kickoff starts the next one in a fresh session.
 
 1. Check `main`, the open PRs, and the next free slice number once (`steward`, Sessions).
-2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews), and fix whatever the merge gate's comment names on a tier A, B or C PR that is not `merge:ready` (`steward`, Merging). Events reach only the session that opened a PR, and that session is gone; the gate enables auto-merge on its own. Under `merge=yes`, merge each tier H PR the rule allows (Merging under a grant).
+2. Walk the open PRs first: drive any with a 🔴, red CI, or a conflict (`steward`, Waiting and Reviews). Events reach only the session that opened a PR, and that session is gone.
 3. Pick up to four ready tasks that touch different crates and share no file. One task runs inline; two or more run through the Workflow tool, one agent per task, each in its own worktree, all building into the one shared target dir (Build output), and nothing else runs while they do.
-4. Per task: branch `NNN/NN-slug` from its parent (`main`, or the open PR it depends on), the slug naming the intent; the failing test commit; the implementation commit; `scripts/check.sh <lane>` green, then its wasm32 output removed (Build output); `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; label its tier; remove the attribution footer the server adds; subscribe.
+4. Per task: branch `NNN/NN-slug` from its parent (`main`, or the open PR it depends on), the slug naming the intent; the failing test commit; the implementation commit; `scripts/check.sh <lane>` green, then its wasm32 output removed (Build output); `mutation-auditor` when the PR adds checks to Rust (`steward`, Local review); push; open the PR from the template with base = parent; remove the attribution footer the server adds; subscribe.
 5. Scope each PR by intent (ADR 0013): one task is one PR unless it carries two intents, and the `Intent` section says what it brings in and why. Never split by size, and never a reason to stop.
 6. Append one comment to the feature's ledger (below), emit the handoff (below) as the session's last output, and end the session. Do not wait for CI or review here; the next firing walks the open PRs.
 
@@ -72,24 +72,17 @@ A step boundary is the end of a numbered step, or of one task inside step 4. At 
 
 ## What a firing decides alone
 
-Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, labelling its tier, resolving a merge conflict with `main` or its parent, answering 🟡 findings and resolving their threads, and fixing 🔴 findings with the proof `steward` asks for.
+Branching, committing, pushing to `NNN/NN-*` and `chore/*`, opening a PR and stacking it, resolving a merge conflict with `main` or its parent, answering 🟡 findings and resolving their threads, and fixing 🔴 findings with the proof `steward` asks for.
 
-Under a grant, also what its fields allow: merging a tier H PR by the rule below (`merge=yes`); editing the tier H paths `paths` lists, beyond its tasks' own files; and accepting a Proposed decision on its own recommendation, recorded as [ADR 0016](../../../docs/adr/0016-standing-merge-authorization.md)'s decisions clause says (`decisions=yes`).
+Under a grant, also what its fields allow: editing the protected paths `paths` lists (Protected paths), beyond its tasks' own files; and accepting a Proposed decision on its own recommendation, recorded as [ADR 0020](../../../docs/adr/0020-factory-grants.md)'s `decisions` field says (`decisions=yes`).
 
 ## What it never does
 
-Merge a PR, except by Merging under a grant; enable auto-merge or apply `merge:ready`, under any grant (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; edit a tier H path that neither its task nor the grant's `paths` names; accept a decision without `decisions=yes`; pick a task outside the grant's features; add scope without a task ID; add `rereview` or `mutation-audit` (the gate asks for a review of a new head; the maintainer requests any other rerun).
+Merge a PR or enable auto-merge, under any grant (the maintainer merges every PR); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; edit a protected path that neither its task nor the grant's `paths` names; accept a decision without `decisions=yes`; pick a task outside the grant's features; add scope without a task ID; add `rereview` or `mutation-audit` (the maintainer requests any rerun).
 
-## Merging under a grant
+## Protected paths
 
-Under `merge=yes`, in step 2, a firing merges an open tier H PR on one of the grant's features (`NNN/` branch) only when every line holds; this is [ADR 0020](../../../docs/adr/0020-factory-grants.md)'s merge rule:
-
-1. None of its files is `scripts/merge-gate.py`, `scripts/pr-tier.py` or `.github/workflows/merge-gate.yml`: the gate cannot vouch for its own replacement.
-2. The gate's latest comment names the PR's current head (`head <sha7>`) and shows every row but `tier` passing.
-3. GitHub reports no conflict.
-4. The grant's end has not passed.
-
-It merges with a merge commit at that head SHA (the merge call's `sha`), so a push since the comment fails the merge instead of landing unjudged code. Row `base is main` keeps it bottom-up: a child waits for a later firing, after the gate judges it against `main`. Each merge goes on the ledger comment's `Merged:` line with its head SHA and a link to the gate comment it relied on. A PR that fails a line stays for the maintainer, under `Skipped:` with the line it failed.
+The rules, gates and agent configuration every other check relies on. A firing edits one only when its task or the grant's `paths` names it: `.github/`, `scripts/`, `.claude/`, `docs/adr/`, `.specify/`; any `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md` or `CODE_OF_CONDUCT.md`; `deny.toml`, `rust-toolchain.toml`, `clippy.toml`, `rustfmt.toml`, `.gitattributes` and `LICENSE-*`.
 
 ## Stop conditions
 
@@ -119,7 +112,6 @@ One GitHub issue per feature, titled `Factory ledger: <feature>`, labelled `fact
 **Firing <date> <time UTC>**
 Grant: <the kickoff's grant, with ends=> or none
 Opened: <what it brings in> (#N, [<feature> <task>](<link>), stacked on #M), … or none
-Merged: <what merged> (#N at <head SHA>, [gate](<comment URL>)), … or none
 Accepted: <the decision in words> ([<feature> <decision>](<link>)), … or none
 Skipped: <why, in words> ([<feature> <task>](<link>)), …
 Stopped: <reason, or `one firing` when no stop condition ended it>
@@ -127,29 +119,29 @@ Next ready: <the task in words> ([<feature> <task>](<link>)) or none
 IDs: [glossary](https://github.com/openplush/openplush/blob/main/docs/reference/glossary.md#id-prefixes)
 ```
 
-`Merged:` and `Accepted:` list what this firing did under its grant. A new or renewed grant gets its own comment first, its **grant record**:
+`Accepted:` lists what this firing accepted under its grant. A new or renewed grant gets its own comment first, its **grant record**:
 
 ```
 **Grant <date> <time UTC>**
-/factory <features> grant hours=<N> merge=<yes|no> paths=<prefixes> decisions=<yes|no> ends=<YYYY-MM-DDTHH:MMZ>
+/factory <features> grant hours=<N> paths=<prefixes> decisions=<yes|no> ends=<YYYY-MM-DDTHH:MMZ>
 Given as: <the maintainer's words verbatim, or `argument`>
 ```
 
-The maintainer reads the ledger, accepts the decisions and merges the tier H PRs no grant took, and ticks `human:` work in `tasks.md`; the gate merges the rest, bottom-up as each base becomes `main`. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
+The maintainer reads the ledger, accepts the decisions, merges the open PRs bottom-up, and ticks `human:` work in `tasks.md`. Ticks for landed tasks go in one `docs(tasks): tick …` PR per firing, as `steward` says.
 
 ## Handoff
 
 The session's last output, after the ledger comment, from every firing: one that opens PRs, one that stops at its first step, and one that stops on a placeholder. It is what the maintainer pastes into a fresh session. Four sections, in this order; an empty one says `none`:
 
 ```
-**State**: stopped: <reason>. Merged: #N, … Open: #N <head SHA> base <branch> tier:<X>, … Branch in hand: <branch>
+**State**: stopped: <reason>. Merged: #N, … Open: #N <head SHA> base <branch>, … Branch in hand: <branch>
 **Next steps**: 1. … 2. …
 **Blockers**: <facts, in words>. Lives in [<feature> <ID>](<link to the file>). Recommend: <one>. If unanswered: <default>.
 **Kickoff**:
-/factory <features> grant hours=<N> merge=<yes|no> paths=<prefixes> decisions=<yes|no> ends=<time>
+/factory <features> grant hours=<N> paths=<prefixes> decisions=<yes|no> ends=<time>
 ```
 
-- **State**: the `Stopped:` reason as the ledger wrote it (for a kickoff stop, its reason here); PRs merged since the last firing; every open PR this firing opened or drove, with its number, head SHA, base and tier; the branch checked out at the end, or `none`.
+- **State**: the `Stopped:` reason as the ledger wrote it (for a kickoff stop, its reason here); PRs merged since the last firing; every open PR this firing opened or drove, with its number, head SHA and base; the branch checked out at the end, or `none`.
 - **Next steps**: what the next firing or the maintainer does first, in order.
 - **Blockers**: one per decision the firing needs, as status prose (`AGENTS.md`): the facts, the ID where it lives linked to its file, one recommendation, and what happens if nobody answers.
 - **Kickoff**: five lines or fewer that start the next firing: the `/factory` line with the active grant and its `ends=`, so the next firing continues it (Arguments, Grant), or `/factory <feature>` alone with no grant. After `grant expired` it is `/factory continue`, which renews the grant only when the maintainer pastes it. Every field is filled, so it passes the placeholder scan: a field the firing cannot fill is left out and asked for under Blockers.

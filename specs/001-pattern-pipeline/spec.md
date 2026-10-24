@@ -163,7 +163,7 @@ The maker saves one portable file, reopens it later (or on another machine), and
 - **FR-043**: Transfer the model's texture onto pieces as printable images for print-on-fabric, with bleed into the allowance. Deferred past v0.1.
 
 ### Fabric & grain
-- **FR-050**: Fabric profiles: name, category (woven, knit, pile, felt), stretch along grain / across grain / bias (%), nap (yes/no), pile length (mm), thickness (mm), frays (yes/no), default seam allowance, roll width. Ship editable presets for quilting cotton, felt, fleece, minky, velboa, short faux fur, long faux fur, teddy / sherpa and corduroy (D-076), with values from supplier spec sheets, or the Fabric Stretch Guide's estimates where none exist (D-075). Profiles are saved in the project.
+- **FR-050**: Fabric profiles: name, category (woven, knit, pile, felt), stretch along grain / across grain / bias (%), nap (yes/no), pile length (mm), thickness (mm), frays (yes/no), default seam allowance, roll width. Ship editable presets for quilting cotton, felt, fleece, minky, velboa, short faux fur, long faux fur, teddy / sherpa and corduroy (D-076), with values from supplier spec sheets, or the Fabric Stretch Guide's estimates where none exist (D-075); bias stretch, which this feature never reads, is an unsourced placeholder. Profiles are saved in the project.
 - **FR-051**: User-defined nap/grain direction on the model via strokes, with a sensible default when none is given.
 - **FR-052**: Each piece is oriented so grain/nap align with the fabric; poor nap coherence within a piece triggers a warning and split suggestion.
 - **FR-053**: Layout honors allowed rotations per fabric (napped: none; non-napped: 180°; felt, which has no grain: any quarter turn). No piece is placed on the bias.

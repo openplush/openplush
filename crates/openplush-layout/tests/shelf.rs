@@ -2,7 +2,7 @@
 
 use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
-use openplush_layout::shelf::pack;
+use openplush_layout::shelf::{pack, pack_templates};
 use openplush_layout::{LayoutError, LayoutOptions, Placement, Sheet};
 use openplush_pattern::{CutCount, Outline, PatternError, PatternPiece, PieceId};
 
@@ -397,5 +397,17 @@ fn the_cut_line_decides_the_size_not_the_sewing_line() -> Result<(), Setup> {
     let s = only(pack(&[pc], &opts(100.0, 0.0, false)?)?)?;
     assert_eq!(s.placements()[1].offset(), DVec2::new(14.0, 0.0));
     assert_eq!(s.length_mm(), 14.0);
+    Ok(())
+}
+
+#[test]
+fn the_print_is_as_wide_as_its_pieces_while_the_plan_is_as_wide_as_the_roll() -> Result<(), Setup> {
+    let pieces = [
+        piece(1, (0.0, 0.0, 200.0, 50.0), 1, &[0.0])?,
+        piece(2, (0.0, 0.0, 140.0, 40.0), 1, &[0.0])?,
+    ];
+    let o = opts(1100.0, 10.0, false)?;
+    assert_eq!(only(pack_templates(&pieces, &o)?)?.width_mm(), 350.0);
+    assert_eq!(only(pack(&pieces, &o)?)?.width_mm(), 1100.0);
     Ok(())
 }

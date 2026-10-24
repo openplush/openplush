@@ -63,7 +63,7 @@
      - [ ] Each task's test commit precedes its implementation commit
      - [ ] CI green at the tip, and not green because a test was weakened
      - [ ] No unrelated intent or chore mixed in; refactor, fix and feature in separate commits
-     - [ ] Branch named NNN/NN-slug or chore/slug; base is the parent if this depends on unmerged work
+     - [ ] Branch named NNN/NN-slug, fix/slug or chore/slug; base is the parent if this depends on unmerged work
      - [ ] No golden snapshot updated to make a test pass
      - [ ] Skipped section filled in honestly
      - [ ] Public changes have their as-built docs, or Docs says n/a

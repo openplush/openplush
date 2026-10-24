@@ -6,8 +6,8 @@ Canonical rules for every AI coding agent; `CLAUDE.md` imports this file. Lane r
 A free, open-source tool that turns a 3D model into a printable plush sewing pattern: a Rust geometry engine (WASM and native CLI) plus a TypeScript/Three.js web app, all on the user's device.
 
 ## Read before working
-- `.specify/memory/constitution.md`: binding. A conflicting request → stop and name the principle.
-- `.specify/feature.json` names the active feature (local, git-ignored); missing → ask which feature.
+- [`CONSTITUTION.md`](CONSTITUTION.md): binding. A conflicting request → stop and name the principle.
+- The task or the request names the feature; unclear → ask which feature.
 - `specs/<feature>/spec.md`, `plan.md`, `data-model.md`, and the task you are executing in `tasks.md`.
 
 ## Workflow
@@ -15,7 +15,6 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 - A decision prompt (an `AskUserQuestion` call, a ledger-issue comment, a handoff blocker) can be answered cold: the facts, with numbers where there are any; where the decision lives (its ID, linked to the file); one recommendation; the default if nobody answers. Link project terms to the [glossary](docs/reference/glossary.md).
 - Trivial-change lane (no task ID): docs or typo fixes, comment fixes, dependency patch bumps, a fixture with its license entry, CI changes that don't alter gates.
 - Tests first: the failing test commit, then the implementation commit.
-- Never hand-edit Spec Kit files (`.specify/templates/`, `.specify/scripts/`, `.specify/extensions/`, `.claude/skills/speckit-*`); use `specify`.
 - Never update golden snapshots (`fixtures/golden/`, `*.snap`) to pass a test; say the output changed and leave it to a human.
 - Never skip, weaken, or delete a test to get green.
 
@@ -80,7 +79,7 @@ Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-r
 - One intent per PR ([ADR 0013](docs/adr/0013-intent-sized-pull-requests.md)): what the PR brings in toward an epic (a feature or a bigger issue) and why, in one sentence, so `git blame` → PR answers "what brought this in, and the idea behind it". The title states it. Group collected tasks by intent before opening PRs. Every task a PR touches is finished and ticked in it. No line budget.
 - Each task is a test commit, then the implementation commit that makes it pass; the PR body names its tasks and a reading order.
 - Never in one PR: two unrelated intents; chores and feature work. A decision the maintainer must accept is its own intent, merged before its code. A refactor, a fix and a feature stay separate commits. The changes `tasks.md` isolates for blast radius get their own PR and are never folded.
-- Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused) or `chore/slug`. The slug names the intent, not the activity. Rename Spec Kit's `NNN-feature-slug` working branch before pushing.
+- Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused) or `chore/slug`. The slug names the intent, not the activity.
 - Session branches (`claude/…`, `codex/…`, `copilot/…`) are not PR branches. If you cannot push the real name, put it and the stack position in the PR title and body.
 - Interdependent intents are stacked (X, then bug fix Y, then feature Z on both): branch from the parent, PR base = parent, fill the `Stack` section, link the child from the parent. A stack never spans features or mixes chores with feature work. At the merge gate, a stack whose intents only make sense together may be folded into one PR by merging each child into its parent upward; the remaining PR lists every intent, and the folded PRs are closed with a link to it.
 - Who merges is the PR's tier ([ADR 0014](docs/adr/0014-auto-merge-tiers.md), [ADR 0018](docs/adr/0018-hands-off-merging.md)): the merge gate ([ADR 0015](docs/adr/0015-merge-gate.md)) computes it from the diff and enables auto-merge on tiers A and C once ready, and on tier B 24 h after CI goes green; the maintainer merges tier H (the gate, CI, `scripts/`, the agent rules, ADRs, the constitution, the licences). Agents never merge, except a tier H PR under a factory grant that allows it, by [ADR 0020](docs/adr/0020-factory-grants.md)'s rule; they never enable auto-merge, apply `merge:ready` or add `rereview`; they fix what the gate's comment names. The tier table is in [docs/how-to/review-and-merge.md](docs/how-to/review-and-merge.md#tiers).

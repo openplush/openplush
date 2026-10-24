@@ -9,7 +9,7 @@ An unattended session that takes ready tasks from a feature's `tasks.md` to open
 
 ## Arguments
 
-`/factory <feature>` names the feature (`001`, `002`, `003`). Without one, `.specify/feature.json` names it; if that is missing too, the firing stops with reason `no feature`.
+`/factory <feature>` names the feature (`001`, `002`, `003`). Without one, the firing stops with reason `no feature`.
 
 ### Grant
 
@@ -78,7 +78,7 @@ Under a grant, also what its fields allow: merging a tier H PR by the rule below
 
 ## What it never does
 
-Merge a PR, except by Merging under a grant; enable auto-merge or apply `merge:ready`, under any grant (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `.specify/`, `specs/*/spec.md`, or a contract except through a task that says so; edit a tier H path that neither its task nor the grant's `paths` names; accept a decision without `decisions=yes`; pick a task outside the grant's features; add scope without a task ID; add `rereview` or `mutation-audit` (the gate asks for a review of a new head; the maintainer requests any other rerun).
+Merge a PR, except by Merging under a grant; enable auto-merge or apply `merge:ready`, under any grant (the merge gate does both); force-push; edit a golden snapshot or `*.snap`; weaken a test; touch `CONSTITUTION.md`, `specs/*/spec.md`, or a contract except through a task that says so; edit a tier H path that neither its task nor the grant's `paths` names; accept a decision without `decisions=yes`; pick a task outside the grant's features; add scope without a task ID; add `rereview` or `mutation-audit` (the gate asks for a review of a new head; the maintainer requests any other rerun).
 
 ## Merging under a grant
 

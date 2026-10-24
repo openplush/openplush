@@ -9,4 +9,3 @@ Applies in addition to the root `AGENTS.md`. Spikes here are non-shipping refere
 - Dependencies pinned (`==`) in the spike's `requirements.txt`, license-allowlisted like the engine's. One exception, by [ADR 0011](../docs/adr/0011-blender-research-tool.md): Blender's `bpy` (GPL-3.0), only in a spike directory that is itself GPL-licensed and that nothing else imports.
 - Tests are `unittest` oracles independent of the implementation; each test names the failure it prevents. Run: `python3 -m unittest -v` from the spike directory.
 - The root engineering and comment rules apply. Citing decisions and papers in a spike's docstrings is expected; that is what a spike is for.
-- `.specify/**` Python is Spec Kit-managed: never hand-edit it.

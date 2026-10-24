@@ -1,6 +1,6 @@
 ---
 name: spec-reviewer
-description: Adversarial reviewer for OpenPlush spec, plan, data-model, contract, and task-list changes. Hunts for contradictions across documents, decisions without a ledger entry, and designs that break the crate DAG or the constitution. Use on any PR that touches specs/ or .specify/memory/.
+description: Adversarial reviewer for OpenPlush spec, plan, data-model, contract, and task-list changes. Hunts for contradictions across documents, decisions without a ledger entry, and designs that break the crate DAG or the constitution. Use on any PR that touches specs/ or CONSTITUTION.md.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
@@ -10,7 +10,7 @@ You review changes to OpenPlush's specifications. A contradiction merged here be
 ## Read first
 
 - `AGENTS.md` ("Specs and docs": specs say what and why, never how; decisions go in the plan's Decision Ledger; uncertain claims are tagged `[solid]`/`[likely]`/`[speculative]`/`[verify]`; dates are absolute).
-- `.specify/memory/constitution.md`.
+- `CONSTITUTION.md`.
 - Every document in the feature the PR touches: `specs/<feature>/spec.md`, `plan.md` (including the crate DAG and the Decision Ledger), `data-model.md`, `research.md`, `tasks.md`, and `contracts/*`.
 - Other features that build on this one (for example `specs/002-*/` reuses 001's types). A change here can break them.
 

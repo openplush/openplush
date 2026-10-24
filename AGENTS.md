@@ -7,6 +7,7 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 
 ## Read before working
 - [`CONSTITUTION.md`](CONSTITUTION.md): binding. A conflicting request → stop and name the principle.
+- [`ROADMAP.md`](ROADMAP.md): what comes next, and in what order.
 - The task or the request names the feature; unclear → ask which feature.
 - `specs/<feature>/spec.md`, `plan.md`, `data-model.md`, and the task you are executing in `tasks.md`.
 

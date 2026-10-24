@@ -30,7 +30,7 @@ New code goes in the crate that owns its concern, whether or not that crate has 
 |---|---|
 | `openplush-geom` | f64 vectors, robust predicates, the tolerance policy (`epsilon`), millimetre units |
 | `openplush-mesh` | `TriangleSoup`, validation, repair, half-edge `ManifoldMesh`, and `id_newtype!`, which defines `u32` ID newtypes |
-| `openplush-io` | bytes → `TriangleSoup` (OBJ, glTF, STL, PLY) |
+| `openplush-io` | bytes → `TriangleSoup` (OBJ, glTF, FBX, STL, PLY) |
 | `openplush-seams` | `SeamSet`, cut-graph completion, darts, symmetry |
 | `openplush-fields` | curvature, nap/grain direction fields |
 | `openplush-flatten` | charts, Tutte/LSCM init, SLIM/ARAP, distortion metrics |

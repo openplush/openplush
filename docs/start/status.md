@@ -1,10 +1,10 @@
 # Project status
 
-What is built and what is not, as of **2026-10-20**. This is the one page that answers "is X built yet?"; every other page links here instead of saying. The facts come from the ticked tasks in each feature's `tasks.md` and from the code on the branch: when the two disagree, the code is right and this page is out of date.
+What is built and what is not, as of **2026-10-24**. This is the one page that answers "is X built yet?"; every other page links here instead of saying. The facts come from the ticked tasks in each feature's `tasks.md` and from the code on the branch: when the two disagree, the code is right and this page is out of date.
 
 ## Entries
 
-OpenPlush is pre-alpha: nothing a maker can use exists yet. The engine stages exist as separate crates, but no command or app runs them end to end.
+OpenPlush is pre-alpha. The command line runs a model end to end, from a model file and a hand-written seams file to a true-scale SVG and a tiled PDF (`openplush-cli pattern`), but it has not yet been tried on a real plush, and the web app does not exist yet. What comes next is in the [roadmap](https://github.com/openplush/openplush/blob/main/ROADMAP.md).
 
 ### By capability
 

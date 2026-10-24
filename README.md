@@ -5,7 +5,7 @@ Turn a 3D model into a sewable plush pattern. Free, open source, and it runs ent
 > **What is built today, and what is not:** the [project status](docs/start/status.md). What exists is described in [docs/](docs/) ([architecture](docs/explanation/architecture.md), [engine API](docs/reference/engine-api.md), [crates](docs/reference/crates/README.md)); what is planned is in the [specs index](specs/README.md).
 
 ## What it will do
-- Import a 3D model (OBJ, glTF) and set its real-world size.
+- Import a 3D model (OBJ, glTF, FBX, STL or PLY) and set its real-world size.
 - Draw seams directly on the model.
 - Flatten every piece with a stretch/compression heatmap and suggestions for darts or extra seams.
 - Add seam allowances, match notches, piece labels, and grain/nap arrows for fur fabrics.
@@ -22,7 +22,7 @@ The full set is in the [constitution](CONSTITUTION.md).
 
 ## Design documents
 
-Start at the [specs index](specs/README.md) — it lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
+What comes next, in order, is the [roadmap](ROADMAP.md) — **start there to contribute**. The [specs index](specs/README.md) lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
 
 **001 — pattern pipeline** (the product)
 
@@ -34,7 +34,7 @@ Start at the [specs index](specs/README.md) — it lists the features, how to re
 | [Data model](specs/001-pattern-pipeline/data-model.md) | Mesh structures, fabric, warnings, geometric edge cases |
 | [Contracts](specs/001-pattern-pipeline/contracts/) | Engine API, worker protocol, project file schema |
 | [Quickstart](specs/001-pattern-pipeline/quickstart.md) | The acceptance walkthrough |
-| [Tasks](specs/001-pattern-pipeline/tasks.md) | The numbered work, and [how much is done](docs/start/status.md#by-feature) — **start here to contribute** |
+| [Tasks](specs/001-pattern-pipeline/tasks.md) | The numbered work, and [how much is done](docs/start/status.md#by-feature) |
 
 **002 — seam-placement hints** (shows you where seams belong; depends on 001)
 

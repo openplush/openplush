@@ -16,4 +16,4 @@ Print the PDF at **Actual size** (or **100%**). Many print windows start on **Fi
 
 ## Which files can I open?
 
-Models saved as OBJ, STL or PLY files, which is what most 3D modelling and sculpting programs can export. The model is read as it was saved: OpenPlush never changes the file on your disk. A model saved in another format does not open; save it as one of those three from your modelling program first.
+Models saved as OBJ, glTF, FBX, STL or PLY files, which is what most 3D modelling and sculpting programs can export. A glTF model is either a glb file, or a gltf file with the other files it comes with kept beside it. An FBX model must be saved as binary FBX; a text (ASCII) FBX file is refused, so save it again as binary. The model is read as it was saved: OpenPlush never changes the file on your disk. A model saved in another format does not open; save it as one of these from your modelling program first.

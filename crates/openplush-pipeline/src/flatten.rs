@@ -101,8 +101,8 @@ pub(crate) fn compression_warning(chart: ChartId, deficit: f64) -> Option<Warnin
         WarningCode::PieceCompressed,
         WarningTarget::Piece(PieceId::new(chart.index())),
         text(format!(
-            "This piece has about {:.0}% less fabric than the curved shape it covers, so it \
-             will sew up flatter than the model.",
+            "This piece is squeezed by about {:.0}% to lie flat, so it will sew up flatter than \
+             the model.",
             deficit * 100.0
         )),
         Remedy::Advisory {

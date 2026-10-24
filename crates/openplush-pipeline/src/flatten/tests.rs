@@ -270,8 +270,8 @@ fn a_piece_compressed_past_the_limit_warns_with_its_share_and_one_at_it_does_not
     assert_eq!(w.target(), WarningTarget::Piece(PieceId::new(4)));
     assert_eq!(
         w.explanation(),
-        "This piece has about 36% less fabric than the curved shape it covers, so it will sew \
-         up flatter than the model."
+        "This piece is squeezed by about 36% to lie flat, so it will sew up flatter than the \
+         model."
     );
     let Remedy::Advisory { what_to_change } = w.remedy() else {
         panic!("advisory: {:?}", w.remedy());

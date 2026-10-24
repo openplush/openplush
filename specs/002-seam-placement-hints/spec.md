@@ -8,7 +8,7 @@
 
 **Input**: User description: "Seam-placement hints: the tool inspects the model and highlights places where a seam, dart, or edge would likely help, so makers (especially first-timers) know where to draw seams instead of guessing. Four toggleable hint categories with sensitivity control: sharp edges and creases, concave creases, dart candidates, symmetry. Hints appear as a 3D overlay and an inspection panel, explain themselves in plain language, convert to a seam or dart in one action with preview, are never applied on their own, and update when the model or its size changes. Out of scope: automatic seam layout, changing geometry, mesh defect detection."
 
-> Spec Kit rule: this file states **what** and **why** only. Technology choices live in `research.md` and `plan.md`. Data structures live in `data-model.md`.
+> Rule: this file states **what** and **why** only. Technology choices live in `research.md` and `plan.md`. Data structures live in `data-model.md`.
 
 Builds on feature 001 (`specs/001-pattern-pipeline/`): import, real-world scaling, seam drawing, and flattening already exist. This feature adds guidance about *where* to draw, and resolves the gap identified during 001's clarification — that its warnings tell a maker something is wrong without telling them where a seam belongs in the first place.
 

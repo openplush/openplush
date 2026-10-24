@@ -47,7 +47,7 @@ specs/005-factory-hardening/
 ├── contracts/
 │   ├── factory-arguments.md   # kickoff, placeholder rule, grant fields
 │   └── handoff.md             # the handoff's shape
-└── tasks.md         # /speckit-tasks
+└── tasks.md
 ```
 
 ### Source (repository root)

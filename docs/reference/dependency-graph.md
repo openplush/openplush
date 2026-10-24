@@ -16,7 +16,7 @@ The [dependency graph](../depgraph/index.html) shows how the repository's parts 
   - Core: `crates/`, without the test kit.
   - Database: none; the repository has no database, so the node is drawn empty.
   - Tests: test files and test modules, `openplush-testkit`, `scripts/tests/` and the [fixtures](glossary.md).
-  - Tools: `scripts/`, `.github/`, `.claude/` and `.specify/`.
+  - Tools: `scripts/`, `.github/` and `.claude/`.
   - Research: `research/`.
   - Docs: `docs/` and `specs/`.
   - External: packages from crates.io, npm and PyPI.

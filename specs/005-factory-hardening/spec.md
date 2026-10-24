@@ -8,7 +8,7 @@
 
 **Input**: User description: "Harden the unattended task factory and its merge gate so the rules agents follow live in one checked place instead of in prose copied across several files that disagree. Input is issues #316–#322, one user story per issue. The stale-review-summary and human changes-requested cases from #322 are already handled by the merge gate and are out of scope except for confirming their tests."
 
-> Spec Kit rule: this file states **what** and **why** only. Tool choices live in `plan.md`.
+> Rule: this file states **what** and **why** only. Tool choices live in `plan.md`.
 
 A process review of the factory's first week (issues [#316](https://github.com/openplush/openplush/issues/316)–[#322](https://github.com/openplush/openplush/issues/322)) found one pattern behind most of the maintainer's interventions: a rule that lives only in prose, or in several places that disagree, is followed inconsistently by unattended sessions. Each story below moves one such rule into a single checked home. Builds on [ADR 0015](../../docs/adr/0015-merge-gate.md) and [ADR 0018](../../docs/adr/0018-hands-off-merging.md); this feature changes neither without a new decision.
 

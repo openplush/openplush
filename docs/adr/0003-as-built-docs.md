@@ -17,7 +17,7 @@ deciders: maintainer, on mentor feedback (reviewed in the PR that adds this ADR)
 * A reader, human or agent, must be able to trust the page they land on (Constitution III: plausible but wrong output is the worst outcome, and that includes wrong docs that produce wrong code).
 * One home per fact (AGENTS.md, DRY): no two live documents describing one API.
 * Docs must stay current without a separate effort; docs written at the end drift like plans do.
-* Spec Kit's specs remain the record of intent and decisions.
+* The specs remain the record of intent and decisions.
 
 ## Considered options
 

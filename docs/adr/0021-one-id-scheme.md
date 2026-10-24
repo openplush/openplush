@@ -13,7 +13,7 @@ Each feature chose its own letters: tasks are `T` in 001, `H` in 002, `U` in 003
 ## Decision drivers
 
 * An ID's kind is readable without knowing its feature.
-* The Spec Kit task generator numbers tasks `T001`, `T002`, …; a scheme that matches it needs no override per feature.
+* The task template numbers tasks `T001`, `T002`, …; a scheme that matches it needs no override per feature.
 * Git history, merged pull requests and ledger comments cannot be rewritten, so old IDs live on and must stay resolvable.
 * The scripts that read task lines (`scripts/gen-status.py`, `scripts/report-tick-lag.sh`) match any `[A-Z][0-9]{3}`, and no script reads a decision or spike ID [solid].
 
@@ -53,13 +53,13 @@ This amends [ADR 0019](0019-spec-maintenance-model.md) by one exception: its rul
 
 ### Option 1
 
-* Good, because it matches Spec Kit and 001, the feature with the most IDs, so the largest set of IDs stays as it is.
+* Good, because it matches the task template and 001, the feature with the most IDs, so the largest set of IDs stays as it is.
 * Bad, because the feature is required wherever the context does not give it.
 
 ### Option 2
 
 * Good, because every ID is unique on its own.
-* Bad, because task lines would no longer match the status page's pattern, and Spec Kit cannot emit it.
+* Bad, because task lines would no longer match the status page's pattern, and the task template does not emit it.
 
 ### Option 3
 

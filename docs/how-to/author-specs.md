@@ -1,53 +1,37 @@
-# How to: set up Spec Kit to author specs
+# How to: start a feature's spec
 
-<!-- index: install `specify` and point it at a feature, for maintainers writing specs. -->
+<!-- index: copy the spec, plan and tasks templates into a new feature folder, for maintainers writing specs. -->
 
-This page gets a clone ready to write or change a feature's spec, plan and tasks with [Spec Kit](https://github.com/github/spec-kit). Maintainers need it; a contributor picking up an existing task does not. [How agents work](../explanation/agents.md#from-an-idea-to-tasks-spec-kit) explains the Spec Kit flow itself.
+This page starts a new feature's folder under `specs/`, with its spec, plan and task list. Maintainers need it; a contributor picking up an existing task does not. [How agents work](../explanation/agents.md#from-an-idea-to-tasks) explains the flow itself.
 
 ## You will
 
-Have `specify` installed and Spec Kit pointed at the feature you are working on, so its `/speckit-<command>` skills run in Claude Code.
+Have a numbered feature folder with a spec, plan and tasks file copied from the templates, on a correctly named branch.
 
 ## Before you start
 
-- **Python 3.11 or newer**, and **[uv](https://docs.astral.sh/uv/)**.
 - A clone set up as in [Set up and run every check](../start/setup.md).
+- The next free feature number: one more than the highest `NNN-` folder in [`specs/`](https://github.com/openplush/openplush/tree/main/specs).
 
 ## Steps
 
-1. Install the Spec Kit command line and confirm it runs:
+1. Branch from `main`, named as [the branch naming](pull-requests.md#3-name-the-branch-and-stack-it) describes:
 
    ```sh
-   uv tool install specify-cli
-   specify version
+   git switch -c 006/01-spec main
    ```
 
-   This repository uses Spec Kit's Claude Code integration with `sh` scripts, so its commands are the skills `/speckit-<command>`.
-
-2. Point Spec Kit at your feature. It tracks the active feature in `.specify/feature.json`, which is local and ignored by git, so every clone sets it once:
-
-   ```json
-   {"feature_directory":"specs/001-pattern-pipeline"}
-   ```
-
-3. On Windows, Claude Code runs the `sh` scripts through Git Bash; `create-new-feature-branch.sh` and `check-prerequisites.sh` were verified to work there on 2026-10-13. If a script fails, switch to the PowerShell scripts:
+2. Make the feature folder and copy the spec template into it:
 
    ```sh
-   specify integration upgrade claude --script ps --force
+   mkdir specs/006-short-name
+   cp specs/templates/spec-template.md specs/006-short-name/spec.md
    ```
 
-4. When `/speckit-specify` starts a new feature, it creates a local `NNN-feature-slug` branch from `main`. Rename it to the pull request's branch name before pushing, as [the branch naming](pull-requests.md#3-name-the-branch-and-stack-it) describes:
+3. Once the spec is clarified, copy the plan template the same way, to `plan.md`. Once the plan's decisions are recorded, copy the tasks template, to `tasks.md`.
 
-   ```sh
-   git branch -m 003/01-spec
-   ```
+4. Add the feature to the table in [`specs/README.md`](https://github.com/openplush/openplush/blob/main/specs/README.md): under Features, or under Repository process if no maker sees the change.
 
 ## Check it worked
 
-`specify version` prints a version, and Spec Kit's prerequisite script prints your feature's folder:
-
-```sh
-bash .specify/scripts/bash/check-prerequisites.sh --paths-only
-```
-
-Its `FEATURE_DIR` line ends in the folder you named in `.specify/feature.json`.
+`scripts/check.sh docs` passes, and the [status page](../start/status.md) lists the new feature once its `tasks.md` exists.

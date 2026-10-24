@@ -5,7 +5,7 @@
 **Status**: Draft — blocking clarifications Q1–Q3 closed 2026-10-13; minor defaults still open
 **Input**: "Take an arbitrary 3D mesh (OBJ/glTF), mark cut seams, flatten the surface patches into 2D with minimal distortion, add seam allowances, map surface details onto the flat pieces, and lay out printable patterns. Must cover Plushify's high-level features. Free, open source, open to contributors."
 
-> Spec Kit rule: this file states **what** and **why** only. Technology choices live in [research.md](./research.md) and [plan.md](./plan.md). Data structures live in [data-model.md](./data-model.md).
+> Rule: this file states **what** and **why** only. Technology choices live in [research.md](./research.md) and [plan.md](./plan.md). Data structures live in [data-model.md](./data-model.md).
 
 ## Parity Baseline
 

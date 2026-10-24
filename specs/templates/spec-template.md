@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "$ARGUMENTS"
+**Input**: the feature description it was written from.
 
 ## User Scenarios & Testing *(mandatory)*
 

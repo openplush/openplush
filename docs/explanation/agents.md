@@ -1,30 +1,28 @@
 # How agents work in this repo
 
-<!-- index: how AI agents take a feature from spec to merged pull request: Spec Kit, steward, the review on opening and the merge gate. -->
+<!-- index: how AI agents take a feature from spec to merged pull request: specs, steward, the review on opening and the merge gate. -->
 
 AI coding agents write most of OpenPlush's pull requests. This page explains, for a contributor who wants to know how that is organised, what the agents do from a feature idea to a merged change, and what keeps a person in charge. The rules themselves live in the skills and ADRs this page links to; it explains them and never replaces them.
 
 ## The short answer
 
-Work starts as a Spec Kit feature: a spec, a plan and a numbered task list. An agent picks a ready task, writes the failing test and then the code, and opens one pull request per intent. An automated review runs once, when the PR opens. A workflow called the merge gate then works out from the diff who may merge: low-risk PRs merge on their own, expected-output changes wait a day first, and engine code, specs, decisions and the rules themselves wait for the maintainer.
+Work starts as a feature: a spec, a plan and a numbered task list. An agent picks a ready task, writes the failing test and then the code, and opens one pull request per intent. An automated review runs once, when the PR opens. A workflow called the merge gate then works out from the diff who may merge: low-risk PRs merge on their own, expected-output changes wait a day first, and engine code, specs, decisions and the rules themselves wait for the maintainer.
 
 ## How it works
 
 ### Every rule has one home
 
-Agents read [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md) first; `CLAUDE.md` only imports it. Rules for a single job live in a skill under [`.claude/skills/`](https://github.com/openplush/openplush/tree/main/.claude/skills), which an agent loads when it starts that job, and reviewers are described as agents under [`.claude/agents/`](https://github.com/openplush/openplush/tree/main/.claude/agents). Above all of them sits the [constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md), which wins any conflict. The reasoning behind a process rule is in an ADR, so a skill can stay short and point there.
+Agents read [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md) first; `CLAUDE.md` only imports it. Rules for a single job live in a skill under [`.claude/skills/`](https://github.com/openplush/openplush/tree/main/.claude/skills), which an agent loads when it starts that job, and reviewers are described as agents under [`.claude/agents/`](https://github.com/openplush/openplush/tree/main/.claude/agents). Above all of them sits the [constitution](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md), which wins any conflict. The reasoning behind a process rule is in an ADR, so a skill can stay short and point there.
 
-### From an idea to tasks: Spec Kit
+### From an idea to tasks
 
-OpenPlush is built spec first, with [Spec Kit](https://github.com/github/spec-kit). Each feature gets a numbered folder under [`specs/`](https://github.com/openplush/openplush/tree/main/specs), and work moves through it in order: specify, clarify, plan, tasks, implement. Each step is a skill an agent or a person runs as a slash command:
+OpenPlush is built spec first. Each feature gets a numbered folder under [`specs/`](https://github.com/openplush/openplush/tree/main/specs), and work moves through it in order: specify, clarify, plan, tasks, implement. Each file starts from a template in [`specs/templates/`](https://github.com/openplush/openplush/tree/main/specs/templates):
 
-- [`speckit-specify`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-specify/SKILL.md) writes `spec.md`: what the feature does and why, with no technology in it.
-- [`speckit-clarify`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-clarify/SKILL.md) asks the few questions the spec leaves open and writes the answers back.
-- [`speckit-plan`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-plan/SKILL.md) writes `plan.md` and its companions: research, data model, contracts and a quickstart. The plan holds the Decision Ledger, where each design choice waits for the maintainer to accept it.
-- [`speckit-tasks`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-tasks/SKILL.md) turns the plan into `tasks.md`: numbered tasks, each naming its files and, where there is code, its test first.
-- [`speckit-implement`](https://github.com/openplush/openplush/blob/main/.claude/skills/speckit-implement/SKILL.md) works through those tasks.
+- `spec.md`: what the feature does and why, with no technology in it. Questions the spec leaves open are asked and answered in it before planning.
+- `plan.md` and its companions: research, data model, contracts and a quickstart. The plan holds the Decision Ledger, where each design choice waits for the maintainer to accept it.
+- `tasks.md`: numbered tasks, each naming its files and, where there is code, its test first. Agents then work through those tasks.
 
-What each file in a feature folder holds is in the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). The task list matters most to agents: every change that is not trivial maps to a task ID, and an agent with no task stops rather than invent scope. Tasks also carry tokens that say when they are ready: `needs:` names tasks that must land first, `blocked:` names a decision only the maintainer can clear, and `human:` marks work no agent picks up. The Spec Kit files themselves are generated, so they are changed with the `specify` tool, never by hand.
+What each file in a feature folder holds is in the [specs index](https://github.com/openplush/openplush/blob/main/specs/README.md). The task list matters most to agents: every change that is not trivial maps to a task ID, and an agent with no task stops rather than invent scope. Tasks also carry tokens that say when they are ready: `needs:` names tasks that must land first, `blocked:` names a decision only the maintainer can clear, and `human:` marks work no agent picks up.
 
 ### Landing a task as a pull request
 
@@ -41,7 +39,7 @@ Once a PR is open, the [`steward`](https://github.com/openplush/openplush/blob/m
 | Reviewer | Runs when |
 |---|---|
 | [`pr-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/pr-reviewer.md) | always |
-| [`spec-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/spec-reviewer.md) | `specs/` or `.specify/memory/` changed |
+| [`spec-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/spec-reviewer.md) | `specs/` or `CONSTITUTION.md` changed |
 | [`docs-reviewer`](https://github.com/openplush/openplush/blob/main/.claude/agents/docs-reviewer.md) | `docs/` or a public surface changed: the pipeline crate's source, `bindings/`, the engine client, or a feature's contracts; or a file that can state what is built changed: a feature's `tasks.md`, `README.md` or `CONTRIBUTING.md`, so a status claim outside [the status page](../start/status.md) is caught |
 | [`mutation-auditor`](https://github.com/openplush/openplush/blob/main/.claude/agents/mutation-auditor.md) | only when the maintainer asks for it, and Rust under `crates/` or `bindings/` changed |
 

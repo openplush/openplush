@@ -17,7 +17,7 @@ Thanks for helping. OpenPlush turns a 3D model into a printable sewing pattern f
 2. [Set up and run every check](docs/start/setup.md): three commands to a passing run of every gate CI runs.
 3. Pick a ready task from a feature's `tasks.md`, starting at the [specs index](specs/README.md); trivial fixes need none.
 4. [Scope and open a pull request](docs/how-to/pull-requests.md): tests first, one intent per pull request, the template filled in. For a docs change, [write a documentation page](docs/how-to/write-docs.md).
-5. Read the [constitution](.specify/memory/constitution.md); reviewers enforce it.
+5. Read the [constitution](CONSTITUTION.md); reviewers enforce it.
 
 What each check enforces, such as the workspace lints, the tests that must also run on wasm32 and the dependency licences, is in [the checks reference](docs/reference/checks.md).
 

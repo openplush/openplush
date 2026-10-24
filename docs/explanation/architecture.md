@@ -13,7 +13,7 @@ OpenPlush turns a 3D model into a sewing pattern on the user's device. The work 
 
 The boundary is enforced, not just intended: `scripts/check-boundary.sh` reads `cargo metadata` and the source, and fails CI if an engine crate reaches a browser or OS API or if a binding depends on any workspace crate but the pipeline. `crates/clippy.toml` bans the listed std filesystem, clock, thread, network and process items at compile time, so an aliased `use std::time;` cannot sneak past the text scan.
 
-Why: a geometry change should never need a UI change, and the user's model never leaves their machine. Rationale: [constitution, Principles I and VIII](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md).
+Why: a geometry change should never need a UI change, and the user's model never leaves their machine. Rationale: [constitution, Principles I and VIII](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md).
 
 ## The pipeline: each stage's type is its guarantee
 

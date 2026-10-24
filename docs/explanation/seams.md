@@ -62,4 +62,4 @@ The obvious alternative is to cut the mesh itself along each seam, so that chart
 
 ## Decisions
 
-[Seams, charts and sewing correspondence (data model)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#4-seams-charts-and-sewing-correspondence) · [seam requirements (spec)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/spec.md#seams) · [Constitution, Principle VII](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md)
+[Seams, charts and sewing correspondence (data model)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/data-model.md#4-seams-charts-and-sewing-correspondence) · [seam requirements (spec)](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/spec.md#seams) · [Constitution, Principle VII](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md)

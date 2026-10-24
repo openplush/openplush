@@ -92,7 +92,7 @@ git push -u origin 002/03-plan
 
 The PR body's `Stack` section lists position, parent, and child. When you open a child, edit the parent's body to link it, so the chain can be walked from either end.
 
-**Why stack.** Spec Kit work is a chain: the plan cites the research, the data model implements the plan, the tasks cite all of them. Code is the same: the weld step needs the mesh types. If every PR branches from `main` instead:
+**Why stack.** Spec work is a chain: the plan cites the research, the data model implements the plan, the tasks cite all of them. Code is the same: the weld step needs the mesh types. If every PR branches from `main` instead:
 
 - Each PR's diff is correct, but its links point at files that don't exist on that branch, so a reviewer can't follow them.
 - Merge order lives only in prose ("merge after `002/research`"), and nothing enforces it.

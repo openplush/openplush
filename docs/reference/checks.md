@@ -49,7 +49,7 @@ Clippy runs with `-D warnings`, so every warning blocks a merge. The workspace l
 
 | Lint | Why |
 |---|---|
-| `unsafe_code = "forbid"` | The [constitution](https://github.com/openplush/openplush/blob/main/.specify/memory/constitution.md) forbids unsafe code in the engine. An exception needs an ADR. |
+| `unsafe_code = "forbid"` | The [constitution](https://github.com/openplush/openplush/blob/main/CONSTITUTION.md) forbids unsafe code in the engine. An exception needs an ADR. |
 | `missing_docs` (`openplush-pipeline` only) | The public engine API documents every item. Elsewhere a doc comment is one line saying what the signature doesn't. |
 | `unreachable_pub` | An item is `pub(crate)` unless another crate calls it. |
 | `too_many_lines` (60), `too_many_arguments` (5) | Small units. A function that predates the limit carries `#[expect(clippy::too_many_lines, reason = …)]` until it is split. |

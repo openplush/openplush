@@ -38,6 +38,7 @@
   - [Get a pull request reviewed and merged](how-to/review-and-merge.md)
   - [Write a documentation page](how-to/write-docs.md)
   - [Start a feature's spec](how-to/author-specs.md)
+  - [Test a pattern on paper and fabric](how-to/test-a-pattern-on-paper.md)
 - [Reference](reference/README.md)
   - [Checks](reference/checks.md)
   - [Code rules for the engine](reference/code-rules.md)

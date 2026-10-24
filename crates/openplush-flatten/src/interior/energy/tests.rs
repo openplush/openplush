@@ -1,7 +1,7 @@
 use openplush_geom::{DVec2, DVec3};
 use openplush_mesh::{FaceId, VertexId};
 
-use super::{energy, max_step, rest_shapes};
+use super::{energy, first_positive_root, max_step, rest_shapes};
 
 type Faces = Vec<(FaceId, [VertexId; 3])>;
 
@@ -173,4 +173,22 @@ fn the_step_is_the_smallest_over_all_faces() {
         (0.0, -4.0),
     ]);
     assert!(near(max_step(&f, &start, &dir), 0.25));
+}
+
+#[test]
+fn any_non_finite_coefficient_allows_no_step() {
+    let finite = [1.0, -3.0, 2.0];
+    for bad in [f64::NAN, f64::INFINITY] {
+        for i in 0..3 {
+            let mut c = finite;
+            c[i] = bad;
+            assert_eq!(first_positive_root(c[0], c[1], c[2]), 0.0, "{c:?}");
+        }
+    }
+}
+
+#[test]
+fn a_root_at_zero_is_not_a_step() {
+    // t² − t: roots 0 and 1.
+    assert_eq!(first_positive_root(1.0, -1.0, 0.0), 1.0);
 }

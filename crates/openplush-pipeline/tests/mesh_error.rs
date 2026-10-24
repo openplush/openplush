@@ -127,6 +127,10 @@ fn messages_naming_a_loop_are_pinned() {
         "the plan fills the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }), which the mesh does not have"
     );
     assert_eq!(
+        MeshError::AmbiguousHoleLoop { loop_ref }.to_string(),
+        "the plan fills the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }), but more than one hole has that name, so none was filled"
+    );
+    assert_eq!(
         MeshError::HoleNotFillable { loop_ref }.to_string(),
         "the loop LoopRef(SourceCorner { primitive: 0, vertex: 3 }) has no fill: every triangulation of it reuses an edge, has no area, or does not solve"
     );

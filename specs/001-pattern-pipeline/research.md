@@ -114,7 +114,7 @@ This is R3 Option A below, chosen because spec FR-023 made seam parity a **hard*
 | T005 | `svg2pdf` WASM viability vs. generating PDF directly | 0.5 day |
 | T006 | Licenses: confirm `faer`, `i_overlay`, `sparrow`, `svg2pdf`, threecrate (MIT vs. dual) | 0.5 day |
 | T007 | **Boundary-pinned flattening (D-013): on the fixture corpus, how often do prescribed boundary lengths fail to close, and does the result stay injective (det J > 0 everywhere)? Measure the interior distortion penalty vs. free-boundary SLIM.** Outcome decides how aggressive the dart-proposal fallback must be. Parity is not negotiable, so a bad result changes the fallback, not the contract | 2 days |
-| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Closed 2026-10-23 by the spec-sheet route (D-075): stretch is sourced below; pile, thickness, allowance and roll width are still guesses | 0.5 day + outside review |
+| T008 | Fabric preset values (R7) need review by someone who sews with these fabrics, or supplier spec sheets. Closed 2026-10-23 by the spec-sheet route (D-075): stretch is sourced below; pile, thickness, allowance and roll width are still guesses | closed |
 
 ### T001 result: baby_shark on wasm32 (2026-10-14) ✅ closed
 
@@ -294,31 +294,31 @@ The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) 
 
 Nine shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
 
-> **Stretch is sourced; the other numbers are `[verify]`.** Under D-075 each stretch value comes from a supplier spec sheet, or failing that from the midpoint of the Fabric Stretch Guide's range, and is tagged `[likely]`. Pile, thickness, allowance and roll width are still plausible craft-fabric values with no source; they are good enough to build and test against, since correctness depends on the plumbing that carries them, not on their accuracy. A measured value from `research/fabric_stretch/protocol.md` replaces any of them. Bias is not used in 001: nothing is cut on the bias (D-046).
+> **Stretch is sourced; the other numbers are `[verify]`.** Under D-075 each stretch value comes from a supplier spec sheet, or failing that from the midpoint of the Fabric Stretch Guide's range, and is tagged `[likely]`, short faux fur `[speculative]` (below). Pile, thickness, allowance and roll width are still plausible craft-fabric values with no source; they are good enough to build and test against, since correctness depends on the plumbing that carries them, not on their accuracy. A measured value from `research/fabric_stretch/protocol.md` replaces any of them. Bias is not read in 001, since nothing is cut on the bias (D-046), but `Fabric::new` requires one, so each preset keeps R7's earlier unsourced estimate, `[verify]`.
 
 | Preset | Category | Stretch grain / cross | Bias | Nap | Pile (mm) | Thick (mm) | Frays | Allowance (mm) | Roll (mm) |
 |---|---|---|---|---|---|---|---|---|---|
-| Quilting cotton | woven | 1.5 / 3% [G1] `[likely]` | not used in 001 | no | 0 | 0.3 | **yes** | 6 | 1120 |
-| Craft felt | felt | 10 / 10% [G2] `[likely]` | not used in 001 | no | 0 | 1.2 | no | 6 | 1800 |
-| Polar fleece | knit | 20 / 55% [G3] `[likely]` | not used in 001 | no | 1 | 2.0 | no | 6 | 1500 |
-| Minky / cuddle | knit (pile) | 12.5 / 52.5% [G4] `[likely]` | not used in 001 | **yes** | 3 | 2.5 | no | 10 | 1500 |
-| Velboa | knit (pile) | 8.5 / 27.5% [G5] `[likely]` | not used in 001 | **yes** | 1.5 | 1.5 | no | 6 | 1500 |
-| Short faux fur | knit (pile) | 4.5 / 15% [G6] `[speculative]` | not used in 001 | **yes** | 8 | 3.0 | no | 10 | 1500 |
-| Long faux fur | knit (pile) | 4.5 / 15% [G6] `[likely]` | not used in 001 | **yes** | 30 | 4.0 | no | 12 | 1500 |
-| Teddy / sherpa | knit (pile) | 11.5 / 27.5% [G7] `[likely]` | not used in 001 | **yes** | 8 | 3.0 | no | 10 | 1500 |
-| Corduroy | woven (pile) | 2 / 4.5% [G8] `[likely]` | not used in 001 | **yes** | 1.5 | 1.0 | **yes** | 10 | 1120 |
+| Quilting cotton | woven | 1.5 / 3% [G1] `[likely]` | 5% `[verify]` | no | 0 | 0.3 | **yes** | 6 | 1120 |
+| Craft felt | felt | 10 / 10% [G2] `[likely]` | 0% `[verify]` | no | 0 | 1.2 | no | 6 | 1800 |
+| Polar fleece | knit | 20 / 55% [G3] `[likely]` | 30% `[verify]` | no | 1 | 2.0 | no | 6 | 1500 |
+| Minky / cuddle | knit (pile) | 12.5 / 52.5% [G4] `[likely]` | 45% `[verify]` | **yes** | 3 | 2.5 | no | 10 | 1500 |
+| Velboa | knit (pile) | 8.5 / 27.5% [G5] `[likely]` | 35% `[verify]` | **yes** | 1.5 | 1.5 | no | 6 | 1500 |
+| Short faux fur | knit (pile) | 4.5 / 15% [G6] `[speculative]` | 35% `[verify]` | **yes** | 8 | 3.0 | no | 10 | 1500 |
+| Long faux fur | knit (pile) | 4.5 / 15% [G6] `[likely]` | 35% `[verify]` | **yes** | 30 | 4.0 | no | 12 | 1500 |
+| Teddy / sherpa | knit (pile) | 11.5 / 27.5% [G7] `[likely]` | 35% `[verify]` | **yes** | 8 | 3.0 | no | 10 | 1500 |
+| Corduroy | woven (pile) | 2 / 4.5% [G8] `[likely]` | 5% `[verify]` | **yes** | 1.5 | 1.0 | **yes** | 10 `[verify]` | 1120 |
 
 ### Stretch sources
 
-**Spec sheets (searched 2026-10-23): none gives a number.** Each search below found only qualitative statements, so every value falls back to the guide (D-075).
+**Spec sheets (searched 2026-10-23): none gives a number.** Each search below found only qualitative statements, so every value falls back to the guide (D-075). D-075's URL and read date go beside a value taken from a spec sheet; none is, so these rows record the searches.
 
 | Fabric | Searched | Found |
 |---|---|---|
 | Minky / cuddle | Shannon Fabrics' Cuddle pages and *Cuddle 101* (<https://shannonfabrics.com/download_patterns/Cuddle101_2024.pdf>, via search summary; the host was unreachable for a direct read) | Cuddle 3 stretches widthwise, not lengthwise; Quilting Cuddle "minimal". No percentage. Agrees in direction with [G4] |
 | Polar fleece | Mill and retail listings (<https://www.mh-chine.com/products/100-polar-fleece-19nw-2050>, <https://en.wikipedia.org/wiki/Polar_fleece>) | Composition, weight and width; stretch only as "comfortable stretch" or "more in one direction" |
 | Faux fur | Retail listings (<https://sewingmachine.com/products/rabbit-soft-plush-short-pile-faux-fur-fabric>, <https://sewingmachine.com/products/luxury-long-pile-shaggy-faux-fur-fabric>) | Stretch "none"; width 58–60 in; pile 0.5–4 in. Conflicts with [G6]'s 10–20% cross; a listing's "none" is a seller's word, not a figure under load, so [G6] stands |
-| Velboa | Retail listings | "2-way stretch", width 58/60 in; no percentage (listing URLs not recorded) |
-| Craft felt, quilting cotton | Felt makers' and retailers' data (<https://www.mcmaster.com/f10-felt>, <https://woollyfelt.com/2024/06/17>) | Tensile strength, no elongation. Quilting cotton not found |
+| Velboa | Retail listings | Searched, no figure found: "2-way stretch", width 58/60 in (listing URLs not recorded) |
+| Craft felt, quilting cotton | Felt makers' and retailers' data (<https://www.mcmaster.com/f10-felt>, <https://woollyfelt.com/2024/06/17>) | Tensile strength, no elongation. Quilting cotton: searched, no figure found |
 
 **Fabric Stretch Guide (the maintainer's copy, 2026-10-23).** Its figures are estimates for a typical fabric under EN ISO 20932-1's conditions; every row used here is marked "Estimate" in the guide, with no public test data behind it. The value is the midpoint of the guide's range, cross and length.
 
@@ -335,7 +335,7 @@ Nine shipped presets, all editable, all persisted in the project. The schema is 
 
 Short faux fur has no row of its own. It takes [G6], the faux-fur row, on the assumption that its knitted backing, not its pile length, sets its stretch, and is tagged `[speculative]` for that reason. The guide's other candidates, Teddy / sherpa ([G7]) and Velboa / short plush ([G5]), both have a 27.5% cross midpoint. Across the nine presets the choice changes FR-058's 20-point result in two pairings: against quilting cotton, the cross gap is 12 points with [G6] and 24.5 with either alternative; against corduroy, 10.5 and 23.
 
-Corduroy is the one preset in category `Pile` that frays (D-076); "woven (pile)" in the table, like "knit (pile)", names the construction, and the category is `Pile`. The guide files it under Pile, as a woven weft-pile fabric, so it takes the pile rules (nap, no rotation, the mirroring question at export) while keeping a non-zero allowance, since FR-057's zero allowance needs `!frays`. Its 1.5 mm pile makes the pile-scaled allowance and the small-part warning irrelevant at any toy size, so its 10 mm allowance is set for fraying and wale bulk, not pile; velboa, with the same pile and no fraying, keeps 6 mm. Both are `[verify]`. No spec sheet was searched for teddy / sherpa or corduroy: their stretch comes from the guide alone.
+Corduroy is the one preset in category `Pile` that frays (D-076); "woven (pile)" in the table, like "knit (pile)", names the construction, and the category is `Pile`. The guide files it under Pile, as a woven weft-pile fabric, so it takes the pile rules (nap, no rotation, the mirroring question at export) while keeping a non-zero allowance, since FR-057's zero allowance needs `!frays`. Its 1.5 mm pile puts both the pile-scaled allowance and the small-part threshold at 3 mm (2 × pile, D-046), so the warning effectively never fires, and its 10 mm allowance is set for fraying and wale bulk, not pile; velboa, with the same pile and no fraying, keeps 6 mm. Both are `[verify]`. No spec sheet was searched for teddy / sherpa or corduroy: their stretch comes from the guide alone.
 
 ### Why these fields and not others
 

@@ -35,7 +35,7 @@ From this directory, with the repo toolchain and `wasm-bindgen-test-runner` 0.2.
 cargo run --release                                     # writes target/pdfs/*.pdf; sizes, hashes, time per page
 cargo test --release                                    # native oracle
 cargo test --release --target wasm32-unknown-unknown    # same tests on wasm32 under Node
-python3 -m unittest -v test_scale                       # scale oracle (needs pypdf==6.17.0; run cargo first)
+python3 -m unittest -v test_scale                       # scale oracle (needs pypdf==6.21.2; run cargo first)
 cargo build --release --target wasm32-unknown-unknown --examples   # size probes
 cargo deny --manifest-path Cargo.toml --config ../../deny.toml check
 ```

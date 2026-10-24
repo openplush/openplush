@@ -26,7 +26,7 @@ Contributed models (CC0 or CC-BY only) go in `meshes/` with an entry in `LICENSE
 }
 ```
 
-`mesh` is relative to `fixtures/`. An edge is a pair of **OBJ vertex indices** (the order of `v` lines), counted from `vertexIndexBase`, 0 or 1; every fixture here is 0-based. The smaller index comes first, and the list is sorted. This names an edge without depending on the engine's half-edge numbering. `version`, `vertexIndexBase`, and edge indices are JSON integers: `1.0` or `false` is invalid. `kind` takes the project schema's seam kinds. Every chart left by the cut is a topological disk, except for sets under `seams/non-disk/`.
+`mesh` is relative to `fixtures/`. An edge is a pair of **OBJ vertex indices** (the order of `v` lines), counted from `vertexIndexBase`, 0 or 1; every fixture here is 0-based. The smaller index comes first, and the list is sorted. This names an edge without depending on the engine's half-edge numbering. `version`, `vertexIndexBase`, and edge indices are JSON integers: `1.0` or `false` is invalid. `kind` is `cut` or `fabricBoundary`. The project schema's other seam kinds, `dart`, `opening` and `mandatory`, are refused for now. Every chart left by the cut is a topological disk, except for sets under `seams/non-disk/`.
 
 ## Dead-end format
 

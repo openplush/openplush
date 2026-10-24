@@ -53,10 +53,14 @@ fn seam(value: &Value) -> Result<Seam, String> {
     let edge = <[u64; 2]>::try_from(ends).map_err(|_| not_two())?;
     let kind = match value["kind"].as_str() {
         Some("cut") => SeamKind::Cut,
-        Some("dart") => SeamKind::Dart,
-        Some("opening") => SeamKind::Opening,
         Some("fabricBoundary") => SeamKind::FabricBoundary,
-        Some("mandatory") => SeamKind::Mandatory,
+        // Placed raw, these would skip the checks the seams crate makes when it places them.
+        Some(name @ ("dart" | "opening" | "mandatory")) => {
+            return Err(format!(
+                "\"kind\" \"{name}\" is not supported in a seam-set file yet; \
+                 use \"cut\" or \"fabricBoundary\""
+            ));
+        }
         _ => return Err("\"kind\" is not a seam kind".into()),
     };
     Ok(Seam { edge, kind })

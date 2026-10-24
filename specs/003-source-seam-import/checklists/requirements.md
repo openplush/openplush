@@ -36,4 +36,4 @@
 - OBJ and glTF are named because feature 001 already fixes them as the supported formats; the spec does not say how either encodes UVs or materials.
 - "Typed error" in FR-011 is the constitution's term (Principle III), not a technology choice.
 - FR-024 (repair-filled faces) is an inference, not a maintainer decision; review it during clarify.
-- Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
+- Items marked incomplete require spec updates before clarify or plan

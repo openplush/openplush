@@ -8,7 +8,7 @@ deciders: Lavender (maintainer)
 
 ## Context and problem statement
 
-[ADR 0003](0003-as-built-docs.md) made code and `docs/` authoritative once built, and froze built spec sections as the record of intent. It did not say how the facts that still change after a feature starts (which tasks are done, what is built) stay true in the places that repeat them. On `main` on 2026-10-20 three had drifted: the status page undercounted 002's ticked tasks by one, the README's task count for 001 was ten short and listed neither 003 nor 004, and ADR 0014 was Proposed while ADRs 0015, 0016 and 0018, all Accepted, amended it. Each was copied by hand, and the only check was a diff-scoped, advisory review that never sees a file the PR does not touch. Spec Kit itself never reconciles `spec.md`, `plan.md` and `tasks.md`; it leaves the maintenance model to the project ([Spec persistence models](https://github.github.com/spec-kit/concepts/spec-persistence.html)). Feature 004, task T042.
+[ADR 0003](0003-as-built-docs.md) made code and `docs/` authoritative once built, and froze built spec sections as the record of intent. It did not say how the facts that still change after a feature starts (which tasks are done, what is built) stay true in the places that repeat them. On `main` on 2026-10-20 three had drifted: the status page undercounted 002's ticked tasks by one, the README's task count for 001 was ten short and listed neither 003 nor 004, and ADR 0014 was Proposed while ADRs 0015, 0016 and 0018, all Accepted, amended it. Each was copied by hand, and the only check was a diff-scoped, advisory review that never sees a file the PR does not touch. Feature 004, task T042.
 
 ## Decision drivers
 

@@ -1,6 +1,6 @@
 ## Stack
 
-<!-- Branch: NNN/NN-slug (e.g. 001/115-slim-interior) or chore/slug. The slug names the intent.
+<!-- Branch: NNN/NN-slug (e.g. 001/115-slim-interior), fix/slug or chore/slug. The slug names the intent.
      Parent: "main", or the intent this one is stacked on (its base branch). Stack
      interdependent intents: X, then fix Y, then feature Z. Child: the PR stacked on this one,
      or "none". A folded stack lists here the PRs it absorbed.
@@ -21,7 +21,7 @@
 
 <!-- Every task this PR finishes, each ticked in tasks.md in this PR, with its feature and a link:
      [001 T080](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md), [001 T082](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md)
-     Or: "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
+     Or: "Fix: no task ID" or "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
 
 ## Reading order
 
@@ -63,7 +63,7 @@
      - [ ] Each task's test commit precedes its implementation commit
      - [ ] CI green at the tip, and not green because a test was weakened
      - [ ] No unrelated intent or chore mixed in; refactor, fix and feature in separate commits
-     - [ ] Branch named NNN/NN-slug or chore/slug; base is the parent if this depends on unmerged work
+     - [ ] Branch named NNN/NN-slug, fix/slug or chore/slug; base is the parent if this depends on unmerged work
      - [ ] No golden snapshot updated to make a test pass
      - [ ] Skipped section filled in honestly
      - [ ] Public changes have their as-built docs, or Docs says n/a

@@ -37,7 +37,13 @@ fn printed(rows: &[SummaryRow]) -> Result<(Vec<Page>, usize), Setup> {
 
 /// The texts the summary drew on `page`: everything at Courier's line size.
 fn summary(page: &Page) -> Vec<&common::Text> {
-    let furniture = ["50 mm", "1 in", "Page map"];
+    let furniture = [
+        "50 mm",
+        "1 in",
+        "Page map",
+        "Print at Actual size, 100%, not Fit to page.",
+        "Check that the square at left measures 50 mm before you cut.",
+    ];
     page.texts
         .iter()
         .filter(|t| !furniture.contains(&t.text.as_str()) && !is_tile_label(&t.text))

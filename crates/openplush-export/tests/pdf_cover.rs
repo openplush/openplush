@@ -23,7 +23,18 @@ const CASES: [(f64, f64, Paper); 3] = [
     (700.0, 150.0, Paper::A4),
 ];
 
-const FURNITURE: [&str; 3] = ["50 mm", "1 in", "Page map"];
+const PRINT_AT_SIZE: [&str; 2] = [
+    "Print at Actual size, 100%, not Fit to page.",
+    "Check that the square at left measures 50 mm before you cut.",
+];
+
+const FURNITURE: [&str; 5] = [
+    "50 mm",
+    "1 in",
+    "Page map",
+    PRINT_AT_SIZE[0],
+    PRINT_AT_SIZE[1],
+];
 
 struct Case {
     sheet: Sheet,
@@ -156,6 +167,41 @@ fn the_cover_has_the_scale_squares_at_the_top_left_of_its_printable_area() -> Re
         top - SCALE_SQUARE_MM < name.at.y && name.at.y < top,
         "{name:?}"
     );
+    Ok(())
+}
+
+#[test]
+fn the_cover_says_to_print_at_actual_size_beside_the_squares() -> Result<(), Setup> {
+    for (w, h, paper) in CASES {
+        let c = case(w, h, paper)?;
+        let top = c.cover.size.y - MARGIN_MM;
+        let find = |text: &str| c.cover.texts.iter().find(|t| t.text == text);
+        let mut above = find("Page map").ok_or("the cover is named")?.at.y;
+        for line in PRINT_AT_SIZE {
+            let t = find(line).ok_or(line)?;
+            assert!(t.at.x > MARGIN_MM + SCALE_SQUARE_MM, "{t:?}");
+            assert!(t.at.y + t.size <= above, "{t:?} overlaps the line above");
+            assert!(t.at.y > top - SCALE_SQUARE_MM, "{t:?} reaches the map");
+            above = t.at.y;
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn the_pdf_asks_the_viewer_not_to_scale_it_when_printing() -> Result<(), Setup> {
+    let (sheet, pieces) = rectangle(100.0, 100.0)?;
+    let tiling = tile(&sheet, Paper::A4)?;
+    let pdf = String::from_utf8_lossy(&write(&sheet, &pieces, &tiling, &[])?).into_owned();
+    let catalog = pdf
+        .split("endobj")
+        .find(|o| o.contains("/Type /Catalog"))
+        .ok_or("no catalog")?;
+    let prefs = catalog
+        .split("/ViewerPreferences")
+        .nth(1)
+        .ok_or("no viewer preferences")?;
+    assert!(prefs.contains("/PrintScaling /None"), "{catalog}");
     Ok(())
 }
 

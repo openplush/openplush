@@ -67,7 +67,7 @@ Named so nobody implements them by accident:
 Worth knowing before planning a release:
 
 - **Fixtures and models**: what the corpus still lacks, and what that leaves unmeasurable, is on the [status page](../docs/start/status.md#known-gaps).
-- **001's fabric preset values** in research R7: stretch is the Fabric Stretch Guide's estimate, `[likely]`; the other fields are `[verify]`. What that leaves is on the [status page](../docs/start/status.md#known-gaps).
+- **001's fabric preset values** in research R7: stretch is the Fabric Stretch Guide's estimate, `[likely]` (short faux fur `[speculative]`); the other fields are `[verify]`. What that leaves is on the [status page](../docs/start/status.md#known-gaps).
 - **001's minor spec defaults** are open questions, each with a default already wired into `project.schema.json`. Listed in 001's spec under "Open Clarifications".
 
 ## Active feature pointer

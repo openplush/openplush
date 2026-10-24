@@ -445,3 +445,37 @@ fn a_refusal_after_the_pattern_stage_writes_nothing() -> Result<(), Setup> {
     assert!(err.starts_with("openplush-cli: Layout: "), "{err}");
     Ok(())
 }
+
+#[test]
+fn a_seam_repair_forces_is_sewn_even_where_it_leaves_no_disk() -> Result<(), Setup> {
+    let dir = scratch("fin")?;
+    // An octahedron with a fin on its edge from +x to +y: repair splits that edge, so the body
+    // keeps a slit there that must be sewn to the fin.
+    let model = file(
+        &dir.0,
+        "fin.obj",
+        "v 10 0 0\nv -10 0 0\nv 0 10 0\nv 0 -10 0\nv 0 0 10\nv 0 0 -10\nv 10 10 0\n\
+         f 1 3 5\nf 3 2 5\nf 2 4 5\nf 4 1 5\nf 3 1 6\nf 2 3 6\nf 4 2 6\nf 1 4 6\nf 1 3 7\n",
+    )?;
+    // A cut from +z through -x to -z opens the body; with the slit as well it is a ring.
+    let seams = file(
+        &dir.0,
+        "seams.json",
+        &seam_set(r#"{"edge": [4, 1], "kind": "cut"}, {"edge": [1, 5], "kind": "cut"}"#),
+    )?;
+    let out_dir = dir.0.join("out");
+    let out = Run {
+        model,
+        seams,
+        ..Run::capsule()
+    }
+    .write_to(&out_dir)?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert!(
+        stderr(&out).starts_with("openplush-cli: ChartNotDisk: "),
+        "{}",
+        stderr(&out)
+    );
+    assert!(!out_dir.exists());
+    Ok(())
+}

@@ -2,7 +2,7 @@
 
 OpenPlush uses spec-driven development. Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`. New files start from [`templates/`](./templates/); [Start a feature's spec](../docs/how-to/author-specs.md) has the steps.
 
-This index lists the features and how to read their files. How far each feature's spec, plan and implementation have got is on the [status page](../docs/start/status.md).
+What to work on next, and in what order, is in [`ROADMAP.md`](../ROADMAP.md); a feature's spec holds its design once it is picked up. This index lists the features and how to read their files. How far each feature's spec, plan and implementation have got is on the [status page](../docs/start/status.md).
 
 ## Features
 

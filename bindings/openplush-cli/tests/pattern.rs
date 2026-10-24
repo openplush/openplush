@@ -116,6 +116,79 @@ fn the_capsule_becomes_an_svg_and_a_pdf_in_a_new_directory() -> Result<(), Setup
     Ok(())
 }
 
+type Outline = Vec<(f64, f64)>;
+
+/// The points of every `<path class="{class}" d="M x y L x y … Z">` in `svg`, in document order.
+fn outlines(svg: &str, class: &str) -> Result<Vec<Outline>, Setup> {
+    let open = format!("<path class=\"{class}\" d=\"");
+    let mut found = Vec::new();
+    for rest in svg.split(open.as_str()).skip(1) {
+        let d = rest.split('"').next().ok_or("an unclosed path")?;
+        let numbers = d
+            .split_whitespace()
+            .filter(|t| !matches!(*t, "M" | "L" | "Z"))
+            .map(str::parse::<f64>)
+            .collect::<Result<Vec<_>, _>>()?;
+        found.push(numbers.chunks_exact(2).map(|p| (p[0], p[1])).collect());
+    }
+    Ok(found)
+}
+
+fn size(outline: &Outline) -> (f64, f64) {
+    let (xs, ys): (Vec<f64>, Vec<f64>) = outline.iter().copied().unzip();
+    let span = |v: &[f64]| {
+        v.iter().copied().fold(f64::MIN, f64::max) - v.iter().copied().fold(f64::MAX, f64::min)
+    };
+    (span(&xs), span(&ys))
+}
+
+fn perimeter(outline: &Outline) -> f64 {
+    let next = outline.iter().cycle().skip(1);
+    outline
+        .iter()
+        .zip(next)
+        .map(|(a, b)| (b.0 - a.0).hypot(b.1 - a.1))
+        .sum()
+}
+
+fn assert_mm(got: f64, want: f64, what: &str) {
+    assert!(
+        (got - want).abs() <= 0.05,
+        "{what}: {got:.3} mm, want {want:.2} mm"
+    );
+}
+
+fn assert_size(got: (f64, f64), want: (f64, f64), what: &str) {
+    let got = if got.0 < got.1 { got } else { (got.1, got.0) };
+    assert_mm(got.0, want.0, what);
+    assert_mm(got.1, want.1, what);
+}
+
+// At 240 mm the capsule (120 model units long) scales by 2. The tube is its 12-sided ring of
+// radius 30 unrolled: 12 sides of 2·30·sin(15°) units, ×2, is 372.70 mm; its 60 units are 120 mm.
+#[test]
+fn the_capsule_s_pieces_measure_what_its_shape_and_the_allowance_give() -> Result<(), Setup> {
+    let dir = scratch("measure")?;
+    let out = Run {
+        size_mm: "240".into(),
+        ..Run::capsule()
+    }
+    .write_to(&dir.0)?;
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
+    let (sew, cut) = (outlines(&svg, "sew")?, outlines(&svg, "cut")?);
+    assert_eq!((sew.len(), cut.len()), (3, 3), "{svg}");
+    let tube = (0..3)
+        .max_by(|&a, &b| perimeter(&sew[a]).total_cmp(&perimeter(&sew[b])))
+        .ok_or("no pieces")?;
+    assert_size(size(&sew[tube]), (120.0, 372.70), "tube sewing line");
+    assert_size(size(&cut[tube]), (132.0, 384.70), "tube cut line");
+    for cap in (0..3).filter(|&i| i != tube) {
+        assert_mm(perimeter(&sew[cap]), 372.70, "cap sewing line");
+    }
+    Ok(())
+}
+
 #[test]
 fn the_same_inputs_give_the_same_bytes() -> Result<(), Setup> {
     let dir = scratch("same")?;

@@ -17,6 +17,10 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # Full debug info for the native and wasm32 test builds outgrew the runner's disk (the
+  # linker died with SIGBUS); line tables keep panics' file and line in far less space.
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_INCREMENTAL: 0
 
 jobs:
   check:

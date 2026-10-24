@@ -144,13 +144,22 @@ mod tests {
     fn each_kind_name_reads_as_its_seam_kind() {
         for (name, kind) in [
             ("cut", SeamKind::Cut),
-            ("dart", SeamKind::Dart),
-            ("opening", SeamKind::Opening),
             ("fabricBoundary", SeamKind::FabricBoundary),
-            ("mandatory", SeamKind::Mandatory),
         ] {
             let file = one(&format!(r#"{{"edge": [1, 2], "kind": "{name}"}}"#));
             assert_eq!(file.map(|f| f.seams[0].kind), Ok(kind), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_kind_the_file_cannot_carry_yet_is_refused_naming_the_seam() {
+        for name in ["dart", "opening", "mandatory"] {
+            let file = one(&format!(r#"{{"edge": [1, 2], "kind": "{name}"}}"#));
+            let says = format!(
+                "seam 0: \"kind\" \"{name}\" is not supported in a seam-set file yet; \
+                 use \"cut\" or \"fabricBoundary\""
+            );
+            assert_eq!(file, Err(says), "{name}");
         }
     }
 

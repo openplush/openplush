@@ -22,7 +22,7 @@ The full set is in the [constitution](CONSTITUTION.md).
 
 ## Design documents
 
-Start at the [specs index](specs/README.md) — it lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
+What comes next, in order, is the [roadmap](ROADMAP.md) — **start there to contribute**. The [specs index](specs/README.md) lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
 
 **001 — pattern pipeline** (the product)
 
@@ -34,7 +34,7 @@ Start at the [specs index](specs/README.md) — it lists the features, how to re
 | [Data model](specs/001-pattern-pipeline/data-model.md) | Mesh structures, fabric, warnings, geometric edge cases |
 | [Contracts](specs/001-pattern-pipeline/contracts/) | Engine API, worker protocol, project file schema |
 | [Quickstart](specs/001-pattern-pipeline/quickstart.md) | The acceptance walkthrough |
-| [Tasks](specs/001-pattern-pipeline/tasks.md) | The numbered work, and [how much is done](docs/start/status.md#by-feature) — **start here to contribute** |
+| [Tasks](specs/001-pattern-pipeline/tasks.md) | The numbered work, and [how much is done](docs/start/status.md#by-feature) |
 
 **002 — seam-placement hints** (shows you where seams belong; depends on 001)
 

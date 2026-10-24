@@ -46,7 +46,7 @@ f .cargo/config.toml | files | pr "$a_title" 001/10-x '[]' | expect "a .cargo/ c
 f .github/workflows/review.yml | files | pr "chore(ci): tweak" chore/review-tweak '[]' | expect "a chore editing review.yml is H, and the review skips it" '.tier == "H" and .review_exempt'
 f scripts/merge-gate.py | files | pr "chore(ci): widen the gate" chore/gate '[]' | expect "scripts/ is H: the gate cannot judge itself" '.tier == "H"'
 f .claude/skills/steward/SKILL.md | files | pr "docs(agents): steward" chore/steward '[]' | expect ".claude/ is H" '.tier == "H"'
-f .specify/memory/constitution.md | files | pr "docs: constitution" chore/constitution '[]' | expect ".specify/ is H" '.tier == "H"'
+f CONSTITUTION.md | files | pr "docs: constitution" chore/constitution '[]' | expect "CONSTITUTION.md is H" '.tier == "H"'
 f GOVERNANCE.md | files | pr "docs: governance" chore/governance '[]' | expect "GOVERNANCE.md is H" '.tier == "H"'
 f deny.toml | files | pr "chore: allow a license" chore/deny '[]' | expect "deny.toml is H" '.tier == "H"'
 f rust-toolchain.toml | files | pr "chore: bump rust" chore/rust '[]' | expect "rust-toolchain.toml is H" '.tier == "H"'

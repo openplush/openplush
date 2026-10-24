@@ -7,11 +7,14 @@ use openplush_geom::GeomError;
 use openplush_io::obj;
 use openplush_mesh::{RepairPlan, into_manifold};
 use openplush_pipeline::{
-    ChartId, ChartMesh, EdgeId, EngineError, FaceId, FlattenError, ManifoldMesh, SeamKind, SeamSet,
-    VertexId, chart, flatten,
+    ChartId, ChartMesh, EdgeId, EngineError, FaceId, FlattenError, ManifoldMesh, PieceId, SeamKind,
+    SeamSet, VertexId, WarningTarget, chart, flatten,
 };
 
-type Setup = Box<dyn std::error::Error>;
+#[allow(dead_code, reason = "each test file uses part of the shared fixtures")]
+mod common;
+
+use common::{CAPSULE_OBJ, Setup};
 
 fn mesh_of(obj: &str) -> Result<ManifoldMesh, Setup> {
     let soup = obj::read(obj.as_bytes())?;
@@ -313,4 +316,31 @@ fn an_unclosable_boundary_reports_its_residual_in_model_units() {
         e.to_string(),
         "chart 3's seam lengths cannot close flat (residual 1.250 in model units)"
     );
+}
+
+#[test]
+fn the_capsule_s_caps_warn_they_are_compressed_and_its_tube_does_not() -> Result<(), Setup> {
+    let mesh = mesh_of(CAPSULE_OBJ)?;
+    let seams = common::capsule_seams(&mesh)?;
+    let (charts, _) = chart(&mesh, &seams)?.value;
+    let warnings = flatten(&mesh, &charts)?.warnings;
+    let compressed: Vec<WarningTarget> = warnings
+        .iter()
+        .filter(|w| w.code().as_str() == "piece-compressed")
+        .map(|w| w.target())
+        .collect();
+    // The tube unrolls without compression and has the most faces.
+    let tube = charts
+        .iter()
+        .max_by_key(|c| c.faces().len())
+        .ok_or("no charts")?
+        .chart();
+    let caps: Vec<WarningTarget> = charts
+        .iter()
+        .filter(|c| c.chart() != tube)
+        .map(|c| WarningTarget::Piece(PieceId::new(c.chart().index())))
+        .collect();
+    assert_eq!(charts.len(), 3);
+    assert_eq!(compressed, caps);
+    Ok(())
 }

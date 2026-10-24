@@ -43,19 +43,27 @@ Have a committed `print-test-YYYY-MM-DD.md` that lists each measured length agai
    svg = open(sys.argv[1]).read()
    paths = [[(float(x), float(y)) for x, y in re.findall(r"(-?\d+\.\d+) (-?\d+\.\d+)", d)]
              for d in re.findall(r'<path class="sew" d="([^"]*)"', svg)]
+   if not paths:
+       sys.exit(f"{sys.argv[1]} has no sewing lines: is it an OpenPlush pattern.svg?")
    if len(sys.argv) == 2:
        for n, pts in enumerate(paths, 1):
            print(f"path {n}")
            for i, (x, y) in enumerate(pts):
                print(f"  {i}: {x:.3f} {y:.3f}")
-   else:
+   elif len(sys.argv) == 5 and all(s.isdigit() for s in sys.argv[2:]):
        n, a, b = map(int, sys.argv[2:])
+       if not 1 <= n <= len(paths):
+           sys.exit(f"there is no path {n}: the paths are 1 to {len(paths)}")
        pts = paths[n - 1]
+       if max(a, b) >= len(pts):
+           sys.exit(f"path {n} has points 0 to {len(pts) - 1}, not {max(a, b)}")
        run = [pts[i % len(pts)] for i in range(a, b + (len(pts) if b < a else 0) + 1)]
        print(f"{sum(math.dist(p, q) for p, q in zip(run, run[1:])):.3f} mm")
+   else:
+       sys.exit("usage: measure.py PATTERN.svg [PATH START END]")
    ```
 
-   `python3 measure.py out/capsule/pattern.svg` lists the points; `python3 measure.py out/capsule/pattern.svg 1 0 3` prints the length of path 1's run from point 0 to point 3.
+   `python3 measure.py out/capsule/pattern.svg` lists the points; `python3 measure.py out/capsule/pattern.svg 1 0 3` prints the length of path 1's run from point 0 to point 3. On Windows the command is `py` instead of `python3`. A path or point number that does not exist stops it with a message naming the valid range.
 
 5. Cut the pieces out, tape the tiled pages together if a piece spans several, and measure each chosen run on the paper along its sewing line (the dashed one). Write each length down.
 

@@ -1,6 +1,6 @@
 # Phase 0 Research — 001-pattern-pipeline
 
-**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Last updated**: 2026-10-13 | **Status**: Active — R3 resolved by spec Q2; R7 added for the fabric profile presets
+**Feature**: `001-pattern-pipeline` | **Date**: 2026-10-12 | **Last updated**: 2026-10-24 | **Status**: Active — R3 resolved by spec Q2; R7 added for the fabric profile presets
 
 Confidence tags: **[solid]** consensus / verified · **[likely]** reasonable inference · **[speculative]** guess · **[verify]** check before committing.
 

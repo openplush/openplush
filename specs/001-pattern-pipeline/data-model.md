@@ -258,7 +258,7 @@ pub struct Fabric {
 }
 ```
 
-- **Presets** (research R7) ship as data, not code: `Fabric` values the user can edit or delete, with values from supplier spec sheets or the Fabric Stretch Guide's estimates (D-075). An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
+- **Presets** (research R7) ship as data, not code: `Fabric` values the user can edit or delete, with values from supplier spec sheets or the Fabric Stretch Guide's estimates (D-075), except bias stretch: an unsourced placeholder, since 001 cuts nothing on the bias. An edited preset is just a `Fabric` in the project; there is no "preset" type, so a reopened project never depends on the app's preset table having stayed the same. This is what makes FR-050's "profiles are saved in the project" true rather than aspirational.
 - **Derived, never stored**: allowed rotation set (from `category` + `nap`, §6 table), whether export must ask about mirrored printing (FR-054: `category == Pile`; the answer is the maker's, never a stored default), and the pile-scaled default allowance (FR-055). Storing a derived value is how a project file ends up self-contradictory after the rules change.
 - **Invariants**: `pile_len_mm > 0 ⇒ nap` for `Pile`; all stretch percentages ≥ 0; `roll_width_mm > 0`; `default_allowance_mm ≥ 0` (zero is legal only when `!frays`, FR-057).
 - **Per-piece assignment** comes from painted fabric regions (FR-041). A piece spanning two fabrics is impossible by construction, because region boundaries are seams.

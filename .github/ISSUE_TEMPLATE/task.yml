@@ -4,7 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Every non-trivial change maps to a task ID in `specs/<feature>/tasks.md` (AGENTS.md). If there's no task for what you want to do, say so: it may need a spec or plan change first.
+        Feature work maps to a task ID in `specs/<feature>/tasks.md` (AGENTS.md); a fix to built code needs none. If there's no task for the feature work you want to do, say so: it may need a spec or plan change first.
   - type: input
     id: task
     attributes:

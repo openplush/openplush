@@ -292,7 +292,7 @@ The earlier synthetic set (19 charts and a 12-run sweep, up to 6,144 triangles) 
 
 ## R7. Fabric Profiles (FR-050, D-018)
 
-Seven shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
+Nine shipped presets, all editable, all persisted in the project. The schema is in [data-model.md §6a](./data-model.md#6a-fabric-profiles).
 
 > **Stretch is sourced; the other numbers are `[verify]`.** Under D-075 each stretch value comes from a supplier spec sheet, or failing that from the midpoint of the Fabric Stretch Guide's range, and is tagged `[likely]`. Pile, thickness, allowance and roll width are still plausible craft-fabric values with no source; they are good enough to build and test against, since correctness depends on the plumbing that carries them, not on their accuracy. A measured value from `research/fabric_stretch/protocol.md` replaces any of them. Bias is not used in 001: nothing is cut on the bias (D-046).
 
@@ -305,6 +305,8 @@ Seven shipped presets, all editable, all persisted in the project. The schema is
 | Velboa | knit (pile) | 8.5 / 27.5% [G5] `[likely]` | not used in 001 | **yes** | 1.5 | 1.5 | no | 6 | 1500 |
 | Short faux fur | knit (pile) | 4.5 / 15% [G6] `[speculative]` | not used in 001 | **yes** | 8 | 3.0 | no | 10 | 1500 |
 | Long faux fur | knit (pile) | 4.5 / 15% [G6] `[likely]` | not used in 001 | **yes** | 30 | 4.0 | no | 12 | 1500 |
+| Teddy / sherpa | knit (pile) | 11.5 / 27.5% [G7] `[likely]` | not used in 001 | **yes** | 8 | 3.0 | no | 10 | 1500 |
+| Corduroy | woven (pile) | 2 / 4.5% [G8] `[likely]` | not used in 001 | **yes** | 1.5 | 1.0 | **yes** | 10 | 1120 |
 
 ### Stretch sources
 
@@ -328,8 +330,12 @@ Seven shipped presets, all editable, all persisted in the project. The schema is
 | [G4] | Minky (plush cuddle fleece) | B, 3–4 N/cm | 45–60% | 10–15% |
 | [G5] | Velboa / short plush | B, 3–4 N/cm | 20–35% | 5–12% |
 | [G6] | Faux fur (long-pile) | A, 6 N/cm | 10–20% | 3–6% |
+| [G7] | Teddy / sherpa (knit-backed) | B, 3–4 N/cm | 20–35% | 8–15% |
+| [G8] | Corduroy (100% cotton) | A, 6 N/cm | 3–6% | 1–3% |
 
-Short faux fur has no row of its own. It takes [G6], the faux-fur row, on the assumption that its knitted backing, not its pile length, sets its stretch, and is tagged `[speculative]` for that reason. The guide's other candidates, Teddy / sherpa and Velboa / short plush ([G5]), both have a 27.5% cross midpoint. Across the seven presets the choice changes FR-058's 20-point result in one pairing only: against quilting cotton, the cross gap is 12 points with [G6] and 24.5 with either alternative.
+Short faux fur has no row of its own. It takes [G6], the faux-fur row, on the assumption that its knitted backing, not its pile length, sets its stretch, and is tagged `[speculative]` for that reason. The guide's other candidates, Teddy / sherpa ([G7]) and Velboa / short plush ([G5]), both have a 27.5% cross midpoint. Across the seven presets the choice changes FR-058's 20-point result in one pairing only: against quilting cotton, the cross gap is 12 points with [G6] and 24.5 with either alternative.
+
+Corduroy is the one preset in category `Pile` that frays (D-076). It is a woven weft-pile fabric, filed under pile by the guide, so it takes the pile rules (nap, no rotation, the mirroring question at export) while keeping a non-zero allowance, since FR-057's zero allowance needs `!frays`. Its 1.5 mm pile makes the pile-scaled allowance and the small-part warning irrelevant at any toy size.
 
 ### Why these fields and not others
 

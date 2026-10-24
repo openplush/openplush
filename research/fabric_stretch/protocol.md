@@ -8,15 +8,19 @@ Non-shipping research. Nothing in `crates/`, `apps/` or `packages/` depends on i
 
 Research R7 records two stretch figures per fabric: along the grain (lengthwise, parallel to the selvage) and across it (crosswise). Each is the extension at a fixed load, as a percentage of the unloaded length. The only consumer in 001 is FR-058's mismatch warning, which compares two fabrics per direction against D-046's 20-point threshold. A test therefore only has to separate fabrics that differ by 20 points, not resolve 1 point.
 
-Bias is not tested. No piece is placed on the bias (D-046), so R7 records bias as "not used in 001".
+Bias is not tested. No piece is placed on the bias (D-046), so 001 uses none of R7's bias figures.
 
 ## Sources
 
 | Ref | Source | What it supplies |
 |---|---|---|
-| [S1] | EN ISO 20932-1:2020, *Textiles — Determination of the elasticity of fabrics — Part 1: Strip tests* (identical to ISO 20932-1:2018, confirmed 2024; replaces EN 14704-1:2005), read through the Fabric Stretch Guide's "Test conditions assumed" (the maintainer's copy, 2026-10-23) | The two specimen forms, the load in N/cm, the 5 cycles and the 30 min rest |
+| [S1] | EN ISO 20932-1:2020, *Textiles — Determination of the elasticity of fabrics — Part 1: Strip tests* (identical to ISO 20932-1:2018, confirmed 2024; replaces EN 14704-1:2005), read through the Fabric Stretch Guide's "Test conditions assumed" (the maintainer's copy, 2026-10-23) | The two specimen forms, the load left to agreement, the 5 cycles and the 30 min rest |
 | [S2] | Bureau Veritas CPS, "BS EN ISO 20932-1: textiles, determination of elasticity of fabrics", <https://www.cps.bureauveritas.com/newsroom/bs-en-iso-20932-1-textiles-determination-elasticity-fabrics>, read 2026-10-23 | Pretension values, a secondary summary of [S1] |
-| [S3] | Fabric Stretch Guide, "Stretch test your fabric" panel (the maintainer's copy, 2026-10-23) | The 10 cm home ruler test |
+| [S3] | Fabric Stretch Guide, "Test conditions assumed" and "Stretch test your fabric" panels (the maintainer's copy, 2026-10-23) | The common-practice loads, and the 10 cm home ruler test |
+
+The guide is an uncommitted copy with no stated licence, so the passage this protocol relies on is quoted here:
+
+> Method A is a 50 mm flat strip; Method B is a 75 mm sewn loop. The standard allows either method for any fabric; using B for knits is a lab habit. The standard leaves the load to be agreed. Common practice is about 6 N/cm for wovens and 3–4 N/cm for knits, applied over 5 cycles. A different load or method gives different numbers.
 
 The standard's full text could not be fetched from this environment. Every value below that [S1] does not give through the guide is marked `[verify]` against the full text and is not used until it is checked.
 
@@ -26,7 +30,7 @@ The standard's full text could not be fetched from this environment. Every value
 |---|---|---|
 | Method A specimen | Flat strip, 50 mm wide | [S1] |
 | Method B specimen | Sewn loop, 75 mm | [S1]. The standard allows either method for any fabric; B for knits is lab habit, not a rule |
-| Load | Agreed between the parties. Common practice is about 6 N/cm of specimen width for wovens and 3–4 N/cm for knits | [S1] |
+| Load | Agreed between the parties [S1]. Common practice is about 6 N/cm of specimen width for wovens and 3–4 N/cm for knits [S3] | [S1], [S3] |
 | Cycles | 5 load cycles | [S1] |
 | Recovery | Measured after a rest of about 30 min following the fifth cycle | [S1] |
 | Pretension, Method A | 1 cN/cm woven, 0.5 cN/cm knitted | [S2] `[verify]` |
@@ -34,13 +38,13 @@ The standard's full text could not be fetched from this environment. Every value
 | Gauge length, extension rate | Not available from [S1] or [S2] | `[verify]` |
 | Cycle whose extension is reported | Not available from [S1] or [S2]; record all five | `[verify]` |
 
-A different load or method gives different numbers [S1], so the same load and method must be used on both fabrics of a comparison. R7 uses Method B at 3–4 N/cm for the knit and pile presets and Method A at 6 N/cm for quilting cotton, craft felt and long-pile faux fur, matching the guide's rows.
+A different load or method gives different numbers [S3], so the same load and method must be used on both fabrics of a comparison. R7 uses Method B at 3–4 N/cm for the knit and pile presets and Method A at 6 N/cm for quilting cotton, craft felt and long-pile faux fur, matching the guide's rows.
 
 ## Home method (no tensile tester)
 
-Use this to check or replace a preset. It reproduces the standard's load per centimetre on a 50 mm strip with a hanging weight. The weights are this protocol's arithmetic from [S1]'s load, not values from the standard.
+Use this to check or replace a preset. It reproduces the standard's load per centimetre on a 50 mm strip with a hanging weight. The weights are this protocol's arithmetic from the common-practice load [S3], not values from the standard.
 
-| Fabric | Load [S1] | On a 50 mm strip | Hanging mass (÷ 9.81 m/s²) |
+| Fabric | Load [S3] | On a 50 mm strip | Hanging mass (÷ 9.81 m/s²) |
 |---|---|---|---|
 | Woven, felt, long-pile faux fur | 6 N/cm | 30 N | 3.1 kg |
 | Knit, minky, velboa, fleece | 3–4 N/cm | 15–20 N | 1.5–2.0 kg; use 1.8 kg (3.5 N/cm) |

@@ -177,7 +177,7 @@ impl Pipeline {
                 Ok((layout, stopped))
             })
             .collect::<Result<_, EngineError>>()?;
-        Ok(staged(laid))
+        staged(charts, laid)
     }
 }
 

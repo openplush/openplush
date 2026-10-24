@@ -40,6 +40,8 @@ pub enum WarningCode {
     /// A piece's flattening stopped at the iteration cap, so its layout may be less relaxed
     /// than it could be.
     FlattenIterationCap,
+    /// A piece is laid out with noticeably less fabric than the curved surface it covers.
+    PieceCompressed,
     /// Declared first, sorts last: proves order follows the string.
     #[cfg(test)]
     TestZulu,
@@ -57,6 +59,7 @@ impl WarningCode {
             Self::ImportIgnored => "import-ignored",
             Self::SizeOutOfRange => "size-out-of-range",
             Self::FlattenIterationCap => "flatten-iteration-cap",
+            Self::PieceCompressed => "piece-compressed",
             #[cfg(test)]
             Self::TestZulu => "test-zulu",
             #[cfg(test)]

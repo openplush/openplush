@@ -159,11 +159,11 @@ fn warnings_print_in_the_files_and_do_not_stop_the_run() -> Result<(), Setup> {
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
     let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
     assert!(
-        svg.contains(">1. size-out-of-range: the whole pattern<"),
+        svg.contains(">3. size-out-of-range: the whole pattern<"),
         "{svg}"
     );
     let pdf = String::from_utf8_lossy(&fs::read(dir.0.join("pattern.pdf"))?).into_owned();
-    assert!(pdf.contains("(1. size-out-of-range: the whole pattern) Tj"));
+    assert!(pdf.contains("(3. size-out-of-range: the whole pattern) Tj"));
     Ok(())
 }
 

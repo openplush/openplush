@@ -139,6 +139,7 @@ Three methods read an error the way the shell needs it. Each matches every varia
 | `NoTriangles` | nothing | `the soup has no triangles` |
 | `UnusableExtent` | nothing | `the soup's extent is zero or too large to derive tolerances from` |
 | `UnknownHoleLoop` | the `loop_ref` | `the plan fills the loop {loop_ref:?}, which the mesh does not have` |
+| `AmbiguousHoleLoop` | the `loop_ref` | `the plan fills the loop {loop_ref:?}, but more than one hole has that name, so none was filled` |
 | `HoleNotFillable` | the `loop_ref` | `the loop {loop_ref:?} has no fill: every triangulation of it reuses an edge, has no area, or does not solve` |
 | `HoleOnSplit` | the `loop_ref` | `the loop {loop_ref:?} runs along a split edge, so it is one side of a seam, not a hole` |
 | `HoleTooLarge` | the `loop_ref`; carries `vertices` | `the loop {loop_ref:?} has {vertices} vertices, more than the 512 a fill takes` |

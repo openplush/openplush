@@ -105,3 +105,30 @@ fn a_closed_mesh_has_no_holes() {
     .0;
     assert!(classify(&mesh, &RepairPlan::default()).unwrap().is_empty());
 }
+
+#[test]
+fn a_name_two_loops_share_is_refused_and_neither_is_filled() {
+    // Two triangles touching at vertex 0, with every corner of a vertex sharing its source, as
+    // an indexed file has it: the bowtie split keeps the sources, so both loops get one name.
+    let positions = vec![
+        p(0., 0., 0.),
+        p(1., 0., 0.),
+        p(0., 1., 0.),
+        p(-1., 0., 0.),
+        p(0., -1., 0.),
+    ];
+    let triangles = [[0, 1, 2], [0, 3, 4]];
+    let corners = triangles.iter().flatten().map(|&v| corner(v)).collect();
+    let soup = TriangleSoup::new(positions, triangles.to_vec(), corners, None).unwrap();
+    let shared = LoopRef::new(corner(0));
+    let mut plan = RepairPlan::default();
+    plan.fill_holes.insert(shared);
+    assert_eq!(
+        crate::into_manifold(&soup, &plan)
+            .err()
+            .map(|e| e.to_string()),
+        Some(format!(
+            "the plan fills the loop {shared:?}, but more than one hole has that name, so none was filled"
+        ))
+    );
+}

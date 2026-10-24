@@ -5,7 +5,7 @@ Turn a 3D model into a sewable plush pattern. Free, open source, and it runs ent
 > **What is built today, and what is not:** the [project status](docs/start/status.md). What exists is described in [docs/](docs/) ([architecture](docs/explanation/architecture.md), [engine API](docs/reference/engine-api.md), [crates](docs/reference/crates/README.md)); what is planned is in the [specs index](specs/README.md).
 
 ## What it will do
-- Import a 3D model (OBJ, glTF) and set its real-world size.
+- Import a 3D model (OBJ, glTF, FBX, STL or PLY) and set its real-world size.
 - Draw seams directly on the model.
 - Flatten every piece with a stretch/compression heatmap and suggestions for darts or extra seams.
 - Add seam allowances, match notches, piece labels, and grain/nap arrows for fur fabrics.

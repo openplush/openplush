@@ -56,11 +56,11 @@ fn a_gltf_takes_every_file_below_its_directory_named_relative_in_byte_order() {
     let dir = scratch("gltf");
     fs::write(dir.join("model.gltf"), "{}").expect("write");
     fs::write(dir.join("b.bin"), "1").expect("write");
-    fs::write(dir.join("B.bin"), "2").expect("write");
+    fs::write(dir.join("C.bin"), "2").expect("write");
     fs::write(dir.join("sub").join("a.png"), "3").expect("write");
     assert_eq!(
         names(&dir, "model.gltf", CAP),
-        ["B.bin", "b.bin", "sub/a.png"]
+        ["C.bin", "b.bin", "sub/a.png"]
     );
     let set = files(&dir.join("model.gltf"), CAP).expect("the set");
     assert_eq!(set.others[1].bytes, b"1");
@@ -130,6 +130,8 @@ fn the_cap_counts_the_model_and_every_file_together() {
 }
 
 #[test]
+// Windows cannot extend a file to 1 TB without the disk space, even when sparse.
+#[cfg(unix)]
 fn a_file_past_the_cap_is_refused_before_it_is_read() {
     let dir = scratch("sparse");
     fs::write(dir.join("model.gltf"), "{}").expect("write");

@@ -57,7 +57,7 @@ fn seam(value: &Value) -> Result<Seam, String> {
         // Placed raw, these would skip the checks the seams crate makes when it places them.
         Some(name @ ("dart" | "opening" | "mandatory")) => {
             return Err(format!(
-                "\"kind\" \"{name}\" is not supported in a seam-set file yet; \
+                "\"kind\" \"{name}\" is not supported in a seam-set file; \
                  use \"cut\" or \"fabricBoundary\""
             ));
         }
@@ -156,11 +156,11 @@ mod tests {
     }
 
     #[test]
-    fn a_kind_the_file_cannot_carry_yet_is_refused_naming_the_seam() {
+    fn a_kind_the_file_cannot_carry_is_refused_naming_the_seam() {
         for name in ["dart", "opening", "mandatory"] {
             let file = one(&format!(r#"{{"edge": [1, 2], "kind": "{name}"}}"#));
             let says = format!(
-                "seam 0: \"kind\" \"{name}\" is not supported in a seam-set file yet; \
+                "seam 0: \"kind\" \"{name}\" is not supported in a seam-set file; \
                  use \"cut\" or \"fabricBoundary\""
             );
             assert_eq!(file, Err(says), "{name}");

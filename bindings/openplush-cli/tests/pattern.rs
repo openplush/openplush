@@ -467,14 +467,14 @@ fn a_one_based_file_is_refused_in_its_own_numbering() -> Result<(), Setup> {
 }
 
 #[test]
-fn a_kind_the_seam_set_file_cannot_carry_yet_is_refused_naming_the_seam() -> Result<(), Setup> {
+fn a_kind_the_seam_set_file_cannot_carry_is_refused_naming_the_seam() -> Result<(), Setup> {
     for kind in ["dart", "opening", "mandatory"] {
         let capsule = fs::read_to_string(fixture("seams/capsule.json"))?;
         let mut set: serde_json::Value = serde_json::from_str(&capsule)?;
         let seams = set["seams"].as_array_mut().ok_or("no seams")?;
         seams.insert(0, serde_json::json!({"edge": [25, 26], "kind": kind}));
         let err = refused_seams(kind, &set.to_string())?;
-        let says = format!("seam 0: \"kind\" \"{kind}\" is not supported in a seam-set file yet");
+        let says = format!("seam 0: \"kind\" \"{kind}\" is not supported in a seam-set file");
         assert!(err.contains(&says), "{kind}: {err}");
     }
     Ok(())

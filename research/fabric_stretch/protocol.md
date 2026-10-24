@@ -22,6 +22,17 @@ The guide is an uncommitted copy with no stated licence, so the passage this pro
 
 > Method A is a 50 mm flat strip; Method B is a 75 mm sewn loop. The standard allows either method for any fabric; using B for knits is a lab habit. The standard leaves the load to be agreed. Common practice is about 6 N/cm for wovens and 3–4 N/cm for knits, applied over 5 cycles. A different load or method gives different numbers.
 
+Its per-fabric rows give each fabric's method and load in a "Test" column; the rows this protocol uses read:
+
+| Guide row | Test |
+|---|---|
+| Quilting cotton | A, 6 N/cm |
+| Felt (wool or acrylic, nonwoven) | A, 6 N/cm |
+| Polar fleece | B, 3–4 N/cm |
+| Minky (plush cuddle fleece) | B, 3–4 N/cm |
+| Velboa / short plush | B, 3–4 N/cm |
+| Faux fur (long-pile) | A, 6 N/cm |
+
 The standard's full text could not be fetched from this environment. Every value below that [S1] does not give through the guide is marked `[verify]` against the full text and is not used until it is checked.
 
 ## Lab method (the standard)

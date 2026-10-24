@@ -65,7 +65,7 @@ Heuristics and ML (ONNX) plug in behind traits only after a deterministic geomet
 - Accessibility: color-blind-safe palettes for all heatmaps (e.g., viridis/cividis); keyboard-operable non-3D UI.
 
 ## Development Workflow
-- SDD flow: `specify → clarify → plan → tasks → implement`. No implementation PR without a linked spec ID and task ID, except the **trivial-change lane**: docs or typo fixes, comment fixes, dependency patch bumps, new fixtures with license entries, and CI changes that don't alter gates.
+- SDD flow for new features: `specify → clarify → plan → tasks → implement`. A fix or small change to built code needs no spec or task ID, only a failing test first. The **trivial-change lane** needs neither: docs or typo fixes, comment fixes, dependency patch bumps, new fixtures with license entries, and CI changes that don't alter gates.
 - AI agent rules live in `AGENTS.md` (root plus lane files). Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`) only import those rules or add tool-specific deltas — never a second copy.
 - PRs touching `crates/`: `fmt`, `clippy -D warnings`, native tests, WASM tests, golden diff, determinism check (native vs. WASM output hash), boundary check.
 - PRs touching `apps/` or `packages/`: typecheck, unit tests, Playwright smoke on fixture models.
@@ -75,4 +75,4 @@ Heuristics and ML (ONNX) plug in behind traits only after a deterministic geomet
 ## Governance
 Amendments require a PR containing the change, an ADR, and a version bump: MAJOR = principle removed or redefined; MINOR = principle added or materially expanded; PATCH = clarification. Maintainers ratify by approving review.
 
-**Version**: 0.1.0 | **Ratified**: TODO | **Last Amended**: 2026-10-13
+**Version**: 0.1.1 | **Ratified**: TODO | **Last Amended**: 2026-10-24

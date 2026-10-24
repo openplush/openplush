@@ -1,6 +1,6 @@
 ## Stack
 
-<!-- Branch: NNN/NN-slug (e.g. 001/115-slim-interior) or chore/slug. The slug names the intent.
+<!-- Branch: NNN/NN-slug (e.g. 001/115-slim-interior), fix/slug or chore/slug. The slug names the intent.
      Parent: "main", or the intent this one is stacked on (its base branch). Stack
      interdependent intents: X, then fix Y, then feature Z. Child: the PR stacked on this one,
      or "none". A folded stack lists here the PRs it absorbed.
@@ -21,7 +21,7 @@
 
 <!-- Every task this PR finishes, each ticked in tasks.md in this PR, with its feature and a link:
      [001 T080](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md), [001 T082](https://github.com/openplush/openplush/blob/main/specs/001-pattern-pipeline/tasks.md)
-     Or: "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
+     Or: "Fix: no task ID" or "Trivial-change lane — docs fix" (see AGENTS.md for what qualifies). -->
 
 ## Reading order
 

@@ -24,6 +24,7 @@
   - [0019 Spec maintenance model](adr/0019-spec-maintenance-model.md)
   - [0021 One ID scheme](adr/0021-one-id-scheme.md)
   - [0022 Hand-written specs](adr/0022-hand-written-specs.md)
+  - [0023 Fixes need tests, not task IDs](adr/0023-fixes-need-tests-not-task-ids.md)
 - [Explanation](explanation/README.md)
   - [Architecture](explanation/architecture.md)
   - [The pipeline, one model at a time](explanation/pipeline.md)

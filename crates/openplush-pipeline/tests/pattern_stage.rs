@@ -8,9 +8,9 @@ use std::fmt::Write as _;
 use openplush_io::obj;
 use openplush_mesh::{RepairPlan, into_manifold};
 use openplush_pipeline::{
-    ChartId, ChartMesh, DVec2, EngineError, ManifoldMesh, Parameterization, PatternError,
-    PatternInput, PatternOptions, PatternPiece, PieceId, Scale, SeamKind, SeamSet, SewingMap,
-    VertexId, chart, flatten, pattern,
+    ChartId, ChartMesh, DVec2, EngineError, Fabric, FabricSpec, ManifoldMesh, Parameterization,
+    PatternError, PatternInput, PatternOptions, PatternPiece, PieceId, Scale, SeamKind, SeamSet,
+    SewingMap, VertexId, WarningTarget, chart, flatten, pattern,
 };
 
 #[allow(dead_code, reason = "each test file uses part of the shared fixtures")]
@@ -396,5 +396,51 @@ fn a_dart_on_a_curved_piece_opens_into_a_wedge() -> Result<(), Setup> {
     assert!((a - b).length() > 1.0, "the dart stays shut: {a:?} {b:?}");
     let line = piece.sewing_line().points();
     assert!(line.contains(&a) && line.contains(&b));
+    Ok(())
+}
+
+#[test]
+fn the_capsule_s_caps_warn_on_woven_and_not_on_a_fabric_that_stretches_enough() -> Result<(), Setup>
+{
+    let run = capsule()?;
+    let woven = fabric(6.0)?;
+    let stretching = |grain: f64, cross: f64| {
+        Fabric::new(FabricSpec {
+            stretch_grain_pct: grain,
+            stretch_cross_pct: cross,
+            ..woven.spec().clone()
+        })
+    };
+    let compressed = |fabric: Fabric| -> Result<Vec<WarningTarget>, Setup> {
+        let opts = PatternOptions {
+            scale: Scale::mm_per_model_unit(1.0)?,
+            fabric,
+        };
+        Ok(pattern(&run.input(), &opts)?
+            .warnings
+            .iter()
+            .filter(|w| w.code().as_str() == "piece-compressed")
+            .map(|w| w.target())
+            .collect())
+    };
+    // The tube unrolls without compression and has the most faces.
+    let tube = run
+        .charts
+        .iter()
+        .max_by_key(|c| c.faces().len())
+        .ok_or("no charts")?
+        .chart();
+    let caps: Vec<WarningTarget> = run
+        .charts
+        .iter()
+        .filter(|c| c.chart() != tube)
+        .map(|c| WarningTarget::Piece(PieceId::new(c.chart().index())))
+        .collect();
+    assert_eq!(caps.len(), 2);
+    assert_eq!(compressed(woven.clone())?, caps);
+    // The caps need about 56%.
+    assert_eq!(compressed(stretching(60.0, 60.0)?)?, []);
+    // The lesser direction counts, and no fabric gives less than 5%.
+    assert_eq!(compressed(stretching(0.0, 60.0)?)?, caps);
     Ok(())
 }

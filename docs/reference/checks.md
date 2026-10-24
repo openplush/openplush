@@ -140,7 +140,7 @@ Each failure names the commit, by short SHA and subject, or `PR body`, and the l
 
 It reads only the commits between the pull request's base and its head, so commits already on `main` are never reported, whoever wrote them: history is not rewritten.
 
-It runs as the `attribution` step of the `fmt, clippy, test` job in `.github/workflows/engine.yml`, on pull request events only, so a failure blocks the merge gate. It reads the description when the step runs, so after removing a footer, re-run the job. `scripts/check.sh` does not run it, because a local run has no pull request. To check your branch's commits before you push:
+It runs as the `attribution` step of the `fmt, clippy, test` job in `.github/workflows/engine.yml`, on pull request events only, so a failure blocks the merge. It reads the description when the step runs, so after removing a footer, re-run the job. `scripts/check.sh` does not run it, because a local run has no pull request. To check your branch's commits before you push:
 
 ```sh
 scripts/check-attribution.sh origin/main HEAD

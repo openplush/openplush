@@ -42,7 +42,7 @@ Confidence tags: `[solid]` verified, `[likely]` reasoned inference, `[speculativ
 | No glossary exists anywhere. Domain terms (half-edge, chart, χ = 1, seam parity, allowance, nap, dart) and process-ID prefixes (D-, T, FR-, SC-, US, S, R, H, U, Q) are undefined | [solid] audit |
 | ADR 0005 carries 53 ID references; `how-to/pull-requests.md` 21 | [solid] audit |
 | Project status is stated in at least four places that disagree (README, CONTRIBUTING, `specs/README.md`, `reference/crates.md`) | [solid] audit |
-| The geometry gotchas, the crate ownership table and the merge-tier table live only in agent files | [solid] audit |
+| The geometry gotchas and the crate ownership table live only in agent files | [solid] audit |
 | `docs/README.md` promises a page on why seam lengths are pinned that does not exist | [solid] audit |
 | Newcomers' main barriers: finding where to start, missing prior knowledge, documentation, technical setup. An orientation portal helped with the first but not with setup, so the setup page must actually work | [solid] Steinmacher et al. 2015, 2016 |
 | A short architecture page with a codemap is the most valuable newcomer page; describe only what rarely changes | [likely] matklad, "ARCHITECTURE.md" |

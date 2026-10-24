@@ -15,7 +15,7 @@ Since 2026-10-13 ([001 D-011](https://github.com/openplush/openplush/blob/main/s
 * One home per rule (AGENTS.md, DRY): the generated skills restated the workflow the agent rules already state, and could disagree with it.
 * YAGNI: no dependency or tooling without a task that uses it now.
 * Contributor burden: a maintainer writing a spec should need a template, not a CLI install.
-* The binding principles must stay maintainer-merged (tier H) wherever they live.
+* The binding principles must stay maintainer-merged wherever they live.
 
 ## Considered options
 
@@ -30,11 +30,11 @@ Chosen option: **drop it**. The spec flow (specify, clarify, plan, tasks, implem
 
 * Good, because every file in the spec flow can be edited by hand, and its rules live once, in `AGENTS.md` and the skills the project writes.
 * Good, because a feature branch is named correctly from the start, with no rename step.
-* Bad, because no tool checks a new spec against its template; `spec-reviewer` and the merge gate are the only checks.
+* Bad, because no tool checks a new spec against its template; `spec-reviewer` and the maintainer's review are the only checks.
 
 ### Confirmation
 
-`scripts/tests/pr-tier.test.sh` asserts `CONSTITUTION.md` is tier H, `.github/CODEOWNERS` assigns it to the maintainer, and no tracked file names the generator or its folder.
+`.github/CODEOWNERS` assigns `CONSTITUTION.md` to the maintainer, and no tracked file names the generator or its folder.
 
 ## More information
 

@@ -2,8 +2,7 @@
 # (pr-reviewer always; spec-reviewer when specs change; docs-reviewer when a public
 # surface, docs/, a tasks.md, the README or CONTRIBUTING changes, since each can
 # state what is built; mutation-auditor only on request). Advisory: it posts
-# findings as review comments and never approves. Who merges is set by the PR's
-# tier (ADR 0014).
+# findings as review comments and never approves. The maintainer merges.
 #
 # Runs ONCE per PR, to spare the subscription's usage limits: when the PR is
 # opened (or marked ready for review), not on every push. Only the maintainer
@@ -12,7 +11,7 @@
 # the PR as one event sees them (added in one operation), only the
 # `mutation-audit` event runs; added one after the other, both can run. The
 # labels are removed when the run starts, so they can be added again later.
-# Not reviewed on opening (ADR 0014): a PR titled `docs(tasks): tick …`
+# Not reviewed on opening: a PR titled `docs(tasks): tick …`
 # (checkbox ticks only), a PR from a `chore/` branch, and a docs-only PR (every
 # changed path under docs/). `rereview` still runs any of them.
 # A rerun reviews only what changed since the last summary's head, and drops
@@ -169,9 +168,6 @@ jobs:
           # The job's own token: scoped to the permissions above, expires with
           # the job. Comments appear as github-actions[bot].
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # The merge gate's App adds `rereview` for a head whose summary is
-          # stale; the action refuses a bot actor unless it is named here.
-          allowed_bots: openplush-merge-gate
           prompt: |
             REPO: ${{ github.repository }}
             PR: ${{ github.event.pull_request.number }}
@@ -222,7 +218,7 @@ jobs:
                Its first line is exactly
                `${{ env.SUMMARY_HEAD }}`
                (the job fails if no new comment starts that way). Then: every agent above
-               as ran or skipped, with the reason for each skip, a line `Findings: 🔴 N, 🟡 N, 🟣 N.` (the merge gate reads it), the mutation kill
+               as ran or skipped, with the reason for each skip, a line `Findings: 🔴 N, 🟡 N, 🟣 N.`, the mutation kill
                count if the auditor ran, findings that do not map to a diff line, and
                "Nothing blocking" if that is true. Add no attribution footer to any comment.
                Post it even when there are no findings or a step failed: say what

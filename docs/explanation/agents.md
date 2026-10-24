@@ -1,12 +1,12 @@
 # How agents work in this repo
 
-<!-- index: how AI agents take a feature from spec to merged pull request: specs, steward, the review on opening and the merge gate. -->
+<!-- index: how AI agents take a feature from spec to merged pull request: specs, steward, the review on opening and who merges. -->
 
 AI coding agents write most of OpenPlush's pull requests. This page explains, for a contributor who wants to know how that is organised, what the agents do from a feature idea to a merged change, and what keeps a person in charge. The rules themselves live in the skills and ADRs this page links to; it explains them and never replaces them.
 
 ## The short answer
 
-Work starts as a feature: a spec, a plan and a numbered task list. An agent picks a ready task, writes the failing test and then the code, and opens one pull request per intent. An automated review runs once, when the PR opens. A workflow called the merge gate then works out from the diff who may merge: low-risk PRs merge on their own, expected-output changes wait a day first, and engine code, specs, decisions and the rules themselves wait for the maintainer.
+Work starts as a feature: a spec, a plan and a numbered task list. An agent picks a ready task, writes the failing test and then the code, and opens one pull request per intent. An automated review runs once, when the PR opens. The maintainer merges every PR; agents never do.
 
 ## How it works
 
@@ -30,7 +30,7 @@ A task becomes a branch, a test commit that fails, and the commit that makes it 
 
 ### Steward: driving a pull request
 
-Once a PR is open, the [`steward`](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md) skill says how an agent sees it through: subscribe to the PR so CI and review results arrive as events, check in now and then for what sends no event (a conflict with `main`, another agent's push), fix what is blocking, answer what is not, and keep stacks in order. Its rules are written down because each one, skipped once, cost a review run or a long turn. Push only to fix a blocking finding, a failing check or a confirmed defect, because every push restarts the merge gate's judgement and no push gets a fresh review.
+Once a PR is open, the [`steward`](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md) skill says how an agent sees it through: subscribe to the PR so CI and review results arrive as events, check in now and then for what sends no event (a conflict with `main`, another agent's push), fix what is blocking, answer what is not, and keep stacks in order. Its rules are written down because each one, skipped once, cost a review run or a long turn. Push only to fix a blocking finding, a failing check or a confirmed defect, because no push gets a fresh review.
 
 ### The review on opening
 
@@ -45,21 +45,14 @@ Once a PR is open, the [`steward`](https://github.com/openplush/openplush/blob/m
 
 The review is advisory. It posts each finding on its line, marked 🔴 blocking, 🟡 optional or 🟣 pre-existing, then one summary comment, and it never approves or requests changes. Three kinds of PR are skipped on opening: a `docs(tasks): tick …` PR, a PR from a `chore/` branch, and a PR that changes only `docs/`. A second run happens only when the maintainer adds the `rereview` or `mutation-audit` label, and it reviews only what changed since the last summary. Runs draw on the maintainer's Claude subscription, which is why there is one per PR ([ADR 0013](../adr/0013-intent-sized-pull-requests.md)). Agents do not run the first three reviewers locally, since the review on opening runs them; the mutation auditor is the one they run themselves, before opening a PR that adds checks to Rust under `crates/` or `bindings/` ([`steward`](https://github.com/openplush/openplush/blob/main/.claude/skills/steward/SKILL.md#local-review)). A person can run any of the reviewers before pushing by asking Claude Code in this repository to use it by name, for example "run the mutation-auditor agent on my branch against main".
 
-### The merge gate: tiers and who merges
+### Who merges
 
-Whether a PR may merge without a person is decided by [`merge-gate.yml`](https://github.com/openplush/openplush/blob/main/.github/workflows/merge-gate.yml), with no language model in the decision. It computes the PR's tier from its diff, title and labels, judges the conditions on the current head commit, and keeps one comment on the PR listing each condition as passing or failing, so a stalled PR explains itself.
-
-- **Tier A** is most of `docs/`, the apps and packages, research and tick PRs. Once CI is green, the review has nothing blocking left, and no review thread is open, the gate labels the PR `merge:ready`. It turns on auto-merge only when the repository variable `MERGE_GATE_MODE` is `on`; the gate ships in `dry-run`, which labels and comments but never touches auto-merge ([ADR 0015](../adr/0015-merge-gate.md)).
-- **Tier B** is a change to expected output, such as a golden fixture or a snapshot. The same conditions apply, plus a 24-hour hold after CI goes green, so the maintainer has a day to look at the output.
-- **Tier C** is engine code, specs, decisions and dependency manifests. The same conditions as tier A apply and the gate merges it once they hold, with no hold ([ADR 0018](../adr/0018-hands-off-merging.md)).
-- **Tier H** is what defines the gate and the rules: CI workflows, `scripts/`, the agent files, ADRs, the constitution, the licence files, and a tick of a `human:` task. The gate never marks it ready; the maintainer merges it, so no PR can change the rules it is judged by without a person choosing to let it.
-
-A PR's tier is the highest that any of its files reaches, and the gate can raise a tier label but never lower one. A push removes `merge:ready` and turns auto-merge off at once, so a new commit is never merged on the old commit's verdict. The review summary must name the current head: after a push the gate adds the `rereview` label itself, once per head, and waits for the new summary. A reviewer's "changes requested" blocks every tier until it is lifted. The gate also never runs the PR's own code. [ADR 0014](../adr/0014-auto-merge-tiers.md) sets tiers A and B and the tick exception; [ADR 0018](../adr/0018-hands-off-merging.md) sets tiers C and H; [ADR 0015](../adr/0015-merge-gate.md) explains the gate and its conditions; the tier table, which agents and people both work from, is in [Get a pull request reviewed and merged](../how-to/review-and-merge.md#tiers).
+The maintainer merges every pull request, bottom-up through a stack, with a merge commit. Agents never merge and never turn on auto-merge. A PR is ready for the maintainer once CI is green on its current head, the review has nothing blocking left, its threads are answered, and its base is `main`.
 
 ## Why not the alternative
 
-The obvious alternatives are the two ends: the maintainer merges every PR, or an agent merges whatever passes. The first was the starting point, and the queue grew faster than one person could clear it as agents opened PRs ([ADR 0014](../adr/0014-auto-merge-tiers.md)). The second would let an agent loosen the very checks it is judged by, and would put engine code, where a plausible-looking wrong pattern is the defect this project fears most, on `main` with no person choosing to let it in. The first design, where the agent that opened a PR labelled its tier and turned on auto-merge, was replaced too: the tier was only as right as the agent's reading, and only the session that opened a PR heard its events ([ADR 0015](../adr/0015-merge-gate.md)). So the decision moved into a deterministic workflow, and the one thing it never merges is the set of files that define it: the gate, the checks, the rules and the constitution stay with the maintainer.
+The alternative is to let something other than a person merge: an agent that judges its own PR, or a workflow that computes a risk tier from the diff and turns on auto-merge. Either one moves the last look at a change away from a person, and the defect this project fears most, a plausible-looking wrong pattern, is the kind that passes CI. An automated gate also has to be trusted not to loosen the checks it is judged by. Keeping every merge with the maintainer costs waiting time on open PRs and buys a person reading everything that lands on `main`.
 
 ## Decisions
 
-[ADR 0013](../adr/0013-intent-sized-pull-requests.md), [ADR 0014](../adr/0014-auto-merge-tiers.md), [ADR 0015](../adr/0015-merge-gate.md), [ADR 0018](../adr/0018-hands-off-merging.md).
+[ADR 0013](../adr/0013-intent-sized-pull-requests.md).

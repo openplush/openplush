@@ -108,7 +108,7 @@ Stacking fixes all three. Each PR targets its parent, so its diff is still just 
 001/122-grain-on-pieces       Z: grain arrows follow the 3D direction      base: 121
 ```
 
-At the merge gate the stack sometimes turns out to make sense only as a whole: Z is the reason X and Y exist, and nobody would review X alone. Then it is folded as [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs) describes: here, 122 merges into 121 and 121 into 120, 120 is retitled and lists all three intents in its `Intent` section, and 121 and 122 close with a link to 120. Merge commits keep each intent's commits, so `git blame` still lands on them, and the one PR explains all three. A change isolated for blast radius, or a decision the maintainer must accept, is never folded into the code around it: each must be judged on its own.
+At merge time the stack sometimes turns out to make sense only as a whole: Z is the reason X and Y exist, and nobody would review X alone. Then it is folded as [`AGENTS.md`](https://github.com/openplush/openplush/blob/main/AGENTS.md#commits-and-prs) describes: here, 122 merges into 121 and 121 into 120, 120 is retitled and lists all three intents in its `Intent` section, and 121 and 122 close with a link to 120. Merge commits keep each intent's commits, so `git blame` still lands on them, and the one PR explains all three. A change isolated for blast radius, or a decision the maintainer must accept, is never folded into the code around it: each must be judged on its own.
 
 **Agent sessions.** Agent harnesses assign their own branch names (`claude/<slug>-<id>`), which are scratch. When a session cannot push the real name, the PR title and body carry it and the stack position, so a maintainer can rename the branch on GitHub, which keeps the PR.
 
@@ -126,7 +126,7 @@ The automated review runs when the PR opens; when it runs again is in [Get a pul
 
 ### 6. Merge the stack bottom-up
 
-Who merges depends on the PR's tier, which the merge gate computes from the diff; the tiers and the gate's conditions are in [Get a pull request reviewed and merged](review-and-merge.md). [`.github/workflows/merge-gate.yml`](https://github.com/openplush/openplush/blob/main/.github/workflows/merge-gate.yml) judges every merge condition on the current head and keeps one comment per PR saying which fail.
+The maintainer merges every PR; when a PR is ready for them is in [Get a pull request reviewed and merged](review-and-merge.md).
 
 The repo uses merge commits only, because of what each strategy does to the PR above:
 
@@ -139,7 +139,7 @@ The repo uses merge commits only, because of what each strategy does to the PR a
 So a stack merges from the bottom:
 
 1. The bottom PR (the only one whose base is `main`) merges.
-2. Its branch is deleted on merge, and GitHub retargets the next PR to `main`; the gate judges the retargeted PR on its next event or on its scheduled backstop.
+2. Its branch is deleted on merge, and GitHub retargets the next PR to `main`.
 3. Repeat.
 
 Only a PR whose base is `main` is merged. Merging one whose base is another PR's branch merges it into the parent's branch, not into `main`, and the stack falls apart quietly.
@@ -163,4 +163,4 @@ Merge upward, don't rebase: rebasing forces a force-push on every branch above, 
 - CI is green at the tip, and not because a test was weakened or a golden snapshot updated ([`AGENTS.md`, Workflow](https://github.com/openplush/openplush/blob/main/AGENTS.md#workflow)).
 - Every box in the template's closing checklist is true.
 
-**Decisions**: [ADR 0013](../adr/0013-intent-sized-pull-requests.md) (intent-sized PRs, one review), [ADR 0014](../adr/0014-auto-merge-tiers.md) (merge tiers), [ADR 0015](../adr/0015-merge-gate.md) (merge gate), [ADR 0018](../adr/0018-hands-off-merging.md) (the gate merges tier C; tier H is the maintainer's).
+**Decisions**: [ADR 0013](../adr/0013-intent-sized-pull-requests.md) (intent-sized PRs, one review).

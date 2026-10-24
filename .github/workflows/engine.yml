@@ -44,7 +44,7 @@ jobs:
       - run: scripts/check.sh --setup engine
       # A PR's own commits and its description carry no agent attribution
       # (AGENTS.md, Commits and PRs). It runs in this job so a failure blocks the
-      # merge gate. The body is read from the API when the step runs, not from
+      # merge. The body is read from the API when the step runs, not from
       # the event: the event keeps the body as it was when the PR opened, so a
       # footer removed after opening would fail every re-run.
       - name: attribution

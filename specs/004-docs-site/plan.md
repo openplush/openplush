@@ -125,11 +125,11 @@ As built, the rustdoc is documented one crate at a time, dependencies first: [Ch
 | 0 | ADR for tools and licences | Maintainer merges |
 | 1 | Writing guide, templates, docs skill | Maintainer merges (skill, `AGENTS.md`) |
 | 2 | Site infrastructure: books, checks, workflow, Pages | Maintainer merges; maintainer enables Pages |
-| 3 | Onboarding path: start here, status, setup, glossary | Auto-merge tier for `docs/`-only |
+| 3 | Onboarding path: start here, status, setup, glossary | Maintainer merges |
 | 4 | Facts out of agent files into `docs/` | Maintainer merges (agent files) |
-| 5 | Engine concepts | Auto-merge tier |
+| 5 | Engine concepts | Maintainer merges |
 | 6 | Reference reshape | Mixed |
-| 7 | Maker guide skeleton and FAQ | Auto-merge tier; publishing is a maintainer decision |
+| 7 | Maker guide skeleton and FAQ | Maintainer merges; publishing is a maintainer decision |
 
 Phases 3, 5 and 7 can run in parallel once Phase 1 and T008 are in.
 

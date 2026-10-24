@@ -3,11 +3,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use openplush_geom::units::{Mm, Scale};
 use openplush_mesh::{HalfEdgeId, ManifoldMesh, VertexId};
 use openplush_pattern::{
-    CutCount, Fabric, Outline, PatternError, PatternPiece, PieceId, allowance, parity,
+    CutCount, Fabric, FabricSpec, Outline, PatternError, PatternPiece, PieceId, allowance, parity,
 };
 use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
 
-use crate::{EngineError, Parameterization, StageResult, Staged, WarningSet};
+use crate::{
+    EngineError, NonBlank, Parameterization, Remedy, StageResult, Staged, Warning, WarningCode,
+    WarningSet, WarningTarget,
+};
 
 /// What the pattern stage reads: one run's charts and sewing map, and their layouts.
 #[derive(Debug, Clone, Copy)]
@@ -34,6 +37,9 @@ pub struct PatternOptions {
 /// One piece per chart, in chart order, in millimetres: the chart's flat boundary as the sewing
 /// line, counter-clockwise, and the cut line around it.
 ///
+/// Raises `piece-compressed` on each piece whose layout needs more stretch to fill its surface
+/// than the fabric gives.
+///
 /// # Errors
 /// `StageInputMismatch` when the layouts or the sewing map are not the charts' own; then
 /// `SeamParity` for the first bundle, in lead-chain order, with a side whose flat length differs
@@ -52,10 +58,15 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
         .zip(input.layouts)
         .map(|(chart, layout)| piece(chart, layout, opts))
         .collect::<Result<_, _>>()?;
-    Ok(Staged {
-        value,
-        warnings: WarningSet::default(),
-    })
+    let mut warnings = WarningSet::default();
+    for w in input
+        .layouts
+        .iter()
+        .filter_map(|l| squeeze_warning(l, opts.fabric.spec()))
+    {
+        warnings.insert(w);
+    }
+    Ok(Staged { value, warnings })
 }
 
 /// Each layout is its chart's, with one position per chart vertex, and each sewing side lies in
@@ -245,6 +256,46 @@ fn boundary_loop(chart: &ChartMesh) -> Option<Vec<VertexId>> {
         at = *next.get(&at)?;
     }
     (at == start && walk.len() == boundary.len()).then_some(walk)
+}
+
+/// The stretch, as a fraction, that fills a layout back to its surface: a piece compressed by
+/// `deficit` must grow by `1 / (1 − deficit)` to cover it.
+fn needed_stretch(deficit: f64) -> f64 {
+    1.0 / (1.0 - deficit) - 1.0
+}
+
+/// The stretch, as a fraction, a piece may count on from `spec`: its lesser direction, since the
+/// deficit does not say which way the piece is squeezed, and never under 5%, so a fabric
+/// recorded as not stretching still takes a slight squeeze.
+fn available_stretch(spec: &FabricSpec) -> f64 {
+    (spec.stretch_grain_pct.min(spec.stretch_cross_pct) / 100.0).max(0.05)
+}
+
+/// `piece-compressed` on the piece numbered as `layout`'s chart when it needs more stretch than
+/// `spec` gives; nothing otherwise.
+fn squeeze_warning(layout: &Parameterization, spec: &FabricSpec) -> Option<Warning> {
+    let (needed, available) = (
+        needed_stretch(layout.compression_deficit),
+        available_stretch(spec),
+    );
+    if needed <= available {
+        return None;
+    }
+    // INVARIANT: both texts are non-blank.
+    let text = |t: String| NonBlank::new(t).unwrap_or_else(|| unreachable!());
+    Some(Warning::new(
+        WarningCode::PieceCompressed,
+        WarningTarget::Piece(PieceId::new(layout.chart.index())),
+        text(format!(
+            "This piece must stretch about {:.0}% to fill its shape, more than this fabric's \
+             {:.0}%, so it will sew up flatter than the model.",
+            needed * 100.0,
+            available * 100.0
+        )),
+        Remedy::Advisory {
+            what_to_change: text("Add a dart or a seam in this piece.".to_owned()),
+        },
+    ))
 }
 
 #[cfg(test)]

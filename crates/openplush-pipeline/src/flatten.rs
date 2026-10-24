@@ -17,6 +17,9 @@ use crate::{
 pub struct Parameterization {
     pub(crate) chart: ChartId,
     pub(crate) uv: Vec<DVec2>,
+    /// The layout's area-weighted mean compression deficit, `Summary::compression_deficit`: the
+    /// mean, since the worst face keeps falling as a mesh is refined.
+    pub(crate) compression_deficit: f64,
 }
 
 impl Parameterization {
@@ -37,7 +40,7 @@ impl Parameterization {
 /// is the one the charts were cut from, read only to name a dart's edges.
 ///
 /// Raises `flatten-iteration-cap` on the piece of each chart whose flatten stopped at the cap,
-/// and `piece-compressed` on each piece whose mean compression deficit is over 15%.
+/// keeping each layout's mean compression deficit for the pattern stage to judge.
 ///
 /// # Errors
 /// The first chart's refusal, and no layout for any chart: `Flip` naming the inverted faces,
@@ -51,64 +54,30 @@ pub fn flatten(mesh: &ManifoldMesh, charts: &[ChartMesh]) -> StageResult<Vec<Par
     staged(charts, laid)
 }
 
-/// shortcut: one compression limit for every fabric, upgrade when fabric profiles give stretch
-/// limits. Compared against the area-weighted mean compression deficit, never the worst face,
-/// which keeps falling as a mesh is refined.
-const COMPRESSION_LIMIT: f64 = 0.15;
-
-/// The layouts of `charts`, in the same order, with the warnings each one's stop and
-/// compression raise.
+/// The layouts of `charts`, from each one's flat positions and stop in the same order, each
+/// measured, with the warnings their stops raise.
 ///
 /// # Errors
 /// `Flatten` if a layout cannot be measured against its chart.
 pub(crate) fn staged(
     charts: &[ChartMesh],
-    laid: Vec<(Parameterization, StoppedBy)>,
+    laid: Vec<(Vec<DVec2>, StoppedBy)>,
 ) -> StageResult<Vec<Parameterization>> {
     let mut warnings = WarningSet::default();
-    for (chart, (layout, stopped)) in charts.iter().zip(&laid) {
-        let summary = summarize(
-            chart.chart(),
-            chart.xyz(),
-            chart.faces(),
-            &layout.uv,
-            *stopped,
-        )
-        .map_err(EngineError::Flatten)?;
-        let compressed = compression_warning(layout.chart, summary.compression_deficit());
-        for w in stop_warning(layout.chart, *stopped)
-            .into_iter()
-            .chain(compressed)
-        {
+    let mut value = Vec::with_capacity(laid.len());
+    for (chart, (uv, stopped)) in charts.iter().zip(laid) {
+        let summary = summarize(chart.chart(), chart.xyz(), chart.faces(), &uv, stopped)
+            .map_err(EngineError::Flatten)?;
+        if let Some(w) = stop_warning(chart.chart(), stopped) {
             warnings.insert(w);
         }
+        value.push(Parameterization {
+            chart: chart.chart(),
+            uv,
+            compression_deficit: summary.compression_deficit(),
+        });
     }
-    Ok(Staged {
-        value: laid.into_iter().map(|(layout, _)| layout).collect(),
-        warnings,
-    })
-}
-
-/// `piece-compressed` on the piece numbered as `chart` when its mean compression `deficit`
-/// passes [`COMPRESSION_LIMIT`]; nothing otherwise.
-pub(crate) fn compression_warning(chart: ChartId, deficit: f64) -> Option<Warning> {
-    if deficit <= COMPRESSION_LIMIT {
-        return None;
-    }
-    // INVARIANT: both texts are non-blank.
-    let text = |t: String| NonBlank::new(t).unwrap_or_else(|| unreachable!());
-    Some(Warning::new(
-        WarningCode::PieceCompressed,
-        WarningTarget::Piece(PieceId::new(chart.index())),
-        text(format!(
-            "This piece is squeezed by about {:.0}% to lie flat, so it will sew up flatter than \
-             the model.",
-            deficit * 100.0
-        )),
-        Remedy::Advisory {
-            what_to_change: text("Add a dart or a seam in this piece.".to_owned()),
-        },
-    ))
+    Ok(Staged { value, warnings })
 }
 
 /// The warning a chart's stop raises: `flatten-iteration-cap` on its piece, numbered as the
@@ -137,9 +106,13 @@ pub(crate) fn stop_warning(chart: ChartId, stopped: StoppedBy) -> Option<Warning
 
 #[cfg(test)]
 impl Parameterization {
-    /// A layout written by hand, to reach states no flatten produces.
+    /// A layout written by hand, uncompressed, to reach states no flatten produces.
     pub(crate) fn by_hand(chart: ChartId, uv: Vec<DVec2>) -> Self {
-        Self { chart, uv }
+        Self {
+            chart,
+            uv,
+            compression_deficit: 0.0,
+        }
     }
 
     pub(crate) fn uv_mut(&mut self) -> &mut [DVec2] {
@@ -147,17 +120,10 @@ impl Parameterization {
     }
 }
 
-fn lay_flat(chart: &ChartMesh) -> Result<(Parameterization, StoppedBy), FlattenError> {
+fn lay_flat(chart: &ChartMesh) -> Result<(Vec<DVec2>, StoppedBy), FlattenError> {
     let mut session = FlattenSession::new(chart.chart(), chart.xyz(), chart.faces().to_vec())?;
     while !matches!(session.step()?, Progress::Done) {}
-    let (uv, stopped) = settled(session, chart.chart())?;
-    Ok((
-        Parameterization {
-            chart: chart.chart(),
-            uv,
-        },
-        stopped,
-    ))
+    settled(session, chart.chart())
 }
 
 /// The flat positions of a session that has stepped to `Done`, indexed like the chart's `xyz`,

@@ -153,7 +153,8 @@ impl Pipeline {
 
     /// Steps every chart without a layout to the end and returns every chart's layout, in
     /// chart order, as [`flatten`](crate::flatten()) would, with its warnings: a chart laid
-    /// from the memo warns as it did when it was flattened.
+    /// from the memo warns as it did when it was flattened. It raises no `piece-compressed`: the
+    /// pattern stage raises that, with the fabric.
     ///
     /// # Errors
     /// The first refusal [`Pipeline::flatten_step`] returns.
@@ -170,11 +171,7 @@ impl Pipeline {
                         chart: chart.chart(),
                     },
                 ))?;
-                let layout = Parameterization {
-                    chart: chart.chart(),
-                    uv: uv.to_vec(),
-                };
-                Ok((layout, stopped))
+                Ok((uv.to_vec(), stopped))
             })
             .collect::<Result<_, EngineError>>()?;
         staged(charts, laid)

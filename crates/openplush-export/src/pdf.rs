@@ -67,7 +67,12 @@ pub fn write(
     let count = tiling.pages().len() + 1 + split.pages.len();
     let mono = (!summary.is_empty()).then(|| page_ref(count));
     let mut pdf = Pdf::new();
-    pdf.catalog(catalog).pages(tree);
+    let mut cat = pdf.catalog(catalog);
+    cat.pages(tree);
+    // pdf-writer has no typed /PrintScaling; /None keeps "fit to page" from shrinking the pattern.
+    cat.viewer_preferences()
+        .pair(Name(b"PrintScaling"), Name(b"None"));
+    drop(cat);
     pdf.pages(tree)
         .kids((0..count).map(page_ref))
         .count(count as i32);

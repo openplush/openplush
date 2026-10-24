@@ -11,6 +11,15 @@ use super::summary::{self, Split};
 use super::{PT_PER_MM, outline, squares, text};
 
 const COVER_LABEL: &str = "Page map";
+/// Viewers default to "fit to page", which shrinks every tile by a few percent.
+const PRINT_AT_SIZE: [&str; 2] = [
+    "Print at Actual size, 100%, not Fit to page.",
+    "Check that the square at left measures 50 mm before you cut.",
+];
+const PRINT_TEXT_MM: f32 = 3.0;
+/// The first line's baseline below the squares' top, under the 5 mm "Page map" label.
+const PRINT_FIRST_MM: f64 = 12.0;
+const PRINT_PITCH_MM: f64 = 5.0;
 /// Between the scale square and the top of the map.
 const MAP_GAP_MM: f64 = 5.0;
 const WINDOW_LINE_MM: f64 = 0.2;
@@ -42,6 +51,11 @@ pub(super) fn draw(
     c.save_state();
     c.transform([k, 0.0, 0.0, k, 0.0, 0.0]);
     squares(&mut c, corner, COVER_LABEL);
+    let beside = corner + DVec2::new(SCALE_SQUARE_MM + 5.0, SCALE_SQUARE_MM);
+    for (i, line) in PRINT_AT_SIZE.iter().enumerate() {
+        let at = beside - DVec2::new(0.0, PRINT_FIRST_MM + i as f64 * PRINT_PITCH_MM);
+        text(&mut c, line, at, PRINT_TEXT_MM);
+    }
     if !summary.cover.is_empty() {
         summary::draw_cover(&mut c, summary);
     }

@@ -220,4 +220,15 @@ impl WarningSet {
     pub fn iter(&self) -> impl Iterator<Item = &Warning> {
         self.items.iter()
     }
+
+    /// Moves each warning to `to(target)`; two that become equal are kept once.
+    pub(crate) fn retarget(&mut self, to: impl Fn(WarningTarget) -> WarningTarget) {
+        self.items = std::mem::take(&mut self.items)
+            .into_iter()
+            .map(|w| Warning {
+                target: to(w.target),
+                ..w
+            })
+            .collect();
+    }
 }

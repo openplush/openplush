@@ -55,7 +55,8 @@ pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let roll = fabric.spec().roll_width;
     let opts = PatternOptions { scale, fabric };
     let pieces = keep(&mut warnings, pattern(&input, &opts)?);
-    let pieces = keep(&mut warnings, templates(&input, &pieces, &opts)?);
+    let pieces = templates(&input, &pieces, &opts, &mut warnings)?;
+    let pieces = keep(&mut warnings, pieces);
     let sheet = print(&pieces, roll, &mut warnings)?;
     write(inputs, &sheet, &pieces, &warnings)
 }

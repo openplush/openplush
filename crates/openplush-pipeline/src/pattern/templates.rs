@@ -22,7 +22,9 @@ use crate::{
 /// labels naming templates, and a matched edge's seam names joined (`Seam 12 / 40`).
 ///
 /// Raises `near-mirror-pieces` on each pair of templates that are mirror images to within 5 mm
-/// but further apart than the floor.
+/// but further apart than the floor. Each warning in `earlier` (the run's warnings so far) on a
+/// piece that joined a template is moved to that template, so it names a piece the print shows;
+/// on an error `earlier` is unchanged.
 ///
 /// # Errors
 /// `StageInputMismatch` when the inputs are not one run's or `pieces` are not `pattern`'s for
@@ -32,6 +34,7 @@ pub fn templates(
     input: &PatternInput<'_>,
     pieces: &[PatternPiece],
     opts: &PatternOptions,
+    earlier: &mut WarningSet,
 ) -> StageResult<Vec<PatternPiece>> {
     check_input(input)?;
     for (i, chart) in input.charts.iter().enumerate() {
@@ -63,6 +66,14 @@ pub fn templates(
         .filter(|(_, m)| m.fit.is_none())
         .map(|(((p, n), l), _)| p.with_notches(n).with_label(l))
         .collect();
+    earlier.retarget(|t| match t {
+        WarningTarget::Piece(id) => pieces
+            .iter()
+            .position(|p| p.id() == id)
+            .and_then(|i| pieces.get(grouping.members.get(i)?.template))
+            .map_or(t, |p| WarningTarget::Piece(p.id())),
+        _ => t,
+    });
     let mut warnings = WarningSet::default();
     for near in &grouping.near {
         warnings.insert(near_warning(pieces, near));

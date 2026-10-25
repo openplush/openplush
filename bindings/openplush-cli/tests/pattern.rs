@@ -239,12 +239,16 @@ fn warnings_print_in_the_files_and_do_not_stop_the_run() -> Result<(), Setup> {
     let out = run.write_to(&dir.0)?;
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
     let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
-    assert!(
-        svg.contains(">3. size-out-of-range: the whole pattern<"),
-        "{svg}"
-    );
+    // Both end caps are squeezed; the twin cap prints as piece 0, so its warning is piece 0's.
+    for row in [
+        "1. piece-compressed: piece 0",
+        "2. size-out-of-range: the whole pattern",
+    ] {
+        assert!(svg.contains(&format!(">{row}<")), "{row}: {svg}");
+    }
+    assert!(!svg.contains(">3. "), "{svg}");
     let pdf = String::from_utf8_lossy(&fs::read(dir.0.join("pattern.pdf"))?).into_owned();
-    assert!(pdf.contains("(3. size-out-of-range: the whole pattern) Tj"));
+    assert!(pdf.contains("(2. size-out-of-range: the whole pattern) Tj"));
     Ok(())
 }
 

@@ -42,7 +42,7 @@ It is one `i_overlay` boolean on the `i64` engine, and the result is checked rat
 
 ### Matching pieces
 
-`dedupe::fit(a, b, facing)` is how outline `b` lies on outline `a`, `Facing::AsPrinted` (turned and moved) or `Flipped` (a mirror image): over every pairing of corners in order, the least-squares best turn and shift, and of those the pairing whose largest corner distance is least, the lowest offset on a tie. The `Fit` gives that distance (`gap_mm`), the corner of `b` each corner of `a` lands on (`corner(i)`) and the edge of `b` each edge lands on (`edge(i)`). It uses no trigonometry, so it is the same on every target, and is `None` when the corner counts differ. `dedupe::NEAR_MM` (5 mm) is the furthest apart two mirror pieces are a near match.
+`dedupe::fit(a, b, facing)` is how outline `b` lies on outline `a`, `Facing::AsPrinted` (turned and moved) or `Flipped` (a mirror image): over every pairing of corners in order, the least-squares best turn and shift, and of those the pairing whose largest corner distance is least, the lowest offset on a tie. The `Fit` gives that distance (`gap_mm`), the corner of `b` each corner of `a` lands on (`corner(i)`) and the edge of `b` each edge lands on (`edge(i)`). It uses no trigonometry, so it is the same on every target, and is `None` when the corner counts differ. `dedupe::fits(a, b, facing, within_mm)` lists every pairing whose largest corner distance is at most `within_mm`, lowest offset first, since a symmetric shape lies on another several ways. `dedupe::NEAR_MM` (5 mm) is the furthest apart two mirror pieces are a near match.
 
 ### Labels
 

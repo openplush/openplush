@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use openplush_geom::epsilon::SeamParity;
 use openplush_geom::units::Mm;
 use openplush_pattern::Outline;
-use openplush_pattern::dedupe::{Facing, Fit, NEAR_MM, fit};
+use openplush_pattern::dedupe::{Facing, Fit, NEAR_MM, fit, fits};
 use openplush_seams::SeamChainId;
 
 /// What sews along one edge of a sewing line: its seam's lead chain, and the pieces, by index,
@@ -42,9 +42,10 @@ pub(super) struct Grouping {
 }
 
 /// Each piece, in order, joins the first earlier template it fits within the seam-parity floor,
-/// as printed before flipped, whose seams sew to the same templates edge for edge; otherwise it
-/// is a template. Which templates the seams sew to depends on the grouping, so it starts from
-/// shape alone and regroups until nothing changes; each pass can only split groups, so it ends.
+/// as printed before flipped, in whichever of the ways it fits lines its seams up with the
+/// template's, sewing to the same templates edge for edge; otherwise it is a template. Which
+/// templates the seams sew to depends on the grouping, so it starts from shape alone and regroups
+/// until nothing changes; each pass can only split groups, so it ends.
 /// `edges[i]` has one entry per edge of `outlines[i]`.
 pub(super) fn group(outlines: &[&Outline], edges: &[Vec<EdgeSeam>]) -> Grouping {
     let same = SeamParity::DEFAULT
@@ -81,12 +82,14 @@ fn pass(
         let joined = templates
             .flat_map(|t| [(t, Facing::AsPrinted), (t, Facing::Flipped)])
             .find_map(|(t, facing)| {
-                let f = fit(outlines[t], outline, facing)?;
-                let seams = earlier.is_none_or(|e| seams_match(edges, e, t, i, &f));
-                (f.gap_mm() <= same && seams).then_some(Member {
-                    template: t,
-                    fit: Some(f),
-                })
+                // A symmetric shape fits several ways; any one that lines the seams up will do.
+                fits(outlines[t], outline, facing, same)
+                    .into_iter()
+                    .find(|f| earlier.is_none_or(|e| seams_match(edges, e, t, i, f)))
+                    .map(|f| Member {
+                        template: t,
+                        fit: Some(f),
+                    })
             });
         members.push(joined.unwrap_or(Member {
             template: i,
@@ -123,15 +126,18 @@ fn near_mirrors(
     let mut out = Vec::new();
     for (k, &a) in templates.iter().enumerate() {
         for &b in &templates[k + 1..] {
-            let Some(f) = fit(outlines[a], outlines[b], Facing::Flipped) else {
+            let Some(best) = fit(outlines[a], outlines[b], Facing::Flipped) else {
                 continue;
             };
-            if f.gap_mm() > same && f.gap_mm() <= NEAR_MM {
+            if best.gap_mm() > same && best.gap_mm() <= NEAR_MM {
+                let seams_mirror = fits(outlines[a], outlines[b], Facing::Flipped, NEAR_MM)
+                    .iter()
+                    .any(|f| seams_match(edges, members, a, b, f));
                 out.push(Near {
                     a,
                     b,
-                    gap_mm: f.gap_mm(),
-                    seams_mirror: seams_match(edges, members, a, b, &f),
+                    gap_mm: best.gap_mm(),
+                    seams_mirror,
                 });
             }
         }

@@ -4,6 +4,7 @@
 //! will own is in `crates/AGENTS.md`.
 
 mod error;
+mod notch;
 pub mod pdf;
 pub mod svg;
 mod warning_summary;

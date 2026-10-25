@@ -14,6 +14,12 @@ No. OpenPlush runs entirely on your own device. Your model, your seams and your 
 
 Print the PDF at **Actual size** (or **100%**). Many print windows start on **Fit to page** or **Shrink to fit**, which makes every piece a little too small. Before you cut, measure the square marked "50 mm" on any page with a ruler. If it is not 50 mm, print again at actual size.
 
+## What are the short lines on the edges of each piece?
+
+They are notches. Each one shows where two pieces line up when you sew them together: the notches on one edge match the notches on the edge it sews to. When you cut a piece out, snip a little way into the seam allowance at each notch, never past the dashed sewing line. Then pin notch to notch before you sew, so the seam does not drift.
+
+Notches between the ends of a seam have one or more lines side by side, usually no more than three. Edges sewn together have the same number, and edges that meet at a corner of a piece have different numbers, so a piece turned the wrong way does not match. There is also a single notch at each end of a seam.
+
 ## Which files can I open?
 
 Models saved as OBJ, glTF, FBX, STL or PLY files, which is what most 3D modelling and sculpting programs can export. A glTF model is either a glb file, or a gltf file with the other files it comes with kept beside it. An FBX model must be saved as binary FBX; a text (ASCII) FBX file is refused, so save it again as binary. The model is read as it was saved: OpenPlush never changes the file on your disk. A model saved in another format does not open; save it as one of these from your modelling program first.

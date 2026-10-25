@@ -68,7 +68,8 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
         .zip(input.layouts)
         .map(|(chart, layout)| piece(chart, layout, opts))
         .collect::<Result<Vec<_>, _>>()?;
-    let notches = notches::notches(input, opts.scale, &pieces)?;
+    let bundles = notches::sides(input, opts.scale)?;
+    let notches = notches::notches(input, &bundles, &pieces)?;
     let value = pieces
         .into_iter()
         .zip(notches)

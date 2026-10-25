@@ -160,6 +160,9 @@ pub enum PatternError {
         /// The chain it was made for.
         chain: SeamChainId,
     },
+    /// A label placed at a point that is not finite.
+    #[error("a label needs a finite point")]
+    BadLabelPoint,
     /// A seam so long it would need more than 1000 notches.
     #[error(
         "seam chain {}: {:.0} mm is too long to notch (at most 1000 notches)",

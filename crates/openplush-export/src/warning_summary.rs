@@ -119,3 +119,12 @@ fn encoded(text: String, indent: bool) -> Line {
         text: text.chars().map(|c| c as u8).collect(),
     }
 }
+
+/// `text` as WinAnsi bytes with each run of whitespace one space, for a single printed line.
+///
+/// # Errors
+/// `Unprintable` as `lines`.
+pub(crate) fn latin1(text: &str) -> Result<Vec<u8>, ExportError> {
+    printable(text)?;
+    Ok(encoded(text.split_whitespace().collect::<Vec<_>>().join(" "), false).text)
+}

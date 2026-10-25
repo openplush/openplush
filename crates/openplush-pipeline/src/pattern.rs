@@ -7,6 +7,7 @@ use openplush_pattern::{
 };
 use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
 
+mod labels;
 mod notches;
 
 use crate::{
@@ -45,6 +46,10 @@ pub struct PatternOptions {
 /// fractions of the length on every side of the seam. Those between the ends carry the seam's
 /// mark count, the least from 1 that no seam it meets on a piece has, in lead-chain order.
 ///
+/// Each piece also carries its label: a block at `Outline::label_point` naming the piece, its
+/// cuts, the fabric and the pieces it shares a seam with (`label::block`), and the seam's name
+/// (`label::seam_text`) 4 mm inside the middle of each of its seam sides.
+///
 /// Raises `piece-compressed` on each piece whose layout needs more stretch to fill its surface
 /// than the fabric gives.
 ///
@@ -70,10 +75,12 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
         .collect::<Result<Vec<_>, _>>()?;
     let bundles = notches::sides(input, opts.scale)?;
     let notches = notches::notches(input, &bundles, &pieces)?;
+    let labels = labels::labels(&bundles, &pieces, &opts.fabric.spec().name)?;
     let value = pieces
         .into_iter()
         .zip(notches)
-        .map(|(p, n)| p.with_notches(n))
+        .zip(labels)
+        .map(|((p, n), l)| p.with_notches(n).with_label(l))
         .collect();
     let mut warnings = WarningSet::default();
     for w in input

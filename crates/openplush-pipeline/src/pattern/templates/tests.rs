@@ -55,7 +55,11 @@ fn a_near_mirror_names_both_pieces_and_the_gap() {
         "Pieces 2 and 7 are mirror images to within 2.4 mm, so they print as two pieces instead \
          of one piece cut twice."
     );
-    assert!(advice(w.remedy()).starts_with("Draw the seams on these two pieces"));
+    assert_eq!(
+        advice(w.remedy()),
+        "Draw the seams on these two pieces so they mirror each other; if their shapes then match \
+         within 1 mm, they print as one piece cut twice."
+    );
 }
 
 #[test]

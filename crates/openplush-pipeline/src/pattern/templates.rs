@@ -7,7 +7,7 @@ use openplush_pattern::dedupe::Facing;
 use openplush_pattern::{CutCount, PatternPiece, PieceId};
 use openplush_seams::ChartId;
 
-use super::group::{EdgeSeam, Grouping, Near, alike, group};
+use super::group::{EdgeSeam, Grouping, Near, alike, group, same_mm};
 use super::notches::{Bundle, sides};
 use super::{PatternInput, PatternOptions, boundary_loop, check_input, labels, mismatch, notches};
 use crate::{
@@ -158,9 +158,11 @@ fn near_warning(pieces: &[PatternPiece], near: &Near) -> Warning {
              pieces; make that part of the model symmetric to cut one piece twice."
         )
     } else {
-        "Draw the seams on these two pieces so they mirror each other; if their shapes then \
-         match within 1 mm, they print as one piece cut twice."
-            .to_owned()
+        format!(
+            "Draw the seams on these two pieces so they mirror each other; if their shapes then \
+             match within {} mm, they print as one piece cut twice.",
+            same_mm()
+        )
     };
     Warning::new(
         WarningCode::NearMirrorPieces,

@@ -48,9 +48,7 @@ pub(super) struct Grouping {
 /// until nothing changes; each pass can only split groups, so it ends.
 /// `edges[i]` has one entry per edge of `outlines[i]`.
 pub(super) fn group(outlines: &[&Outline], edges: &[Vec<EdgeSeam>]) -> Grouping {
-    let same = SeamParity::DEFAULT
-        .allowed(Mm::try_new(0.0).unwrap_or_else(|_| unreachable!()))
-        .get();
+    let same = same_mm();
     let mut members: Option<Vec<Member>> = None;
     loop {
         let next = pass(outlines, edges, members.as_deref(), same);
@@ -63,6 +61,14 @@ pub(super) fn group(outlines: &[&Outline], edges: &[Vec<EdgeSeam>]) -> Grouping 
     let members = members.unwrap_or_else(|| unreachable!());
     let near = near_mirrors(outlines, edges, &members, same);
     Grouping { members, near }
+}
+
+/// How close, in mm, every corner of two pieces must be to merge them: the seam-parity floor, so
+/// a merge never breaks a seam's length match.
+pub(super) fn same_mm() -> f64 {
+    // INVARIANT: zero is a valid length.
+    let zero = Mm::try_new(0.0).unwrap_or_else(|_| unreachable!());
+    SeamParity::DEFAULT.allowed(zero).get()
 }
 
 /// One grouping pass; with no earlier grouping, seams are not compared.

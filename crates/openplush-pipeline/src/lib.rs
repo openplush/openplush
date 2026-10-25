@@ -45,7 +45,7 @@ pub use openplush_seams::{
     ChainSide, ChartFailure, ChartId, ChartMesh, Proposal, ProposalId, ProposalKind, SeamBundle,
     SeamChainId, SeamKind, SeamReason, SeamSet, SewingMap,
 };
-pub use pattern::{PatternInput, PatternOptions, pattern};
+pub use pattern::{PatternInput, PatternOptions, pattern, templates};
 pub use repair::{repair, validate};
 pub use session::{Pipeline, Progress};
 pub use size::size;

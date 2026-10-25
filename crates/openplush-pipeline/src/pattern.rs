@@ -7,8 +7,12 @@ use openplush_pattern::{
 };
 use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
 
+mod group;
 mod labels;
 mod notches;
+mod templates;
+
+pub use templates::templates;
 
 use crate::{
     EngineError, NonBlank, Parameterization, Remedy, StageResult, Staged, Warning, WarningCode,
@@ -75,8 +79,9 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
         .map(|(chart, layout)| piece(chart, layout, opts))
         .collect::<Result<Vec<_>, _>>()?;
     let bundles = notches::sides(input, opts.scale)?;
-    let notches = notches::notches(input, &bundles, &pieces)?;
-    let labels = labels::labels(&bundles, &pieces, &opts.fabric.spec().name)?;
+    let alike = group::Alike::default();
+    let notches = notches::notches(input, &bundles, &pieces, &alike)?;
+    let labels = labels::labels(&bundles, &pieces, &opts.fabric.spec().name, &alike)?;
     let value = pieces
         .into_iter()
         .zip(notches)

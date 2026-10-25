@@ -43,6 +43,9 @@ pub enum WarningCode {
     /// A piece is squeezed to lie flat more than its fabric stretches, so it sews up flatter
     /// than its surface.
     PieceCompressed,
+    /// Two pieces are mirror images to within 5 mm but not within the seam-parity floor, so they
+    /// print as two pieces instead of one piece cut twice.
+    NearMirrorPieces,
     /// Declared first, sorts last: proves order follows the string.
     #[cfg(test)]
     TestZulu,
@@ -61,6 +64,7 @@ impl WarningCode {
             Self::SizeOutOfRange => "size-out-of-range",
             Self::FlattenIterationCap => "flatten-iteration-cap",
             Self::PieceCompressed => "piece-compressed",
+            Self::NearMirrorPieces => "near-mirror-pieces",
             #[cfg(test)]
             Self::TestZulu => "test-zulu",
             #[cfg(test)]
@@ -81,6 +85,8 @@ pub enum WarningTarget {
     Chain(SeamChainId),
     /// A pattern piece.
     Piece(PieceId),
+    /// Two pattern pieces, the lower first.
+    Pieces(PieceId, PieceId),
     /// A connected component of the repaired mesh.
     Component(ComponentId),
     /// The whole project.

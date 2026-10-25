@@ -56,8 +56,10 @@ fn one_partner_is_singular_and_none_leaves_the_line_out() -> Result<(), Setup> {
 }
 
 #[test]
-fn a_seam_is_named_as_the_warning_summary_names_it() {
-    assert_eq!(seam_text(SeamChainId::new(12)), "Seam 12");
+fn a_seam_is_named_as_the_warning_summary_names_it_and_copies_join_their_names() {
+    assert_eq!(seam_text(&[SeamChainId::new(12)]), "Seam 12");
+    let both = [SeamChainId::new(12), SeamChainId::new(40)];
+    assert_eq!(seam_text(&both), "Seam 12 / 40");
 }
 
 #[test]

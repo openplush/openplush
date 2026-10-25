@@ -85,7 +85,9 @@ pub fn block(id: PieceId, cuts: CutCount, fabric: &str, sews_to: &[PieceId]) -> 
     lines
 }
 
-/// A seam's name on the print, as the warning summary names its chain.
-pub fn seam_text(chain: SeamChainId) -> String {
-    format!("Seam {}", chain.index())
+/// A seam's name on the print, as the warning summary names its chain, or several chains' names
+/// joined by ` / ` when one edge of a template is a different seam on each of its copies.
+pub fn seam_text(chains: &[SeamChainId]) -> String {
+    let names: Vec<String> = chains.iter().map(|c| c.index().to_string()).collect();
+    format!("Seam {}", names.join(" / "))
 }

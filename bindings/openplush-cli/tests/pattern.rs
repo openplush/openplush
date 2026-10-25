@@ -180,13 +180,18 @@ fn the_capsule_s_pieces_measure_what_its_shape_and_the_allowance_give() -> Resul
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
     let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
     let (sew, cut) = (outlines(&svg, "sew")?, outlines(&svg, "cut")?);
-    assert_eq!((sew.len(), cut.len()), (3, 3), "{svg}");
-    let tube = (0..3)
+    // The two end caps are one template cut twice, so the print has two pieces.
+    assert_eq!((sew.len(), cut.len()), (2, 2), "{svg}");
+    assert!(
+        svg.contains(">Cut 2<"),
+        "the caps' template is cut twice: {svg}"
+    );
+    let tube = (0..2)
         .max_by(|&a, &b| perimeter(&sew[a]).total_cmp(&perimeter(&sew[b])))
         .ok_or("no pieces")?;
     assert_size(size(&sew[tube]), (120.0, 372.70), "tube sewing line");
     assert_size(size(&cut[tube]), (132.0, 384.70), "tube cut line");
-    for cap in (0..3).filter(|&i| i != tube) {
+    for cap in (0..2).filter(|&i| i != tube) {
         assert_mm(perimeter(&sew[cap]), 372.70, "cap sewing line");
     }
     Ok(())

@@ -1,6 +1,7 @@
-use crate::{CutCount, Outline, PatternError, PieceId};
+use crate::{CutCount, Notch, Outline, PatternError, PieceId};
 
-/// One pattern template: its two outlines, how many copies to cut, and the rotations layout may use.
+/// One pattern template: its two outlines, its notches, how many copies to cut, and the rotations
+/// layout may use.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PatternPiece {
     id: PieceId,
@@ -8,6 +9,7 @@ pub struct PatternPiece {
     cut_line: Outline,
     cuts: CutCount,
     rotations_deg: Vec<f64>,
+    notches: Vec<Notch>,
 }
 
 impl PatternPiece {
@@ -31,6 +33,7 @@ impl PatternPiece {
             cut_line,
             cuts,
             rotations_deg,
+            notches: Vec::new(),
         })
     }
 
@@ -57,5 +60,16 @@ impl PatternPiece {
     /// The rotations, in degrees, layout may place the piece at; never empty.
     pub fn rotations_deg(&self) -> &[f64] {
         &self.rotations_deg
+    }
+
+    /// The piece with `notches` as its notches, which lie on its sewing line.
+    #[must_use]
+    pub fn with_notches(self, notches: Vec<Notch>) -> Self {
+        Self { notches, ..self }
+    }
+
+    /// Its match notches; none until `with_notches`.
+    pub fn notches(&self) -> &[Notch] {
+        &self.notches
     }
 }

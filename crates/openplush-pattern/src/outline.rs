@@ -32,6 +32,17 @@ impl Outline {
     pub fn points(&self) -> &[DVec2] {
         &self.points
     }
+
+    /// The unit direction out of the outline at corner `i`, halfway between its two edges' outward
+    /// normals, so it points out at reflex corners too; `None` past the last corner.
+    pub fn outward_at(&self, i: usize) -> Option<DVec2> {
+        let n = self.points.len();
+        let at = *self.points.get(i)?;
+        let (before, after) = (self.points[(i + n - 1) % n], self.points[(i + 1) % n]);
+        let right = |d: DVec2| DVec2::new(d.y, -d.x).normalize();
+        // A simple outline never folds back, so the two normals never cancel.
+        (right(at - before)? + right(after - at)?).normalize()
+    }
 }
 
 enum Refusal {

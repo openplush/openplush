@@ -4,6 +4,7 @@ pub mod allowance;
 mod cut;
 mod error;
 mod fabric;
+pub mod notch;
 mod outline;
 pub mod parity;
 mod piece;
@@ -12,6 +13,7 @@ pub mod scale;
 pub use cut::CutCount;
 pub use error::PatternError;
 pub use fabric::{Fabric, FabricCategory, FabricSpec, StretchDirection};
+pub use notch::Notch;
 pub use outline::Outline;
 pub use piece::PatternPiece;
 

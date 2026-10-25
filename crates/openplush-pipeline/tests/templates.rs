@@ -4,7 +4,10 @@
 
 use std::collections::BTreeMap;
 
-use openplush_pipeline::{EngineError, PatternPiece, StageResult, templates};
+use openplush_pipeline::{
+    EngineError, NonBlank, PatternPiece, PieceId, Remedy, StageResult, Warning, WarningCode,
+    WarningSet, WarningTarget, templates,
+};
 
 #[allow(dead_code, reason = "each test file uses part of the shared fixtures")]
 mod common;
@@ -13,7 +16,44 @@ use common::sides::{Run, reference};
 use common::{CAPSULE_OBJ, CAPSULE_SEAMS, CUBE_OBJ, CUBE_SEAMS, Setup};
 
 fn templated(run: &Run) -> Result<StageResult<Vec<PatternPiece>>, Setup> {
-    Ok(templates(&run.input(), &run.pieces, &run.options()?))
+    Ok(templates(
+        &run.input(),
+        &run.pieces,
+        &run.options()?,
+        &mut WarningSet::default(),
+    ))
+}
+
+fn squeezed(piece: PieceId) -> Result<Warning, Setup> {
+    let text = |t: &str| NonBlank::new(t.to_owned()).ok_or("non-blank");
+    Ok(Warning::new(
+        WarningCode::PieceCompressed,
+        WarningTarget::Piece(piece),
+        text("This piece must stretch.")?,
+        Remedy::Advisory {
+            what_to_change: text("Add a dart or a seam in this piece.")?,
+        },
+    ))
+}
+
+#[test]
+fn a_warning_on_a_merged_piece_names_its_template() -> Result<(), Setup> {
+    let run = reference(CAPSULE_OBJ, CAPSULE_SEAMS, 5.0)?;
+    let mut warnings = WarningSet::default();
+    for p in &run.pieces {
+        warnings.insert(squeezed(p.id())?);
+    }
+    let staged = templates(&run.input(), &run.pieces, &run.options()?, &mut warnings)
+        .map_err(|e| format!("{e:?}"))?;
+    let printed: Vec<WarningTarget> = staged
+        .value
+        .iter()
+        .map(|p| WarningTarget::Piece(p.id()))
+        .collect();
+    let targets: Vec<WarningTarget> = warnings.iter().map(Warning::target).collect();
+    // The twin cap's warning, now on cap 0, equals cap 0's own and is kept once.
+    assert_eq!(targets, printed);
+    Ok(())
 }
 
 fn label_lines(p: &PatternPiece) -> Result<Vec<String>, Setup> {
@@ -113,26 +153,41 @@ fn nothing_merges_where_nothing_matches() -> Result<(), Setup> {
 fn pieces_from_another_run_or_order_are_refused() -> Result<(), Setup> {
     let run = reference(CAPSULE_OBJ, CAPSULE_SEAMS, 5.0)?;
     let reversed: Vec<PatternPiece> = run.pieces.iter().rev().cloned().collect();
-    let err = templates(&run.input(), &reversed, &run.options()?)
-        .err()
-        .ok_or("refused")?;
+    let err = templates(
+        &run.input(),
+        &reversed,
+        &run.options()?,
+        &mut WarningSet::default(),
+    )
+    .err()
+    .ok_or("refused")?;
     assert!(
         matches!(err, EngineError::StageInputMismatch { .. }),
         "{err:?}"
     );
     let mut extra = run.pieces.clone();
     extra.push(run.pieces[0].clone());
-    let err = templates(&run.input(), &extra, &run.options()?)
-        .err()
-        .ok_or("refused")?;
+    let err = templates(
+        &run.input(),
+        &extra,
+        &run.options()?,
+        &mut WarningSet::default(),
+    )
+    .err()
+    .ok_or("refused")?;
     assert!(
         matches!(err, EngineError::StageInputMismatch { .. }),
         "{err:?}"
     );
     let short = &run.pieces[..1];
-    let err = templates(&run.input(), short, &run.options()?)
-        .err()
-        .ok_or("refused")?;
+    let err = templates(
+        &run.input(),
+        short,
+        &run.options()?,
+        &mut WarningSet::default(),
+    )
+    .err()
+    .ok_or("refused")?;
     assert!(
         matches!(err, EngineError::StageInputMismatch { .. }),
         "{err:?}"

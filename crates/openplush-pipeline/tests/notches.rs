@@ -2,7 +2,7 @@
 //! at most 50 mm apart, with a mark count that differs from every seam it meets on a piece. The
 //! sides are walked from the chart faces here, not by the stage.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::f64::consts::PI;
 
 use openplush_io::obj;
@@ -244,11 +244,16 @@ fn assert_notched(run: &Run) -> Result<(), Setup> {
                 Some(want) => assert_same_fractions(want, &inner, chain),
             }
             for p in [path.points[0], path.points[path.points.len() - 1]] {
-                let notched = piece
+                let at_end: Vec<_> = piece
                     .notches()
                     .iter()
-                    .any(|n| (n.at() - p).length() <= SAME_MM);
-                assert!(notched, "chain {chain:?}: no notch at its end {p:?}");
+                    .filter(|n| (n.at() - p).length() <= SAME_MM)
+                    .collect();
+                assert!(
+                    !at_end.is_empty(),
+                    "chain {chain:?}: no notch at its end {p:?}"
+                );
+                assert!(at_end.iter().all(|n| n.marks() == 1), "{at_end:?}");
                 ends.entry((path.chart, [p.x.to_bits(), p.y.to_bits()]))
                     .or_default()
                     .push((chain.index(), marks));
@@ -260,16 +265,34 @@ fn assert_notched(run: &Run) -> Result<(), Setup> {
     Ok(())
 }
 
+/// Seams that meet on a piece differ, and each has exactly the least count, from 1, that no
+/// lower seam it meets has: no more than it needs.
 fn assert_neighbours_differ(ends: &Ends) {
+    let mut meets: BTreeMap<u32, BTreeSet<u32>> = BTreeMap::new();
+    let mut marks = BTreeMap::new();
     for ((chart, _), chains) in ends {
         for (i, &(a, ma)) in chains.iter().enumerate() {
+            marks.insert(a, ma);
+            meets.entry(a).or_default();
             for &(b, mb) in &chains[i + 1..] {
                 if a != b {
                     assert_ne!(ma, mb, "chains {a} and {b} meet on piece {chart}");
+                    meets.entry(a).or_default().insert(b);
+                    meets.entry(b).or_default().insert(a);
                 }
             }
         }
     }
+    let mut want: BTreeMap<u32, u32> = BTreeMap::new();
+    for (&chain, others) in &meets {
+        let taken: BTreeSet<u32> = others.iter().filter_map(|o| want.get(o).copied()).collect();
+        let least = (1..)
+            .find(|c| !taken.contains(c))
+            .ok_or("a count")
+            .unwrap_or(0);
+        want.insert(chain, least);
+    }
+    assert_eq!(marks, want);
 }
 
 /// Each notch has marks, points out of its piece, and sits apart from the piece's others.
@@ -319,7 +342,14 @@ fn both_sides_of_a_dart_are_notched_alike() -> Result<(), Setup> {
 
 #[test]
 fn a_short_seam_still_gets_a_notch_between_its_ends() -> Result<(), Setup> {
-    assert_notched(&reference(CAPSULE_OBJ, CAPSULE_SEAMS, 1.0)?)
+    let run = reference(CAPSULE_OBJ, CAPSULE_SEAMS, 0.5)?;
+    let short = run.sewing.bundles().iter().any(|b| {
+        b.sides()
+            .iter()
+            .all(|s| path(&run, s).is_ok_and(|p| p.length() <= SPACING_MM))
+    });
+    assert!(short, "no seam of 50 mm or less");
+    assert_notched(&run)
 }
 
 #[test]

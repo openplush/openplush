@@ -147,3 +147,17 @@ fn outward_at_a_reflex_corner_points_out_of_the_notch() -> Result<(), Setup> {
     assert!((d - DVec2::new(h, h)).length() <= 1e-12, "{d:?}");
     Ok(())
 }
+
+#[test]
+fn outward_at_halves_the_angle_whatever_the_edge_lengths() -> Result<(), Setup> {
+    let long = Outline::new(vec![
+        DVec2::new(0.0, 0.0),
+        DVec2::new(4.0, 0.0),
+        DVec2::new(4.0, 1.0),
+        DVec2::new(0.0, 1.0),
+    ])?;
+    let d = long.outward_at(1).ok_or("a direction")?;
+    let h = std::f64::consts::FRAC_1_SQRT_2;
+    assert!((d - DVec2::new(h, -h)).length() <= 1e-12, "{d:?}");
+    Ok(())
+}

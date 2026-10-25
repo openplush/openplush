@@ -7,6 +7,8 @@ use openplush_pipeline::{
     Fabric, FabricCategory, FabricId, FabricSpec, ManifoldMesh, Mm, SeamKind, SeamSet, VertexId,
 };
 
+pub(crate) mod sides;
+
 pub(crate) type Setup = Box<dyn std::error::Error>;
 
 pub(crate) const CAPSULE_OBJ: &str = include_str!("../../../../fixtures/meshes/capsule.obj");

@@ -2,6 +2,7 @@
 
 pub mod allowance;
 mod cut;
+pub mod dedupe;
 mod error;
 mod fabric;
 pub mod label;

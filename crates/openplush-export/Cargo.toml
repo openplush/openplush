@@ -16,6 +16,10 @@ openplush-pattern = { path = "../openplush-pattern" }
 pdf-writer = "=0.15.0"
 thiserror = "2.0.21"
 
+[dev-dependencies]
+# Only to name the seam chain a test notch matches along.
+openplush-seams = { path = "../openplush-seams" }
+
 [lints]
 workspace = true
 

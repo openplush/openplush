@@ -12,7 +12,7 @@ What `openplush-pattern` contains **today**, and what it actually depends on. Wh
 
 ### Outlines
 
-`Outline::new(points)` builds a closed, simple, counter-clockwise polygon in mm or refuses it (`OutlineTooShort`, `OutlineNotFinite`, `OutlineNotSimple { edge, other }` for a repeated point, crossing, touching, overlap or fold, `OutlineClockwise`, `OutlineUnjudgeable`); it never reverses or repairs. `outward_at(i)` is the unit direction out of the outline at corner `i`, halfway between its two edges' outward normals, so it points out at reflex corners too. `label_point()` is a point inside the outline as far from its edges as a 32 × 32 grid over its bounding box finds (the first such in row order); an outline too thin for the grid gets a point just inside its lowest, leftmost corner.
+`Outline::new(points)` builds a closed, simple, counter-clockwise polygon in mm or refuses it (`OutlineTooShort`, `OutlineNotFinite`, `OutlineNotSimple { edge, other }` for a repeated point, crossing, touching, overlap or fold, `OutlineClockwise`, `OutlineUnjudgeable`); it never reverses or repairs. `outward_at(i)` is the unit direction out of the outline at corner `i`, halfway between its two edges' outward normals, so it points out at reflex corners too. `label_point()` is a point inside the outline as far from its edges as a 32 × 32 grid over its bounding box finds (the first such in row order); an outline too thin for the grid gets a point just inside its lowest, leftmost corner, along its bisector, a quarter of its shorter edge in or half that again until the point is inside.
 
 ### Seam allowance
 

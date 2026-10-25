@@ -46,7 +46,8 @@ impl Outline {
 
     /// A point inside the outline as far from its edges as a 32 × 32 grid over its bounding box
     /// finds, the first such in row order, so a label there stays clear of narrow parts. A
-    /// piece too thin for the grid gets a point just inside its lowest, leftmost corner.
+    /// piece too thin for the grid gets a point just inside its lowest, leftmost corner, along its
+    /// bisector.
     pub fn label_point(&self) -> DVec2 {
         const CELLS: u32 = 32;
         let (min, max) =
@@ -106,7 +107,7 @@ impl Outline {
     }
 
     /// The lowest, leftmost corner, always convex, moved inward along its bisector by a quarter
-    /// of its shorter edge.
+    /// of its shorter edge, or by half that again until the point is inside.
     fn inside_lowest_corner(&self) -> DVec2 {
         let n = self.points.len();
         let i = (0..n)
@@ -120,7 +121,17 @@ impl Outline {
             .length()
             .min((self.points[(i + 1) % n] - at).length());
         let out = self.outward_at(i).unwrap_or(DVec2::new(0.0, 0.0));
-        at - out * (shorter / 4.0)
+        // Halve the step until it lands inside: a convex corner always has room just inside it,
+        // and 60 halvings reach well under any edge a valid outline can have.
+        let mut step = shorter / 4.0;
+        for _ in 0..60 {
+            let p = at - out * step;
+            if self.contains(p) {
+                return p;
+            }
+            step /= 2.0;
+        }
+        at - out * step
     }
 }
 

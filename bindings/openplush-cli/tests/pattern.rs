@@ -33,6 +33,14 @@ fn scratch(test: &str) -> Result<Scratch, Setup> {
     Ok(Scratch(dir))
 }
 
+#[test]
+fn two_scratch_folders_asked_for_by_one_name_are_apart() -> Result<(), Setup> {
+    let (a, b) = (scratch("twin")?, scratch("twin")?);
+    assert_ne!(a.0, b.0);
+    assert!(a.0.exists() && b.0.exists());
+    Ok(())
+}
+
 fn text(path: &Path) -> Result<String, Setup> {
     path.to_str()
         .map(str::to_owned)

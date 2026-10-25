@@ -25,10 +25,14 @@ DEFECTS = (
     "hole",
     "multi-component",
     "non-manifold-edge",
+    "non-orientable",
     "self-intersection",
     "unwelded-split-vertices",
     "zero-area-face",
 )
+# The classes a fixture trips when not only its own. A surface no winding fits must disagree
+# across some edge, and it can only be closed by passing through itself, so it has an open edge.
+EXPECTED = {"non-orientable": ["flipped-normals", "hole"]}
 SEAM_KINDS = {"cut", "dart", "opening", "fabricBoundary", "mandatory"}
 
 Vec = tuple[float, float, float]
@@ -120,6 +124,34 @@ def inward_closed_components(pos: list[Vec], faces: list[Face], comps: UnionFind
     return sum(signed_volume(pos, fs) <= 0 for root, fs in by_comp.items() if root not in open_comps)
 
 
+def orientable(faces: list[Face]) -> bool:
+    """Whether flipping some faces makes every 2-face edge's faces traverse it oppositely."""
+    by_edge: dict[Edge, list[tuple[int, Edge]]] = {}
+    for i, f in enumerate(faces):
+        for a, b in edges_of(f):
+            by_edge.setdefault((min(a, b), max(a, b)), []).append((i, (a, b)))
+    flip: dict[int, bool] = {}
+    for start in range(len(faces)):
+        if start in flip:
+            continue
+        flip[start], todo = False, [start]
+        while todo:
+            i = todo.pop()
+            for a, b in edges_of(faces[i]):
+                uses = by_edge[(min(a, b), max(a, b))]
+                if len(uses) != 2:
+                    continue
+                (j, d), = [u for u in uses if u[0] != i]
+                # Kept as they are, the two agree when they traverse the edge oppositely.
+                want = flip[i] if d == (b, a) else not flip[i]
+                if j not in flip:
+                    flip[j] = want
+                    todo.append(j)
+                elif flip[j] != want:
+                    return False
+    return True
+
+
 def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
     """Count each defect class; zero everywhere means closed, manifold, oriented, and clean."""
     canon: dict[Vec, int] = {}
@@ -202,7 +234,14 @@ class DefectCorpus(unittest.TestCase):
         for name in DEFECTS:
             with self.subTest(name):
                 found = {k: v for k, v in detect(*read_obj(FIXTURES / "defects" / f"{name}.obj")).items() if v}
-                self.assertEqual(list(found), [name])
+                self.assertEqual(list(found), EXPECTED.get(name, [name]))
+
+    def test_the_non_orientable_strip_has_no_winding_and_flipped_normals_has_one(self) -> None:
+        """Prevents a strip with merely one flipped face passing as non-orientable."""
+        _, strip = read_obj(FIXTURES / "defects" / "non-orientable.obj")
+        self.assertFalse(orientable(strip))
+        _, flipped = read_obj(FIXTURES / "defects" / "flipped-normals.obj")
+        self.assertTrue(orientable(flipped))
 
     def test_a_closed_component_wound_inward_throughout_is_flipped(self) -> None:
         """Consistent winding alone passes an inside-out shell; repair orients closed components to +volume."""

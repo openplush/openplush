@@ -5,17 +5,23 @@
 use openplush_mesh::{ValidationReport, validate};
 use openplush_testkit::fixtures::{self, Kind};
 
-/// The detector each defect fixture must trip, and no other.
-const CORPUS: [(&str, &str); 9] = [
-    ("bowtie-vertex", "non_manifold_vertices"),
-    ("duplicate-face", "duplicates"),
-    ("flipped-normals", "winding_conflicts"),
-    ("hole", "boundary_loops"),
-    ("multi-component", "multiple_components"),
-    ("non-manifold-edge", "non_manifold_edges"),
-    ("self-intersection", "self_intersections"),
-    ("unwelded-split-vertices", "unwelded"),
-    ("zero-area-face", "zero_area"),
+/// The detectors each defect fixture must trip, and no others, in report order. Only
+/// `non-orientable` trips more than one: a surface with no consistent winding must have a
+/// conflict somewhere, and it cannot be closed without passing through itself.
+const CORPUS: [(&str, &[&str]); 10] = [
+    ("bowtie-vertex", &["non_manifold_vertices"]),
+    ("duplicate-face", &["duplicates"]),
+    ("flipped-normals", &["winding_conflicts"]),
+    ("hole", &["boundary_loops"]),
+    ("multi-component", &["multiple_components"]),
+    ("non-manifold-edge", &["non_manifold_edges"]),
+    (
+        "non-orientable",
+        &["winding_conflicts", "non_orientable", "boundary_loops"],
+    ),
+    ("self-intersection", &["self_intersections"]),
+    ("unwelded-split-vertices", &["unwelded"]),
+    ("zero-area-face", &["zero_area"]),
 ];
 
 /// Every non-empty list in the report, by name.
@@ -69,8 +75,8 @@ fn every_defect_fixture_trips_exactly_its_own_detector() -> Outcome<()> {
         names, listed,
         "the corpus and fixtures/defects must list the same models"
     );
-    for (name, detector) in CORPUS {
-        assert_eq!(defects(&report(Kind::Defect, name)?), [detector], "{name}");
+    for (name, detectors) in CORPUS {
+        assert_eq!(defects(&report(Kind::Defect, name)?), detectors, "{name}");
     }
     Ok(())
 }

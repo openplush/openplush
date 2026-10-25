@@ -467,6 +467,7 @@ fn validate_writes_every_list_exactly_as_the_engine_reports_it() -> Result<(), S
         "hole",
         "multi-component",
         "non-manifold-edge",
+        "non-orientable",
         "self-intersection",
         "unwelded-split-vertices",
         "zero-area-face",
@@ -499,10 +500,10 @@ fn validate_writes_every_list_exactly_as_the_engine_reports_it() -> Result<(), S
         })
         .collect();
     assert!(orientations.contains(&"Same".into()) && orientations.contains(&"Opposite".into()));
-    // Every list but `non_orientable` is non-empty for some model, so a swap or a drop shows.
+    // Every list is non-empty for some model, so a swap or a drop shows.
     let all: std::collections::BTreeSet<&str> = REPORT_KEYS[1..].iter().copied().collect();
     let missing: Vec<_> = all.difference(&seen).collect();
-    assert_eq!(missing, [&"non_orientable"], "lists no model exercises");
+    assert!(missing.is_empty(), "lists no model exercises: {missing:?}");
     Ok(())
 }
 

@@ -89,11 +89,9 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
         .map(|((p, n), l)| p.with_notches(n).with_label(l))
         .collect();
     let mut warnings = WarningSet::default();
-    for w in input
-        .layouts
-        .iter()
-        .filter_map(|l| squeeze_warning(l.chart, l.compression_deficit, opts.fabric.spec()))
-    {
+    for w in input.layouts.iter().filter_map(|l| {
+        squeeze_warning(l.chart, l.summary.compression_deficit(), opts.fabric.spec())
+    }) {
         warnings.insert(w);
     }
     Ok(Staged { value, warnings })

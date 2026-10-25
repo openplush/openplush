@@ -52,7 +52,7 @@ Nothing is written if repair fails. `-o` is written before `--plan-out`, so if t
 
 ### `pattern`
 
-Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` into `-o`, which is created if missing. Nothing is written unless every stage succeeds.
+Runs the model through every stage and writes `pattern.svg`, `pattern.pdf` and `pattern.json` into `-o`, which is created if missing. Nothing is written unless every stage succeeds.
 
 - The model is read as above and repaired with the default plan, every step on. A model that needs another plan is repaired first with `repair -o`, and that OBJ is patterned.
 - Where repair split an edge into a boundary (a third face on an edge, or a cut where the faces' winding cannot agree), every copy of that edge is added as a `mandatory` seam, so the copies are sewn back together. If these seams and the seam file's together leave a piece that is not a disk, the run exits 1 with `ChartNotDisk` or `Flatten`.
@@ -72,6 +72,13 @@ Runs the model through every stage and writes `pattern.svg` and `pattern.pdf` in
 - `--size-mm` is the finished length of the model's longest dimension: a finite number above 0, in millimetres. Outside 75 mm to 1000 mm the run still succeeds, with a `size-out-of-range` warning.
 - Identical and mirror-image pieces are first made one template with their cut count (the `templates` stage), so a left and right pair prints once, labelled `Cut 2 (1 + 1 flipped)`. The print places one template of every piece on a roll as wide as the fabric's `rollWidthMm`, 10 mm apart, not mirrored; the sheet ends at the rightmost piece. `pattern.svg` is that sheet at true scale. `pattern.pdf` tiles it on `--page`.
 - Every warning the stages raised prints in both files: under the SVG's sheet, and on the PDF's cover. A warning on a piece merged into a template names the template, the number the print shows. Warnings never change the exit code.
+- `pattern.json` is the same pattern for scripts: one JSON object, keys in alphabetical order, no whitespace, the same bytes for the same inputs. Lengths are millimetres rounded to 0.001, the SVG's precision; ratios are rounded to 0.000001.
+  - `pieces`: one object per printed piece, in the print's order:
+    - `piece`: its number, as on its label;
+    - `cuts`: `{ "as_printed": n, "flipped": n }`;
+    - `sewing_line_mm`, `cut_line_mm`: the outline's corners as `[x, y]` pairs, in the piece's own frame, not placed on the sheet;
+    - `distortion`: the piece's layout, as flattened, measured against the model. `most_stretched` and `most_compressed` are `{ "face": n, "ratio": r }`, the face with the largest flat-to-3D length ratio σ₁ and the one with the smallest σ₂; `tail_stretch` and `tail_compression` are the σ₁ and σ₂ that 5% of the area reaches; `stretch_excess` is Σ A·max(0, σ₁ − 1) / ΣA and `compression_deficit` is Σ A·max(0, 1 − σ₂) / ΣA over 3D face areas A; `area_ratio` is flat area over 3D area; `stopped_by` is `settled`, `no-descent` or `iteration-cap`.
+  - `warnings`: every warning, in the print's order, as `{ "code", "target", "explanation", "remedy" }`, each the same text the print shows.
 
 ## Exit codes
 

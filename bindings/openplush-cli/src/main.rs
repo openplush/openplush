@@ -77,7 +77,8 @@ struct Pattern {
     /// The paper the PDF is tiled onto.
     #[arg(long, value_enum, default_value_t = Page::A4)]
     page: Page,
-    /// The directory to write `pattern.svg` and `pattern.pdf` into, created if missing.
+    /// The directory to write `pattern.svg`, `pattern.pdf` and `pattern.json` into, created if
+    /// missing.
     #[arg(short, long)]
     out: PathBuf,
 }

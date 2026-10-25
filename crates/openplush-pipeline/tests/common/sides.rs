@@ -98,6 +98,19 @@ impl Path {
         self.points.windows(2).map(|w| (w[1] - w[0]).length()).sum()
     }
 
+    /// The point `t` of the way along.
+    pub(crate) fn point_at(&self, t: f64) -> DVec2 {
+        let mut left = t * self.length();
+        for w in self.points.windows(2) {
+            let len = (w[1] - w[0]).length();
+            if left <= len {
+                return w[0] + (w[1] - w[0]) * (left / len);
+            }
+            left -= len;
+        }
+        self.points[self.points.len() - 1]
+    }
+
     /// The fraction of the length at which `p` lies on the path, if it lies on it.
     pub(crate) fn fraction_of(&self, p: DVec2) -> Option<f64> {
         let mut walked = 0.0;

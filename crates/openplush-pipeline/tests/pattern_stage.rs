@@ -322,40 +322,10 @@ fn a_piece_whose_flat_boundary_overlaps_itself_is_refused_naming_the_piece() -> 
     Ok(())
 }
 
-/// A spherical cap of radius 10 out to 60° from its pole, in `rings` rings of 16, with the rim
-/// vertex at angle 0 first in its ring.
-fn cap(rings: u32) -> String {
-    let n = 16;
-    let mut s = String::from("v 0 0 10\n");
-    for k in 1..=rings {
-        let polar = f64::from(k) * (PI / 3.0) / f64::from(rings);
-        for j in 0..n {
-            let a = f64::from(j) * TAU / f64::from(n);
-            let (x, y, z) = (
-                libm::sin(polar) * libm::cos(a),
-                libm::sin(polar) * libm::sin(a),
-                libm::cos(polar),
-            );
-            let _ = writeln!(s, "v {} {} {}", 10.0 * x, 10.0 * y, 10.0 * z);
-        }
-    }
-    let at = |k: u32, j: u32| if k == 0 { 1 } else { 2 + (k - 1) * n + j % n };
-    for j in 0..n {
-        let _ = writeln!(s, "f {} {} {}", at(0, 0), at(1, j), at(1, j + 1));
-    }
-    for k in 1..rings {
-        for j in 0..n {
-            let (a, b, c, d) = (at(k, j), at(k + 1, j), at(k + 1, j + 1), at(k, j + 1));
-            let _ = writeln!(s, "f {a} {b} {c}\nf {a} {c} {d}");
-        }
-    }
-    s
-}
-
 #[test]
 fn a_dart_on_a_curved_piece_opens_into_a_wedge() -> Result<(), Setup> {
     let rings = 4;
-    let mesh = mesh_of(&cap(rings))?;
+    let mesh = mesh_of(&common::cap(rings))?;
     let on_meridian = |k: u32| -> Result<VertexId, Setup> {
         let polar = f64::from(k) * (PI / 3.0) / f64::from(rings);
         (0..u32::try_from(mesh.vertex_count())?)

@@ -12,7 +12,7 @@ What `openplush-pattern` contains **today**, and what it actually depends on. Wh
 
 ### Outlines
 
-`Outline::new(points)` builds a closed, simple, counter-clockwise polygon in mm or refuses it (`OutlineTooShort`, `OutlineNotFinite`, `OutlineNotSimple { edge, other }` for a repeated point, crossing, touching, overlap or fold, `OutlineClockwise`, `OutlineUnjudgeable`); it never reverses or repairs.
+`Outline::new(points)` builds a closed, simple, counter-clockwise polygon in mm or refuses it (`OutlineTooShort`, `OutlineNotFinite`, `OutlineNotSimple { edge, other }` for a repeated point, crossing, touching, overlap or fold, `OutlineClockwise`, `OutlineUnjudgeable`); it never reverses or repairs. `outward_at(i)` is the unit direction out of the outline at corner `i`, halfway between its two edges' outward normals, so it points out at reflex corners too.
 
 ### Seam allowance
 
@@ -30,7 +30,15 @@ It is one `i_overlay` boolean on the `i64` engine, and the result is checked rat
 
 ### Pieces
 
-`PieceId`; `CutCount::new(as_printed, flipped)` holds how many copies to cut as the template is printed and how many with it flipped, and refuses a total of zero (`ZeroCutQuantity`) or over 100 (`TooManyCuts { total }`); `PatternPiece::new(id, sewing_line, cut_line, cuts, rotations_deg)` refuses `NoRotations` and `NonFiniteRotation { index }`, and reads back through accessors.
+`PieceId`; `CutCount::new(as_printed, flipped)` holds how many copies to cut as the template is printed and how many with it flipped, and refuses a total of zero (`ZeroCutQuantity`) or over 100 (`TooManyCuts { total }`); `PatternPiece::new(id, sewing_line, cut_line, cuts, rotations_deg)` refuses `NoRotations` and `NonFiniteRotation { index }`, and reads back through accessors; `with_notches(notches)` gives it its match notches, read back by `notches()`.
+
+### Notches
+
+`Notch::new(at, outward, chain, marks)` is a match notch on a sewing line in mm: the point, the direction out of the piece (scaled to unit length), the lead `SeamChainId` of the seam it matches along, and how many marks are cut side by side. It refuses a point that is not finite, a zero or non-finite direction, or zero marks (`BadNotch { chain }`).
+
+`notch::fractions(chain, length)` gives the fractions of a seam side's length, strictly between its ends, where every side of the seam is notched: evenly spaced at most `notch::SPACING_MM` (50 mm) apart, and at least the midpoint. Even spacing reads the same from either end. Past 1000 notches it refuses `TooManyNotches { chain, length }`.
+
+`notch::mark_counts(meets)` gives each chain the least mark count, from 1, that no chain it meets has taken, chains taken in ascending order, so two seams that meet on a piece never carry the same count.
 
 ### Fabrics
 

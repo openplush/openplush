@@ -791,6 +791,7 @@ dependencies = [
  "openplush-geom",
  "openplush-layout",
  "openplush-pattern",
+ "openplush-seams",
  "pdf-writer",
  "thiserror",
  "wasm-bindgen-test",

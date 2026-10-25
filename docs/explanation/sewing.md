@@ -6,7 +6,7 @@ This page explains the four sewing ideas the engine has to get right: seam allow
 
 ## The short answer
 
-A sewist cuts fabric along a **cut line** and sews along a **sewing line** a little inside it; the strip between them is the **seam allowance**. Woven fabric has a **grain**, the direction of its threads, and stretches differently along it, across it and diagonally. Pile fabrics such as faux fur and minky have a **nap**, a direction the pile lies in, so every piece must point the same way. **Notches** are small marks on matching seam edges that tell the sewist which edges go together and where they line up. In the engine, allowance is built in `openplush-pattern` and drawn by `openplush-export`; grain and nap are recorded in a fabric profile (`openplush-pattern`'s `Fabric`) and limit how `openplush-layout` may turn and mirror pieces; notches are not built yet.
+A sewist cuts fabric along a **cut line** and sews along a **sewing line** a little inside it; the strip between them is the **seam allowance**. Woven fabric has a **grain**, the direction of its threads, and stretches differently along it, across it and diagonally. Pile fabrics such as faux fur and minky have a **nap**, a direction the pile lies in, so every piece must point the same way. **Notches** are small marks on matching seam edges that tell the sewist which edges go together and where they line up. In the engine, allowance is built in `openplush-pattern` and drawn by `openplush-export`; grain and nap are recorded in a fabric profile (`openplush-pattern`'s `Fabric`) and limit how `openplush-layout` may turn and mirror pieces; notches are placed on each piece by the `pattern` stage (`openplush-pattern`'s `Notch`).
 
 ## How it works
 
@@ -30,7 +30,9 @@ In the engine, `Fabric` has a `nap` flag, and `rotations_deg` gives only 0° whe
 
 ### Notches
 
-Long seams are hard to line up by eye, so each pair of matching seam edges carries notches: small marks at the same distance along both sides, with a code saying which edge sews to which. Pinning notch to notch keeps the seam from drifting. Notches are not built yet ([status](../start/status.md)). The registration crosshairs `openplush-layout` places on printed pages are a different thing: they line up the paper tiles, not the fabric pieces. The data notches will need already exists: the `SewingMap` (`openplush-seams`) pairs the sides of every seam chain, and exact seam lengths (see [flattening](flattening.md)) mean the same distance along both sides is the same point of the seam.
+Long seams are hard to line up by eye, so each pair of matching seam edges carries notches: small marks at the same distance along both sides, with a code saying which edge sews to which. Pinning notch to notch keeps the seam from drifting. The registration crosshairs `openplush-layout` places on printed pages are a different thing: they line up the paper tiles, not the fabric pieces.
+
+In the engine, the `pattern` stage gives every piece its notches. It walks each seam side that the `SewingMap` (`openplush-seams`) pairs, and puts a notch at each end and more evenly spaced between, at most 50 mm apart and at the same fractions of the length on every side. Exact seam lengths (see [flattening](flattening.md)) make the same fraction the same point of the seam on every piece. The notches between the ends carry a mark count, cut as that many marks side by side, that differs from every seam they meet on a piece, so a piece turned the wrong way does not line up. `openplush-export` prints each one as that many short ticks across the seam allowance, from the sewing line to the cut line.
 
 ## Why not the alternative
 

@@ -13,7 +13,7 @@ use pdf_writer::{Content, Name, Pdf, Rect, Ref, Str};
 
 use crate::svg::index;
 use crate::warning_summary::lines;
-use crate::{ExportError, SummaryRow};
+use crate::{ExportError, SummaryRow, notch};
 
 mod cover;
 mod summary;
@@ -26,6 +26,7 @@ const SQUARE_LINE_MM: f32 = 0.3;
 /// Each crosshair arm reaches this far from the mark, so the cross fits the 15 mm overlap band.
 const MARK_ARM_MM: f64 = 5.0;
 const MARK_LINE_MM: f32 = 0.2;
+const NOTCH_MM: f32 = 0.4;
 const LABEL_MM: f32 = 5.0;
 const SQUARE_LABEL_MM: f32 = 3.0;
 /// Helvetica is one of the PDF standard fonts, so the viewer supplies it and nothing is embedded.
@@ -129,6 +130,17 @@ fn draw(page: &Page, placed: &[(&Placement, &PatternPiece)], marks: &[DVec2]) ->
         c.set_line_width(SEW_MM);
         c.set_dash_pattern(SEW_DASH_MM, 0.0);
         outline(&mut c, piece.sewing_line(), placement);
+        let ticks = notch::ticks(piece);
+        if !ticks.is_empty() {
+            c.set_line_width(NOTCH_MM);
+            c.set_dash_pattern([], 0.0);
+        }
+        for [a, b] in ticks {
+            let (a, b) = (placement.apply(a), placement.apply(b));
+            c.move_to(a.x as f32, a.y as f32);
+            c.line_to(b.x as f32, b.y as f32);
+            c.stroke();
+        }
     }
     c.set_dash_pattern([], 0.0);
     c.set_line_width(MARK_LINE_MM);

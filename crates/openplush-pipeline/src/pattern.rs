@@ -7,6 +7,8 @@ use openplush_pattern::{
 };
 use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
 
+mod notches;
+
 use crate::{
     EngineError, NonBlank, Parameterization, Remedy, StageResult, Staged, Warning, WarningCode,
     WarningSet, WarningTarget,
@@ -37,6 +39,12 @@ pub struct PatternOptions {
 /// One piece per chart, in chart order, in millimetres: the chart's flat boundary as the sewing
 /// line, counter-clockwise, and the cut line around it.
 ///
+/// Each piece carries the match notches on its sides of every seam: one at each end of a side,
+/// once where two seams meet, and more evenly spaced between, at most
+/// [`notch::SPACING_MM`](openplush_pattern::notch::SPACING_MM) apart and at least one, at the same
+/// fractions of the length on every side of the seam. Those between the ends carry the seam's
+/// mark count, the least from 1 that no seam it meets on a piece has, in lead-chain order.
+///
 /// Raises `piece-compressed` on each piece whose layout needs more stretch to fill its surface
 /// than the fabric gives.
 ///
@@ -44,7 +52,9 @@ pub struct PatternOptions {
 /// `StageInputMismatch` when the layouts or the sewing map are not the charts' own; then
 /// `SeamParity` for the first bundle, in lead-chain order, with a side whose flat length differs
 /// from its first side's, a flattener bug; then, per chart in order, `Pattern` naming the piece
-/// when its sewing line or cut line is refused. No pieces are returned with an error.
+/// when its sewing line or cut line is refused; then `Pattern` with `TooManyNotches` for the
+/// first seam, in lead-chain order, that would need more than 1000 notches. No pieces are
+/// returned with an error.
 pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<Vec<PatternPiece>> {
     check_input(input)?;
     // Parity first: it checks the flattener's own postcondition, so a broken layout surfaces as
@@ -52,12 +62,18 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
     for bundle in input.sewing.bundles() {
         check_parity(input, bundle, opts.scale)?;
     }
-    let value = input
+    let pieces = input
         .charts
         .iter()
         .zip(input.layouts)
         .map(|(chart, layout)| piece(chart, layout, opts))
-        .collect::<Result<_, _>>()?;
+        .collect::<Result<Vec<_>, _>>()?;
+    let notches = notches::notches(input, opts.scale, &pieces)?;
+    let value = pieces
+        .into_iter()
+        .zip(notches)
+        .map(|(p, n)| p.with_notches(n))
+        .collect();
     let mut warnings = WarningSet::default();
     for w in input
         .layouts

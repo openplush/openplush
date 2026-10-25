@@ -7,10 +7,11 @@ use openplush_layout::{Placement, Sheet};
 use openplush_pattern::{Outline, PatternPiece, PieceId};
 
 use crate::warning_summary::{INDENT_COLUMNS, Line, lines};
-use crate::{ExportError, SummaryRow};
+use crate::{ExportError, SummaryRow, notch};
 
 const STYLE: &str = ".cut{fill:none;stroke:#000;stroke-width:0.5}\
-.sew{fill:none;stroke:#000;stroke-width:0.3;stroke-dasharray:3 2}";
+.sew{fill:none;stroke:#000;stroke-width:0.3;stroke-dasharray:3 2}\
+.notch{fill:none;stroke:#000;stroke-width:0.4}";
 
 /// Summary text size in mm, about 10 pt, and the pitch of its lines.
 const TEXT_MM: f64 = 3.5;
@@ -23,8 +24,8 @@ const ADVANCE: f64 = 0.6;
 /// The narrowest the summary wraps to, about 126 mm; a narrower sheet's document widens to it.
 const MIN_COLUMNS: usize = 60;
 
-/// The sheet with a solid cut line and a dashed sewing line for every placed copy, in placement
-/// order, then the `summary` rows as lines of text under it.
+/// The sheet with a solid cut line, a dashed sewing line and the notch ticks for every placed
+/// copy, in placement order, then the `summary` rows as lines of text under it.
 ///
 /// Sheets are y-up and SVG is y-down, so y is flipped about the sheet's length: the print reads
 /// the right way up, never mirrored. Coordinates are written to 0.001 mm. The summary only
@@ -63,6 +64,7 @@ pub fn write(
             })?;
         path(&mut out, "cut", piece.cut_line(), placement, length);
         path(&mut out, "sew", piece.sewing_line(), placement, length);
+        ticks(&mut out, piece, placement, length);
     }
     for (i, line) in notes.iter().enumerate() {
         text(&mut out, line, baseline(length, i));
@@ -93,6 +95,27 @@ fn path(out: &mut String, class: &str, outline: &Outline, placement: &Placement,
         out.push_str(&format!("{command} {:.3} {:.3}", flipped.x, flipped.y));
     }
     out.push_str(" Z\"/>\n");
+}
+
+/// The piece's notch ticks as one path, placed and flipped as `path`; nothing without notches.
+fn ticks(out: &mut String, piece: &PatternPiece, placement: &Placement, length: f64) {
+    let ticks = notch::ticks(piece);
+    if ticks.is_empty() {
+        return;
+    }
+    out.push_str("<path class=\"notch\" d=\"");
+    for (i, [a, b]) in ticks.iter().enumerate() {
+        let (a, b) = (placement.apply(*a), placement.apply(*b));
+        let space = if i == 0 { "" } else { " " };
+        out.push_str(&format!(
+            "{space}M {:.3} {:.3} L {:.3} {:.3}",
+            a.x,
+            length - a.y,
+            b.x,
+            length - b.y
+        ));
+    }
+    out.push_str("\"/>\n");
 }
 
 /// Whole monospace columns in `mm`; none when it is not positive.

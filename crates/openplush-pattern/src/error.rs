@@ -154,6 +154,23 @@ pub enum PatternError {
         /// The rotation's index.
         index: usize,
     },
+    /// A notch whose point is not finite, whose direction is zero or not finite, or with no marks.
+    #[error("seam chain {}: a notch needs a finite point, a direction and at least one mark", .chain.index())]
+    BadNotch {
+        /// The chain it was made for.
+        chain: SeamChainId,
+    },
+    /// A seam so long it would need more than 1000 notches.
+    #[error(
+        "seam chain {}: {:.0} mm is too long to notch (at most 1000 notches)",
+        .chain.index(), .length.get()
+    )]
+    TooManyNotches {
+        /// The chain.
+        chain: SeamChainId,
+        /// Its first side's length.
+        length: Mm,
+    },
 }
 
 fn direction_name(direction: StretchDirection) -> &'static str {

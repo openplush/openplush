@@ -35,3 +35,6 @@ fn remedy_text(remedy: &Remedy) -> &str {
         Remedy::Advisory { what_to_change } => what_to_change.as_str(),
     }
 }
+
+#[cfg(test)]
+mod tests;

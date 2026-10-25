@@ -183,7 +183,7 @@ fn the_capsule_s_pieces_measure_what_its_shape_and_the_allowance_give() -> Resul
     // The two end caps are one template cut twice, so the print has two pieces.
     assert_eq!((sew.len(), cut.len()), (2, 2), "{svg}");
     assert!(
-        svg.contains(">Cut 2"),
+        svg.contains(">Cut 2<"),
         "the caps' template is cut twice: {svg}"
     );
     let tube = (0..2)

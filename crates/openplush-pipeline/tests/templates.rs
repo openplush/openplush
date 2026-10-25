@@ -29,7 +29,9 @@ fn the_capsule_s_two_end_caps_are_one_template_cut_twice() -> Result<(), Setup> 
     let ids: Vec<u32> = staged.value.iter().map(|p| p.id().index()).collect();
     assert_eq!(ids, [0, 5]);
     let (cap, tube) = (&staged.value[0], &staged.value[1]);
-    assert_eq!(cap.cuts().total(), 2);
+    // A round cap fits its twin as printed, which is tried first.
+    assert_eq!((cap.cuts().as_printed(), cap.cuts().flipped()), (2, 0));
+    assert_eq!(label_lines(cap)?[1], "Cut 2");
     assert_eq!((tube.cuts().as_printed(), tube.cuts().flipped()), (1, 0));
     assert_eq!(label_lines(cap)?[3], "Sews to piece 5");
     assert_eq!(label_lines(tube)?[3], "Sews to piece 0");
@@ -112,6 +114,15 @@ fn pieces_from_another_run_or_order_are_refused() -> Result<(), Setup> {
     let run = reference(CAPSULE_OBJ, CAPSULE_SEAMS, 5.0)?;
     let reversed: Vec<PatternPiece> = run.pieces.iter().rev().cloned().collect();
     let err = templates(&run.input(), &reversed, &run.options()?)
+        .err()
+        .ok_or("refused")?;
+    assert!(
+        matches!(err, EngineError::StageInputMismatch { .. }),
+        "{err:?}"
+    );
+    let mut extra = run.pieces.clone();
+    extra.push(run.pieces[0].clone());
+    let err = templates(&run.input(), &extra, &run.options()?)
         .err()
         .ok_or("refused")?;
     assert!(

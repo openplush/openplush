@@ -3,7 +3,7 @@
 
 use openplush_geom::DVec2;
 use openplush_pattern::Outline;
-use openplush_pattern::dedupe::{Facing, fit};
+use openplush_pattern::dedupe::{Facing, fit, fits};
 
 type Setup = Box<dyn std::error::Error>;
 
@@ -48,6 +48,13 @@ fn a_turned_moved_copy_lies_on_the_original_as_printed() -> Result<(), Setup> {
     // `b` starts at the L's corner 2, so the L's corner 2 is `b`'s corner 0.
     assert_eq!(f.corner(2), 0);
     assert_eq!(f.corner(0), 4);
+    for i in 0..6 {
+        assert_eq!(
+            f.edge(i),
+            f.corner(i),
+            "as printed, edge i starts at corner i's match"
+        );
+    }
     Ok(())
 }
 
@@ -109,5 +116,34 @@ fn outlines_with_different_corner_counts_do_not_fit() -> Result<(), Setup> {
     ])?;
     assert!(fit(&a, &square, Facing::AsPrinted).is_none());
     assert!(fit(&a, &square, Facing::Flipped).is_none());
+    Ok(())
+}
+
+fn square() -> Result<Outline, Setup> {
+    Ok(Outline::new(vec![
+        DVec2::new(0.0, 0.0),
+        DVec2::new(10.0, 0.0),
+        DVec2::new(10.0, 10.0),
+        DVec2::new(0.0, 10.0),
+    ])?)
+}
+
+#[test]
+fn of_equally_good_pairings_the_lowest_offset_is_the_fit() -> Result<(), Setup> {
+    let s = square()?;
+    let f = fit(&s, &s, Facing::AsPrinted).ok_or("same corner count")?;
+    assert_eq!(f.corner(0), 0);
+    Ok(())
+}
+
+#[test]
+fn a_symmetric_shape_lies_on_itself_every_way_it_can() -> Result<(), Setup> {
+    let s = square()?;
+    let all = fits(&s, &s, Facing::AsPrinted, 1e-9);
+    let starts: Vec<usize> = all.iter().map(|f| f.corner(0)).collect();
+    assert_eq!(starts, [0, 1, 2, 3]);
+    let l = Outline::new(ell())?;
+    assert_eq!(fits(&l, &l, Facing::AsPrinted, 1e-9).len(), 1);
+    assert!(fits(&l, &s, Facing::AsPrinted, 1e9).is_empty());
     Ok(())
 }

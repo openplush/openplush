@@ -252,3 +252,6 @@ fn side(input: &PatternInput<'_>, side: &ChainSide, scale: Scale) -> Result<Side
         edges,
     })
 }
+
+#[cfg(test)]
+mod tests;

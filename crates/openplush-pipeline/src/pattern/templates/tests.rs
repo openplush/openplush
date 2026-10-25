@@ -4,8 +4,9 @@
 use openplush_geom::DVec2;
 use openplush_pattern::{CutCount, Outline, PatternPiece, PieceId};
 
-use super::near_warning;
+use super::{counted, near_warning};
 use crate::pattern::group::Near;
+use crate::pattern::group::{EdgeSeam, group};
 use crate::{Remedy, WarningCode, WarningTarget};
 
 fn piece(id: u32) -> PatternPiece {
@@ -44,6 +45,7 @@ fn a_near_mirror_names_both_pieces_and_the_gap() {
     };
     let w = near_warning(&pieces, &near);
     assert_eq!(w.code(), WarningCode::NearMirrorPieces);
+    assert_eq!(w.code().as_str(), "near-mirror-pieces");
     assert_eq!(
         w.target(),
         WarningTarget::Pieces(PieceId::new(2), PieceId::new(7))
@@ -67,4 +69,37 @@ fn when_the_seams_already_mirror_the_shape_is_what_differs() {
     };
     let w = near_warning(&pieces, &near);
     assert!(advice(w.remedy()).starts_with("The model's shape differs by up to 5.0 mm"));
+}
+
+fn shaped(id: u32, points: &[(f64, f64)]) -> PatternPiece {
+    let line =
+        Outline::new(points.iter().map(|&(x, y)| DVec2::new(x, y)).collect()).expect("valid");
+    PatternPiece::new(
+        PieceId::new(id),
+        line.clone(),
+        line,
+        CutCount::new(1, 0).expect("valid"),
+        vec![0.0],
+    )
+    .expect("valid")
+}
+
+#[test]
+fn a_template_counts_its_copies_as_printed_and_flipped() {
+    let ell = [
+        (0.0, 0.0),
+        (90.0, 0.0),
+        (90.0, 30.0),
+        (30.0, 30.0),
+        (30.0, 60.0),
+        (0.0, 60.0),
+    ];
+    let mirrored: Vec<(f64, f64)> = ell.iter().rev().map(|&(x, y)| (-x, y)).collect();
+    let pieces = [shaped(0, &ell), shaped(1, &ell), shaped(2, &mirrored)];
+    let outlines: Vec<_> = pieces.iter().map(PatternPiece::sewing_line).collect();
+    let bare = || vec![EdgeSeam::default(); 6];
+    let grouping = group(&outlines, &[bare(), bare(), bare()]);
+    let counted = counted(&pieces, &grouping).expect("counts");
+    let cuts = counted[0].cuts();
+    assert_eq!((cuts.as_printed(), cuts.flipped()), (2, 1));
 }

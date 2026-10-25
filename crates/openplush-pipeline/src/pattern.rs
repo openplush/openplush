@@ -5,7 +5,7 @@ use openplush_mesh::{HalfEdgeId, ManifoldMesh, VertexId};
 use openplush_pattern::{
     CutCount, Fabric, FabricSpec, Outline, PatternError, PatternPiece, PieceId, allowance, parity,
 };
-use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
+use openplush_seams::{ChainSide, ChartId, ChartMesh, SeamBundle, SewingMap};
 
 mod group;
 mod labels;
@@ -92,7 +92,7 @@ pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<V
     for w in input
         .layouts
         .iter()
-        .filter_map(|l| squeeze_warning(l, opts.fabric.spec()))
+        .filter_map(|l| squeeze_warning(l.chart, l.compression_deficit, opts.fabric.spec()))
     {
         warnings.insert(w);
     }
@@ -301,13 +301,10 @@ fn available_stretch(spec: &FabricSpec) -> f64 {
     (spec.stretch_grain_pct.min(spec.stretch_cross_pct) / 100.0).max(0.05)
 }
 
-/// `piece-compressed` on the piece numbered as `layout`'s chart when it needs more stretch than
-/// `spec` gives; nothing otherwise.
-fn squeeze_warning(layout: &Parameterization, spec: &FabricSpec) -> Option<Warning> {
-    let (needed, available) = (
-        needed_stretch(layout.compression_deficit),
-        available_stretch(spec),
-    );
+/// `piece-compressed` on the piece numbered as `chart` when its layout's compression `deficit`
+/// needs more stretch than `spec` gives; nothing otherwise.
+fn squeeze_warning(chart: ChartId, deficit: f64, spec: &FabricSpec) -> Option<Warning> {
+    let (needed, available) = (needed_stretch(deficit), available_stretch(spec));
     if needed <= available {
         return None;
     }
@@ -315,7 +312,7 @@ fn squeeze_warning(layout: &Parameterization, spec: &FabricSpec) -> Option<Warni
     let text = |t: String| NonBlank::new(t).unwrap_or_else(|| unreachable!());
     Some(Warning::new(
         WarningCode::PieceCompressed,
-        WarningTarget::Piece(PieceId::new(layout.chart.index())),
+        WarningTarget::Piece(PieceId::new(chart.index())),
         text(format!(
             "This piece must stretch about {:.0}% to fill its shape, more than this fabric's \
              {:.0}%, so it will sew up flatter than the model.",

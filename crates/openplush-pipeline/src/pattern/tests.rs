@@ -259,13 +259,10 @@ fn a_chart_with_two_boundary_loops_cannot_be_its_layout_s() {
 #[test]
 fn a_piece_needing_more_stretch_than_its_fabric_warns_with_both_and_one_needing_less_does_not() {
     let woven = options(1.0).fabric;
-    let layout = |deficit| Parameterization {
-        compression_deficit: deficit,
-        ..Parameterization::by_hand(ChartId::new(4), Vec::new())
-    };
+    let chart = ChartId::new(4);
     assert_eq!(needed_stretch(0.2), 0.25);
-    assert_eq!(squeeze_warning(&layout(0.04), woven.spec()), None);
-    let w = squeeze_warning(&layout(0.364), woven.spec()).expect("a warning");
+    assert_eq!(squeeze_warning(chart, 0.04, woven.spec()), None);
+    let w = squeeze_warning(chart, 0.364, woven.spec()).expect("a warning");
     assert_eq!(w.code().as_str(), "piece-compressed");
     assert_eq!(w.target(), WarningTarget::Piece(PieceId::new(4)));
     assert_eq!(
@@ -293,11 +290,8 @@ fn the_fabric_gives_its_lesser_stretch_never_under_5_percent_and_equal_need_does
         .expect("a fabric")
     };
     let warns = |deficit, grain, cross| {
-        let layout = Parameterization {
-            compression_deficit: deficit,
-            ..Parameterization::by_hand(ChartId::new(4), Vec::new())
-        };
-        squeeze_warning(&layout, fabric(grain, cross).spec()).map(|w| w.explanation().to_owned())
+        squeeze_warning(ChartId::new(4), deficit, fabric(grain, cross).spec())
+            .map(|w| w.explanation().to_owned())
     };
     // A deficit of 0.2 needs exactly 25%.
     assert_eq!(warns(0.2, 25.0, 25.0), None);

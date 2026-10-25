@@ -13,7 +13,8 @@ pub struct SeamLabel {
 }
 
 impl SeamLabel {
-    /// Refuses a point that is not finite.
+    /// # Errors
+    /// `BadLabelPoint` for a point that is not finite.
     pub fn new(at: DVec2, text: String) -> Result<Self, PatternError> {
         if !at.is_finite() {
             return Err(PatternError::BadLabelPoint);
@@ -41,7 +42,8 @@ pub struct Label {
 }
 
 impl Label {
-    /// Refuses a point that is not finite.
+    /// # Errors
+    /// `BadLabelPoint` for a point that is not finite.
     pub fn new(at: DVec2, lines: Vec<String>, seams: Vec<SeamLabel>) -> Result<Self, PatternError> {
         if !at.is_finite() {
             return Err(PatternError::BadLabelPoint);

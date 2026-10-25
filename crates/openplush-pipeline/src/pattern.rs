@@ -58,7 +58,8 @@ pub struct PatternOptions {
 /// `SeamParity` for the first bundle, in lead-chain order, with a side whose flat length differs
 /// from its first side's, a flattener bug; then, per chart in order, `Pattern` naming the piece
 /// when its sewing line or cut line is refused; then `Pattern` with `TooManyNotches` for the
-/// first seam, in lead-chain order, that would need more than 1000 notches. No pieces are
+/// first seam, in lead-chain order, that would need more than 1000 notches; then `Pattern` with
+/// `BadLabelPoint`, naming the piece, for a label point that is not finite. No pieces are
 /// returned with an error.
 pub fn pattern(input: &PatternInput<'_>, opts: &PatternOptions) -> StageResult<Vec<PatternPiece>> {
     check_input(input)?;

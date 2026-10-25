@@ -115,14 +115,17 @@ impl Outline {
                 let (p, q) = (self.points[a], self.points[b]);
                 p.y.total_cmp(&q.y).then(p.x.total_cmp(&q.x))
             })
-            .unwrap_or(0);
+            // INVARIANT: an outline has at least three points, so a lowest one exists.
+            .unwrap_or_else(|| unreachable!());
         let at = self.points[i];
         let shorter = (at - self.points[(i + n - 1) % n])
             .length()
             .min((self.points[(i + 1) % n] - at).length());
-        let out = self.outward_at(i).unwrap_or(DVec2::new(0.0, 0.0));
+        // INVARIANT: `i` is a corner, and a simple outline never folds back, so it has a direction.
+        let out = self.outward_at(i).unwrap_or_else(|| unreachable!());
         // Halve the step until it lands inside: a convex corner always has room just inside it,
-        // and 60 halvings reach well under any edge a valid outline can have.
+        // and 60 halvings reach well under any edge a valid outline can have, so the loop always
+        // returns; the corner itself is only what the type needs after it.
         let mut step = shorter / 4.0;
         for _ in 0..60 {
             let p = at - out * step;
@@ -131,7 +134,8 @@ impl Outline {
             }
             step /= 2.0;
         }
-        at - out * step
+        debug_assert!(false, "no point inside the corner after 60 halvings");
+        at
     }
 }
 

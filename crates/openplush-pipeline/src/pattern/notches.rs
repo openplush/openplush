@@ -8,6 +8,7 @@ use openplush_mesh::VertexId;
 use openplush_pattern::{Notch, PatternError, PatternPiece, PieceId, notch};
 use openplush_seams::{ChainSide, SeamChainId};
 
+use super::group::Alike;
 use super::{PatternInput, flat_side};
 use crate::EngineError;
 
@@ -39,6 +40,11 @@ impl Side {
 
     fn end(&self) -> DVec2 {
         self.edges[self.edges.len() - 1].1
+    }
+
+    /// Its chart vertices in walking order.
+    pub(super) fn vertices(&self) -> &[VertexId] {
+        &self.vertices
     }
 
     fn length(&self) -> f64 {
@@ -82,6 +88,8 @@ pub(super) fn sides(input: &PatternInput<'_>, scale: Scale) -> Result<Vec<Bundle
 /// each end and at the same fractions of its length, with the bundle's mark count; an end shared
 /// by two seams on one piece is notched once, for the lower lead chain.
 ///
+/// Chains `alike` maps to one chain, the same seam on matching pieces, share a mark count.
+///
 /// # Errors
 /// `Pattern` with `TooManyNotches` for a seam too long to notch; `StageInputMismatch` as
 /// `pattern`.
@@ -89,8 +97,9 @@ pub(super) fn notches(
     input: &PatternInput<'_>,
     bundles: &[Bundle],
     pieces: &[PatternPiece],
+    alike: &Alike,
 ) -> Result<Vec<Vec<Notch>>, EngineError> {
-    let marks = notch::mark_counts(&meets(bundles));
+    let marks = notch::mark_counts(&meets(bundles, alike));
     let mut out = vec![Vec::new(); input.charts.len()];
     let mut ended = BTreeSet::new();
     for (chain, sides) in bundles {
@@ -103,7 +112,10 @@ pub(super) fn notches(
         let fractions =
             notch::fractions(*chain, length).map_err(|source| refused(first_piece, source))?;
         // INVARIANT: `meets` holds every lead chain, so each has a count.
-        let count = marks.get(chain).copied().unwrap_or_else(|| unreachable!());
+        let count = marks
+            .get(&alike.of(*chain))
+            .copied()
+            .unwrap_or_else(|| unreachable!());
         for s in sides {
             let id = piece_of(input, s);
             let piece = &mut out[s.chart];
@@ -159,19 +171,21 @@ fn refused(piece: Option<PieceId>, source: PatternError) -> EngineError {
     EngineError::Pattern { piece, source }
 }
 
-/// Each lead chain with the lead chains whose sides end at a chart vertex where one of its own
-/// does.
-fn meets(bundles: &[(SeamChainId, Vec<Side>)]) -> BTreeMap<SeamChainId, BTreeSet<SeamChainId>> {
+/// Each chain, as `alike` maps it, with the chains whose sides end at a chart vertex where one
+/// of its own does.
+fn meets(bundles: &[Bundle], alike: &Alike) -> BTreeMap<SeamChainId, BTreeSet<SeamChainId>> {
     let mut at: BTreeMap<(usize, VertexId), BTreeSet<SeamChainId>> = BTreeMap::new();
     for (chain, sides) in bundles {
         for s in sides {
             for v in [s.first(), s.last()] {
-                at.entry((s.chart, v)).or_default().insert(*chain);
+                at.entry((s.chart, v)).or_default().insert(alike.of(*chain));
             }
         }
     }
-    let mut meets: BTreeMap<_, BTreeSet<_>> =
-        bundles.iter().map(|(c, _)| (*c, BTreeSet::new())).collect();
+    let mut meets: BTreeMap<_, BTreeSet<_>> = bundles
+        .iter()
+        .map(|(c, _)| (alike.of(*c), BTreeSet::new()))
+        .collect();
     for chains in at.values() {
         for &a in chains {
             for &b in chains {

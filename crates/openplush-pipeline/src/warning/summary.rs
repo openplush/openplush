@@ -23,6 +23,7 @@ fn target_words(target: WarningTarget) -> String {
         WarningTarget::Edge(id) => format!("edge {}", id.index()),
         WarningTarget::Chain(id) => format!("seam chain {}", id.index()),
         WarningTarget::Piece(id) => format!("piece {}", id.index()),
+        WarningTarget::Pieces(a, b) => format!("pieces {} and {}", a.index(), b.index()),
         WarningTarget::Component(id) => format!("component {}", id.index()),
         WarningTarget::Project => "the whole pattern".to_owned(),
     }

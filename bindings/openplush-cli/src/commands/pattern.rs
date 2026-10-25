@@ -7,7 +7,7 @@ use std::path::Path;
 use openplush_pipeline::{
     EdgeId, LayoutOptions, ManifoldMesh, Mm, Paper, PatternInput, PatternOptions, PatternPiece,
     RepairPlan, RepairReport, SeamKind, SeamSet, SeamsError, Sheet, SizeTarget, Staged, WarningSet,
-    chart, export_pdf, export_svg, flatten, import, layout, pattern, repair, size,
+    chart, export_pdf, export_svg, flatten, import, layout, pattern, repair, size, templates,
 };
 
 use crate::failure::{Failure, io};
@@ -55,6 +55,7 @@ pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let roll = fabric.spec().roll_width;
     let opts = PatternOptions { scale, fabric };
     let pieces = keep(&mut warnings, pattern(&input, &opts)?);
+    let pieces = keep(&mut warnings, templates(&input, &pieces, &opts)?);
     let sheet = print(&pieces, roll, &mut warnings)?;
     write(inputs, &sheet, &pieces, &warnings)
 }

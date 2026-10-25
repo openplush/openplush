@@ -40,11 +40,15 @@ It is one `i_overlay` boolean on the `i64` engine, and the result is checked rat
 
 `notch::mark_counts(meets)` gives each chain the least mark count, from 1, that no chain it meets has taken, chains taken in ascending order, so two seams that meet on a piece never carry the same count.
 
+### Matching pieces
+
+`dedupe::fit(a, b, facing)` is how outline `b` lies on outline `a`, `Facing::AsPrinted` (turned and moved) or `Flipped` (a mirror image): over every pairing of corners in order, the least-squares best turn and shift, and of those the pairing whose largest corner distance is least, the lowest offset on a tie. The `Fit` gives that distance (`gap_mm`), the corner of `b` each corner of `a` lands on (`corner(i)`) and the edge of `b` each edge lands on (`edge(i)`). It uses no trigonometry, so it is the same on every target, and is `None` when the corner counts differ. `dedupe::NEAR_MM` (5 mm) is the furthest apart two mirror pieces are a near match.
+
 ### Labels
 
 `Label::new(at, lines, seams)` is a piece's label: its block of lines, top first, centred on `at`, and one `SeamLabel::new(at, text)` per seam side on the piece, its text centred on its point. Both refuse a point that is not finite (`BadLabelPoint`).
 
-`label::block(id, cuts, fabric, sews_to)` gives the block's lines: `Piece N`, the cut line (`Cut 1`, `Cut 2 flipped`, `Cut 3 (2 + 1 flipped)`), the fabric's name, and, when there are any, `Sews to piece N` or `Sews to pieces N, M`, numbered as the warning summary numbers pieces. `label::seam_text(chain)` is `Seam N`, numbered as the summary numbers seam chains.
+`label::block(id, cuts, fabric, sews_to)` gives the block's lines: `Piece N`, the cut line (`Cut 1`, `Cut 2 flipped`, `Cut 3 (2 + 1 flipped)`), the fabric's name, and, when there are any, `Sews to piece N` or `Sews to pieces N, M`, numbered as the warning summary numbers pieces. `label::seam_text(chains)` is `Seam N`, numbered as the summary numbers seam chains, or `Seam N / M` for several, when one edge of a template is a different seam on each of its copies.
 
 ### Fabrics
 

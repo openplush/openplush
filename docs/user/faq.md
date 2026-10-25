@@ -26,6 +26,10 @@ The block of text near the middle of a piece tells you which piece it is ("Piece
 
 Smaller text along an edge, such as "Seam 12", names the seam that edge belongs to. The edge it sews to has the same name, so you can find matching edges by name as well as by their notches.
 
+## Why are my left and right pieces printed separately?
+
+OpenPlush prints a left and right pair once, as "Cut 2 (1 + 1 flipped)", when the two pieces are mirror images to within 1 mm and are sewn to the same pieces. If they differ by a little more, up to 5 mm, the pattern lists a warning saying how far apart they are, and prints both. Usually the seams on one side were drawn a little differently from the other side: draw them to mirror each other and the pair prints once. If the seams already mirror each other, the model itself is not quite symmetric there.
+
 ## Which files can I open?
 
 Models saved as OBJ, glTF, FBX, STL or PLY files, which is what most 3D modelling and sculpting programs can export. A glTF model is either a glb file, or a gltf file with the other files it comes with kept beside it. An FBX model must be saved as binary FBX; a text (ASCII) FBX file is refused, so save it again as binary. The model is read as it was saved: OpenPlush never changes the file on your disk. A model saved in another format does not open; save it as one of these from your modelling program first.

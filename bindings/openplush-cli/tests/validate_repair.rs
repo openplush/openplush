@@ -11,6 +11,10 @@ use openplush_pipeline::{
 };
 use serde_json::Value;
 
+mod common;
+
+use common::scratch;
+
 type Setup = Box<dyn std::error::Error>;
 
 fn cli(args: &[&str]) -> std::io::Result<Output> {
@@ -25,31 +29,6 @@ fn stderr(out: &Output) -> String {
 
 fn fixture(path: &str) -> String {
     format!("{}/../../fixtures/{path}", env!("CARGO_MANIFEST_DIR"))
-}
-
-/// A fresh directory for one test's files, removed when the test ends.
-struct Scratch(PathBuf);
-
-impl std::ops::Deref for Scratch {
-    type Target = Path;
-    fn deref(&self) -> &Path {
-        &self.0
-    }
-}
-
-impl Drop for Scratch {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
-
-fn scratch(test: &str) -> Result<Scratch, Setup> {
-    let dir = std::env::temp_dir().join(format!("openplush-cli-{}-{test}", std::process::id()));
-    if dir.exists() {
-        fs::remove_dir_all(&dir)?;
-    }
-    fs::create_dir_all(&dir)?;
-    Ok(Scratch(dir))
 }
 
 fn text(path: &Path) -> Result<String, Setup> {

@@ -283,9 +283,10 @@ fn the_pdf_is_tiled_on_the_paper_asked_for() -> Result<(), Setup> {
         .into_owned();
     let a4 =
         String::from_utf8_lossy(&export_pdf(&sheet, &pieces, Paper::A4, &none)?.value).into_owned();
-    // Letter is 612 by 792 pt; A4 is about 595 by 842 pt.
+    // Letter is 8.5 by 11 in, 612 by 792 pt; A4 is 210 by 297 mm, 595.2756 by 841.8898 pt.
     assert!(letter.contains("/MediaBox [0 0 612 792]"), "{letter}");
-    assert!(!a4.contains("/MediaBox [0 0 612 792]"));
+    assert!(a4.contains("/MediaBox [0 0 595.2756 841.8898]"), "{a4}");
+    assert!(!a4.contains("/MediaBox [0 0 612 792]"), "{a4}");
     Ok(())
 }
 

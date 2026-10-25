@@ -147,7 +147,8 @@ fn validate_writes_duplicates_and_non_manifold_edges_as_objects() -> Result<(), 
     assert!(ran.status.success(), "{}", stderr(&ran));
     let d = &json(&dup)?["duplicates"][0];
     assert!(d["face"].is_u64() && d["of"].is_u64(), "{d}");
-    assert!(["same", "opposite"].contains(&d["orientation"].as_str().ok_or("orientation")?));
+    // The fixture repeats one face with the same winding (research/fixtures_gen/README.md).
+    assert_eq!(d["orientation"], "same", "{d}");
     let ran = cli(&[
         "validate",
         &fixture("defects/non-manifold-edge.obj"),

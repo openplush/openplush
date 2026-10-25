@@ -47,6 +47,11 @@ fn an_unknown_page_size_is_a_usage_error() {
     ])
     .expect("the binary runs");
     assert_eq!(out.status.code(), Some(2), "{}", stderr(&out));
+    assert!(
+        stderr(&out).contains("invalid value 'a3' for '--page"),
+        "{}",
+        stderr(&out)
+    );
 }
 
 #[test]
@@ -72,6 +77,12 @@ fn repair_s_old_flags_are_gone() {
     for flag in ["--weld", "--fix-orientation", "--fill-holes=auto"] {
         let out = cli(&["repair", "m.obj", flag, "-o", "fixed.obj"]).expect("the binary runs");
         assert_eq!(out.status.code(), Some(2), "{flag}: {}", stderr(&out));
+        let name = flag.split('=').next().unwrap_or(flag);
+        assert!(
+            stderr(&out).contains(&format!("unexpected argument '{name}'")),
+            "{flag}: {}",
+            stderr(&out)
+        );
     }
 }
 
@@ -83,5 +94,10 @@ fn a_fill_that_is_not_a_loop_ref_is_a_usage_error() {
         let flag = format!("--fill={text}");
         let out = cli(&["repair", "m.obj", &flag, "-o", "fixed.obj"]).expect("the binary runs");
         assert_eq!(out.status.code(), Some(2), "{text:?}: {}", stderr(&out));
+        assert!(
+            stderr(&out).contains(&format!("{text:?} is not a loop")),
+            "{text:?}: {}",
+            stderr(&out)
+        );
     }
 }

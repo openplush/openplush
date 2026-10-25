@@ -4,7 +4,7 @@ What is built and what is not, as of **2026-10-24**. This is the one page that a
 
 ## Entries
 
-OpenPlush is pre-alpha. The command line runs a model end to end, from a model file and a hand-written seams file to a true-scale SVG and a tiled PDF (`openplush-cli pattern`), but it has not yet been tried on a real plush, and the web app does not exist yet. What comes next is in the [roadmap](https://github.com/openplush/openplush/blob/main/ROADMAP.md).
+OpenPlush is pre-alpha. The command line runs a model end to end, from a model file and a hand-written seams file to a true-scale SVG and a tiled PDF (`openplush-cli pattern`), but it has not yet been tried on a real plush, and the web app does not exist yet. What comes next is on the [issue list](https://github.com/openplush/openplush/issues).
 
 ### By capability
 

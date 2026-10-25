@@ -1,0 +1,9 @@
+[ledger]
+path = "../openplush-ledger"
+
+[code]
+target = "main"
+
+[[mirror]]
+forge = "github"
+repo = "https://github.com/openplush/openplush"

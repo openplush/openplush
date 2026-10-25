@@ -30,8 +30,7 @@ DEFECTS = (
     "unwelded-split-vertices",
     "zero-area-face",
 )
-# The classes a fixture trips when not only its own. A surface no winding fits must disagree
-# across some edge, and it can only be closed by passing through itself, so it has an open edge.
+# The classes a fixture trips when not only its own; README.md, Defect fixtures, says why.
 EXPECTED = {"non-orientable": ["flipped-normals", "hole"]}
 SEAM_KINDS = {"cut", "dart", "opening", "fabricBoundary", "mandatory"}
 

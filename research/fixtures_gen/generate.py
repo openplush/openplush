@@ -105,11 +105,7 @@ def tetra(m: Mesh, pts: list[Vec | int]) -> None:
 
 
 def mobius() -> Mesh:
-    """A strip of 12 quads, 40 mm radius and 20 mm wide, closed with a half twist.
-
-    The one fixture that is not the cube: a closed surface can only be non-orientable by passing
-    through itself, so a non-orientable defect needs an open edge, and it also trips boundary.
-    """
+    """A strip of 12 quads, 40 mm radius and 20 mm wide, closed with a half twist: the one defect not on the cube (README)."""
     m = Mesh()
     radius, half = 40.0, 10.0
     ring: list[tuple[int, int]] = []

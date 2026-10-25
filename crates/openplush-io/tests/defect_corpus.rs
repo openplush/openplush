@@ -6,8 +6,7 @@ use openplush_mesh::{ValidationReport, validate};
 use openplush_testkit::fixtures::{self, Kind};
 
 /// The detectors each defect fixture must trip, and no others, in report order. Only
-/// `non-orientable` trips more than one: a surface with no consistent winding must have a
-/// conflict somewhere, and it cannot be closed without passing through itself.
+/// `non-orientable` trips more than one; `research/fixtures_gen/README.md` says why.
 const CORPUS: [(&str, &[&str]); 10] = [
     ("bowtie-vertex", &["non_manifold_vertices"]),
     ("duplicate-face", &["duplicates"]),

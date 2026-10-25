@@ -36,8 +36,8 @@ pub use openplush_mesh::{
 };
 pub use openplush_pattern::scale::SizeTarget;
 pub use openplush_pattern::{
-    CutCount, Fabric, FabricCategory, FabricId, FabricSpec, Notch, Outline, PatternError,
-    PatternPiece, PieceId, StretchDirection,
+    CutCount, Fabric, FabricCategory, FabricId, FabricSpec, Label, Notch, Outline, PatternError,
+    PatternPiece, PieceId, SeamLabel, StretchDirection,
 };
 /// The error [`ProposalId::from_hex`] and [`Proposal::new`] return.
 pub use openplush_seams::SeamsError;

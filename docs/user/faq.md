@@ -20,6 +20,12 @@ They are notches. Each one shows where two pieces line up when you sew them toge
 
 Notches between the ends of a seam have one or more lines side by side, usually no more than three. Edges sewn together have the same number, and edges that meet at a corner of a piece have different numbers, so a piece turned the wrong way does not match. There is also a single notch at each end of a seam.
 
+## What does the writing on each piece mean?
+
+The block of text near the middle of a piece tells you which piece it is ("Piece 3"), how many to cut, which fabric, and which pieces it sews to. "Cut 2 (1 + 1 flipped)" means cut one with the paper as printed and one with the paper turned over, for a left and right pair.
+
+Smaller text along an edge, such as "Seam 12", names the seam that edge belongs to. The edge it sews to has the same name, so you can find matching edges by name as well as by their notches.
+
 ## Which files can I open?
 
 Models saved as OBJ, glTF, FBX, STL or PLY files, which is what most 3D modelling and sculpting programs can export. A glTF model is either a glb file, or a gltf file with the other files it comes with kept beside it. An FBX model must be saved as binary FBX; a text (ASCII) FBX file is refused, so save it again as binary. The model is read as it was saved: OpenPlush never changes the file on your disk. A model saved in another format does not open; save it as one of these from your modelling program first.

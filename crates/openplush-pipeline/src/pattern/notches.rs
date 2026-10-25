@@ -11,10 +11,13 @@ use openplush_seams::{ChainSide, SeamChainId};
 use super::{PatternInput, flat_side};
 use crate::EngineError;
 
+/// A bundle's lead chain and its sides.
+pub(super) type Bundle = (SeamChainId, Vec<Side>);
+
 /// One side laid flat, in walking order: its chart's index, its chart vertices, and per edge its
 /// two ends in mm and the unit direction out of the piece.
-struct Side {
-    chart: usize,
+pub(super) struct Side {
+    pub(super) chart: usize,
     vertices: Vec<VertexId>,
     edges: Vec<(DVec2, DVec2, DVec2)>,
 }
@@ -43,7 +46,7 @@ impl Side {
     }
 
     /// The point `t` of the way along, and the outward direction of the edge it is on.
-    fn at(&self, t: f64) -> (DVec2, DVec2) {
+    pub(super) fn at(&self, t: f64) -> (DVec2, DVec2) {
         let mut left = t * self.length();
         for &(a, b, out) in &self.edges {
             let len = (b - a).length();
@@ -58,18 +61,11 @@ impl Side {
     }
 }
 
-/// The notches of each chart's piece, in chart order. Every side of a bundle gets a notch at
-/// each end and at the same fractions of its length, with the bundle's mark count; an end shared
-/// by two seams on one piece is notched once, for the lower lead chain.
+/// Every bundle's lead chain with its sides laid flat, in lead-chain order.
 ///
 /// # Errors
-/// `Pattern` with `TooManyNotches` for a seam too long to notch; `StageInputMismatch` as
-/// `pattern`.
-pub(super) fn notches(
-    input: &PatternInput<'_>,
-    scale: Scale,
-    pieces: &[PatternPiece],
-) -> Result<Vec<Vec<Notch>>, EngineError> {
+/// `StageInputMismatch` as `pattern`.
+pub(super) fn sides(input: &PatternInput<'_>, scale: Scale) -> Result<Vec<Bundle>, EngineError> {
     let mut bundles = Vec::new();
     for bundle in input.sewing.bundles() {
         let sides = bundle
@@ -79,10 +75,25 @@ pub(super) fn notches(
             .collect::<Result<Vec<_>, _>>()?;
         bundles.push((bundle.chain(), sides));
     }
-    let marks = notch::mark_counts(&meets(&bundles));
+    Ok(bundles)
+}
+
+/// The notches of each chart's piece, in chart order. Every side of a bundle gets a notch at
+/// each end and at the same fractions of its length, with the bundle's mark count; an end shared
+/// by two seams on one piece is notched once, for the lower lead chain.
+///
+/// # Errors
+/// `Pattern` with `TooManyNotches` for a seam too long to notch; `StageInputMismatch` as
+/// `pattern`.
+pub(super) fn notches(
+    input: &PatternInput<'_>,
+    bundles: &[Bundle],
+    pieces: &[PatternPiece],
+) -> Result<Vec<Vec<Notch>>, EngineError> {
+    let marks = notch::mark_counts(&meets(bundles));
     let mut out = vec![Vec::new(); input.charts.len()];
     let mut ended = BTreeSet::new();
-    for (chain, sides) in &bundles {
+    for (chain, sides) in bundles {
         let Some(first) = sides.first() else {
             continue;
         };
@@ -193,7 +204,11 @@ fn side(input: &PatternInput<'_>, side: &ChainSide, scale: Scale) -> Result<Side
         };
         // The piece lies left of each chart face side, so out is to the right.
         let d = pb - pa;
-        let out = DVec2::new(d.y, -d.x);
+        // A zero edge, which a layout with every det J > 0 never has, leaves a zero direction that
+        // `Notch::new` refuses.
+        let out = DVec2::new(d.y, -d.x)
+            .normalize()
+            .unwrap_or(DVec2::new(0.0, 0.0));
         flat.push((a, b, pa, pb, out));
     }
     // A side's half-edges each run one way along their chart faces, which may be against the walk.

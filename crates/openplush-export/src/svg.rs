@@ -6,8 +6,9 @@ use openplush_geom::DVec2;
 use openplush_layout::{Placement, Sheet};
 use openplush_pattern::{Outline, PatternPiece, PieceId};
 
+use crate::label::Placed;
 use crate::warning_summary::{INDENT_COLUMNS, Line, lines};
-use crate::{ExportError, SummaryRow, notch};
+use crate::{ExportError, SummaryRow, label, notch};
 
 const STYLE: &str = ".cut{fill:none;stroke:#000;stroke-width:0.5}\
 .sew{fill:none;stroke:#000;stroke-width:0.3;stroke-dasharray:3 2}\
@@ -24,15 +25,15 @@ const ADVANCE: f64 = 0.6;
 /// The narrowest the summary wraps to, about 126 mm; a narrower sheet's document widens to it.
 const MIN_COLUMNS: usize = 60;
 
-/// The sheet with a solid cut line, a dashed sewing line and the notch ticks for every placed
-/// copy, in placement order, then the `summary` rows as lines of text under it.
+/// The sheet with a solid cut line, a dashed sewing line, the notch ticks and the label for
+/// every placed copy, in placement order, then the `summary` rows as lines of text under it.
 ///
 /// Sheets are y-up and SVG is y-down, so y is flipped about the sheet's length: the print reads
 /// the right way up, never mirrored. Coordinates are written to 0.001 mm. The summary only
 /// lengthens the document, and widens it for a sheet too narrow for its lines; no piece moves.
 ///
 /// # Errors
-/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary text outside Latin-1.
+/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary or label text outside Latin-1.
 pub fn write(
     sheet: &Sheet,
     pieces: &[PatternPiece],
@@ -65,6 +66,9 @@ pub fn write(
         path(&mut out, "cut", piece.cut_line(), placement, length);
         path(&mut out, "sew", piece.sewing_line(), placement, length);
         ticks(&mut out, piece, placement, length);
+        for line in label::placed(piece, placement)? {
+            label_text(&mut out, &line, length);
+        }
     }
     for (i, line) in notes.iter().enumerate() {
         text(&mut out, line, baseline(length, i));
@@ -118,6 +122,18 @@ fn ticks(out: &mut String, piece: &PatternPiece, placement: &Placement, length: 
     out.push_str("\"/>\n");
 }
 
+/// One label line, centred on its point, flipped into SVG's y-down frame.
+fn label_text(out: &mut String, line: &Placed, length: f64) {
+    out.push_str(&format!(
+        "<text class=\"label\" x=\"{:.3}\" y=\"{:.3}\" font-family=\"sans-serif\" font-size=\"{:.3}\" text-anchor=\"middle\">",
+        line.at.x,
+        length - line.at.y,
+        line.size
+    ));
+    escaped(out, &line.text);
+    out.push_str("</text>\n");
+}
+
 /// Whole monospace columns in `mm`; none when it is not positive.
 fn columns_in(mm: f64) -> usize {
     // Truncation is the point: a partial column holds no character. Lossless for any sheet that
@@ -144,7 +160,13 @@ fn text(out: &mut String, line: &Line, y: f64) {
     out.push_str(&format!(
         "<text x=\"{x:.3}\" y=\"{y:.3}\" font-family=\"monospace\" font-size=\"{TEXT_MM:.3}\">"
     ));
-    for c in line.text.iter().map(|&b| char::from(b)) {
+    escaped(out, &line.text);
+    out.push_str("</text>\n");
+}
+
+/// WinAnsi bytes as the Latin-1 characters they are, escaped for XML.
+fn escaped(out: &mut String, text: &[u8]) {
+    for c in text.iter().map(|&b| char::from(b)) {
         match c {
             '&' => out.push_str("&amp;"),
             '<' => out.push_str("&lt;"),
@@ -152,5 +174,4 @@ fn text(out: &mut String, line: &Line, y: f64) {
             c => out.push(c),
         }
     }
-    out.push_str("</text>\n");
 }

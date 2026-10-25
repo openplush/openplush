@@ -1,4 +1,4 @@
-use crate::{CutCount, Notch, Outline, PatternError, PieceId};
+use crate::{CutCount, Label, Notch, Outline, PatternError, PieceId};
 
 /// One pattern template: its two outlines, its notches, how many copies to cut, and the rotations
 /// layout may use.
@@ -10,6 +10,7 @@ pub struct PatternPiece {
     cuts: CutCount,
     rotations_deg: Vec<f64>,
     notches: Vec<Notch>,
+    label: Option<Label>,
 }
 
 impl PatternPiece {
@@ -34,6 +35,7 @@ impl PatternPiece {
             cuts,
             rotations_deg,
             notches: Vec::new(),
+            label: None,
         })
     }
 
@@ -66,6 +68,20 @@ impl PatternPiece {
     #[must_use]
     pub fn with_notches(self, notches: Vec<Notch>) -> Self {
         Self { notches, ..self }
+    }
+
+    /// The piece with `label` as its label.
+    #[must_use]
+    pub fn with_label(self, label: Label) -> Self {
+        Self {
+            label: Some(label),
+            ..self
+        }
+    }
+
+    /// Its label; none until `with_label`.
+    pub fn label(&self) -> Option<&Label> {
+        self.label.as_ref()
     }
 
     /// Its match notches; none until `with_notches`.

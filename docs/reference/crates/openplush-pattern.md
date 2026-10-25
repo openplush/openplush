@@ -12,7 +12,7 @@ What `openplush-pattern` contains **today**, and what it actually depends on. Wh
 
 ### Outlines
 
-`Outline::new(points)` builds a closed, simple, counter-clockwise polygon in mm or refuses it (`OutlineTooShort`, `OutlineNotFinite`, `OutlineNotSimple { edge, other }` for a repeated point, crossing, touching, overlap or fold, `OutlineClockwise`, `OutlineUnjudgeable`); it never reverses or repairs. `outward_at(i)` is the unit direction out of the outline at corner `i`, halfway between its two edges' outward normals, so it points out at reflex corners too.
+`Outline::new(points)` builds a closed, simple, counter-clockwise polygon in mm or refuses it (`OutlineTooShort`, `OutlineNotFinite`, `OutlineNotSimple { edge, other }` for a repeated point, crossing, touching, overlap or fold, `OutlineClockwise`, `OutlineUnjudgeable`); it never reverses or repairs. `outward_at(i)` is the unit direction out of the outline at corner `i`, halfway between its two edges' outward normals, so it points out at reflex corners too. `label_point()` is a point inside the outline as far from its edges as a 32 × 32 grid over its bounding box finds (the first such in row order); an outline too thin for the grid gets a point just inside its lowest, leftmost corner, along its bisector, a quarter of its shorter edge in or half that again until the point is inside.
 
 ### Seam allowance
 
@@ -30,7 +30,7 @@ It is one `i_overlay` boolean on the `i64` engine, and the result is checked rat
 
 ### Pieces
 
-`PieceId`; `CutCount::new(as_printed, flipped)` holds how many copies to cut as the template is printed and how many with it flipped, and refuses a total of zero (`ZeroCutQuantity`) or over 100 (`TooManyCuts { total }`); `PatternPiece::new(id, sewing_line, cut_line, cuts, rotations_deg)` refuses `NoRotations` and `NonFiniteRotation { index }`, and reads back through accessors; `with_notches(notches)` gives it its match notches, read back by `notches()`.
+`PieceId`; `CutCount::new(as_printed, flipped)` holds how many copies to cut as the template is printed and how many with it flipped, and refuses a total of zero (`ZeroCutQuantity`) or over 100 (`TooManyCuts { total }`); `PatternPiece::new(id, sewing_line, cut_line, cuts, rotations_deg)` refuses `NoRotations` and `NonFiniteRotation { index }`, and reads back through accessors; `with_notches(notches)` gives it its match notches, read back by `notches()`, and `with_label(label)` its label, read back by `label()`.
 
 ### Notches
 
@@ -39,6 +39,12 @@ It is one `i_overlay` boolean on the `i64` engine, and the result is checked rat
 `notch::fractions(chain, length)` gives the fractions of a seam side's length, strictly between its ends, where every side of the seam is notched: evenly spaced at most `notch::SPACING_MM` (50 mm) apart, and at least the midpoint. Even spacing reads the same from either end. Past 1000 notches it refuses `TooManyNotches { chain, length }`.
 
 `notch::mark_counts(meets)` gives each chain the least mark count, from 1, that no chain it meets has taken, chains taken in ascending order, so two seams that meet on a piece never carry the same count.
+
+### Labels
+
+`Label::new(at, lines, seams)` is a piece's label: its block of lines, top first, centred on `at`, and one `SeamLabel::new(at, text)` per seam side on the piece, its text centred on its point. Both refuse a point that is not finite (`BadLabelPoint`).
+
+`label::block(id, cuts, fabric, sews_to)` gives the block's lines: `Piece N`, the cut line (`Cut 1`, `Cut 2 flipped`, `Cut 3 (2 + 1 flipped)`), the fabric's name, and, when there are any, `Sews to piece N` or `Sews to pieces N, M`, numbered as the warning summary numbers pieces. `label::seam_text(chain)` is `Seam N`, numbered as the summary numbers seam chains.
 
 ### Fabrics
 

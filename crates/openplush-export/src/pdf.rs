@@ -11,9 +11,10 @@ use openplush_layout::{Placement, Sheet};
 use openplush_pattern::{Outline, PatternPiece};
 use pdf_writer::{Content, Name, Pdf, Rect, Ref, Str};
 
+use crate::label::Placed;
 use crate::svg::index;
 use crate::warning_summary::lines;
-use crate::{ExportError, SummaryRow, notch};
+use crate::{ExportError, SummaryRow, label, notch};
 
 mod cover;
 mod summary;
@@ -34,29 +35,21 @@ const FONT: Name<'static> = Name(b"F1");
 
 /// The sheet tiled as `tiling` says, which must have been made from this sheet. First a cover
 /// page with the labelled scale-check squares, a map of the tiles and, under it, the `summary` of
-/// unresolved warnings; then on every tile's page, every placed copy's solid cut line then dashed
-/// sewing line, a crosshair at each registration mark the page shows, the labelled scale-check
-/// squares and the page's label; then any summary rows the cover had no room for.
+/// unresolved warnings; then on every tile's page, every placed copy's solid cut line, dashed
+/// sewing line, notch ticks and label, a crosshair at each registration mark the page shows,
+/// the labelled scale-check squares and the page's label; then any summary rows the cover had
+/// no room for.
 ///
 /// # Errors
-/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary text outside Latin-1.
+/// `UnknownPiece`, `DuplicatePiece`, and `Unprintable` for summary or label text outside
+/// Latin-1.
 pub fn write(
     sheet: &Sheet,
     pieces: &[PatternPiece],
     tiling: &PageTiling,
     summary: &[SummaryRow],
 ) -> Result<Vec<u8>, ExportError> {
-    let by_id = index(pieces)?;
-    let placed = sheet
-        .placements()
-        .iter()
-        .map(|pl| {
-            let piece = by_id
-                .get(&pl.piece())
-                .ok_or(ExportError::UnknownPiece { piece: pl.piece() })?;
-            Ok((pl, *piece))
-        })
-        .collect::<Result<Vec<_>, ExportError>>()?;
+    let (placed, labels) = placed(sheet, pieces)?;
     let size = tiling.paper().size_mm();
     let rows = lines(summary, summary::columns(size))?;
     let first_after = tiling.pages().len() + 2;
@@ -81,7 +74,7 @@ pub fn write(
     let tiles = tiling
         .pages()
         .iter()
-        .map(|p| draw(p, &placed, tiling.marks()));
+        .map(|p| draw(p, &placed, &labels, tiling.marks()));
     let after = split.pages.iter().map(|lines| summary::page(lines, size));
     for (i, stream) in std::iter::once(cover).chain(tiles).chain(after).enumerate() {
         let (id, content) = (page_ref(i), Ref::new(page_ref(i).get() + 1));
@@ -111,9 +104,36 @@ pub fn write(
     Ok(pdf.finish())
 }
 
+/// Each placement with its piece, and each copy's label lines, in placement order.
+type Copies<'a> = (Vec<(&'a Placement, &'a PatternPiece)>, Vec<Vec<Placed>>);
+
+fn placed<'a>(sheet: &'a Sheet, pieces: &'a [PatternPiece]) -> Result<Copies<'a>, ExportError> {
+    let by_id = index(pieces)?;
+    let placed = sheet
+        .placements()
+        .iter()
+        .map(|pl| {
+            let piece = by_id
+                .get(&pl.piece())
+                .ok_or(ExportError::UnknownPiece { piece: pl.piece() })?;
+            Ok((pl, *piece))
+        })
+        .collect::<Result<Vec<_>, ExportError>>()?;
+    let labels = placed
+        .iter()
+        .map(|(pl, piece)| label::placed(piece, pl))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((placed, labels))
+}
+
 /// The page's content: its window of the sheet, clipped to the printable area, then the
 /// registration marks in that window, the squares and the labels.
-fn draw(page: &Page, placed: &[(&Placement, &PatternPiece)], marks: &[DVec2]) -> Vec<u8> {
+fn draw(
+    page: &Page,
+    placed: &[(&Placement, &PatternPiece)],
+    labels: &[Vec<Placed>],
+    marks: &[DVec2],
+) -> Vec<u8> {
     let (min, max) = (page.window_min(), page.window_max());
     let k = PT_PER_MM as f32;
     let mut c = Content::new();
@@ -141,6 +161,9 @@ fn draw(page: &Page, placed: &[(&Placement, &PatternPiece)], marks: &[DVec2]) ->
             c.line_to(b.x as f32, b.y as f32);
             c.stroke();
         }
+    }
+    for line in labels.iter().flatten() {
+        label_text(&mut c, line);
     }
     c.set_dash_pattern([], 0.0);
     c.set_line_width(MARK_LINE_MM);
@@ -210,4 +233,21 @@ fn square(c: &mut Content, min: DVec2, side: f64) {
 
 fn pt(mm: f64) -> f32 {
     (mm * PT_PER_MM) as f32
+}
+
+/// Helvetica's average advance as a share of its size, to centre a line without its metrics; the
+/// centring is off by about a character on unusual text.
+const ADVANCE: f64 = 0.55;
+
+/// One label line in Helvetica, centred on its point by an estimate of its width.
+fn label_text(c: &mut Content, line: &Placed) {
+    // Lossless: a label line is far shorter than 2^52 bytes.
+    #[allow(clippy::cast_precision_loss)]
+    let half = line.text.len() as f64 * ADVANCE * line.size / 2.0;
+    c.begin_text();
+    c.set_font(FONT, line.size as f32);
+    let at = line.at - DVec2::new(half, 0.0);
+    c.set_text_matrix([1.0, 0.0, 0.0, 1.0, at.x as f32, at.y as f32]);
+    c.show(Str(&line.text));
+    c.end_text();
 }

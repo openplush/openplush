@@ -204,7 +204,11 @@ fn side(input: &PatternInput<'_>, side: &ChainSide, scale: Scale) -> Result<Side
         };
         // The piece lies left of each chart face side, so out is to the right.
         let d = pb - pa;
-        let out = DVec2::new(d.y, -d.x);
+        // A zero edge, which a layout with every det J > 0 never has, leaves a zero direction that
+        // `Notch::new` refuses.
+        let out = DVec2::new(d.y, -d.x)
+            .normalize()
+            .unwrap_or(DVec2::new(0.0, 0.0));
         flat.push((a, b, pa, pb, out));
     }
     // A side's half-edges each run one way along their chart faces, which may be against the walk.

@@ -34,7 +34,7 @@ Chosen option: **drop it**. The spec flow (specify, clarify, plan, tasks, implem
 
 ### Confirmation
 
-`.github/CODEOWNERS` assigns `CONSTITUTION.md` to the maintainer, and no tracked file names the generator or its folder.
+`.github/CODEOWNERS` assigns `CONSTITUTION.md` to the maintainer.
 
 ## More information
 

@@ -41,8 +41,10 @@ known_configs=" clippy.toml crates/clippy.toml crates/openplush-testkit/clippy.t
 
 # repo_files <extended regex>: repository files whose relative path matches, sorted.
 repo_files() {
-  local files
-  if [[ $(git rev-parse --show-toplevel 2>/dev/null) == "$PWD" ]]; then
+  local files prefix
+  # An empty prefix means $PWD is the checkout's top; comparing paths breaks in
+  # Git Bash, where git prints C:/... and $PWD is /c/....
+  if prefix=$(git rev-parse --show-prefix 2>/dev/null) && [[ -z $prefix ]]; then
     files=$(git ls-files --cached --others --exclude-standard)
   else
     files=$(find . \( -path ./target -o -path ./.git -o -path ./node_modules \) -prune -o -type f -print |

@@ -304,6 +304,8 @@ fn pattern_json_holds_each_printed_piece_in_mm_and_every_printed_warning() -> Re
 #[test]
 fn the_page_is_a4_unless_letter_is_asked_for() -> Result<(), Setup> {
     let dir = scratch("page")?;
+    // A4 is 210 by 297 mm and Letter 8.5 by 11 in, at 72 pt to the inch.
+    let a4_box = "/MediaBox [0 0 595.2756 841.8898]";
     let letter_box = "/MediaBox [0 0 612 792]";
     for (page, letter) in [(None, false), (Some("letter"), true)] {
         let out_dir = dir.0.join(page.unwrap_or("default"));
@@ -315,6 +317,7 @@ fn the_page_is_a4_unless_letter_is_asked_for() -> Result<(), Setup> {
         assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
         let pdf = String::from_utf8_lossy(&fs::read(out_dir.join("pattern.pdf"))?).into_owned();
         assert_eq!(pdf.contains(letter_box), letter, "{page:?}");
+        assert_eq!(pdf.contains(a4_box), !letter, "{page:?}");
     }
     Ok(())
 }

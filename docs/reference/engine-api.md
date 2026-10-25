@@ -24,7 +24,8 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 | `repair(soup, plan)` | function | `StageResult<(ManifoldMesh, RepairReport)>`; see [Stages](#stages) |
 | `chart(mesh, seams)` | function | `StageResult<(Vec<ChartMesh>, SewingMap)>`; see [Stages](#stages) |
 | `flatten(mesh, charts)` | function | `StageResult<Vec<Parameterization>>`; see [Stages](#stages) |
-| `Parameterization` | struct | One chart laid flat: `chart()` and `uv()`, one flat position per chart vertex |
+| `Parameterization` | struct | One chart laid flat: `chart()`, `uv()`, one flat position per chart vertex, and `summary()`, the layout's distortion |
+| `Summary`, `StoppedBy` | re-exports | From `openplush-flatten`: a layout's distortion (`most_stretched`, `most_compressed`, `tail_stretch`, `tail_compression`, `stretch_excess`, `compression_deficit`, `area_ratio`, `stopped_by`), and why its flatten stopped, `StoppedBy::as_str()` naming it `settled`, `no-descent` or `iteration-cap` |
 | `pattern(input, opts)` | function | `StageResult<Vec<PatternPiece>>`; see [Stages](#stages) |
 | `templates(input, pieces, opts, earlier)` | function | `StageResult<Vec<PatternPiece>>`: `pattern`'s pieces with identical and mirror-image ones made one template; see [Stages](#stages) |
 | `PatternInput` | struct | What `pattern` reads, all borrowed from one run: `mesh`, `charts`, `sewing`, `layouts` |
@@ -74,7 +75,7 @@ The [engine API contract](https://github.com/openplush/openplush/blob/main/specs
 
 **`export_svg(&Sheet, &[PatternPiece], &WarningSet)`** is `svg::write`: the sheet at true scale, 1 user unit to 1 mm, with every warning in the set printed under it as summary rows. **`export_pdf(&Sheet, &[PatternPiece], Paper, &WarningSet)`** tiles the sheet on `paper` with `pages::tile` and calls `pdf::write`: a cover with the scale check, the page map and the summary rows, then one page per tile. The pieces are the ones the sheet places; a `Sheet` holds placements, not outlines. A sheet needing more than 26 pages across or down is `Layout` (`TooManyPages`), naming nothing. A placement whose piece was not given, or a piece given twice, is `Export`, naming the piece. Their warnings are empty.
 
-**Summary rows.** Both exports print every warning in the set, in its order, acknowledged or not: "unresolved" means not fixed. A row is the code's string; the target in words: `face {n}`, `edge {n}`, `seam chain {n}`, `piece {n}`, `component {n}`, or `the whole pattern`; the explanation; and the remedy's text, an `Actionable` proposal's explanation or an `Advisory`'s `what_to_change`. Each prints as `{n}. {code}: {target}`, then the explanation, then `Fix: {remedy}`. Every engine warning's text is printable ASCII, so `ExportError::Unprintable` is a bug if it ever appears.
+**Summary rows.** Both exports print every warning in the set, in its order, acknowledged or not: "unresolved" means not fixed. A row is the code's string; the target in words, `WarningTarget`'s `Display`: `face {n}`, `edge {n}`, `seam chain {n}`, `piece {n}`, `pieces {a} and {b}`, `component {n}`, or `the whole pattern`; the explanation; and `Remedy::text()`, an `Actionable` proposal's explanation or an `Advisory`'s `what_to_change`. Each prints as `{n}. {code}: {target}`, then the explanation, then `Fix: {remedy}`. Every engine warning's text is printable ASCII, so `ExportError::Unprintable` is a bug if it ever appears.
 
 ## Session
 

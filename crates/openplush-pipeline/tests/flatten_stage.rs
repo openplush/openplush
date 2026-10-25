@@ -8,7 +8,7 @@ use openplush_io::obj;
 use openplush_mesh::{RepairPlan, into_manifold};
 use openplush_pipeline::{
     ChartId, ChartMesh, EdgeId, EngineError, FaceId, FlattenError, ManifoldMesh, SeamKind, SeamSet,
-    VertexId, chart, flatten,
+    StoppedBy, VertexId, chart, flatten,
 };
 
 #[allow(dead_code, reason = "each test file uses part of the shared fixtures")]
@@ -110,6 +110,28 @@ fn a_flat_sheet_is_laid_flat_at_its_own_lengths() -> Result<(), Setup> {
     assert_eq!(layout.uv().len(), charts[0].xyz().len());
     let worst = worst_stretch(&charts[0], layout.uv());
     assert!(worst < 1e-6, "an edge stretched by {worst}");
+    Ok(())
+}
+
+#[test]
+fn a_flat_sheet_s_summary_shows_no_distortion() -> Result<(), Setup> {
+    let mesh = mesh_of(&sheet(3, 2))?;
+    let (charts, _) = chart(&mesh, &SeamSet::new())?.value;
+    let staged = flatten(&mesh, &charts)?;
+    let s = staged.value.first().ok_or("one layout")?.summary();
+    for (what, got, want) in [
+        ("most stretched", s.most_stretched().1, 1.0),
+        ("most compressed", s.most_compressed().1, 1.0),
+        ("stretch excess", s.stretch_excess(), 0.0),
+        ("compression deficit", s.compression_deficit(), 0.0),
+        ("area ratio", s.area_ratio(), 1.0),
+    ] {
+        assert!((got - want).abs() < 1e-6, "{what}: {got}");
+    }
+    assert_ne!(s.stopped_by(), StoppedBy::IterationCap);
+    assert_eq!(StoppedBy::IterationCap.as_str(), "iteration-cap");
+    assert_eq!(StoppedBy::Settled.as_str(), "settled");
+    assert_eq!(StoppedBy::NoDescent.as_str(), "no-descent");
     Ok(())
 }
 

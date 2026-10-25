@@ -1,8 +1,12 @@
 use std::collections::BTreeMap;
 
-use openplush_flatten::summary::summarize;
+use openplush_flatten::summary::{Summary, summarize};
 use openplush_flatten::{FlattenError, FlattenSession, Progress, StoppedBy};
 use openplush_geom::DVec2;
+#[cfg(test)]
+use openplush_geom::DVec3;
+#[cfg(test)]
+use openplush_mesh::FaceId;
 use openplush_mesh::{EdgeId, ManifoldMesh, VertexId};
 use openplush_pattern::PieceId;
 use openplush_seams::{ChartId, ChartMesh, Proposal, ProposalKind, SeamKind};
@@ -17,9 +21,7 @@ use crate::{
 pub struct Parameterization {
     pub(crate) chart: ChartId,
     pub(crate) uv: Vec<DVec2>,
-    /// The layout's area-weighted mean compression deficit, `Summary::compression_deficit`: the
-    /// mean, since the worst face keeps falling as a mesh is refined.
-    pub(crate) compression_deficit: f64,
+    pub(crate) summary: Summary,
 }
 
 impl Parameterization {
@@ -33,6 +35,12 @@ impl Parameterization {
     #[must_use]
     pub fn uv(&self) -> &[DVec2] {
         &self.uv
+    }
+
+    /// How far the layout stretches and squeezes the chart, and why its flatten stopped.
+    #[must_use]
+    pub fn summary(&self) -> &Summary {
+        &self.summary
     }
 }
 
@@ -74,7 +82,7 @@ pub(crate) fn staged(
         value.push(Parameterization {
             chart: chart.chart(),
             uv,
-            compression_deficit: summary.compression_deficit(),
+            summary,
         });
     }
     Ok(Staged { value, warnings })
@@ -108,11 +116,14 @@ pub(crate) fn stop_warning(chart: ChartId, stopped: StoppedBy) -> Option<Warning
 impl Parameterization {
     /// A layout written by hand, uncompressed, to reach states no flatten produces.
     pub(crate) fn by_hand(chart: ChartId, uv: Vec<DVec2>) -> Self {
-        Self {
-            chart,
-            uv,
-            compression_deficit: 0.0,
-        }
+        let corners = [0, 1, 2].map(VertexId::new);
+        let xyz = [DVec3::ZERO, DVec3::X, DVec3::Y];
+        let flat = [DVec2::ZERO, DVec2::X, DVec2::Y];
+        let faces = [(FaceId::new(0), corners)];
+        // INVARIANT: one triangle laid flat at its own shape always measures.
+        let summary = summarize(chart, &xyz, &faces, &flat, StoppedBy::Settled)
+            .unwrap_or_else(|_| unreachable!());
+        Self { chart, uv, summary }
     }
 
     pub(crate) fn uv_mut(&mut self) -> &mut [DVec2] {

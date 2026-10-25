@@ -1,3 +1,5 @@
+use std::fmt;
+
 use openplush_export::SummaryRow;
 
 use super::{Remedy, WarningSet, WarningTarget};
@@ -9,30 +11,36 @@ pub(crate) fn rows(warnings: &WarningSet) -> Vec<SummaryRow> {
         .map(|w| {
             SummaryRow::new(
                 w.code().as_str().to_owned(),
-                target_words(w.target()),
+                w.target().to_string(),
                 w.explanation().to_owned(),
-                remedy_text(w.remedy()).to_owned(),
+                w.remedy().text().to_owned(),
             )
         })
         .collect()
 }
 
-fn target_words(target: WarningTarget) -> String {
-    match target {
-        WarningTarget::Face(id) => format!("face {}", id.index()),
-        WarningTarget::Edge(id) => format!("edge {}", id.index()),
-        WarningTarget::Chain(id) => format!("seam chain {}", id.index()),
-        WarningTarget::Piece(id) => format!("piece {}", id.index()),
-        WarningTarget::Pieces(a, b) => format!("pieces {} and {}", a.index(), b.index()),
-        WarningTarget::Component(id) => format!("component {}", id.index()),
-        WarningTarget::Project => "the whole pattern".to_owned(),
+impl fmt::Display for WarningTarget {
+    /// The target in the words the print uses: `piece 3`, `pieces 2 and 7`, `the whole pattern`.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Face(id) => write!(f, "face {}", id.index()),
+            Self::Edge(id) => write!(f, "edge {}", id.index()),
+            Self::Chain(id) => write!(f, "seam chain {}", id.index()),
+            Self::Piece(id) => write!(f, "piece {}", id.index()),
+            Self::Pieces(a, b) => write!(f, "pieces {} and {}", a.index(), b.index()),
+            Self::Component(id) => write!(f, "component {}", id.index()),
+            Self::Project => f.write_str("the whole pattern"),
+        }
     }
 }
 
-fn remedy_text(remedy: &Remedy) -> &str {
-    match remedy {
-        Remedy::Actionable { proposal } => proposal.explanation(),
-        Remedy::Advisory { what_to_change } => what_to_change.as_str(),
+impl Remedy {
+    /// What to do, in plain language: the proposal's explanation or the advice.
+    pub fn text(&self) -> &str {
+        match self {
+            Self::Actionable { proposal } => proposal.explanation(),
+            Self::Advisory { what_to_change } => what_to_change.as_str(),
+        }
     }
 }
 

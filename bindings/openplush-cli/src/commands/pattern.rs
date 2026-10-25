@@ -1,5 +1,8 @@
 //! `pattern <MODEL> --seams <PATH> --fabric <PATH> --size-mm <MM> -o <DIR>`: the model through
-//! every stage, written as `pattern.svg` and `pattern.pdf` with every warning the run raised.
+//! every stage, written as `pattern.svg`, `pattern.pdf` and `pattern.json` with every warning the
+//! run raised.
+
+mod json;
 
 use std::fs;
 use std::path::Path;
@@ -27,7 +30,7 @@ pub(crate) struct Inputs<'a> {
     pub(crate) out: &'a Path,
 }
 
-/// Runs every stage and writes both files; nothing is written unless every stage succeeds.
+/// Runs every stage and writes the three files; nothing is written unless every stage succeeds.
 pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let fabric = read(inputs.fabric, fabric::parse)?;
     let seam_file = read(inputs.seams, seam_set::parse)?;
@@ -58,7 +61,8 @@ pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let pieces = templates(&input, &pieces, &opts, &mut warnings)?;
     let pieces = keep(&mut warnings, pieces);
     let sheet = print(&pieces, roll, &mut warnings)?;
-    write(inputs, &sheet, &pieces, &warnings)
+    let json = json::pattern_json(&pieces, &layouts, &warnings).to_string();
+    write(inputs, &sheet, &pieces, &warnings, json.into_bytes())
 }
 
 /// Marks mandatory every copy of each edge repair split where it forced a seam, so the copies
@@ -102,11 +106,16 @@ fn write(
     sheet: &Sheet,
     pieces: &[PatternPiece],
     warnings: &WarningSet,
+    json: Vec<u8>,
 ) -> Result<(), Failure> {
     let svg = export_svg(sheet, pieces, warnings)?.value;
     let pdf = export_pdf(sheet, pieces, inputs.page, warnings)?.value;
     fs::create_dir_all(inputs.out).map_err(io(inputs.out))?;
-    for (name, bytes) in [("pattern.svg", svg), ("pattern.pdf", pdf)] {
+    for (name, bytes) in [
+        ("pattern.svg", svg),
+        ("pattern.pdf", pdf),
+        ("pattern.json", json),
+    ] {
         let path = inputs.out.join(name);
         fs::write(&path, bytes).map_err(io(&path))?;
     }

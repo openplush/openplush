@@ -37,6 +37,17 @@ pub enum StoppedBy {
     NoDescent,
 }
 
+impl StoppedBy {
+    /// A stable name for files: `iteration-cap`, `settled` or `no-descent`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::IterationCap => "iteration-cap",
+            Self::Settled => "settled",
+            Self::NoDescent => "no-descent",
+        }
+    }
+}
+
 /// One chart's flatten in progress, owning the chart's faces so a caller can hold it between
 /// steps.
 pub struct FlattenSession {

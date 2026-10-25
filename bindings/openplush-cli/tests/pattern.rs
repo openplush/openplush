@@ -106,7 +106,10 @@ fn the_capsule_becomes_an_svg_and_a_pdf_in_a_new_directory() -> Result<(), Setup
     let out_dir = dir.0.join("out").join("nested");
     let out = Run::capsule().write_to(&out_dir)?;
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
-    assert_eq!(listing(&out_dir)?, ["pattern.pdf", "pattern.svg"]);
+    assert_eq!(
+        listing(&out_dir)?,
+        ["pattern.json", "pattern.pdf", "pattern.svg"]
+    );
     let svg = fs::read_to_string(out_dir.join("pattern.svg"))?;
     assert!(
         svg.contains("<svg ") && svg.contains("mm\" height=\""),
@@ -205,9 +208,96 @@ fn the_same_inputs_give_the_same_bytes() -> Result<(), Setup> {
         let out = Run::capsule().write_to(out_dir)?;
         assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
     }
-    for name in ["pattern.svg", "pattern.pdf"] {
+    for name in ["pattern.svg", "pattern.pdf", "pattern.json"] {
         assert_eq!(fs::read(a.join(name))?, fs::read(b.join(name))?, "{name}");
     }
+    Ok(())
+}
+
+/// A `[[x, y], …]` array as points.
+fn points(v: &serde_json::Value) -> Result<Outline, Setup> {
+    v.as_array()
+        .ok_or("an array")?
+        .iter()
+        .map(|p| Ok((p[0].as_f64().ok_or("x")?, p[1].as_f64().ok_or("y")?)))
+        .collect()
+}
+
+/// `d` holds every distortion measure, and why the flatten stopped.
+fn assert_distortion(d: &serde_json::Value) {
+    for key in [
+        "tail_stretch",
+        "tail_compression",
+        "stretch_excess",
+        "compression_deficit",
+        "area_ratio",
+    ] {
+        assert!(d[key].as_f64().is_some(), "{key}: {d}");
+    }
+    for key in ["most_stretched", "most_compressed"] {
+        assert!(
+            d[key]["face"].is_u64() && d[key]["ratio"].is_f64(),
+            "{key}: {d}"
+        );
+    }
+    assert!(
+        ["iteration-cap", "settled", "no-descent"]
+            .contains(&d["stopped_by"].as_str().unwrap_or("")),
+        "{d}"
+    );
+}
+
+#[test]
+fn pattern_json_holds_each_printed_piece_in_mm_and_every_printed_warning() -> Result<(), Setup> {
+    let dir = scratch("written-json")?;
+    let out = Run {
+        size_mm: "240".into(),
+        ..Run::capsule()
+    }
+    .write_to(&dir.0)?;
+    assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
+    let json: serde_json::Value = serde_json::from_slice(&fs::read(dir.0.join("pattern.json"))?)?;
+    let pieces = json["pieces"].as_array().ok_or("pieces")?;
+    let ids: Vec<u64> = pieces.iter().filter_map(|p| p["piece"].as_u64()).collect();
+    assert_eq!(ids, [0, 5]);
+    let (cap, tube) = (&pieces[0], &pieces[1]);
+    assert_eq!(
+        cap["cuts"],
+        serde_json::json!({"as_printed": 2, "flipped": 0})
+    );
+    assert_size(
+        size(&points(&tube["sewing_line_mm"])?),
+        (120.0, 372.70),
+        "tube sewing line",
+    );
+    assert_size(
+        size(&points(&tube["cut_line_mm"])?),
+        (132.0, 384.70),
+        "tube cut line",
+    );
+    for p in pieces {
+        assert_distortion(&p["distortion"]);
+    }
+    let svg = fs::read_to_string(dir.0.join("pattern.svg"))?;
+    let warnings = json["warnings"].as_array().ok_or("warnings")?;
+    assert!(!warnings.is_empty(), "the caps are squeezed: {svg}");
+    for (i, w) in warnings.iter().enumerate() {
+        let row = format!(
+            ">{}. {}: {}<",
+            i + 1,
+            w["code"].as_str().ok_or("code")?,
+            w["target"].as_str().ok_or("target")?
+        );
+        assert!(svg.contains(&row), "{row}: {svg}");
+        assert!(
+            w["explanation"].is_string() && w["remedy"].is_string(),
+            "{w}"
+        );
+    }
+    assert!(
+        !svg.contains(&format!(">{}. ", warnings.len() + 1)),
+        "{svg}"
+    );
     Ok(())
 }
 

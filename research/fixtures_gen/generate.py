@@ -104,6 +104,23 @@ def tetra(m: Mesh, pts: list[Vec | int]) -> None:
     m.faces += [(i0, i2, i1), (i0, i1, i3), (i0, i3, i2), (i1, i2, i3)]
 
 
+def mobius() -> Mesh:
+    """A strip of 12 quads, 40 mm radius and 20 mm wide, closed with a half twist: the one defect not on the cube (README)."""
+    m = Mesh()
+    radius, half = 40.0, 10.0
+    ring: list[tuple[int, int]] = []
+    for i in range(SEGMENTS):
+        t = 2 * math.pi * i / SEGMENTS
+        dr, dz = half * math.cos(t / 2), half * math.sin(t / 2)
+        a, b = (m.add(((radius + s * dr) * math.cos(t), (radius + s * dr) * math.sin(t), s * dz)) for s in (1, -1))
+        ring.append((a, b))
+    for i in range(SEGMENTS):
+        a, b = ring[i]
+        c, d = ring[i + 1] if i + 1 < SEGMENTS else (ring[0][1], ring[0][0])  # the half twist
+        m.faces += [(a, b, d), (a, d, c)]
+    return m
+
+
 def defects() -> dict[str, tuple[str, Mesh]]:
     """Each model is the cube with one defect added; the string says what and where."""
     out: dict[str, tuple[str, Mesh]] = {}
@@ -155,6 +172,8 @@ def defects() -> dict[str, tuple[str, Mesh]]:
     m, _, _ = cube()
     tetra(m, [(100.0, 0.0, 0.0), (120.0, 0.0, 0.0), (100.0, 20.0, 0.0), (100.0, 0.0, 20.0)])
     out["multi-component"] = ("a separate closed tetrahedron floats beside the cube", m)
+
+    out["non-orientable"] = ("a Mobius strip, not the cube: no winding fits every face, and its edge is open", mobius())
     return out
 
 

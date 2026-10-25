@@ -33,7 +33,7 @@ All coordinates are millimetres, faces are triangles wound counter-clockwise see
 
 ### Defect fixtures
 
-Each one is the cube with one change, chosen so each fixture trips exactly one detector on its input mesh. The oracle welds coincident positions and drops duplicate faces, then evaluates every topology detector together on that welded, de-duplicated mesh; it repairs nothing.
+Each one but `non-orientable` is the cube with one change, chosen so each fixture trips exactly one detector on its input mesh. The oracle welds coincident positions and drops duplicate faces, then evaluates every topology detector together on that welded, de-duplicated mesh; it repairs nothing.
 
 | Class | Change | Why it does not trip anything else |
 |---|---|---|
@@ -46,6 +46,7 @@ Each one is the cube with one change, chosen so each fixture trips exactly one d
 | `unwelded-split-vertices` | The top side gets its own coincident copies of its 12 border vertices, as a glTF exporter splits at a UV seam | Welding by position restores the clean cube |
 | `self-intersection` | One top vertex pushed through the bottom side, off the grid lines | Topology unchanged; the crossings are transverse |
 | `multi-component` | A separate closed tetrahedron beside the cube | Closed, manifold, outward |
+| `non-orientable` | Not the cube: a Möbius strip of 12 quads, 40 mm radius and 20 mm wide, with one half twist | It cannot trip only its own detector. A closed surface in 3D can be non-orientable only by passing through itself, so the strip has an open edge (boundary), and with no winding that fits every face, two faces disagree across the edge where the twist closes (winding). The one fixture with more than one class, listed in both oracles |
 
 "Exactly one" holds for the input, not after repair. Repair splits bowtie vertices before it counts components, so `bowtie-vertex` becomes two components, the cube and the tetrahedron, and a repaired run also reports `multi-component` [solid]. The `non-manifold-edge` fin can likewise end up as its own component once its edge is split [likely]. A test over the engine's repair report should assert that the named class is present, not that it is the only one.
 
@@ -57,14 +58,13 @@ The repair pipeline handles these, but the corpus has no fixture for them yet:
 
 - Repeated indices: a face that names one vertex twice.
 - An opposite-orientation duplicate face, which repair flags as a double-sided sheet.
-- A non-orientable (Möbius-like) winding conflict.
 
 ## The oracles
 
 `test_fixtures.py`, `test_source_seams.py`, `test_source_materials.py`, `test_dead_end.py` and `test_reshaped.py` read the committed files and share no code with `generate.py`, `source_seams.py`, `source_dead_end.py` or `source_reshaped.py`, except the one test that regenerates into a temporary directory and compares bytes:
 
 - **Clean meshes**: every detector reads zero, Euler characteristic 2, no unused vertex, positive signed volume.
-- **Defects**: one file per class and no others; each file trips exactly its own detector. Detectors: coincident positions (weld), repeated vertex sets, faces per edge (> 2 non-manifold, 1 boundary), repeated directed edges across 2-face edges plus closed components with signed volume ≤ 0 (winding), face fans per vertex joined through shared edges (bowtie), vertex-connected components, area below `1e-12 × bbox diagonal²`, and Moller–Trumbore edge-through-triangle tests between faces that share no vertex (self-intersection).
+- **Defects**: one file per class and no others; each file trips exactly its own detector, and `non-orientable` exactly boundary and winding, with a separate check that no flipping of its faces makes every shared edge agree while one does for `flipped-normals`. Detectors: coincident positions (weld), repeated vertex sets, faces per edge (> 2 non-manifold, 1 boundary), repeated directed edges across 2-face edges plus closed components with signed volume ≤ 0 (winding), face fans per vertex joined through shared edges (bowtie), vertex-connected components, area below `1e-12 × bbox diagonal²`, and Moller–Trumbore edge-through-triangle tests between faces that share no vertex (self-intersection).
 - **Seams**: the JSON is type-checked field by field (an index of `1.0` or `false` is rejected, not compared equal); every listed pair is a mesh edge; cutting virtually (faces flood-filled across uncut edges, corners joined across uncut edges) leaves every chart with Euler characteristic 1 and one boundary loop. The same oracle must reject an uncut closed mesh and an annulus, so it cannot pass vacuously.
 - **Source seams**: the UV cuts recomputed from the OBJ's `vt` (an interior edge whose corner UVs differ across it at either endpoint) are exactly the reference seam set, and the rule is checked on a cut that differs at one endpoint only. The layout itself is pinned: 9 meridian edges pole to pole plus the 12 edges of the tube's upper rim, leaving two disk-shaped charts. The glTF is a GLB with valid chunks; matched to the OBJ by position, it has the same triangles and the same corner UVs (V flipped), with one vertex per distinct (position, UV) and no more. Its POSITION bounds equal the data. `capsule-hardshade.glb`, matched to the same OBJ, has the same triangles and UV cuts, more than 50 interior edges whose normals differ but whose UVs do not, and unit-length normals. `sphere-band`'s UV cuts equal its seam set, are two full 12-edge rings at mirrored heights, and leave exactly two disks and one annulus. Every face keeps its outside-seen counter-clockwise winding in UV space, so no island is mirrored.
 - **Materials** (`test_source_materials.py`): the OBJ has one object and three `usemtl` runs with the exact names; the boundaries recomputed from those runs equal the seam set, are both tube rims, and leave two disks and a tube; two names match a preset only after trimming and lower-casing, and one matches none; the glTF has the same three names, one primitive per material in OBJ order with the run's triangles, no `TEXCOORD_0`, one vertex per position per primitive, and exact POSITION bounds.

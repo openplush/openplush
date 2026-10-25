@@ -31,8 +31,7 @@ The binding rules are in `AGENTS.md` (Commits and PRs). This file covers how to 
 
 ## Merging
 
-- The maintainer merges every PR. Never merge one yourself, and never enable auto-merge.
-- A PR is ready for the maintainer when, on its current head: CI is green, the review summary has no open 🔴, every thread you answered is resolved, there is no conflict, and its base is `main`. Say once that it waits on the maintainer, then wait for the next event.
+- Merge a PR through qew, as `AGENTS.md` (Commits and PRs) says, once on its current head it is ready (Reviews above), every thread you answered is resolved, there is no conflict, and its base is `main`. Never enable auto-merge.
 
 ## Waiting
 

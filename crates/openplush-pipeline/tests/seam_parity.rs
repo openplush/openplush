@@ -1,6 +1,5 @@
-//! On every fixture with a reference seam set, every side of every seam is as long, flat, as
-//! every other side it sews to, within the spec's max(1.0 mm, 0.5%), judged by the testkit's
-//! own restatement of that rule rather than the engine's.
+//! Seam parity on every fixture with a reference seam set, judged by the testkit's oracle, not
+//! the engine's constant.
 
 use openplush_pipeline::Mm;
 use openplush_testkit::oracles::seam_parity;

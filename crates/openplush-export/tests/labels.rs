@@ -9,7 +9,7 @@
 use openplush_export::{ExportError, pdf, svg};
 use openplush_geom::DVec2;
 use openplush_geom::units::Mm;
-use openplush_layout::pages::{Paper, tile};
+use openplush_layout::pages::{MARGIN_MM, Paper, tile};
 use openplush_layout::shelf::pack;
 use openplush_layout::{LayoutError, LayoutOptions, Sheet};
 use openplush_pattern::{CutCount, Label, Outline, PatternPiece, PieceId, SeamLabel};
@@ -82,20 +82,68 @@ fn the_svg_centres_the_block_on_the_label_point_and_places_each_seam_label() -> 
     let texts: Vec<&str> = labels.iter().map(|(t, _)| t.as_str()).collect();
     assert_eq!(texts, ["Piece 0", "Cut 1", "cotton", "Seam 3"]);
     // Packed with its cut line at the origin, the piece's centre is at (36, 36) on a 72 mm sheet,
-    // and SVG's y runs down: the block is centred on x = 36, its lines 5 mm apart downwards.
-    for (_, at) in &labels[..3] {
-        assert!((at.x - 36.0).abs() <= 1e-3, "{at:?}");
+    // and SVG's y runs down. The middle line is centred on it: its baseline is 0.35 of 3.5 mm
+    // below, and the others 5 mm above and below that. The seam label at (36, 10) on the sheet
+    // drops 0.35 of 2.5 mm.
+    let want = [
+        DVec2::new(36.0, 32.225),
+        DVec2::new(36.0, 37.225),
+        DVec2::new(36.0, 42.225),
+        DVec2::new(36.0, 62.875),
+    ];
+    for ((t, at), w) in labels.iter().zip(want) {
+        assert!((*at - w).length() <= 1e-3, "{t}: {at:?}, want {w:?}");
     }
-    assert!((labels[1].1.y - labels[0].1.y - 5.0).abs() <= 1e-3);
-    assert!((labels[2].1.y - labels[1].1.y - 5.0).abs() <= 1e-3);
-    let middle = (labels[0].1.y + labels[2].1.y) / 2.0;
-    assert!((middle - 36.0).abs() <= 3.5, "the block's middle {middle}");
     assert!(text.contains("text-anchor=\"middle\""));
-    let seam = labels[3].1;
-    assert!(
-        (seam.x - 36.0).abs() <= 1e-3 && (seam.y - (72.0 - 10.0)).abs() <= 2.5,
-        "{seam:?}"
-    );
+    assert_eq!(text.matches("font-size=\"3.500\" text-anchor").count(), 3);
+    assert_eq!(text.matches("font-size=\"2.500\" text-anchor").count(), 1);
+    Ok(())
+}
+
+#[test]
+fn each_run_of_whitespace_in_label_text_prints_as_one_space() -> Result<(), Setup> {
+    let pieces = [piece("faux\t\n  fur")?];
+    let s = sheet(&pieces)?;
+    let text = String::from_utf8(svg::write(&s, &pieces, &[])?)?;
+    assert!(text.contains(">faux fur</text>"), "{text}");
+    Ok(())
+}
+
+#[test]
+fn the_pdf_places_each_label_line_where_the_svg_does() -> Result<(), Setup> {
+    let pieces = [piece("cotton")?];
+    let s = sheet(&pieces)?;
+    let tiling = tile(&s, Paper::A4)?;
+    let pages = tiles(&pdf::write(&s, &pieces, &tiling, &[])?)?;
+    let [page] = &pages[..] else {
+        return Err(format!("one tile, got {}", pages.len()).into());
+    };
+    // Sheet millimetres land on the page at the margin, less the tile window's corner; a line
+    // starts half its estimated width, 0.55 of its size per character, left of its centre.
+    let shift = DVec2::new(MARGIN_MM, MARGIN_MM) - tiling.pages()[0].window_min();
+    let want = [
+        ("Piece 0", DVec2::new(36.0, 39.775), 3.5),
+        ("Cut 1", DVec2::new(36.0, 34.775), 3.5),
+        ("cotton", DVec2::new(36.0, 29.775), 3.5),
+        ("Seam 3", DVec2::new(36.0, 9.125), 2.5),
+    ];
+    for (text, centre, size) in want {
+        // Lossless: a few characters.
+        #[allow(clippy::cast_precision_loss)]
+        let half = text.len() as f64 * 0.55 * size / 2.0;
+        let start = centre - DVec2::new(half, 0.0) + shift;
+        let found = page.texts.iter().find(|t| t.text == text).ok_or(text)?;
+        assert!(
+            (found.at - start).length() <= 0.01,
+            "{text}: {:?}, want {start:?}",
+            found.at
+        );
+        assert!(
+            (found.size - size).abs() <= 0.01,
+            "{text}: size {}",
+            found.size
+        );
+    }
     Ok(())
 }
 

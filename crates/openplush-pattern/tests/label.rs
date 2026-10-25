@@ -87,6 +87,15 @@ fn a_label_at_a_point_that_is_not_finite_is_refused() {
         SeamLabel::new(nan, "Seam 1".to_owned()),
         Err(PatternError::BadLabelPoint)
     );
+    for far in [
+        DVec2::new(f64::INFINITY, 0.0),
+        DVec2::new(0.0, f64::NEG_INFINITY),
+    ] {
+        let label = Label::new(far, vec![], vec![]);
+        assert_eq!(label, Err(PatternError::BadLabelPoint));
+        let seam = SeamLabel::new(far, "Seam 1".to_owned());
+        assert_eq!(seam, Err(PatternError::BadLabelPoint));
+    }
 }
 
 fn inside(outline: &Outline, p: DVec2) -> bool {
@@ -110,8 +119,9 @@ fn a_square_s_label_point_is_its_centre() -> Result<(), Setup> {
         DVec2::new(64.0, 64.0),
         DVec2::new(0.0, 64.0),
     ])?;
-    let p = square.label_point();
-    assert!((p - DVec2::new(32.0, 32.0)).length() <= 2.0 + 1e-9, "{p:?}");
+    // Cells are 2 mm, centred on odd millimetres; the four round the centre tie, and the first
+    // in row order wins.
+    assert_eq!(square.label_point(), DVec2::new(31.0, 31.0));
     Ok(())
 }
 
@@ -134,6 +144,44 @@ fn a_concave_piece_s_label_point_is_inside_it_and_clear_of_its_edges() -> Result
     assert!(
         p.x > 10.0 && p.x < 20.0 && p.y > 10.0 && p.y < 90.0,
         "{p:?}"
+    );
+    Ok(())
+}
+
+#[test]
+fn clearance_is_to_each_edge_itself_not_the_line_through_it() -> Result<(), Setup> {
+    // An L 40 wide: measured to whole lines, the inner corner's edges would push the point into
+    // the outer corner; measured to the edges, it sits near the inner corner's diagonal.
+    let l = Outline::new(vec![
+        DVec2::new(0.0, 0.0),
+        DVec2::new(100.0, 0.0),
+        DVec2::new(100.0, 40.0),
+        DVec2::new(40.0, 40.0),
+        DVec2::new(40.0, 100.0),
+        DVec2::new(0.0, 100.0),
+    ])?;
+    let p = l.label_point();
+    assert!(inside(&l, p) && p.x > 20.0 && p.y > 20.0, "{p:?}");
+    Ok(())
+}
+
+#[test]
+fn a_piece_too_thin_for_the_grid_still_gets_a_point_inside_it() -> Result<(), Setup> {
+    // Two 0.1 mm strips along the axes: every grid cell centre is at least 1.5 mm from both, so
+    // none lies inside, and the corner's bisector leaves the piece within a millimetre.
+    let thin = Outline::new(vec![
+        DVec2::new(0.0, 0.0),
+        DVec2::new(100.0, 0.0),
+        DVec2::new(100.0, 0.1),
+        DVec2::new(0.1, 0.1),
+        DVec2::new(0.1, 100.0),
+        DVec2::new(0.0, 100.0),
+    ])?;
+    let p = thin.label_point();
+    assert!(inside(&thin, p), "{p:?}");
+    assert!(
+        p.length() < 1.0,
+        "{p:?} is not at the lowest, leftmost corner"
     );
     Ok(())
 }

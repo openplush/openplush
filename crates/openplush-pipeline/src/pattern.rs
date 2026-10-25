@@ -7,6 +7,7 @@ use openplush_pattern::{
 };
 use openplush_seams::{ChainSide, ChartMesh, SeamBundle, SewingMap};
 
+mod group;
 mod labels;
 mod notches;
 

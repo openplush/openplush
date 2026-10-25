@@ -7,14 +7,14 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 
 ## Read before working
 - [`CONSTITUTION.md`](CONSTITUTION.md): binding. A conflicting request → stop and name the principle.
-- [`ROADMAP.md`](ROADMAP.md): what comes next, and in what order.
-- The task or the request names the feature; unclear → ask which feature.
-- `specs/<feature>/spec.md`, `plan.md`, `data-model.md`, and the task you are executing in `tasks.md`.
+- The [qew](https://github.com/foundlings/qew) ledger ([ADR 0024](docs/adr/0024-track-work-in-qew.md)): `qew ready` is what to work on now, `qew show ID` what done means, `qew board` the whole plan.
+- The item or the request names the feature; unclear → ask which feature.
+- `specs/<feature>/spec.md`, `plan.md` and `data-model.md` when the item names a feature.
 
 ## Workflow
-- New feature work maps to a task ID in a `tasks.md`. A fix or small change to built code needs no task ID, only a failing test first. Unclear scope → stop and ask; never invent scope.
+- Work is a qew item: `qew start ID` before the first commit. Something found on the way is filed with `qew create`, never fixed silently. A fix or small change to built code needs no spec, only a failing test first. Unclear scope → stop and ask; never invent scope.
 - A decision prompt (an `AskUserQuestion` call, a handoff blocker) can be answered cold: the facts, with numbers where there are any; where the decision lives (its ID, linked to the file); one recommendation; the default if nobody answers. Link project terms to the [glossary](docs/reference/glossary.md).
-- Trivial-change lane (no task ID, no test): docs or typo fixes, comment fixes, dependency patch bumps, a fixture with its license entry, CI changes that don't alter gates.
+- Trivial-change lane (no qew item, no test): docs or typo fixes, comment fixes, dependency patch bumps, a fixture with its license entry, CI changes that don't alter gates.
 - Tests first: the failing test commit, then the implementation commit.
 - Never update golden snapshots (`fixtures/golden/`, `*.snap`) to pass a test; say the output changed and leave it to a human.
 - Never skip, weaken, or delete a test to get green.
@@ -49,6 +49,7 @@ A free, open-source tool that turns a 3D model into a printable plush sewing pat
 | Task | Command |
 |---|---|
 | Install the pinned tools | `scripts/check.sh --setup` |
+| What to work on now | `qew ready` |
 | Every gate CI runs | `scripts/check.sh` |
 | Engine: boundary, hygiene, fmt, clippy, tests, generated TS types, test build for wasm32 | `scripts/check.sh engine` |
 | One step | `scripts/check.sh <boundary\|hygiene\|fmt\|clippy\|test\|types\|wasm-check\|deny\|wasm\|shell>` |
@@ -82,5 +83,5 @@ Reasoning and worked examples: [docs/how-to/pull-requests.md](docs/how-to/pull-r
 - Branches: `NNN/NN-slug` for feature work (`NN` = position in the feature, never reused), `fix/slug` for a fix, or `chore/slug`. The slug names the intent, not the activity.
 - Session branches (`claude/…`, `codex/…`, `copilot/…`) are not PR branches. If you cannot push the real name, put it and the stack position in the PR title and body.
 - Interdependent intents are stacked (X, then bug fix Y, then feature Z on both): branch from the parent, PR base = parent, fill the `Stack` section, link the child from the parent. A stack never spans features or mixes chores with feature work. At merge time, a stack whose intents only make sense together may be folded into one PR by merging each child into its parent upward; the remaining PR lists every intent, and the folded PRs are closed with a link to it.
-- The maintainer merges every PR. Agents never merge, enable auto-merge or add `rereview`, grant or no grant.
+- A PR for a qew item goes through qew: `qew evidence ID` on the pushed head, `qew pr open ID --ready`, and once every check has passed `qew pr merge N`, then `qew land N`. Never merge with a failing or pending check, with `--admin`, or on GitHub directly; never add `rereview`. The maintainer can stop the loop or revert any merge.
 - Merge commits only, bottom-up, and only a PR whose base is `main`. A fix to a lower slice is merged upward; never rebase or force-push a stack under review.

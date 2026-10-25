@@ -2,7 +2,9 @@
 
 OpenPlush uses spec-driven development. Each feature gets a numbered directory, and work flows `specify → clarify → plan → tasks → implement`. New files start from [`templates/`](./templates/); [Start a feature's spec](../docs/how-to/author-specs.md) has the steps.
 
-What to work on next, and in what order, is in [`ROADMAP.md`](../ROADMAP.md); a feature's spec holds its design once it is picked up. This index lists the features and how to read their files. How far each feature's spec, plan and implementation have got is on the [status page](../docs/start/status.md).
+What to work on next, and in what order, is in the qew work ledger (`qew ready`; the [issue list](https://github.com/openplush/openplush/issues) mirrors it); a feature's spec holds its design once it is picked up.
+
+The `tasks.md` files of features 001 to 004 are history: their ticked lines record what was built, and their open lines are not a queue. When a ledger item starts work on a feature, the open lines it covers are read, the ones still worth doing are filed as ledger items, and the rest are dropped. This index lists the features and how to read their files. How far each feature's spec, plan and implementation have got is on the [status page](../docs/start/status.md).
 
 ## Features
 

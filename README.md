@@ -22,7 +22,7 @@ The full set is in the [constitution](CONSTITUTION.md).
 
 ## Design documents
 
-What comes next, in order, is the [roadmap](ROADMAP.md) — **start there to contribute**. The [specs index](specs/README.md) lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
+What comes next is on the [issue list](https://github.com/openplush/openplush/issues): issues marked `ready` can be picked up now — **start there to contribute**. The [specs index](specs/README.md) lists the features, how to read their files, and what is deferred. How far each one has got is on the [status page](docs/start/status.md).
 
 **001 — pattern pipeline** (the product)
 

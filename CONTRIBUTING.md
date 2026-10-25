@@ -15,7 +15,7 @@ Thanks for helping. OpenPlush turns a 3D model into a printable sewing pattern f
 
 1. Read [Start here](docs/start/README.md): what OpenPlush is and the path through the book.
 2. [Set up and run every check](docs/start/setup.md): three commands to a passing run of every gate CI runs.
-3. Pick a ready task from a feature's `tasks.md`, starting at the [specs index](specs/README.md); trivial fixes need none.
+3. Pick an [issue marked `ready`](https://github.com/openplush/openplush/issues?q=is%3Aopen+label%3Aready); trivial fixes need none.
 4. [Scope and open a pull request](docs/how-to/pull-requests.md): tests first, one intent per pull request, the template filled in. For a docs change, [write a documentation page](docs/how-to/write-docs.md).
 5. Read the [constitution](CONSTITUTION.md); reviewers enforce it.
 

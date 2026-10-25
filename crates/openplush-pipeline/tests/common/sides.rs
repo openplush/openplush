@@ -182,3 +182,23 @@ pub(crate) fn inside(polygon: &[DVec2], p: DVec2) -> bool {
         % 2
         == 1
 }
+
+impl Run {
+    /// The run's stage inputs, for a later stage.
+    pub(crate) fn input(&self) -> PatternInput<'_> {
+        PatternInput {
+            mesh: &self.mesh,
+            charts: &self.charts,
+            sewing: &self.sewing,
+            layouts: &self.layouts,
+        }
+    }
+
+    /// The options `run` used.
+    pub(crate) fn options(&self) -> Result<PatternOptions, Setup> {
+        Ok(PatternOptions {
+            scale: Scale::mm_per_model_unit(self.mm_per_unit)?,
+            fabric: fabric(6.0)?,
+        })
+    }
+}

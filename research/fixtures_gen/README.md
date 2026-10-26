@@ -33,7 +33,7 @@ All coordinates are millimetres, faces are triangles wound counter-clockwise see
 
 ### Defect fixtures
 
-Each one but `non-orientable` is the cube with one change, chosen so each fixture trips exactly one detector on its input mesh. The oracle welds coincident positions and drops duplicate faces, then evaluates every topology detector together on that welded, de-duplicated mesh; it repairs nothing.
+Each one but `non-orientable` is the cube with one change, chosen so each fixture trips exactly its own detector on its input mesh, or exactly those the table below names when one change cannot help tripping more. The oracle welds coincident positions and drops duplicate faces, then evaluates every topology detector together on that welded, de-duplicated mesh; it repairs nothing.
 
 | Class | Change | Why it does not trip anything else |
 |---|---|---|

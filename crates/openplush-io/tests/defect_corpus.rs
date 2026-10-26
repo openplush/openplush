@@ -5,9 +5,9 @@
 use openplush_mesh::{ValidationReport, validate};
 use openplush_testkit::fixtures::{self, Kind};
 
-/// The detectors each defect fixture must trip, and no others, in report order. Only
-/// `non-orientable` trips more than one; `research/fixtures_gen/README.md` says why.
-const CORPUS: [(&str, &[&str]); 10] = [
+/// The detectors each defect fixture must trip, and no others, in report order; where it is
+/// more than one, `research/fixtures_gen/README.md` says why.
+const CORPUS: [(&str, &[&str]); 12] = [
     ("bowtie-vertex", &["non_manifold_vertices"]),
     ("duplicate-face", &["duplicates"]),
     ("flipped-normals", &["winding_conflicts"]),
@@ -18,6 +18,11 @@ const CORPUS: [(&str, &[&str]); 10] = [
         "non-orientable",
         &["winding_conflicts", "non_orientable", "boundary_loops"],
     ),
+    (
+        "opposite-duplicate-face",
+        &["duplicates", "non_manifold_edges"],
+    ),
+    ("repeated-index-face", &["zero_area", "repeated_index"]),
     ("self-intersection", &["self_intersections"]),
     ("unwelded-split-vertices", &["unwelded"]),
     ("zero-area-face", &["zero_area"]),

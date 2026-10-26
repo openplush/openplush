@@ -447,6 +447,8 @@ fn validate_writes_every_list_exactly_as_the_engine_reports_it() -> Result<(), S
         "multi-component",
         "non-manifold-edge",
         "non-orientable",
+        "opposite-duplicate-face",
+        "repeated-index-face",
         "self-intersection",
         "unwelded-split-vertices",
         "zero-area-face",

@@ -407,6 +407,28 @@ fn a_seam_between_vertices_with_no_edge_is_refused_naming_the_seam() -> Result<(
 }
 
 #[test]
+fn an_edge_listed_twice_is_refused_naming_both_seams() -> Result<(), Setup> {
+    for (case, second) in [
+        ("twice-same", r#"{"edge": [25, 26], "kind": "cut"}"#),
+        ("twice-reversed", r#"{"edge": [26, 25], "kind": "cut"}"#),
+        (
+            "twice-kinds",
+            r#"{"edge": [25, 26], "kind": "fabricBoundary"}"#,
+        ),
+    ] {
+        let seams = seam_set(&format!(
+            r#"{{"edge": [25, 26], "kind": "cut"}}, {{"edge": [0, 1], "kind": "cut"}}, {second}"#
+        ));
+        let err = refused_seams(case, &seams)?;
+        assert!(
+            err.contains("seam 2: edge already listed as seam 0"),
+            "{case}: {err}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn a_malformed_seam_set_is_refused() -> Result<(), Setup> {
     for (case, contents, says) in [
         (

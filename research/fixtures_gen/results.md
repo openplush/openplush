@@ -2,7 +2,7 @@
 
 Run on 2026-10-14, Linux x86_64; rerun on 2026-10-16 when the source-seam fixtures were added, on 2026-10-19 when the symmetry and faceted fixtures were added, and on 2026-10-20 when the quadruped was added. Standard library only; no third-party packages.
 
-On 2026-10-25 the non-orientable strip was added and generated on Windows x86_64 with CPython 3.15.1: 50 tests, OK, and regenerating left every earlier file byte-identical. The three interpreters below were not rerun then.
+On 2026-10-25 the non-orientable strip was added and generated on Windows x86_64 with CPython 3.15.1: 50 tests, OK, and regenerating left every earlier file byte-identical. The three interpreters below were not rerun then. On 2026-10-26 the repeated-index and opposite-duplicate faces were added the same way, on the same interpreter, again leaving every earlier file byte-identical.
 
 ## Interpreters
 

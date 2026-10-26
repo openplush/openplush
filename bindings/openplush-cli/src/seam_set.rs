@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use openplush_pipeline::{HalfEdgeId, ManifoldMesh, SeamKind, SeamSet, VertexId};
+use openplush_pipeline::{EdgeId, HalfEdgeId, ManifoldMesh, SeamKind, SeamSet, VertexId};
 use serde_json::Value;
 
 /// One seam as the file gives it: two source vertex indices, counted from the file's base.
@@ -66,53 +66,48 @@ fn seam(value: &Value) -> Result<Seam, String> {
     Ok(Seam { edge, kind })
 }
 
-/// Why a seam cannot be placed on the mesh.
-#[derive(Debug)]
-pub(crate) enum Unplaced {
-    /// The text, naming the seam by its place in the file.
-    Seam(String),
-    /// The seam set refused the edge.
-    Set(openplush_pipeline::SeamsError),
-}
-
 /// The seams on `mesh`: each index names the source vertex every mesh vertex records through
-/// `corner_source`, so an index must name exactly one mesh vertex, and the two an edge.
-pub(crate) fn apply(file: &SeamFile, mesh: &ManifoldMesh) -> Result<SeamSet, Unplaced> {
+/// `corner_source`, so an index must name exactly one mesh vertex, and the two an edge. A
+/// refusal names the seam by its place in the file.
+pub(crate) fn apply(file: &SeamFile, mesh: &ManifoldMesh) -> Result<SeamSet, String> {
     let from = sources(mesh);
     let mut set = SeamSet::new();
+    let mut listed: BTreeMap<EdgeId, usize> = BTreeMap::new();
     for (n, seam) in file.seams.iter().enumerate() {
-        let vertex = |i: u64| -> Result<VertexId, Unplaced> {
+        let vertex = |i: u64| -> Result<VertexId, String> {
             let shown = i + file.base;
             let found: Vec<VertexId> = from.get(&i).into_iter().flatten().copied().collect();
             match found[..] {
                 [v] => Ok(v),
-                [] => Err(Unplaced::Seam(format!(
-                    "seam {n}: no vertex {shown} in the model"
-                ))),
-                _ => Err(Unplaced::Seam(format!(
+                [] => Err(format!("seam {n}: no vertex {shown} in the model")),
+                _ => Err(format!(
                     "seam {n}: vertex {shown} is more than one vertex of the repaired model"
-                ))),
+                )),
             }
         };
         let [a, b] = seam.edge.map(|i| i.checked_sub(file.base));
         let (Some(a), Some(b)) = (a, b) else {
-            return Err(Unplaced::Seam(format!(
-                "seam {n}: an index is below the file's base"
-            )));
+            return Err(format!("seam {n}: an index is below the file's base"));
         };
         let (va, vb) = (vertex(a)?, vertex(b)?);
         let edge = mesh
             .outgoing(va)
             .find(|&h| mesh.dest(h) == vb)
             .ok_or_else(|| {
-                Unplaced::Seam(format!(
+                format!(
                     "seam {n}: vertices {} and {} share no edge",
                     a + file.base,
                     b + file.base
-                ))
+                )
             })?
             .edge();
-        set.insert(edge, seam.kind).map_err(Unplaced::Set)?;
+        if let Some(first) = listed.insert(edge, n) {
+            return Err(format!("seam {n}: edge already listed as seam {first}"));
+        }
+        // INVARIANT: a file carries no mandatory kind and lists each edge once, so `insert`
+        // never refuses.
+        set.insert(edge, seam.kind)
+            .unwrap_or_else(|_| unreachable!());
     }
     Ok(set)
 }

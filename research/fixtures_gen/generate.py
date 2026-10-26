@@ -151,6 +151,16 @@ def defects() -> dict[str, tuple[str, Mesh]]:
     m.faces.append(m.faces[0])
     out["duplicate-face"] = ("the first face is repeated with the same winding", m)
 
+    m, _, _ = cube()
+    a, b, c = m.faces[0]
+    m.faces.append((a, c, b))
+    out["opposite-duplicate-face"] = ("the first face is repeated wound the other way, a double-sided sheet", m)
+
+    m, _, _ = cube()
+    a, b, _ = m.faces[0]
+    m.faces.append((a, a, b))
+    out["repeated-index-face"] = ("an extra face names the first face's first vertex twice", m)
+
     m, sides, _ = cube()
     quad = 2 * (GRID * (GRID // 2) + GRID // 2)  # first triangle of the centre quad
     middle = sides[TOP][quad : quad + 2]

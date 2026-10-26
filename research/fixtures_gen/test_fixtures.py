@@ -17,7 +17,7 @@ from typing import Generic, TypeVar
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 MESHES = ("capsule", "cube", "sphere")
-# The nine defect classes the corpus covers. Non-finite input fails at import instead, so it is not here.
+# The defect classes the corpus covers. Non-finite input fails at import instead, so it is not here.
 DEFECTS = (
     "bowtie-vertex",
     "duplicate-face",
@@ -26,12 +26,18 @@ DEFECTS = (
     "multi-component",
     "non-manifold-edge",
     "non-orientable",
+    "opposite-duplicate-face",
+    "repeated-index-face",
     "self-intersection",
     "unwelded-split-vertices",
     "zero-area-face",
 )
-# The classes a fixture trips when not only its own; README.md, Defect fixtures, says why.
-EXPECTED = {"non-orientable": ["flipped-normals", "hole"]}
+# The classes a fixture trips when not only, or not exactly, its own; README.md, Defect fixtures, says why.
+EXPECTED = {
+    "non-orientable": ["flipped-normals", "hole"],
+    "opposite-duplicate-face": ["duplicate-face"],
+    "repeated-index-face": ["repeated-index-face", "zero-area-face"],
+}
 SEAM_KINDS = {"cut", "dart", "opening", "fabricBoundary", "mandatory"}
 
 Vec = tuple[float, float, float]
@@ -159,7 +165,9 @@ def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
         return canon.setdefault(pos[i], i)
 
     welded = [(weld(a), weld(b), weld(c)) for a, b, c in faces]
-    unique = list({tuple(sorted(f)): f for f in reversed(welded)}.values())
+    # A face naming one vertex twice has no edges of its own, so it is kept out of the topology.
+    proper = [f for f in welded if len(set(f)) == 3]
+    unique = list({tuple(sorted(f)): f for f in reversed(proper)}.values())
     lo = [min(p[k] for p in pos) for k in range(3)]
     hi = [max(p[k] for p in pos) for k in range(3)]
     diag2 = sum((h - l) ** 2 for h, l in zip(hi, lo))
@@ -192,15 +200,16 @@ def detect(pos: list[Vec], faces: list[Face]) -> dict[str, int]:
     ) + inward_closed_components(pos, unique, comps)
     return {
         "bowtie-vertex": len(fan_roots) - len({v for v, _ in fan_roots}),
-        "duplicate-face": len(welded) - len(unique),
+        "duplicate-face": len(proper) - len(unique),
         "flipped-normals": misoriented,
         "hole": sum(len(fs) == 1 for fs in edge_faces.values()),
         "multi-component": len({comps.find(v) for f in unique for v in f}) - 1,
         "non-finite": sum(not math.isfinite(c) for p in pos for c in p),
         "non-manifold-edge": sum(len(fs) > 2 for fs in edge_faces.values()),
+        "repeated-index-face": len(welded) - len(proper),
         "self-intersection": crossings,
         "unwelded-split-vertices": len(pos) - len(canon),
-        "zero-area-face": sum(
+        "zero-area-face": len(welded) - len(proper) + sum(
             dot(n, n) / 4 <= 1e-12 * diag2 * diag2
             for n in (cross(sub(t[1], t[0]), sub(t[2], t[0])) for t in tris)
         ),

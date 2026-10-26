@@ -29,6 +29,8 @@ fn every_defect_class_is_listed_in_name_order() {
             "multi-component",
             "non-manifold-edge",
             "non-orientable",
+            "opposite-duplicate-face",
+            "repeated-index-face",
             "self-intersection",
             "unwelded-split-vertices",
             "zero-area-face",

@@ -643,16 +643,44 @@ fn a_file_that_cannot_be_read_or_written_is_named_on_stderr() -> Result<(), Setu
     Ok(())
 }
 
-#[test]
-fn a_gltf_named_without_a_directory_reads_its_buffer_from_the_working_directory()
--> Result<(), Setup> {
-    let dir = scratch("bare-gltf")?;
+/// One triangle as a `.gltf` whose positions live in `sub/tri.bin`, and that buffer's bytes.
+fn triangle_gltf() -> (String, Vec<u8>) {
     let points = [0f32, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0];
     let bin: Vec<u8> = points.iter().flat_map(|c| c.to_le_bytes()).collect();
     let gltf = format!(
         r#"{{"asset":{{"version":"2.0"}},"buffers":[{{"uri":"sub/tri.bin","byteLength":{len}}}],"bufferViews":[{{"buffer":0,"byteLength":{len}}}],"accessors":[{{"bufferView":0,"componentType":5126,"type":"VEC3","count":3,"min":[0,0,0],"max":[1,1,0]}}],"meshes":[{{"primitives":[{{"attributes":{{"POSITION":0}}}}]}}],"nodes":[{{"mesh":0}}],"scenes":[{{"nodes":[0]}}],"scene":0}}"#,
         len = bin.len()
     );
+    (gltf, bin)
+}
+
+#[test]
+fn a_gltf_whose_buffer_is_missing_exits_1_naming_it() -> Result<(), Setup> {
+    let dir = scratch("missing-buffer")?;
+    let (gltf, _) = triangle_gltf();
+    fs::write(dir.join("model.gltf"), gltf)?;
+    let report = dir.join("r.json");
+    let out = cli(&[
+        "validate",
+        &text(&dir.join("model.gltf"))?,
+        "--json",
+        &text(&report)?,
+    ])?;
+    assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
+    assert_eq!(
+        stderr(&out),
+        "openplush-cli: MissingResource: the file refers to \"sub/tri.bin\", which was not \
+         supplied beside it\n"
+    );
+    assert!(!report.exists());
+    Ok(())
+}
+
+#[test]
+fn a_gltf_named_without_a_directory_reads_its_buffer_from_the_working_directory()
+-> Result<(), Setup> {
+    let dir = scratch("bare-gltf")?;
+    let (gltf, bin) = triangle_gltf();
     fs::create_dir_all(dir.join("sub"))?;
     fs::write(dir.join("sub").join("tri.bin"), bin)?;
     fs::write(dir.join("model.gltf"), gltf)?;

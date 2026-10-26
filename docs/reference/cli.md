@@ -61,6 +61,7 @@ Runs the model through every stage and writes `pattern.svg`, `pattern.pdf` and `
   - an index no vertex came from;
   - an index more than one vertex came from;
   - two vertices with no edge between them;
+  - an edge an earlier seam already lists, in either order and with either kind (`seam N: edge already listed as seam M`);
   - a `format`, `version`, `vertexIndexBase`, `edge` or `kind` the format does not allow;
   - a `kind` other than `cut` or `fabricBoundary`: `dart`, `opening` and `mandatory` are not supported in a seam-set file.
 - `--fabric` is one JSON object in the project schema's `fabric` shape:

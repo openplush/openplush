@@ -37,12 +37,9 @@ pub(crate) fn run(inputs: &Inputs<'_>) -> Result<(), Failure> {
     let mut warnings = WarningSet::default();
     let soup = keep(&mut warnings, import(&files(inputs.model, CAP)?)?);
     let (mesh, report) = keep(&mut warnings, repair(&soup, &RepairPlan::default())?);
-    let mut seams = seam_set::apply(&seam_file, &mesh).map_err(|why| match why {
-        seam_set::Unplaced::Seam(detail) => Failure::Input {
-            path: inputs.seams.to_path_buf(),
-            detail,
-        },
-        seam_set::Unplaced::Set(e) => Failure::Engine(e.into()),
+    let mut seams = seam_set::apply(&seam_file, &mesh).map_err(|detail| Failure::Input {
+        path: inputs.seams.to_path_buf(),
+        detail,
     })?;
     forced(&mut seams, &mesh, &report).map_err(|e| Failure::Engine(e.into()))?;
     let (charts, sewing) = keep(&mut warnings, chart(&mesh, &seams)?);
